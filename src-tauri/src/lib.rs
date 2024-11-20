@@ -1,31 +1,49 @@
-use http::ws::create_event_handles;
-use state::auth::SharedAuthState;
-use twitch_api::HelixClient;
+use std::sync::Arc;
+
+use http::server::EventRecvHandle;
+use tokio::sync::broadcast;
+use twitch::manager::TwitchManager;
+use twitch_api::{
+    eventsub::{event::websocket, WebsocketTransport},
+    HelixClient,
+};
 
 mod commands;
 mod constants;
 mod http;
 mod state;
+mod twitch;
 
+/// Prevent slow changes from macro by using a separate entrypoint
+/// from the macro
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    run_inner();
+}
+
+fn run_inner() {
+    env_logger::init();
+
     // Create the HelixClient, which is used to make requests to the Twitch API
     let client: HelixClient<reqwest::Client> = HelixClient::default();
 
-    let auth_state = SharedAuthState::default();
+    let (tx, rx) = broadcast::channel(10);
+    let event_recv = EventRecvHandle(rx);
 
-    let (event_send, event_recv) = create_event_handles();
+    let (twitch_manager, twitch_event_rx) = TwitchManager::new(client.clone());
+    let twitch_manager = Arc::new(twitch_manager);
 
     tauri::Builder::default()
         .setup({
             // Copy shared auth state for the server
-            let auth_state = auth_state.clone();
             let client = client.clone();
-            let event_handles = (event_send.clone(), event_recv.clone());
+            let event_recv = event_recv.clone();
 
-            move |_app| {
+            move |app| {
+                let handle = app.handle().clone();
+
                 _ = tauri::async_runtime::spawn(async move {
-                    _ = http::server::start(auth_state, client, event_handles).await;
+                    _ = http::server::start(client, event_recv, handle, twitch_manager).await;
                 });
 
                 // TODO: Start server and block until a channel reports back that the server started?

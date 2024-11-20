@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use crate::{
     constants::{TWITCH_CLIENT_ID, TWITCH_REDIRECT_URI, TWITCH_REQUIRED_SCOPES},
-    state::auth::SharedAuthState,
+    twitch::manager::TwitchManager,
 };
 use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
 use url::Url;
@@ -28,6 +30,6 @@ pub fn open_twitch_oauth_uri() {
 }
 
 #[tauri::command]
-pub async fn is_authenticated(state: tauri::State<'_, SharedAuthState>) -> Result<bool, ()> {
+pub async fn is_authenticated(state: tauri::State<'_, Arc<TwitchManager>>) -> Result<bool, ()> {
     Ok(state.is_authenticated().await)
 }

@@ -1,6 +1,9 @@
 {
   "words": [
+    "eventsub",
+    "Keepalive",
     "reqwest",
-    "tauri"
+    "tauri",
+    "tungstenite"
   ]
 }

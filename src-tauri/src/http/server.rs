@@ -3,48 +3,48 @@
 //! Internal server for handling OAuth responses and serving the app overlay HTML
 
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::sync::Arc;
 
+use super::error::HttpResult;
+use crate::constants::LOCAL_SERVER_PORT;
+use crate::twitch::manager::TwitchManager;
 use anyhow::Context;
+use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::{
-    extract::WebSocketUpgrade,
     response::{IntoResponse, Response},
     routing::{get, post},
     Extension, Json, Router,
 };
+use futures_util::stream::{self, Stream};
 use reqwest::header::CONTENT_TYPE;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use std::{convert::Infallible, time::Duration};
+use tauri::{AppHandle, Emitter, Listener};
+use tokio::sync::broadcast;
+use tokio_stream::wrappers::BroadcastStream;
 use twitch_api::{
     twitch_oauth2::{AccessToken, UserToken},
     HelixClient,
 };
 
-use crate::{constants::LOCAL_SERVER_PORT, state::auth::SharedAuthState};
-
-use super::{
-    error::HttpResult,
-    ws::{
-        handle_socket, AuthStateChange, EventRecvHandle, EventSendHandle, WebsocketServerMessage,
-    },
-};
-
 pub async fn start(
-    auth_state: SharedAuthState,
     helix_client: HelixClient<'static, reqwest::Client>,
-    event_handles: (EventSendHandle, EventRecvHandle),
+    event_handles: EventRecvHandle,
+    app_handle: AppHandle,
+    twitch_manager: Arc<TwitchManager>,
 ) {
     // build our application with a single route
     let app = Router::new()
         .route("/oauth", get(handle_oauth))
         .route("/oauth/complete", post(handle_oauth_complete))
-        .route("/ws", get(handle_ws))
-        .layer(Extension(auth_state))
+        .route("/events", get(handle_sse))
         .layer(Extension(helix_client))
-        .layer(Extension(event_handles.0))
-        .layer(Extension(event_handles.1));
+        .layer(Extension(event_handles))
+        .layer(Extension(app_handle))
+        .layer(Extension(twitch_manager));
 
     let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, LOCAL_SERVER_PORT));
 
-    // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
@@ -70,8 +70,8 @@ pub struct OAuthComplete {
 /// POST /oauth/complete
 ///
 pub async fn handle_oauth_complete(
-    Extension(event_handle): Extension<EventSendHandle>,
-    Extension(auth_state): Extension<SharedAuthState>,
+    Extension(app_handle): Extension<AppHandle>,
+    Extension(twitch_manager): Extension<Arc<TwitchManager>>,
     Extension(helix_client): Extension<HelixClient<'static, reqwest::Client>>,
     Json(req): Json<OAuthComplete>,
 ) -> HttpResult<()> {
@@ -84,18 +84,37 @@ pub async fn handle_oauth_complete(
     .await
     .context("failed to create user token")?;
 
-    auth_state.set_authenticated(token).await;
+    twitch_manager.set_authenticated(token).await;
 
-    event_handle.send(WebsocketServerMessage::AuthStateChange {
-        state: AuthStateChange::Authenticated,
-    });
+    // Tell the app we are authenticated
+    app_handle.emit("authenticated", ());
 
     Ok(Json(()))
 }
 
-async fn handle_ws(
+pub struct EventRecvHandle(pub broadcast::Receiver<EventMessage>);
+
+impl Clone for EventRecvHandle {
+    fn clone(&self) -> Self {
+        Self(self.0.resubscribe())
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub enum EventMessage {}
+
+async fn handle_sse(
     Extension(event_handle): Extension<EventRecvHandle>,
-    ws: WebSocketUpgrade,
-) -> Response {
-    ws.on_upgrade(move |socket| handle_socket(socket, event_handle))
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    use tokio_stream::StreamExt;
+
+    let stream = BroadcastStream::new(event_handle.0);
+    let stream = stream.filter_map(|result| {
+        result
+            .ok()
+            .and_then(|event| Event::default().json_data(event).ok())
+            .map(Ok)
+    });
+
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }
