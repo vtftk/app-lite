@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Complete</title>
+
+
+    <style>
+        #title {
+            font-size: 4rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        #text {
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        body {
+            background-color: #222;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 id="title">Loading...</h1>
+    <p id="text"></p>
+</body>
+
+</html>
+
+
+<script>
+    const titleElement = document.getElementById("title");
+    const textElement = document.getElementById("text");
+
+    async function submitOAuthResult() {
+        const location = window.location;
+
+        const hash = location.hash.substr(1);
+        const params = new URLSearchParams(hash);
+
+        if (!params.has('access_token')) {
+            titleElement.innerText = "Failed to authenticate";
+            textElement.innerText = "Missing authentication token from response, try again"
+            return;
+        }
+
+        const endpoint = new URL("/oauth/complete", location.origin);
+
+        titleElement.innerText = "Completing Login";
+        textElement.innerText = "Finishing up the login, don't close this page yet"
+
+        await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                access_token: params.get('access_token')
+            })
+        })
+
+        titleElement.innerText = "Login Complete";
+        textElement.innerText = "You can close this page now and return to VTFTK"
+    }
+
+    submitOAuthResult();
+</script>
