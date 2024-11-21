@@ -1,9 +1,23 @@
+use std::{arch, os::windows::io::AsRawSocket, sync::Arc};
+
 use log::error;
+use tauri::{AppHandle, Emitter};
 use tokio::{
     sync::{broadcast, mpsc, Mutex},
     task::AbortHandle,
 };
-use twitch_api::{twitch_oauth2::UserToken, types::UserId, HelixClient};
+use twitch_api::{
+    eventsub::{
+        self,
+        channel::{
+            channel_points_custom_reward_redemption::Reward, chat::message::Cheer,
+            subscription::message::SubscriptionMessage,
+        },
+    },
+    twitch_oauth2::UserToken,
+    types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
+    HelixClient,
+};
 
 use super::websocket::WebsocketClient;
 
@@ -11,11 +25,13 @@ pub struct TwitchManager {
     helix_client: HelixClient<'static, reqwest::Client>,
     state: Mutex<TwitchManagerState>,
     tx: broadcast::Sender<TwitchEvent>,
+    app_handle: AppHandle,
 }
 
 impl TwitchManager {
     pub fn new(
         helix_client: HelixClient<'static, reqwest::Client>,
+        app_handle: AppHandle,
     ) -> (Self, broadcast::Receiver<TwitchEvent>) {
         let (tx, rx) = broadcast::channel(10);
         (
@@ -23,6 +39,7 @@ impl TwitchManager {
                 helix_client,
                 state: Default::default(),
                 tx,
+                app_handle,
             },
             rx,
         )
@@ -35,7 +52,70 @@ impl TwitchManager {
 }
 
 #[derive(Debug, Clone)]
-pub enum TwitchEvent {}
+#[allow(unused)]
+pub enum TwitchEvent {
+    Redeem {
+        id: RedemptionId,
+        reward: Reward,
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: DisplayName,
+    },
+    CheerBits {
+        // Total bits gifted
+        bits: i64,
+        anonymous: bool,
+
+        // User details empty when cheer is anonymous
+        user_id: Option<UserId>,
+        user_name: Option<UserName>,
+        user_display_name: Option<DisplayName>,
+    },
+    Follow {
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: DisplayName,
+    },
+    Sub {
+        is_gift: bool,
+        tier: SubscriptionTier,
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: DisplayName,
+    },
+    GiftSub {
+        anonymous: bool,
+
+        // Total subs gifted
+        total: i64,
+
+        // Total gifts user has given (If not anonymous)
+        cumulative_total: Option<i64>,
+        tier: SubscriptionTier,
+
+        // User details empty when cheer is anonymous
+        user_id: Option<UserId>,
+        user_name: Option<DisplayName>,
+        user_display_name: Option<UserName>,
+    },
+    ResubMsg {
+        cumulative_months: i64,
+        duration_months: i64,
+        message: SubscriptionMessage,
+        streak_months: Option<i64>,
+        tier: SubscriptionTier,
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: DisplayName,
+    },
+    ChatMsg {
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: UserName,
+        message: eventsub::channel::chat::Message,
+        cheer: Option<Cheer>,
+    },
+}
 
 #[derive(Default)]
 #[allow(clippy::large_enum_variant)]
@@ -47,10 +127,8 @@ enum TwitchManagerState {
     Authenticated {
         // Token for the authenticated user
         token: UserToken,
-        // User ID of the user to monitor
-        user_id: UserId,
         // Currently active websocket connection
-        websocket: WebsocketManagedTask,
+        _websocket: WebsocketManagedTask,
     },
 }
 
@@ -64,13 +142,16 @@ impl Drop for WebsocketManagedTask {
 
 impl WebsocketManagedTask {
     pub fn create(
+        twitch_manager: Arc<TwitchManager>,
         client: HelixClient<'static, reqwest::Client>,
+        tx: broadcast::Sender<TwitchEvent>,
         token: UserToken,
     ) -> WebsocketManagedTask {
         let abort_handle = tokio::spawn(async move {
-            let ws = WebsocketClient::new(None, token, client);
+            let ws = WebsocketClient::new(client, tx, token);
             if let Err(err) = ws.run().await {
-                error!("failed to connect: {:?}", err);
+                error!("websocket error: {:?}", err);
+                twitch_manager.reset().await;
             }
         })
         .abort_handle();
@@ -80,24 +161,35 @@ impl WebsocketManagedTask {
 }
 
 impl TwitchManager {
-    pub async fn set_authenticated(&self, token: UserToken) -> anyhow::Result<()> {
-        let lock = &mut *self.state.lock().await;
-        let user_id = token.user_id.clone();
+    pub async fn set_authenticated(self: &Arc<Self>, token: UserToken) {
+        {
+            let lock = &mut *self.state.lock().await;
 
-        let websocket = WebsocketManagedTask::create(self.helix_client.clone(), token.clone());
+            let websocket = WebsocketManagedTask::create(
+                self.clone(),
+                self.helix_client.clone(),
+                self.tx.clone(),
+                token.clone(),
+            );
 
-        *lock = TwitchManagerState::Authenticated {
-            user_id,
-            token,
-            websocket,
-        };
+            *lock = TwitchManagerState::Authenticated {
+                token,
+                _websocket: websocket,
+            };
+        }
 
-        Ok(())
+        // Tell the app we are authenticated
+        _ = self.app_handle.emit("authenticated", ());
     }
 
     pub async fn reset(&self) {
-        let lock = &mut *self.state.lock().await;
-        *lock = TwitchManagerState::Initial;
+        {
+            let lock = &mut *self.state.lock().await;
+            *lock = TwitchManagerState::Initial;
+        }
+
+        // Tell the app we are authenticated
+        _ = self.app_handle.emit("logout", ());
     }
 
     pub fn events(&self) -> broadcast::Receiver<TwitchEvent> {

@@ -11,15 +11,15 @@ use crate::twitch::manager::TwitchManager;
 use anyhow::Context;
 use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::{
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     routing::{get, post},
     Extension, Json, Router,
 };
-use futures_util::stream::{self, Stream};
+use futures_util::stream::Stream;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
-use std::{convert::Infallible, time::Duration};
-use tauri::{AppHandle, Emitter, Listener};
+use std::convert::Infallible;
+use tauri::AppHandle;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use twitch_api::{
@@ -70,7 +70,6 @@ pub struct OAuthComplete {
 /// POST /oauth/complete
 ///
 pub async fn handle_oauth_complete(
-    Extension(app_handle): Extension<AppHandle>,
     Extension(twitch_manager): Extension<Arc<TwitchManager>>,
     Extension(helix_client): Extension<HelixClient<'static, reqwest::Client>>,
     Json(req): Json<OAuthComplete>,
@@ -85,9 +84,6 @@ pub async fn handle_oauth_complete(
     .context("failed to create user token")?;
 
     twitch_manager.set_authenticated(token).await;
-
-    // Tell the app we are authenticated
-    app_handle.emit("authenticated", ());
 
     Ok(Json(()))
 }

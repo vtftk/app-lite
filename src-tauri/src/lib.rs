@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use http::server::EventRecvHandle;
+use tauri::Manager;
 use tokio::sync::broadcast;
 use twitch::manager::TwitchManager;
 use twitch_api::{
@@ -30,9 +31,6 @@ fn run_inner() {
     let (tx, rx) = broadcast::channel(10);
     let event_recv = EventRecvHandle(rx);
 
-    let (twitch_manager, twitch_event_rx) = TwitchManager::new(client.clone());
-    let twitch_manager = Arc::new(twitch_manager);
-
     tauri::Builder::default()
         .setup({
             // Copy shared auth state for the server
@@ -41,6 +39,14 @@ fn run_inner() {
 
             move |app| {
                 let handle = app.handle().clone();
+
+                let (twitch_manager, mut twitch_event_rx) =
+                    TwitchManager::new(client.clone(), handle.clone());
+                let twitch_manager = Arc::new(twitch_manager);
+
+                _ = tauri::async_runtime::spawn(async move {
+                    while let Ok(event) = twitch_event_rx.recv().await {}
+                });
 
                 _ = tauri::async_runtime::spawn(async move {
                     _ = http::server::start(client, event_recv, handle, twitch_manager).await;
