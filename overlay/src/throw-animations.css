@@ -1,0 +1,152 @@
+@font-face {
+  font-family: "Noto Sans";
+  font-display: swap;
+  unicode-range: U+000-5FF;
+  src: local("Noto Sans") format("ttf"),
+    url("NotoSans-Regular.ttf") format("ttf");
+}
+
+@-webkit-keyframes throwLeft {
+  0% {
+    transform: translate(-150vw, 0vh);
+  }
+  25% {
+    transform: translate(-75vw, -10vh);
+  }
+  50% {
+    transform: translate(0vw, 0vh);
+  }
+  100% {
+    transform: translate(-30vw, -120vh);
+  }
+}
+
+@keyframes throwLeft {
+  0% {
+    transform: translate(-150vw, 0vh);
+  }
+  25% {
+    transform: translate(-75vw, -10vh);
+  }
+  50% {
+    transform: translate(0vw, 0vh);
+  }
+  100% {
+    transform: translate(-30vw, -120vh);
+  }
+}
+
+@-webkit-keyframes throwRight {
+  0% {
+    transform: translate(150vw, 0vh);
+  }
+  25% {
+    transform: translate(75vw, -10vh);
+  }
+  50% {
+    transform: translate(0vw, 0vh);
+  }
+  100% {
+    transform: translate(30vw, -120vh);
+  }
+}
+
+@keyframes throwRight {
+  0% {
+    transform: translate(150vw, 0vh);
+  }
+  25% {
+    transform: translate(75vw, -10vh);
+  }
+  50% {
+    transform: translate(0vw, 0vh);
+  }
+  100% {
+    transform: translate(30vw, -120vh);
+  }
+}
+
+@-webkit-keyframes spinClockwise {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360);
+  }
+}
+
+@keyframes spinClockwise {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@-webkit-keyframes spinCounterClockwise {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes spinCounterClockwise {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+body {
+  font-family: "Noto Sans", Verdana, Geneva, Tahoma, sans-serif;
+  color: white;
+  -webkit-text-stroke: 3px black;
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+}
+
+.thrown {
+  position: absolute;
+}
+
+.thrown image {
+  position: absolute;
+  left: -9999px;
+  right: -9999px;
+  top: -9999px;
+  bottom: -9999px;
+}
+
+.pixel {
+  image-rendering: pixelated;
+}
+
+.animated,
+.thrown {
+  -webkit-animation-timing-function: linear !important;
+  animation-timing-function: linear !important;
+  -webkit-animation-fill-mode: both !important;
+  animation-fill-mode: both !important;
+}
+
+@keyframes glow {
+  0% {
+    color: white;
+  }
+  50% {
+    color: #ff5bce;
+  }
+  100% {
+    color: white;
+  }
+}
+
+* {
+  pointer-events: none;
+}

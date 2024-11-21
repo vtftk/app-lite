@@ -36,5 +36,5 @@ export async function requestCurrentModel() {
   }
 
   const data: RequestCurrentModelData = response.data;
-  console.log(response);
+  return data;
 }
