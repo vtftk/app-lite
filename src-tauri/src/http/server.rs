@@ -8,6 +8,7 @@ use std::sync::Arc;
 use super::error::HttpResult;
 use crate::constants::LOCAL_SERVER_PORT;
 use crate::state::app_data::{AppData, AppDataStore, MinMax, ModelData, ModelId};
+use crate::state::runtime_app_data::RuntimeAppDataStore;
 use crate::twitch::manager::TwitchManager;
 use anyhow::Context;
 use axum::response::sse::{Event, KeepAlive, Sse};
@@ -36,6 +37,7 @@ pub async fn start(
     app_handle: AppHandle,
     twitch_manager: Arc<TwitchManager>,
     app_data: AppDataStore,
+    runtime_app_data: RuntimeAppDataStore,
 ) {
     // build our application with a single route
     let app = Router::new()
@@ -49,6 +51,7 @@ pub async fn start(
         .layer(Extension(app_handle))
         .layer(Extension(twitch_manager))
         .layer(Extension(app_data))
+        .layer(Extension(runtime_app_data))
         .layer(CorsLayer::very_permissive());
 
     let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, LOCAL_SERVER_PORT));

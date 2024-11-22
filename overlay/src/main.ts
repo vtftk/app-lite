@@ -6,6 +6,7 @@ import { getAppData } from "./vtftk/appData";
 import { VTubeStudioWebSocket } from "./vtube-studio/socket";
 import {
   createModelParameters,
+  requestCurrentModel,
   requestInputParameterList,
 } from "./vtube-studio/model";
 import {
@@ -14,6 +15,8 @@ import {
   throwItem,
 } from "./vtube-studio/throw-item";
 import { createEventSource } from "./vtftk/events";
+import { beginCalibrationStep } from "./vtftk/calibration";
+import { CalibrationStep } from "./vtftk/calibration-types";
 
 async function load() {
   const appData = await getAppData();
@@ -27,6 +30,16 @@ async function load() {
   console.debug("Connected to VTube studio");
 
   createEventSource(vtSocket);
+
+  const { modelID } = await requestCurrentModel(vtSocket);
+
+  const modelData = appData.models[modelID];
+
+  // Model is not yet calibrate
+  if (modelData === undefined) {
+    beginCalibrationStep(vtSocket, CalibrationStep.NotStarted);
+    return;
+  }
 
   try {
     // Only needs to be done on initial load, can be stored until next refresh

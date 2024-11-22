@@ -3,17 +3,10 @@ import {
   requestCurrentModel,
   requestMoveModel,
 } from "../vtube-studio/model";
-import {
-  CalibrationPoint,
-  CalibrationStep,
-  CalibrationStepData,
-} from "./calibration-types";
-import {
-  BACKEND_HTTP,
-  LARGEST_MODEL_SIZE,
-  SMALLEST_MODEL_SIZE,
-} from "../constants";
+import { CalibrationPoint, CalibrationStep } from "./calibration-types";
+import { LARGEST_MODEL_SIZE, SMALLEST_MODEL_SIZE } from "../constants";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
+import { notifyProgressCalibration } from "./api";
 
 const calibrationEl = document.getElementById("calibration");
 
@@ -84,14 +77,6 @@ const STEPS = [
   CalibrationStep.Largest,
   CalibrationStep.Complete,
 ];
-
-export async function notifyProgressCalibration(body: CalibrationStepData) {
-  await fetch(new URL("/calibration", BACKEND_HTTP), {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
 
 export async function beginCalibrationStep(
   socket: VTubeStudioWebSocket,

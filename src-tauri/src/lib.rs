@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::Arc};
 use anyhow::Context;
 use http::server::EventRecvHandle;
 use log::debug;
-use state::app_data::{load_app_data, AppDataStore};
+use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use tauri::Manager;
 use tokio::sync::broadcast;
 use twitch::manager::TwitchManager;
@@ -47,6 +47,8 @@ fn run_inner() {
             let app_data = tauri::async_runtime::block_on(AppDataStore::load(app_data_file))
                 .expect("failed to load app data");
 
+            let runtime_app_data = RuntimeAppDataStore::default();
+
             let handle = app.handle().clone();
 
             let (twitch_manager, mut twitch_event_rx) =
@@ -54,6 +56,7 @@ fn run_inner() {
             let twitch_manager = Arc::new(twitch_manager);
 
             app.manage(app_data.clone());
+            app.manage(runtime_app_data.clone());
             app.manage(event_tx.clone());
             app.manage(twitch_manager.clone());
 
@@ -86,7 +89,15 @@ fn run_inner() {
             });
 
             _ = tauri::async_runtime::spawn(async move {
-                _ = http::server::start(client, event_recv, handle, twitch_manager, app_data).await;
+                _ = http::server::start(
+                    client,
+                    event_recv,
+                    handle,
+                    twitch_manager,
+                    app_data,
+                    runtime_app_data,
+                )
+                .await;
             });
 
             // TODO: Start server and block until a channel reports back that the server started?
