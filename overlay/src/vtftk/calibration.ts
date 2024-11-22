@@ -42,12 +42,38 @@ function setCalibrationPoint(x: number, y: number) {
   }
 }
 
-window.addEventListener("click", (event) => {
+let mouseDown = true;
+
+function onMouseDown(event: MouseEvent) {
   setCalibrationPoint(event.clientX, event.clientY);
-});
+  mouseDown = true;
+}
+
+function onMouseUp() {
+  mouseDown = false;
+}
+
+function onMouseMove(event: MouseEvent) {
+  if (mouseDown) setCalibrationPoint(event.clientX, event.clientY);
+}
+
+function subscribeCalibrate() {
+  if (calibrationEl) calibrationEl.hidden = false;
+  window.addEventListener("mousedown", onMouseDown);
+  window.addEventListener("mouseup", onMouseUp);
+  window.addEventListener("mousemove", onMouseMove);
+}
+
+function unsubscribeCalibrate() {
+  if (calibrationEl) calibrationEl.hidden = true;
+  window.removeEventListener("mousedown", onMouseDown);
+  window.removeEventListener("mouseup", onMouseUp);
+  window.removeEventListener("mousemove", onMouseMove);
+}
 
 async function resetCalibration(socket: VTubeStudioWebSocket) {
   currentStep = CalibrationStep.NotStarted;
+  unsubscribeCalibrate();
   await notifyProgressCalibration({ step: CalibrationStep.NotStarted });
   await resetModel(socket);
 }
@@ -90,6 +116,8 @@ export async function beginCalibrationStep(
   switch (step) {
     // Capture initial model position
     case CalibrationStep.Smallest:
+      subscribeCalibrate();
+
       const { modelID, modelPosition } = await requestCurrentModel(socket);
       modelId = modelID;
       initialModelPosition = modelPosition;
