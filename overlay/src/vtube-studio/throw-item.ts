@@ -1,9 +1,10 @@
-import { sleep } from "../async-utils";
+import { loadAudio, loadImage, sleep } from "../utils/async";
 import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
-import { percentRange, randomBool, randomRange } from "../math";
-import { AppData, MinMax, ModelData, ThrowDirection } from "../vtftk/config";
+import { percentRange, randomBool, randomRange } from "../utils/math";
+import { AppData, MinMax, ModelData, ThrowDirection } from "../vtftk/types";
 import { flinch } from "./flinch";
 import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
+import { VTubeStudioWebSocket } from "./socket";
 
 export type ThrowItemConfig = {
   imageConfig: ImageConfig;
@@ -53,12 +54,13 @@ function isRandomDirectionLeft(direction: ThrowDirection): boolean {
  * @returns Promise that completes when the item has been thrown and removed
  */
 export async function throwItem(
+  socket: VTubeStudioWebSocket,
   appData: AppData,
   config: ThrowItemConfig,
   image: HTMLImageElement,
   audio: HTMLAudioElement | null
 ) {
-  const { modelID, modelPosition } = await requestCurrentModel();
+  const { modelID, modelPosition } = await requestCurrentModel(socket);
 
   const modelData = appData.models[modelID];
 
@@ -132,7 +134,7 @@ export async function throwItem(
   await sleep(impactTimeout);
 
   // Handle point of impact
-  handleThrowableImpact(appData, config, audio, angle, leftSide);
+  handleThrowableImpact(socket, appData, config, audio, angle, leftSide);
 
   // Wait remaining duration before removing
   await sleep(throwables.duration / 2);
@@ -142,6 +144,7 @@ export async function throwItem(
 }
 
 async function handleThrowableImpact(
+  socket: VTubeStudioWebSocket,
   appData: AppData,
   config: ThrowItemConfig,
   audio: HTMLAudioElement | null,
@@ -160,7 +163,7 @@ async function handleThrowableImpact(
   }
 
   // Make the VTuber model flinch from the impact
-  flinch({
+  flinch(socket, {
     angle,
     eyeState: appData.model.eyes_on_hit,
     magnitude: config.imageConfig.weight,
@@ -306,7 +309,6 @@ function createMovementContainer(
 
   return elm;
 }
-
 /**
  * Loads the resources a throwable depends on (Image and optionally audio)
  *
@@ -333,23 +335,4 @@ export async function loadThrowableResources(
     audioResult.status === "fulfilled" ? audioResult.value : null;
 
   return { image, audio };
-}
-
-async function loadImage(src: string): Promise<HTMLImageElement> {
-  const image = new Image();
-  image.src = src;
-
-  return new Promise((resolve, reject) => {
-    image.onload = () => resolve(image);
-    image.onerror = (err) => reject(err);
-  });
-}
-
-async function loadAudio(src: string): Promise<HTMLAudioElement> {
-  const audio = new Audio(src);
-
-  return new Promise((resolve, reject) => {
-    audio.oncanplaythrough = () => resolve(audio);
-    audio.onerror = () => reject();
-  });
 }

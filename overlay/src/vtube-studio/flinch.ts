@@ -1,9 +1,10 @@
-import { EyesMode } from "../vtftk/config";
+import { EyesMode } from "../vtftk/types";
 import {
   injectParameterData,
   InjectParameterValue,
   ModelParameters,
 } from "./model";
+import { VTubeStudioWebSocket } from "./socket";
 
 type FlinchConfig = {
   leftSide: boolean;
@@ -17,7 +18,7 @@ type FlinchConfig = {
 let flinchWeight = 0;
 let flinchInterval: number | undefined;
 
-export function flinch(config: FlinchConfig) {
+export function flinch(socket: VTubeStudioWebSocket, config: FlinchConfig) {
   const parameterValues: InjectParameterValue[] = [];
 
   for (const param of config.modelParams.horizontal) {
@@ -41,17 +42,20 @@ export function flinch(config: FlinchConfig) {
 
   if (flinchInterval) clearInterval(flinchInterval);
 
-  injectParameterData({
+  injectParameterData(socket, {
     faceFound: false,
     mode: "add",
     parameterValues,
   });
 
   flinchWeight = 1;
-  flinchInterval = setInterval(flinchReturn, 1000.0 / 60.0, config);
+  flinchInterval = setInterval(flinchReturn, 1000.0 / 60.0, socket, config);
 }
 
-export function flinchReturn(config: FlinchConfig) {
+export function flinchReturn(
+  socket: VTubeStudioWebSocket,
+  config: FlinchConfig
+) {
   flinchWeight -= 1 / config.returnSpeed / 60.0;
   if (flinchWeight <= 0) flinchWeight = 0;
 
@@ -91,7 +95,7 @@ export function flinchReturn(config: FlinchConfig) {
     }
   }
 
-  injectParameterData({
+  injectParameterData(socket, {
     faceFound: false,
     mode: "add",
     parameterValues,

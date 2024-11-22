@@ -72,15 +72,34 @@ pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
 pub struct AppData {
     pub twitch: TwitchConfig,
     pub throwables: ThrowablesConfig,
     pub model: ModelConfig,
     pub items: ItemsConfig,
+    pub vtube_studio: VTubeStudioConfig,
     pub models: HashMap<ModelId, ModelData>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct VTubeStudioConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+impl Default for VTubeStudioConfig {
+    fn default() -> Self {
+        Self {
+            host: "localhost".to_string(),
+            port: 8001,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
 pub struct TwitchConfig {
     pub access_token: Option<String>,
 }
@@ -96,6 +115,7 @@ pub struct ModelData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ThrowablesConfig {
     /// Duration in milliseconds that a thrown object should spend
     /// being thrown
@@ -129,6 +149,7 @@ impl Default for ThrowablesConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ItemsConfig {
     /// Global volume for all sounds
     pub global_volume: f32,
@@ -166,6 +187,7 @@ pub struct MinMax<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ModelConfig {
     /// Time in seconds the model will take to return to its
     /// original position in milliseconds

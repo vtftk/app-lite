@@ -1,6 +1,6 @@
 import { InvalidMessageTypeError } from "./error";
-import { createVTubeMessage, VTubeMessage } from "./message";
-import { sendSocketMessage } from "./socket";
+import { createVTubeMessage } from "./message";
+import { VTubeStudioWebSocket } from "./socket";
 
 export type RequestCurrentModelData = {
   hasPhysicsFile: boolean;
@@ -26,9 +26,9 @@ export type ModelPosition = {
   size: number;
 };
 
-export async function requestCurrentModel() {
+export async function requestCurrentModel(socket: VTubeStudioWebSocket) {
   const request = createVTubeMessage("CurrentModelRequest", undefined);
-  const response = await sendSocketMessage(request);
+  const response = await socket.send(request);
 
   if (response.messageType !== "CurrentModelResponse") {
     throw new InvalidMessageTypeError(
@@ -58,9 +58,11 @@ export type InputParameterListData = {
   customParameters: [];
 };
 
-export async function requestInputParameterList(): Promise<InputParameterListData> {
+export async function requestInputParameterList(
+  socket: VTubeStudioWebSocket
+): Promise<InputParameterListData> {
   const request = createVTubeMessage("InputParameterListRequest", undefined);
-  const response = await sendSocketMessage(request);
+  const response = await socket.send(request);
 
   if (response.messageType !== "InputParameterListResponse") {
     throw new InvalidMessageTypeError(
@@ -81,10 +83,12 @@ type MoveModelData = {
   positionY?: number;
 };
 
-export async function requestMoveModel(data: MoveModelData) {
+export async function requestMoveModel(
+  socket: VTubeStudioWebSocket,
+  data: MoveModelData
+) {
   const request = createVTubeMessage("MoveModelRequest", data);
-  const response = await sendSocketMessage(request);
-  console.log("Move model response", response);
+  const response = await socket.send(request);
   return response.data;
 }
 
@@ -99,10 +103,12 @@ export type InjectParameterValue = {
   value: number;
 };
 
-export async function injectParameterData(data: InjectParameterData) {
+export async function injectParameterData(
+  socket: VTubeStudioWebSocket,
+  data: InjectParameterData
+) {
   const request = createVTubeMessage("InjectParameterDataRequest", data);
-  const response = await sendSocketMessage(request);
-  console.log("Inject param data response", response);
+  const response = await socket.send(request);
   return response.data;
 }
 

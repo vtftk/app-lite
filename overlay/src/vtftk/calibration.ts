@@ -8,7 +8,12 @@ import {
   CalibrationStep,
   CalibrationStepData,
 } from "./calibration-types";
-import { LARGEST_MODEL_SIZE, SMALLEST_MODEL_SIZE } from "../constants";
+import {
+  BACKEND_HTTP,
+  LARGEST_MODEL_SIZE,
+  SMALLEST_MODEL_SIZE,
+} from "../constants";
+import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 
 const calibrationEl = document.getElementById("calibration");
 
@@ -41,10 +46,10 @@ window.addEventListener("click", (event) => {
   setCalibrationPoint(event.clientX, event.clientY);
 });
 
-async function resetCalibration() {
+async function resetCalibration(socket: VTubeStudioWebSocket) {
   currentStep = CalibrationStep.NotStarted;
   await notifyProgressCalibration({ step: CalibrationStep.NotStarted });
-  await resetModel();
+  await resetModel(socket);
 }
 
 const STEPS = [
@@ -55,14 +60,17 @@ const STEPS = [
 ];
 
 export async function notifyProgressCalibration(body: CalibrationStepData) {
-  await fetch("http://localhost:58371/calibration", {
+  await fetch(new URL("/calibration", BACKEND_HTTP), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
 }
 
-export async function beginCalibrationStep(step: CalibrationStep) {
+export async function beginCalibrationStep(
+  socket: VTubeStudioWebSocket,
+  step: CalibrationStep
+) {
   const currentStepIndex = STEPS.indexOf(currentStep);
   const stepIndex = STEPS.indexOf(step);
 
@@ -73,7 +81,7 @@ export async function beginCalibrationStep(step: CalibrationStep) {
     stepIndex !== currentStepIndex + 1 ||
     step === CalibrationStep.NotStarted
   ) {
-    await resetCalibration();
+    await resetCalibration(socket);
     return;
   }
 
@@ -82,7 +90,7 @@ export async function beginCalibrationStep(step: CalibrationStep) {
   switch (step) {
     // Capture initial model position
     case CalibrationStep.Smallest:
-      const { modelID, modelPosition } = await requestCurrentModel();
+      const { modelID, modelPosition } = await requestCurrentModel(socket);
       modelId = modelID;
       initialModelPosition = modelPosition;
       calibrationPoint = {
@@ -90,41 +98,41 @@ export async function beginCalibrationStep(step: CalibrationStep) {
         y: window.innerHeight / 2,
       };
 
-      await shrinkModel();
+      await shrinkModel(socket);
       await notifyProgressCalibration({ step: CalibrationStep.Smallest });
       break;
 
     // Store smallest position and grow model
     case CalibrationStep.Largest:
-      smallestPoint = await getModelGuidePosition();
+      smallestPoint = await getModelGuidePosition(socket);
       await notifyProgressCalibration({ step: CalibrationStep.Largest });
-      await growModel();
+      await growModel(socket);
       break;
 
     // Store largest position, report calibration results and reset model
     case CalibrationStep.Complete:
       if (smallestPoint === undefined || modelId === undefined) {
-        await resetCalibration();
+        await resetCalibration(socket);
         console.error("missing smallest point");
         return;
       }
 
-      largestPoint = await getModelGuidePosition();
+      largestPoint = await getModelGuidePosition(socket);
       await notifyProgressCalibration({
         step: CalibrationStep.Complete,
         model_id: modelId,
         smallest_point: smallestPoint,
         largest_point: largestPoint,
       });
-      await resetModel();
+      await resetModel(socket);
       break;
     default:
       break;
   }
 }
 
-function shrinkModel() {
-  return requestMoveModel({
+function shrinkModel(socket: VTubeStudioWebSocket) {
+  return requestMoveModel(socket, {
     timeInSeconds: 0.5,
     valuesAreRelativeToModel: false,
     rotation: 0,
@@ -132,8 +140,8 @@ function shrinkModel() {
   });
 }
 
-function growModel() {
-  return requestMoveModel({
+function growModel(socket: VTubeStudioWebSocket) {
+  return requestMoveModel(socket, {
     timeInSeconds: 0.5,
     valuesAreRelativeToModel: false,
     rotation: 0,
@@ -141,10 +149,10 @@ function growModel() {
   });
 }
 
-function resetModel() {
+function resetModel(socket: VTubeStudioWebSocket) {
   if (!initialModelPosition) return Promise.resolve({});
 
-  return requestMoveModel({
+  return requestMoveModel(socket, {
     timeInSeconds: 0.5,
     valuesAreRelativeToModel: false,
     rotation: initialModelPosition.rotation,
@@ -158,12 +166,14 @@ function resetModel() {
  * Obtains the current model position relative
  * to the guide
  */
-async function getModelGuidePosition(): Promise<CalibrationPoint> {
+async function getModelGuidePosition(
+  socket: VTubeStudioWebSocket
+): Promise<CalibrationPoint> {
   if (calibrationPoint === undefined)
     throw new Error("calibration not currently active");
 
   // Calibration, get initial position
-  const { modelPosition } = await requestCurrentModel();
+  const { modelPosition } = await requestCurrentModel(socket);
 
   return {
     x:

@@ -7,6 +7,7 @@ export type AppData = {
   throwables: ThrowablesConfig;
   items: ItemsConfig;
   model: ModelConfig;
+  vtube_studio: VTubeStudioConfig;
   models: Record<ModelId, ModelData>;
 };
 
@@ -46,3 +47,8 @@ export enum EyesMode {
   Opened = "Opened",
   Closed = "Closed",
 }
+
+export type VTubeStudioConfig = {
+  host: string;
+  port: number;
+};

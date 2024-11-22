@@ -1,17 +1,18 @@
+import { BACKEND_EVENTS } from "../constants";
+import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 import { beginCalibrationStep } from "./calibration";
-import { CalibrationStepData } from "./calibration-types";
 
-function createEventSource() {
-  const eventSource = new EventSource("http://localhost:58371/events");
+export function createEventSource(vtSocket: VTubeStudioWebSocket) {
+  const eventSource = new EventSource(BACKEND_EVENTS);
   eventSource.onopen = () => {
-    console.log("listening to events");
+    console.debug("listening to events");
   };
   eventSource.onmessage = (msg) => {
     console.log(msg);
     const event = JSON.parse(msg.data);
 
     if (event.type === "SetCalibrationStep") {
-      beginCalibrationStep(event.step);
+      beginCalibrationStep(vtSocket, event.step);
     }
   };
 
@@ -19,5 +20,3 @@ function createEventSource() {
     console.error(event);
   };
 }
-
-createEventSource();

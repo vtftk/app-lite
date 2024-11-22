@@ -4,6 +4,7 @@
     "Keepalive",
     "reqwest",
     "tauri",
-    "tungstenite"
+    "tungstenite",
+    "vtube"
   ]
 }
