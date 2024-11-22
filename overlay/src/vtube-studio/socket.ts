@@ -1,7 +1,17 @@
 import { attemptAuthorization } from "./auth";
 import { APIError } from "./error";
 import { VTubeMessage } from "./message";
-import { requestCurrentModel } from "./model";
+import { requestCurrentModel, requestInputParameterList } from "./model";
+import {
+  createModelParameters,
+  FaceConfig,
+  ImageConfig,
+  loadThrowable,
+  ModelConfig,
+  ThrowConfig,
+  ThrowDirection,
+  throwItem,
+} from "./throw-item";
 
 type PromiseExecutor = {
   resolve: (value: VTubeMessage<any>) => void;
@@ -45,6 +55,58 @@ function connect() {
         console.debug("Authorization complete");
 
         await requestCurrentModel();
+
+        // Only needs to be done on initial load, can be stored until next refresh
+        const inputParameters = await requestInputParameterList();
+        const modelParameters = createModelParameters(
+          inputParameters.defaultParameters
+        );
+
+        const imageConfig: ImageConfig = {
+          pixel: false,
+          scale: 1,
+          src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
+          weight: 1,
+        };
+
+        const throwConfig: ThrowConfig = {
+          direction: ThrowDirection.Random,
+          throwAngle: { min: -360, max: 360 },
+          itemScale: { min: 0.2, max: 1.2 },
+          spinSpeed: { min: 5, max: 15 },
+          duration: 5000,
+          delay: 0,
+        };
+
+        // TODO: Should come from calibration,
+        const faceConfig: FaceConfig = {
+          x: { min: -0.5833332777023315, max: -0.5833332777023315 },
+          y: { min: -0.8053247107399835, max: -0.8053247107399835 },
+        };
+
+        const modelConfig: ModelConfig = {
+          openEyes: false,
+          closeEyes: false,
+        };
+
+        const { image, audio } = await loadThrowable(imageConfig, null);
+        if (!image) {
+          console.error("FAILED TO LOAD IMAGE");
+          return;
+        }
+        for (let i = 0; i < 10; i += 1) {
+          await throwItem(
+            {
+              imageConfig,
+              throwConfig,
+              soundConfig: null,
+              faceConfig,
+              modelConfig,
+            },
+            image,
+            audio
+          );
+        }
       } catch (e) {
         console.error("failed to authorize", e);
       }

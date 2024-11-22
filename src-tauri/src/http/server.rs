@@ -19,9 +19,10 @@ use futures_util::stream::Stream;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
+use tower_http::cors::CorsLayer;
 use twitch_api::{
     twitch_oauth2::{AccessToken, UserToken},
     HelixClient,
@@ -38,10 +39,12 @@ pub async fn start(
         .route("/oauth", get(handle_oauth))
         .route("/oauth/complete", post(handle_oauth_complete))
         .route("/events", get(handle_sse))
+        .route("/calibration", post(handle_calibration_progress))
         .layer(Extension(helix_client))
         .layer(Extension(event_handles))
         .layer(Extension(app_handle))
-        .layer(Extension(twitch_manager));
+        .layer(Extension(twitch_manager))
+        .layer(CorsLayer::very_permissive());
 
     let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, LOCAL_SERVER_PORT));
 
@@ -87,6 +90,53 @@ pub async fn handle_oauth_complete(
 
     Ok(Json(()))
 }
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "step")]
+pub struct CalibrationPoint {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "step")]
+pub enum CalibrationStepData {
+    NotStarted,
+    Smallest,
+    Largest,
+    Complete {
+        smallest_point: CalibrationPoint,
+        largest_point: CalibrationPoint,
+    },
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub enum CalibrationStep {
+    NotStarted,
+    Smallest,
+    Largest,
+    Complete,
+}
+
+pub async fn handle_calibration_progress(
+    Extension(app_handle): Extension<AppHandle>,
+    Json(req): Json<CalibrationStepData>,
+) -> HttpResult<()> {
+    match &req {
+        CalibrationStepData::NotStarted => {}
+        CalibrationStepData::Smallest => todo!(),
+        CalibrationStepData::Largest => todo!(),
+        CalibrationStepData::Complete {
+            smallest_point,
+            largest_point,
+        } => todo!(),
+    }
+
+    app_handle
+        .emit("calibration_state", req)
+        .context("failed to inform app")?;
+
+    Ok(Json(()))
+}
 
 pub struct EventRecvHandle(pub broadcast::Receiver<EventMessage>);
 
@@ -97,7 +147,12 @@ impl Clone for EventRecvHandle {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum EventMessage {}
+pub enum EventMessage {
+    // Tells any connected browser apps to refresh
+    Refresh,
+    // Sets the current calibration step
+    SetCalibrationStep { step: CalibrationStep },
+}
 
 async fn handle_sse(
     Extension(event_handle): Extension<EventRecvHandle>,

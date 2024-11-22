@@ -1,5 +1,9 @@
-export function rangedRandom(min: number, max: number) {
+export function randomRange(min: number, max: number) {
   return Math.random() * (max - min) + min;
+}
+
+export function percentRange(value: number, min: number, max: number): number {
+  return value * (max - min) + min;
 }
 
 export function arrayRandom<T>(array: T[]): T {

@@ -4,10 +4,7 @@ use http::server::EventRecvHandle;
 use tauri::Manager;
 use tokio::sync::broadcast;
 use twitch::manager::TwitchManager;
-use twitch_api::{
-    eventsub::{event::websocket, WebsocketTransport},
-    HelixClient,
-};
+use twitch_api::HelixClient;
 
 mod commands;
 mod constants;
@@ -28,7 +25,7 @@ fn run_inner() {
     // Create the HelixClient, which is used to make requests to the Twitch API
     let client: HelixClient<reqwest::Client> = HelixClient::default();
 
-    let (tx, rx) = broadcast::channel(10);
+    let (event_tx, rx) = broadcast::channel(10);
     let event_recv = EventRecvHandle(rx);
 
     tauri::Builder::default()
@@ -40,12 +37,14 @@ fn run_inner() {
             move |app| {
                 let handle = app.handle().clone();
 
+                app.manage(event_tx.clone());
+
                 let (twitch_manager, mut twitch_event_rx) =
                     TwitchManager::new(client.clone(), handle.clone());
                 let twitch_manager = Arc::new(twitch_manager);
 
                 _ = tauri::async_runtime::spawn(async move {
-                    while let Ok(event) = twitch_event_rx.recv().await {}
+                    while let Ok(_event) = twitch_event_rx.recv().await {}
                 });
 
                 _ = tauri::async_runtime::spawn(async move {
@@ -62,6 +61,7 @@ fn run_inner() {
             commands::auth::get_twitch_oauth_uri,
             commands::auth::is_authenticated,
             commands::auth::open_twitch_oauth_uri,
+            commands::calibration::set_calibration_step,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
