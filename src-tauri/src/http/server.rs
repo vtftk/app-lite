@@ -61,7 +61,11 @@ pub async fn start(
 ///
 /// Obtain the current app data configuration
 pub async fn handle_app_data(Extension(app_data): Extension<AppDataStore>) -> Json<AppData> {
-    let data = app_data.read().await.clone();
+    let mut data = app_data.read().await.clone();
+
+    // Hide twitch access token from frontend
+    data.twitch.access_token = None;
+
     Json(data)
 }
 
@@ -100,7 +104,7 @@ pub async fn handle_oauth_complete(
     .await
     .context("failed to create user token")?;
 
-    let access_token = token.access_token.to_string();
+    let access_token = token.access_token.as_str().to_string();
     twitch_manager.set_authenticated(token).await;
 
     app_data
