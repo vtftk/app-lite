@@ -49,12 +49,13 @@ fn run_inner() {
 
             let handle = app.handle().clone();
 
-            app.manage(app_data.clone());
-            app.manage(event_tx.clone());
-
             let (twitch_manager, mut twitch_event_rx) =
                 TwitchManager::new(client.clone(), handle.clone());
             let twitch_manager = Arc::new(twitch_manager);
+
+            app.manage(app_data.clone());
+            app.manage(event_tx.clone());
+            app.manage(twitch_manager.clone());
 
             _ = tauri::async_runtime::spawn({
                 let twitch_manager = twitch_manager.clone();

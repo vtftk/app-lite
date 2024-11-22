@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { twitchAuthState } from "$lib/globalStores";
   import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
 
   async function getTwitchURL(): Promise<string> {
     return await invoke("get_twitch_oauth_uri");
@@ -9,6 +11,11 @@
     const success = await invoke<boolean>("open_twitch_oauth_uri");
     // TODO: Handle error
   }
+
+  onMount(async () => {
+    $twitchAuthState = await invoke<boolean>("is_authenticated");
+    console.log($twitchAuthState);
+  });
 </script>
 
 <main>
