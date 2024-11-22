@@ -28,14 +28,14 @@
     Done
   </button>
 {:else if $calibrationStep == CalibrationStep.Largest}
-  <h1>Smallest size</h1>
+  <h1>Largest size</h1>
   <p>
     Your model has been grown to its largest, position the guide on your models
     head then press done. Click on the overlay to set the guide position. You
     can press "Interact" in OBS
   </p>
   <button onclick={() => setCalibrationStep(CalibrationStep.Complete)}>
-    Start
+    Done
   </button>
 {:else if $calibrationStep == CalibrationStep.Complete}
   <h1>Complete</h1>

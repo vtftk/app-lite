@@ -1,13 +1,88 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{
+    collections::HashMap,
+    fmt::Debug,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
+use anyhow::Context;
+use log::debug;
 use serde::{Deserialize, Serialize};
+use tokio::sync::{RwLock, RwLockReadGuard};
+
+#[derive(Clone)]
+pub struct AppDataStore {
+    inner: Arc<AppDataStoreInner>,
+}
+
+pub struct AppDataStoreInner {
+    /// Current app data
+    data: RwLock<AppData>,
+
+    /// File path the app data is stored at
+    path: PathBuf,
+}
+
+impl AppDataStore {
+    pub async fn load(path: PathBuf) -> anyhow::Result<Self> {
+        let data = if !path.exists() {
+            AppData::default()
+        } else {
+            load_app_data(&path).await?
+        };
+        let inner = RwLock::new(data);
+        Ok(Self {
+            inner: Arc::new(AppDataStoreInner { data: inner, path }),
+        })
+    }
+
+    /// Obtain a read guard
+    pub async fn read(&self) -> RwLockReadGuard<'_, AppData> {
+        self.inner.data.read().await
+    }
+
+    pub async fn write<F>(&self, action: F) -> anyhow::Result<()>
+    where
+        F: FnOnce(&mut AppData),
+    {
+        let data = &mut *self.inner.data.write().await;
+        action(data);
+
+        debug!("writing app data");
+        save_app_data(&self.inner.path, data).await
+    }
+}
+
+pub async fn load_app_data(path: &Path) -> anyhow::Result<AppData> {
+    let data = tokio::fs::read(path).await.context("read file")?;
+    let data = serde_json::from_slice(&data).context("parse file")?;
+    Ok(data)
+}
+
+pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()> {
+    let parent = path.parent().expect("parent should exist");
+
+    if !parent.exists() {
+        tokio::fs::create_dir_all(parent).await?
+    }
+
+    let data = serde_json::to_string(app_data)?;
+    tokio::fs::write(path, &data).await.context("write file")?;
+    Ok(())
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppData {
+    pub twitch: TwitchConfig,
     pub throwables: ThrowablesConfig,
     pub model: ModelConfig,
     pub items: ItemsConfig,
     pub models: HashMap<ModelId, ModelData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct TwitchConfig {
+    pub access_token: Option<String>,
 }
 
 pub type ModelId = String;

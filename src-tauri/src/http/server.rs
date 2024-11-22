@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use super::error::HttpResult;
 use crate::constants::LOCAL_SERVER_PORT;
+use crate::state::app_data::{AppData, AppDataStore, MinMax, ModelData, ModelId};
 use crate::twitch::manager::TwitchManager;
 use anyhow::Context;
 use axum::response::sse::{Event, KeepAlive, Sse};
@@ -34,6 +35,7 @@ pub async fn start(
     event_handles: EventRecvHandle,
     app_handle: AppHandle,
     twitch_manager: Arc<TwitchManager>,
+    app_data: AppDataStore,
 ) {
     // build our application with a single route
     let app = Router::new()
@@ -41,16 +43,26 @@ pub async fn start(
         .route("/oauth/complete", post(handle_oauth_complete))
         .route("/events", get(handle_sse))
         .route("/calibration", post(handle_calibration_progress))
+        .route("/app-data", get(handle_app_data))
         .layer(Extension(helix_client))
         .layer(Extension(event_handles))
         .layer(Extension(app_handle))
         .layer(Extension(twitch_manager))
+        .layer(Extension(app_data))
         .layer(CorsLayer::very_permissive());
 
     let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, LOCAL_SERVER_PORT));
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+/// GET /app-data
+///
+/// Obtain the current app data configuration
+pub async fn handle_app_data(Extension(app_data): Extension<AppDataStore>) -> Json<AppData> {
+    let data = app_data.read().await.clone();
+    Json(data)
 }
 
 /// Embedded oauth response page for handling sending the fragment
@@ -74,6 +86,7 @@ pub struct OAuthComplete {
 /// POST /oauth/complete
 ///
 pub async fn handle_oauth_complete(
+    Extension(app_data): Extension<AppDataStore>,
     Extension(twitch_manager): Extension<Arc<TwitchManager>>,
     Extension(helix_client): Extension<HelixClient<'static, reqwest::Client>>,
     Json(req): Json<OAuthComplete>,
@@ -87,7 +100,15 @@ pub async fn handle_oauth_complete(
     .await
     .context("failed to create user token")?;
 
+    let access_token = token.access_token.to_string();
     twitch_manager.set_authenticated(token).await;
+
+    app_data
+        .write(|app_data| {
+            app_data.twitch.access_token = Some(access_token);
+        })
+        .await
+        .context("saving app data")?;
 
     Ok(Json(()))
 }
@@ -105,6 +126,7 @@ pub enum CalibrationStepData {
     Smallest,
     Largest,
     Complete {
+        model_id: ModelId,
         smallest_point: CalibrationPoint,
         largest_point: CalibrationPoint,
     },
@@ -122,6 +144,7 @@ pub enum CalibrationStep {
 pub struct CalibrationProgressRes {}
 
 pub async fn handle_calibration_progress(
+    Extension(app_data): Extension<AppDataStore>,
     Extension(app_handle): Extension<AppHandle>,
     Json(req): Json<CalibrationStepData>,
 ) -> HttpResult<CalibrationProgressRes> {
@@ -130,13 +153,33 @@ pub async fn handle_calibration_progress(
         CalibrationStepData::Smallest => {}
         CalibrationStepData::Largest => {}
         CalibrationStepData::Complete {
+            model_id,
             smallest_point,
             largest_point,
         } => {
             info!(
                 "COMPLETED CALIBRATION: {:?} {:?}",
                 smallest_point, largest_point
-            )
+            );
+
+            app_data
+                .write(move |app_data| {
+                    app_data.models.insert(
+                        model_id.to_string(),
+                        ModelData {
+                            x: MinMax {
+                                min: smallest_point.x,
+                                max: largest_point.x,
+                            },
+                            y: MinMax {
+                                min: smallest_point.y,
+                                max: largest_point.y,
+                            },
+                        },
+                    );
+                })
+                .await
+                .context("saving app data")?;
         }
     }
 

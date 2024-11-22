@@ -15,6 +15,7 @@ const calibrationEl = document.getElementById("calibration");
 // Initial model position before calibration, to allow restoring back to
 // original position after calibrating
 let initialModelPosition: ModelPosition | undefined;
+let modelId: string | undefined;
 
 // Currently selected calibration point on the screen
 let calibrationPoint: CalibrationPoint | undefined;
@@ -81,7 +82,8 @@ export async function beginCalibrationStep(step: CalibrationStep) {
   switch (step) {
     // Capture initial model position
     case CalibrationStep.Smallest:
-      const { modelPosition } = await requestCurrentModel();
+      const { modelID, modelPosition } = await requestCurrentModel();
+      modelId = modelID;
       initialModelPosition = modelPosition;
       calibrationPoint = {
         x: window.innerWidth / 2,
@@ -101,7 +103,7 @@ export async function beginCalibrationStep(step: CalibrationStep) {
 
     // Store largest position, report calibration results and reset model
     case CalibrationStep.Complete:
-      if (smallestPoint === undefined) {
+      if (smallestPoint === undefined || modelId === undefined) {
         await resetCalibration();
         console.error("missing smallest point");
         return;
@@ -110,6 +112,7 @@ export async function beginCalibrationStep(step: CalibrationStep) {
       largestPoint = await getModelGuidePosition();
       await notifyProgressCalibration({
         step: CalibrationStep.Complete,
+        model_id: modelId,
         smallest_point: smallestPoint,
         largest_point: largestPoint,
       });
