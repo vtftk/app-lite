@@ -1,3 +1,4 @@
+import { EyesMode } from "../vtftk/config";
 import {
   injectParameterData,
   InjectParameterValue,
@@ -10,7 +11,7 @@ type FlinchConfig = {
   magnitude: number;
   modelParams: ModelParameters;
   returnSpeed: number;
-  eyeState: number;
+  eyeState: EyesMode;
 };
 
 let flinchWeight = 0;
@@ -74,14 +75,14 @@ export function flinchReturn(config: FlinchConfig) {
     });
   }
 
-  if (config.eyeState === 1 || config.eyeState === 2) {
+  if (config.eyeState !== EyesMode.Unchanged) {
     for (const param of config.modelParams.eyes) {
       let value =
         (config.leftSide ? param.max : param.min) *
         config.magnitude *
         flinchWeight;
 
-      if (config.eyeState === 1) value = -value;
+      if (config.eyeState === EyesMode.Closed) value = -value;
 
       parameterValues.push({
         id: param.name,

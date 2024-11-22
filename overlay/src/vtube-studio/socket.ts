@@ -1,21 +1,13 @@
+import { AppData, EyesMode, ThrowDirection } from "../vtftk/config";
 import { attemptAuthorization } from "./auth";
 import { APIError } from "./error";
-import { flinch } from "./flinch";
 import { VTubeMessage } from "./message";
 import {
   createModelParameters,
   requestCurrentModel,
   requestInputParameterList,
 } from "./model";
-import {
-  FaceConfig,
-  ImageConfig,
-  loadThrowable,
-  ModelConfig,
-  ThrowConfig,
-  ThrowDirection,
-  throwItem,
-} from "./throw-item";
+import { ImageConfig, loadThrowableResources, throwItem } from "./throw-item";
 
 type PromiseExecutor = {
   resolve: (value: VTubeMessage<any>) => void;
@@ -66,6 +58,30 @@ function connect() {
           inputParameters.defaultParameters
         );
 
+        const appData: AppData = {
+          throwables: {
+            duration: 5000,
+            spin_speed: { min: 5, max: 15 },
+            throw_angle: { min: -360, max: 360 },
+            direction: ThrowDirection.Random,
+            impact_delay: 100,
+          },
+          model: {
+            eyes_on_hit: EyesMode.Unchanged,
+            model_return_time: 300,
+          },
+          items: {
+            global_volume: 0.5,
+            item_scale: { min: 0.25, max: 0.3 },
+          },
+          models: {
+            "9ec22117d5824507942c59851badbf99": {
+              x: { min: -0.5833332777023315, max: -0.5833332777023315 },
+              y: { min: -0.8053247107399835, max: -0.8053247107399835 },
+            },
+          },
+        };
+
         const imageConfig: ImageConfig = {
           pixel: false,
           scale: 1,
@@ -73,49 +89,34 @@ function connect() {
           weight: 1,
         };
 
-        const throwConfig: ThrowConfig = {
-          direction: ThrowDirection.Random,
-          throwAngle: { min: -360, max: 360 },
-          itemScale: { min: 0.2, max: 1.2 },
-          spinSpeed: { min: 5, max: 15 },
-          duration: 5000,
-          delay: 0,
-        };
-
-        // TODO: Should come from calibration,
-        const faceConfig: FaceConfig = {
-          x: { min: -0.5833332777023315, max: -0.5833332777023315 },
-          y: { min: -0.8053247107399835, max: -0.8053247107399835 },
-        };
-
-        const modelConfig: ModelConfig = {
-          openEyes: false,
-          closeEyes: false,
-        };
-
-        const { image, audio } = await loadThrowable(imageConfig, null);
+        const { image, audio } = await loadThrowableResources(
+          imageConfig,
+          null
+        );
         if (!image) {
-          console.error("FAILED TO LOAD IMAGE");
           return;
         }
-        for (let i = 0; i < 1; i += 1) {
-          await throwItem(
-            {
-              imageConfig,
-              throwConfig,
-              soundConfig: null,
-              faceConfig,
-              modelConfig,
-              modelParameters,
-            },
-            image,
-            audio
+
+        let promises = [];
+
+        for (let i = 0; i < 11; i += 1) {
+          promises.push(
+            throwItem(
+              appData,
+              {
+                imageConfig,
+                soundConfig: null,
+                modelParameters,
+              },
+              image,
+              audio
+            )
           );
         }
       } catch (e) {
         console.error("failed to authorize", e);
       }
-    }, 100);
+    }, 1);
   };
 
   socket.onerror = (event) => {

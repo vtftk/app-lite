@@ -8,6 +8,7 @@ use twitch_api::HelixClient;
 
 mod commands;
 mod constants;
+mod data;
 mod http;
 mod state;
 mod twitch;

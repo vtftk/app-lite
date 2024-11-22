@@ -1,4 +1,3 @@
-import { event } from "@tauri-apps/api";
 import {
   ModelPosition,
   requestCurrentModel,
@@ -9,6 +8,7 @@ import {
   CalibrationStep,
   CalibrationStepData,
 } from "./calibration-types";
+import { LARGEST_MODEL_SIZE, SMALLEST_MODEL_SIZE } from "../constants";
 
 const calibrationEl = document.getElementById("calibration");
 
@@ -21,7 +21,6 @@ let calibrationPoint: CalibrationPoint | undefined;
 
 let currentStep: CalibrationStep = CalibrationStep.NotStarted;
 
-let defaultPoint: CalibrationPoint | undefined;
 let smallestPoint: CalibrationPoint | undefined;
 let largestPoint: CalibrationPoint | undefined;
 
@@ -126,7 +125,7 @@ function shrinkModel() {
     timeInSeconds: 0.5,
     valuesAreRelativeToModel: false,
     rotation: 0,
-    size: -100,
+    size: SMALLEST_MODEL_SIZE,
   });
 }
 
@@ -135,7 +134,7 @@ function growModel() {
     timeInSeconds: 0.5,
     valuesAreRelativeToModel: false,
     rotation: 0,
-    size: 100,
+    size: LARGEST_MODEL_SIZE,
   });
 }
 

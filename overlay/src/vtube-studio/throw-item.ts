@@ -1,26 +1,15 @@
+import { sleep } from "../async-utils";
+import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
 import { percentRange, randomBool, randomRange } from "../math";
+import { AppData, MinMax, ModelData, ThrowDirection } from "../vtftk/config";
 import { flinch } from "./flinch";
-import {
-  InputParameter,
-  ModelParameters,
-  ModelPosition,
-  requestCurrentModel,
-} from "./model";
+import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
 
 export type ThrowItemConfig = {
   imageConfig: ImageConfig;
-  throwConfig: ThrowConfig;
   soundConfig: SoundConfig | null;
-  faceConfig: FaceConfig;
-  modelConfig: ModelConfig;
   modelParameters: ModelParameters;
 };
-
-export enum ThrowDirection {
-  Random = "Random",
-  LeftOnly = "Left Only",
-  RightOnly = "Right Only",
-}
 
 export type ImageConfig = {
   // Image being thrown
@@ -33,13 +22,6 @@ export type ImageConfig = {
   pixel: boolean;
 };
 
-export type FaceConfig = {
-  /// Minimum and maximum x position of the model face
-  x: MinMax;
-  /// Minimum and maximum y position of the model face
-  y: MinMax;
-};
-
 export type SoundConfig = {
   // URL of the sound to play
   src: string;
@@ -48,38 +30,10 @@ export type SoundConfig = {
   volume: number;
 };
 
-export type ModelConfig = {
-  // Whether to close model eyes when hit
-  closeEyes: boolean;
-  // Whether to open model eyes when hit
-  openEyes: boolean;
-};
-
-export type TimingConfig = {};
-
-type MinMax = {
-  min: number;
-  max: number;
-};
-
-export type ThrowConfig = {
-  // Direction thrown from
-  direction: ThrowDirection;
-  throwAngle: MinMax;
-  itemScale: MinMax;
-  spinSpeed: MinMax;
-
-  // Duration of the whole throw animation
-  duration: number;
-
-  // Delay before the item is thrown
-  delay: number;
-};
-
 function isRandomDirectionLeft(direction: ThrowDirection): boolean {
   switch (direction) {
     case ThrowDirection.Random:
-      return Math.random() < 0.5;
+      return randomBool();
     case ThrowDirection.LeftOnly:
       return true;
     case ThrowDirection.RightOnly:
@@ -89,56 +43,56 @@ function isRandomDirectionLeft(direction: ThrowDirection): boolean {
   }
 }
 
+/**
+ * Throws an item
+ *
+ * @param appData App data
+ * @param config Configuration for the thrown item
+ * @param image Preloaded image for the item
+ * @param audio Preloaded audio for the item
+ * @returns Promise that completes when the item has been thrown and removed
+ */
 export async function throwItem(
+  appData: AppData,
   config: ThrowItemConfig,
   image: HTMLImageElement,
   audio: HTMLAudioElement | null
 ) {
-  const { modelPosition } = await requestCurrentModel();
+  const { modelID, modelPosition } = await requestCurrentModel();
+
+  const modelData = appData.models[modelID];
+
+  // Model is not yet calibrated
+  if (modelData === undefined) return;
 
   // Model is not available
   if (!modelPosition) return;
 
-  const {
-    imageConfig,
-    faceConfig,
-    throwConfig,
-    modelConfig,
-    soundConfig,
-    modelParameters,
-  } = config;
+  const { throwables, items } = appData;
+  const { imageConfig } = config;
 
-  const modelScale = (modelPosition.size + 100) / 200;
+  // Determine scale of the model relative to the calibrated minimum and maximum sizes
+  const modelScale =
+    (modelPosition.size + LARGEST_MODEL_SIZE) / TOTAL_MODEL_SIZE_RANGE;
 
-  const offsetX = percentRange(modelScale, faceConfig.x.min, faceConfig.x.max);
-  const offsetY = percentRange(modelScale, faceConfig.y.min, faceConfig.y.max);
+  const leftSide: boolean = isRandomDirectionLeft(throwables.direction);
 
-  console.log(offsetX);
+  let angle = randomRange(
+    throwables.throw_angle.min,
+    throwables.throw_angle.max
+  );
 
-  const xPos = (modelPosition.positionX - offsetX + 1) / 2;
-  const yPos = 1 - (modelPosition.positionY - offsetY + 1) / 2;
+  // Flip the angle when coming from the right side
+  if (!leftSide) angle = -angle;
 
-  const leftSide: boolean = isRandomDirectionLeft(throwConfig.direction);
+  const itemScale = percentRange(
+    modelScale,
+    items.item_scale.min,
+    items.item_scale.max
+  );
 
-  // Multiplier on the x axis
-  const xMultiplier = leftSide ? 1 : -1;
-
-  const angle =
-    randomRange(throwConfig.throwAngle.min, throwConfig.throwAngle.max) *
-    xMultiplier;
-
-  const sizeScale =
-    throwConfig.itemScale.min +
-    modelScale * (throwConfig.itemScale.max - throwConfig.itemScale.min);
-
-  const eyeState = modelConfig.closeEyes ? 1 : modelConfig.openEyes ? 2 : 0;
-
-  const randScale = (modelPosition.size + 100) / 200;
-  const randH = (Math.random() * 100 - 50) * randScale;
-  const randV = (Math.random() * 100 - 50) * randScale;
-
-  const scaledImageWidth = image.width * imageConfig.scale * sizeScale;
-  const scaledImageHeight = image.height * imageConfig.scale * sizeScale;
+  const scaledImageWidth = image.width * imageConfig.scale * itemScale;
+  const scaledImageHeight = image.height * imageConfig.scale * itemScale;
 
   const thrown = createThrownImage(
     imageConfig,
@@ -146,22 +100,21 @@ export async function throwItem(
     scaledImageWidth,
     scaledImageHeight,
     angle,
-    throwConfig.spinSpeed
+    throwables.spin_speed
   );
 
   const movement = createMovementContainer(
     leftSide,
-    throwConfig.duration,
-    throwConfig.delay
+    throwables.duration,
+    throwables.impact_delay
   );
 
   const pivot = createPivotContainer(
     scaledImageWidth,
     scaledImageHeight,
-    xPos,
-    yPos,
-    randH,
-    randV,
+    modelPosition,
+    modelData,
+    modelScale,
     angle
   );
 
@@ -172,23 +125,51 @@ export async function throwItem(
   root.appendChild(pivot);
   document.body.appendChild(root);
 
-  console.log("THROW");
+  // Impact is encountered half way through the animation
+  const impactTimeout = throwables.duration / 2 + throwables.impact_delay;
 
-  setTimeout(() => {
-    flinch({
-      angle,
-      eyeState,
-      magnitude: imageConfig.weight,
-      modelParams: modelParameters,
-      leftSide,
-      returnSpeed: 0.3,
-    });
-  }, throwConfig.duration / 2);
+  // Wait for the impact to occur
+  await sleep(impactTimeout);
+
+  // Handle point of impact
+  handleThrowableImpact(appData, config, audio, angle, leftSide);
+
+  // Wait remaining duration before removing
+  await sleep(throwables.duration / 2);
 
   // Remove after complete
-  setTimeout(function () {
-    document.body.removeChild(root);
-  }, throwConfig.duration + throwConfig.delay);
+  document.body.removeChild(root);
+}
+
+async function handleThrowableImpact(
+  appData: AppData,
+  config: ThrowItemConfig,
+  audio: HTMLAudioElement | null,
+  angle: number,
+  leftSide: boolean
+) {
+  // Play the impact sound
+  if (audio !== null && config.soundConfig) {
+    try {
+      audio.volume = appData.items.global_volume * config.soundConfig.volume;
+
+      audio.play();
+    } catch (err) {
+      console.error("failed to play audio", err);
+    }
+  }
+
+  // Make the VTuber model flinch from the impact
+  flinch({
+    angle,
+    eyeState: appData.model.eyes_on_hit,
+    magnitude: config.imageConfig.weight,
+    modelParams: config.modelParameters,
+    leftSide,
+    returnSpeed: 0.3,
+  });
+
+  // TODO: IMPACT DECAL
 }
 
 function createRootContainer(modelPosition: ModelPosition) {
@@ -207,9 +188,22 @@ function createRootContainer(modelPosition: ModelPosition) {
   return elm;
 }
 
+/**
+ * Creates a throwable image element, applies rotation and other
+ * image styling
+ *
+ * @param config Configuration for the image
+ * @param image The underlying image element itself
+ * @param scaledWidth The scaled width of the image
+ * @param scaledHeight The scaled height of the image
+ * @param angle The angle of the image
+ * @param spinSpeed Speed the image should spin at
+ * @returns The image element
+ */
 function createThrownImage(
   config: ImageConfig,
   image: HTMLImageElement,
+
   scaledWidth: number,
   scaledHeight: number,
 
@@ -243,13 +237,23 @@ function createThrownImage(
   return elm;
 }
 
+/**
+ * Creates a container for handling the pivoting of a throwable
+ *
+ * @param scaledWidth Scaled width of the image
+ * @param scaledHeight Scaled height of the image
+ * @param modelPosition The position of the model
+ * @param modelData Model and calibration data for the model
+ * @param modelScale Scale of the model
+ * @param angle Angle of the throwable
+ * @returns The container element
+ */
 function createPivotContainer(
   scaledWidth: number,
   scaledHeight: number,
-  xPos: number,
-  yPos: number,
-  randH: number,
-  randV: number,
+  modelPosition: ModelPosition,
+  modelData: ModelData,
+  modelScale: number,
   angle: number
 ) {
   const elm = document.createElement("div");
@@ -257,8 +261,18 @@ function createPivotContainer(
 
   const style = elm.style;
 
-  const left = window.innerWidth * xPos - scaledWidth / 2 + randH;
-  const top = window.innerHeight * yPos - scaledHeight / 2 + randV;
+  const offsetX = percentRange(modelScale, modelData.x.min, modelData.x.max);
+  const offsetY = percentRange(modelScale, modelData.y.min, modelData.y.max);
+
+  const xPos = (modelPosition.positionX - offsetX + 1) / 2;
+  const yPos = 1 - (modelPosition.positionY - offsetY + 1) / 2;
+
+  // Random offsets to the X and Y positions
+  const randX = (Math.random() * 100 - 50) * modelScale;
+  const randY = (Math.random() * 100 - 50) * modelScale;
+
+  const left = window.innerWidth * xPos - scaledWidth / 2 + randX;
+  const top = window.innerHeight * yPos - scaledHeight / 2 + randY;
 
   style.left = `${left}px`;
   style.top = `${top}px`;
@@ -267,6 +281,15 @@ function createPivotContainer(
   return elm;
 }
 
+/**
+ * Creates the container in charge of the movement for
+ * a throwable item
+ *
+ * @param leftSide Whether the movement is coming from the left side
+ * @param duration The duration of the whole animation
+ * @param delayMs Delay before the movement begins
+ * @returns The container element
+ */
 function createMovementContainer(
   leftSide: boolean,
   duration: number,
@@ -291,7 +314,7 @@ function createMovementContainer(
  * @param soundConfig The sound configuration
  * @returns
  */
-export async function loadThrowable(
+export async function loadThrowableResources(
   imageConfig: ImageConfig,
   soundConfig: SoundConfig | null
 ): Promise<{ image: HTMLImageElement | null; audio: HTMLAudioElement | null }> {
