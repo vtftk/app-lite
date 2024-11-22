@@ -98,7 +98,7 @@ function connect() {
           console.error("FAILED TO LOAD IMAGE");
           return;
         }
-        for (let i = 0; i < 10; i += 1) {
+        for (let i = 0; i < 1; i += 1) {
           await throwItem(
             {
               imageConfig,
@@ -106,10 +106,10 @@ function connect() {
               soundConfig: null,
               faceConfig,
               modelConfig,
+              modelParameters,
             },
             image,
-            audio,
-            modelParameters
+            audio
           );
         }
       } catch (e) {

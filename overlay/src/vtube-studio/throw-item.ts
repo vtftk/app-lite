@@ -13,6 +13,7 @@ export type ThrowItemConfig = {
   soundConfig: SoundConfig | null;
   faceConfig: FaceConfig;
   modelConfig: ModelConfig;
+  modelParameters: ModelParameters;
 };
 
 export enum ThrowDirection {
@@ -91,16 +92,21 @@ function isRandomDirectionLeft(direction: ThrowDirection): boolean {
 export async function throwItem(
   config: ThrowItemConfig,
   image: HTMLImageElement,
-  audio: HTMLAudioElement | null,
-  modelParameters: ModelParameters
+  audio: HTMLAudioElement | null
 ) {
   const { modelPosition } = await requestCurrentModel();
 
   // Model is not available
   if (!modelPosition) return;
 
-  const { imageConfig, faceConfig, throwConfig, modelConfig, soundConfig } =
-    config;
+  const {
+    imageConfig,
+    faceConfig,
+    throwConfig,
+    modelConfig,
+    soundConfig,
+    modelParameters,
+  } = config;
 
   const modelScale = (modelPosition.size + 100) / 200;
 
