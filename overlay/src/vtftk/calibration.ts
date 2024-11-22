@@ -4,8 +4,13 @@ import {
   requestCurrentModel,
   requestMoveModel,
 } from "../vtube-studio/model";
-import { notifyProgressCalibration } from "./events";
-import { CalibrationPoint, CalibrationStep } from "./calibration-types";
+import {
+  CalibrationPoint,
+  CalibrationStep,
+  CalibrationStepData,
+} from "./calibration-types";
+
+const calibrationEl = document.getElementById("calibration");
 
 // Initial model position before calibration, to allow restoring back to
 // original position after calibrating
@@ -25,6 +30,11 @@ function setCalibrationPoint(x: number, y: number) {
     x,
     y,
   };
+
+  if (calibrationEl) {
+    calibrationEl.style.left = `${x}px`;
+    calibrationEl.style.top = `${y}px`;
+  }
 }
 
 window.addEventListener("click", (event) => {
@@ -44,9 +54,19 @@ const STEPS = [
   CalibrationStep.Complete,
 ];
 
-async function beginCalibrationStep(step: CalibrationStep) {
+export async function notifyProgressCalibration(body: CalibrationStepData) {
+  await fetch("http://localhost:58371/calibration", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function beginCalibrationStep(step: CalibrationStep) {
   const currentStepIndex = STEPS.indexOf(currentStep);
   const stepIndex = STEPS.indexOf(step);
+
+  console.log(stepIndex, currentStepIndex);
 
   // Handle out of sync with server
   if (
@@ -57,11 +77,17 @@ async function beginCalibrationStep(step: CalibrationStep) {
     return;
   }
 
+  currentStep = step;
+
   switch (step) {
     // Capture initial model position
     case CalibrationStep.Smallest:
       const { modelPosition } = await requestCurrentModel();
       initialModelPosition = modelPosition;
+      calibrationPoint = {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      };
 
       await shrinkModel();
       await notifyProgressCalibration({ step: CalibrationStep.Smallest });
@@ -84,7 +110,7 @@ async function beginCalibrationStep(step: CalibrationStep) {
 
       largestPoint = await getModelGuidePosition();
       await notifyProgressCalibration({
-        step: currentStep,
+        step: CalibrationStep.Complete,
         smallest_point: smallestPoint,
         largest_point: largestPoint,
       });

@@ -16,6 +16,7 @@ use axum::{
     Extension, Json, Router,
 };
 use futures_util::stream::Stream;
+use log::info;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
@@ -117,25 +118,33 @@ pub enum CalibrationStep {
     Complete,
 }
 
+#[derive(Debug, Serialize)]
+pub struct CalibrationProgressRes {}
+
 pub async fn handle_calibration_progress(
     Extension(app_handle): Extension<AppHandle>,
     Json(req): Json<CalibrationStepData>,
-) -> HttpResult<()> {
+) -> HttpResult<CalibrationProgressRes> {
     match &req {
         CalibrationStepData::NotStarted => {}
-        CalibrationStepData::Smallest => todo!(),
-        CalibrationStepData::Largest => todo!(),
+        CalibrationStepData::Smallest => {}
+        CalibrationStepData::Largest => {}
         CalibrationStepData::Complete {
             smallest_point,
             largest_point,
-        } => todo!(),
+        } => {
+            info!(
+                "COMPLETED CALIBRATION: {:?} {:?}",
+                smallest_point, largest_point
+            )
+        }
     }
 
     app_handle
         .emit("calibration_state", req)
         .context("failed to inform app")?;
 
-    Ok(Json(()))
+    Ok(Json(CalibrationProgressRes {}))
 }
 
 pub struct EventRecvHandle(pub broadcast::Receiver<EventMessage>);
@@ -147,6 +156,7 @@ impl Clone for EventRecvHandle {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type")]
 pub enum EventMessage {
     // Tells any connected browser apps to refresh
     Refresh,

@@ -1,3 +1,4 @@
+import { beginCalibrationStep } from "./calibration";
 import { CalibrationStepData } from "./calibration-types";
 
 function createEventSource() {
@@ -5,8 +6,13 @@ function createEventSource() {
   eventSource.onopen = () => {
     console.log("listening to events");
   };
-  eventSource.onmessage = (event) => {
-    console.log(event);
+  eventSource.onmessage = (msg) => {
+    console.log(msg);
+    const event = JSON.parse(msg.data);
+
+    if (event.type === "SetCalibrationStep") {
+      beginCalibrationStep(event.step);
+    }
   };
 
   eventSource.onerror = (event) => {
@@ -15,15 +21,3 @@ function createEventSource() {
 }
 
 createEventSource();
-
-export async function notifyProgressCalibration(body: CalibrationStepData) {
-  await fetch(
-    "http://localhost:58371/calibration",
-
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    }
-  );
-}

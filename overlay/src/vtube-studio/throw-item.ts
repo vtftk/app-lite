@@ -1,5 +1,11 @@
 import { percentRange, randomBool, randomRange } from "../math";
-import { InputParameter, ModelPosition, requestCurrentModel } from "./model";
+import { flinch } from "./flinch";
+import {
+  InputParameter,
+  ModelParameters,
+  ModelPosition,
+  requestCurrentModel,
+} from "./model";
 
 export type ThrowItemConfig = {
   imageConfig: ImageConfig;
@@ -85,7 +91,8 @@ function isRandomDirectionLeft(direction: ThrowDirection): boolean {
 export async function throwItem(
   config: ThrowItemConfig,
   image: HTMLImageElement,
-  audio: HTMLAudioElement | null
+  audio: HTMLAudioElement | null,
+  modelParameters: ModelParameters
 ) {
   const { modelPosition } = await requestCurrentModel();
 
@@ -105,14 +112,14 @@ export async function throwItem(
   const xPos = (modelPosition.positionX - offsetX + 1) / 2;
   const yPos = 1 - (modelPosition.positionY - offsetY + 1) / 2;
 
-  const isLeft: boolean = isRandomDirectionLeft(throwConfig.direction);
+  const leftSide: boolean = isRandomDirectionLeft(throwConfig.direction);
 
   // Multiplier on the x axis
-  const xMulti = isLeft ? 1 : -1;
+  const xMultiplier = leftSide ? 1 : -1;
 
   const angle =
     randomRange(throwConfig.throwAngle.min, throwConfig.throwAngle.max) *
-    xMulti;
+    xMultiplier;
 
   const sizeScale =
     throwConfig.itemScale.min +
@@ -137,7 +144,7 @@ export async function throwItem(
   );
 
   const movement = createMovementContainer(
-    isLeft,
+    leftSide,
     throwConfig.duration,
     throwConfig.delay
   );
@@ -160,6 +167,22 @@ export async function throwItem(
   document.body.appendChild(root);
 
   console.log("THROW");
+
+  setTimeout(() => {
+    flinch({
+      angle,
+      eyeState,
+      magnitude: imageConfig.weight,
+      modelParams: modelParameters,
+      leftSide,
+      returnSpeed: 0.3,
+    });
+  }, throwConfig.duration / 2);
+
+  // Remove after complete
+  setTimeout(function () {
+    document.body.removeChild(root);
+  }, throwConfig.duration + throwConfig.delay);
 }
 
 function createRootContainer(modelPosition: ModelPosition) {
@@ -300,57 +323,4 @@ async function loadAudio(src: string): Promise<HTMLAudioElement> {
     audio.oncanplaythrough = () => resolve(audio);
     audio.onerror = () => reject();
   });
-}
-
-type ModelParameters = {
-  horizontal: [ModelParameter, ModelParameter, ModelParameter];
-  vertical: [ModelParameter, ModelParameter];
-  eyes: [ModelParameter, ModelParameter];
-};
-
-type ModelParameter = {
-  name: string;
-  value: number;
-  min: number;
-  max: number;
-};
-
-// Names for horizontal input parameters
-const HORIZONTAL_PARAM_NAMES = ["FaceAngleX", "FaceAngleZ", "FacePositionX"];
-// Names for vertical input parameters
-const VERTICAL_PARAM_NAMES = ["FaceAngleY", "FacePositionY"];
-// Names for eye open parameters
-const EYE_PARAM_NAMES = ["EyeOpenLeft", "EyeOpenRight"];
-
-export function createModelParameters(
-  params: InputParameter[]
-): ModelParameters {
-  const getOrDefault = (
-    name: string,
-    value: number,
-    min: number,
-    max: number
-  ): ModelParameter => {
-    const param = params.find((value) => value.name === name);
-    if (param) {
-      return { name, value: param.value, min: param.min, max: param.max };
-    }
-
-    return { name, value, min, max };
-  };
-
-  const horizontal = HORIZONTAL_PARAM_NAMES.map((name) =>
-    getOrDefault(name, 0, -30, 30)
-  ) as [ModelParameter, ModelParameter, ModelParameter];
-
-  const vertical = VERTICAL_PARAM_NAMES.map((name) =>
-    getOrDefault(name, 0, -30, 30)
-  ) as [ModelParameter, ModelParameter];
-
-  const eyes = EYE_PARAM_NAMES.map((name) => getOrDefault(name, 0, 0, 1)) as [
-    ModelParameter,
-    ModelParameter
-  ];
-
-  return { horizontal, vertical, eyes };
 }

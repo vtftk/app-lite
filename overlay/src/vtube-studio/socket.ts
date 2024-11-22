@@ -1,9 +1,13 @@
 import { attemptAuthorization } from "./auth";
 import { APIError } from "./error";
+import { flinch } from "./flinch";
 import { VTubeMessage } from "./message";
-import { requestCurrentModel, requestInputParameterList } from "./model";
 import {
   createModelParameters,
+  requestCurrentModel,
+  requestInputParameterList,
+} from "./model";
+import {
   FaceConfig,
   ImageConfig,
   loadThrowable,
@@ -104,7 +108,8 @@ function connect() {
               modelConfig,
             },
             image,
-            audio
+            audio,
+            modelParameters
           );
         }
       } catch (e) {

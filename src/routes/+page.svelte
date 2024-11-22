@@ -3,6 +3,7 @@
   import TwitchOAuth from "../lib/sections/TwitchOAuth.svelte";
   import { twitchAuthState } from "$lib/globalStores";
   import "$lib/api/events";
+  import Calibration from "$lib/sections/Calibration.svelte";
 
   let name = $state("");
   let greetMsg = $state("");
@@ -16,7 +17,7 @@
 
 <main class="container">
   {#if $twitchAuthState}
-    <p>Test</p>
+    <Calibration />
   {:else}
     <TwitchOAuth />
   {/if}

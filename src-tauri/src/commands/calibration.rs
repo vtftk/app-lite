@@ -1,7 +1,8 @@
 use crate::http::server::{CalibrationStep, EventMessage};
+use serde::Deserialize;
 use tokio::sync::broadcast;
 
-/// Obtain a URL for use logging into twitch using OAuth2
+/// Set the current calibration step
 #[tauri::command]
 pub fn set_calibration_step(
     step: CalibrationStep,
