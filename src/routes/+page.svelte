@@ -1,10 +1,9 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import TwitchOAuth from "../lib/sections/TwitchOAuth.svelte";
-  import { twitchAuthState } from "$lib/globalStores";
   import "$lib/api/events";
   import Calibration from "$lib/sections/Calibration.svelte";
-  import { createRuntimeAppDataQuery } from "$lib/api/runtimeAppData";
+  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import { derived } from "svelte/store";
 
   let name = $state("");
   let greetMsg = $state("");
@@ -31,17 +30,32 @@
     });
   }
 
-  const runtimeAppData = createRuntimeAppDataQuery();
+  const appData = getAppData();
+  const runtimeAppData = getRuntimeAppData();
+
+  // Model needs to be calibrated if not available here
+  const isModelCalibrated = derived(
+    [appData, runtimeAppData],
+    ([$appData, $runtimeAppData]) => {
+      // No model active
+      if ($runtimeAppData.model_id === null) {
+        return false;
+      }
+
+      const modelData = $appData.models[$runtimeAppData.model_id];
+      return modelData !== undefined;
+    }
+  );
 </script>
 
 <main class="container">
-  {#if $runtimeAppData.isLoading}
-    Loading data...
-  {:else if $twitchAuthState}
-    <Calibration />
+  <p>Connected to VTube Studio: {$runtimeAppData.vtube_studio_connected}</p>
+  <p>Current Model ID: {$runtimeAppData.model_id}</p>
+  <p>Model Calibrated: {$isModelCalibrated}</p>
 
-    <button onclick={testThrow}>Test throw</button>
-  {:else}
-    <TwitchOAuth />
+  {#if !isModelCalibrated}
+    <Calibration />
   {/if}
+
+  <button onclick={testThrow}>Test throw</button>
 </main>

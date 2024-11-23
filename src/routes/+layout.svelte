@@ -3,8 +3,14 @@
 
   import { queryClient } from "$lib/api/utils";
   import { QueryClientProvider } from "@tanstack/svelte-query";
+  import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
+  import TwitchOAuthGate from "$lib/sections/TwitchOAuthGate.svelte";
 </script>
 
 <QueryClientProvider client={queryClient}>
-  <slot />
+  <AppDataProvider>
+    <TwitchOAuthGate>
+      <slot />
+    </TwitchOAuthGate>
+  </AppDataProvider>
 </QueryClientProvider>

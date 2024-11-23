@@ -1,21 +1,13 @@
 <script lang="ts">
-  import { twitchAuthState } from "$lib/globalStores";
   import { invoke } from "@tauri-apps/api/core";
-  import { onMount } from "svelte";
 
   async function getTwitchURL(): Promise<string> {
     return await invoke("get_twitch_oauth_uri");
   }
 
   async function openTwitchURL() {
-    const success = await invoke<boolean>("open_twitch_oauth_uri");
-    // TODO: Handle error
+    await invoke<boolean>("open_twitch_oauth_uri");
   }
-
-  onMount(async () => {
-    $twitchAuthState = await invoke<boolean>("is_authenticated");
-    console.log($twitchAuthState);
-  });
 </script>
 
 <main>
@@ -26,6 +18,7 @@
       below to allow access. Click "Open in browser" to open the link in your
       default browser.
     </p>
+
     {#await getTwitchURL() then twitchURL}
       <input class="url" type="text" readonly value={twitchURL} />
     {/await}
