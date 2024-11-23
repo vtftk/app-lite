@@ -38,7 +38,7 @@ fn run_inner() {
 
     tauri::Builder::default()
         .setup(move |app| {
-            let handle = app.handle();
+            let handle = app.handle().clone();
 
             let (twitch_manager, twitch_event_rx) =
                 TwitchManager::new(HelixClient::default(), handle.clone());
@@ -71,7 +71,7 @@ fn run_inner() {
             _ = tauri::async_runtime::spawn(async move {
                 _ = http::server::start(
                     event_rx,
-                    handle.clone(),
+                    handle,
                     twitch_manager,
                     app_data,
                     runtime_app_data,

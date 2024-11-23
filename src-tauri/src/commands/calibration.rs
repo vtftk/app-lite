@@ -1,5 +1,4 @@
-use crate::http::server::{CalibrationStep, EventMessage};
-use serde::Deserialize;
+use crate::{events::EventMessage, http::models::calibration::CalibrationStep};
 use tokio::sync::broadcast;
 
 /// Set the current calibration step

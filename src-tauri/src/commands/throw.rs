@@ -1,6 +1,6 @@
 use tokio::sync::broadcast;
 
-use crate::{http::server::EventMessage, state::app_data::ThrowableConfig};
+use crate::{events::EventMessage, state::app_data::ThrowableConfig};
 
 #[tauri::command]
 pub fn test_throw(
