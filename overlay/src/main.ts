@@ -9,40 +9,79 @@ import {
   requestCurrentModel,
   requestInputParameterList,
 } from "./vtube-studio/model";
-import { createEventSource } from "./vtftk/events";
+import { createEventSource, EventSourceData } from "./vtftk/events";
 import { beginCalibrationStep } from "./vtftk/calibration";
 import { CalibrationStep } from "./vtftk/calibration-types";
 import { setRuntimeData } from "./vtftk/api";
 
 async function load() {
+  // Tell the backend we aren't connected
+  await setRuntimeData({
+    model_id: null,
+    vtube_studio_connected: false,
+  });
+
   const appData = await getAppData();
+
+  const eventSourceData: EventSourceData = {
+    appData,
+    vtSocket: undefined,
+    modelParameters: undefined,
+  };
+
+  createEventSource(eventSourceData);
 
   const vtSocket = new VTubeStudioWebSocket(
     appData.vtube_studio.host,
     appData.vtube_studio.port
   );
 
-  await vtSocket.connect();
+  eventSourceData.vtSocket = vtSocket;
 
-  console.debug("Connected to VTube studio");
+  // Run when the socket is connected
+  vtSocket.onConnected = async () => {
+    // Tell the backend we aren't connected
+    setRuntimeData({
+      model_id: null,
+      vtube_studio_connected: true,
+    });
 
-  const { modelID } = await requestCurrentModel(vtSocket);
+    console.debug("Connected to VTube studio");
 
-  const modelData = appData.models[modelID];
+    const { modelID } = await requestCurrentModel(vtSocket);
 
-  // Only needs to be done on initial load, can be stored until next refresh
-  const inputParameters = await requestInputParameterList(vtSocket);
-  const modelParameters = createModelParameters(
-    inputParameters.defaultParameters
-  );
+    // Tell the backend we aren't connected
+    setRuntimeData({
+      model_id: modelID,
+      vtube_studio_connected: true,
+    });
 
-  createEventSource(appData, vtSocket, modelParameters);
+    const modelData = appData.models[modelID];
 
-  // Model is not yet calibrate
-  if (modelData === undefined) {
-    beginCalibrationStep(vtSocket, CalibrationStep.NotStarted);
-    return;
-  }
+    // Only needs to be done on initial load, can be stored until next refresh
+    const inputParameters = await requestInputParameterList(vtSocket);
+    const modelParameters = createModelParameters(
+      inputParameters.defaultParameters
+    );
+
+    eventSourceData.modelParameters = modelParameters;
+
+    // Model is not yet calibrated
+    if (modelData === undefined) {
+      beginCalibrationStep(vtSocket, CalibrationStep.NotStarted);
+      return;
+    }
+  };
+
+  vtSocket.onDisconnect = () => {
+    // Tell the backend we aren't connected
+    setRuntimeData({
+      model_id: null,
+      vtube_studio_connected: false,
+    });
+  };
+
+  vtSocket.connect();
 }
 
 load();

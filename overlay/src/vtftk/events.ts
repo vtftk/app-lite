@@ -6,11 +6,13 @@ import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
 import { AppData, ThrowableConfig } from "./types";
 
-export function createEventSource(
-  appData: AppData,
-  vtSocket: VTubeStudioWebSocket,
-  modelParameters: ModelParameters
-) {
+export type EventSourceData = {
+  appData: AppData;
+  vtSocket: VTubeStudioWebSocket | undefined;
+  modelParameters: ModelParameters | undefined;
+};
+
+export function createEventSource(data: EventSourceData) {
   const eventSource = new EventSource(BACKEND_EVENTS);
   eventSource.onopen = () => {
     console.debug("listening to events");
@@ -20,22 +22,34 @@ export function createEventSource(
 
     switch (event.type) {
       case "SetCalibrationStep": {
-        onSetCalibrationStepEvent(vtSocket, event.step);
+        if (data.vtSocket) {
+          onSetCalibrationStepEvent(data.vtSocket, event.step);
+        }
         break;
       }
       case "Throw": {
-        onThrowEvent(appData, vtSocket, modelParameters, event.config);
+        if (data.vtSocket && data.modelParameters) {
+          onThrowEvent(
+            data.appData,
+            data.vtSocket,
+            data.modelParameters,
+            event.config
+          );
+        }
+
         break;
       }
 
       case "ThrowMany": {
-        onThrowManyEvent(
-          appData,
-          vtSocket,
-          modelParameters,
-          event.config,
-          event.amount
-        );
+        if (data.vtSocket && data.modelParameters) {
+          onThrowManyEvent(
+            data.appData,
+            data.vtSocket,
+            data.modelParameters,
+            event.config,
+            event.amount
+          );
+        }
         break;
       }
     }
@@ -44,6 +58,8 @@ export function createEventSource(
   eventSource.onerror = (event) => {
     console.error(event);
   };
+
+  return eventSource;
 }
 
 async function onSetCalibrationStepEvent(

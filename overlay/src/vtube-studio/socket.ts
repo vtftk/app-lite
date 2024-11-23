@@ -28,50 +28,47 @@ export class VTubeStudioWebSocket {
     this.requestHandlers = new Map();
   }
 
-  connect(): Promise<WebSocket> {
-    return new Promise((resolve) => {
-      const tryConnect = () => {
-        this.websocket = new WebSocket(`ws://${this.host}:${this.port}/`);
+  connect() {
+    const tryConnect = () => {
+      this.websocket = new WebSocket(`ws://${this.host}:${this.port}/`);
 
-        this.websocket.onopen = async () => {
-          const socket = this.websocket!;
-          if (socket.readyState !== WebSocket.OPEN) return;
+      this.websocket.onopen = async () => {
+        const socket = this.websocket!;
+        if (socket.readyState !== WebSocket.OPEN) return;
 
-          await attemptAuthorization(this);
+        await attemptAuthorization(this);
 
-          console.debug("VTube studio authorization complete");
+        console.debug("VTube studio authorization complete");
 
-          if (this.onConnected) this.onConnected();
-          resolve(socket);
-        };
-
-        this.websocket.onmessage = this.handleSocketMessage.bind(this);
-        this.websocket.onclose = (event: CloseEvent) => {
-          if (this.onDisconnect) this.onDisconnect();
-
-          console.warn(
-            "VTube studio WebSocket closed:",
-            event.code,
-            event.reason
-          );
-
-          this.clearRequestHandlers();
-          this.websocket = null;
-
-          setTimeout(() => {
-            console.log(`Reconnecting...`);
-            tryConnect();
-          }, RETRY_TIMEOUT);
-        };
-
-        this.websocket.onerror = (error: Event) => {
-          console.error("VTube studio WebSocket error:", error);
-          this.websocket?.close();
-        };
+        if (this.onConnected) this.onConnected();
       };
 
-      tryConnect();
-    });
+      this.websocket.onmessage = this.handleSocketMessage.bind(this);
+      this.websocket.onclose = (event: CloseEvent) => {
+        if (this.onDisconnect) this.onDisconnect();
+
+        console.warn(
+          "VTube studio WebSocket closed:",
+          event.code,
+          event.reason
+        );
+
+        this.clearRequestHandlers();
+        this.websocket = null;
+
+        setTimeout(() => {
+          console.log(`Reconnecting...`);
+          tryConnect();
+        }, RETRY_TIMEOUT);
+      };
+
+      this.websocket.onerror = (error: Event) => {
+        console.error("VTube studio WebSocket error:", error);
+        this.websocket?.close();
+      };
+    };
+
+    tryConnect();
   }
 
   handleSocketMessage(message: MessageEvent<string>) {
