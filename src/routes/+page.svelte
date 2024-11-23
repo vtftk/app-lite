@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/core";
   import "$lib/api/events";
   import Calibration from "$lib/sections/Calibration.svelte";
   import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
   import { derived } from "svelte/store";
   import Throwables from "$lib/sections/Throwables.svelte";
-  import type { ThrowableConfig } from "$lib/api/types";
 
   const appData = getAppData();
   const runtimeAppData = getRuntimeAppData();
@@ -23,19 +21,6 @@
       return modelData !== undefined;
     }
   );
-
-  const testData: ThrowableConfig[] = [
-    {
-      name: "Heart",
-      image: {
-        pixelate: false,
-        scale: 0.5,
-        src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
-        weight: 1,
-      },
-      sound: null,
-    },
-  ];
 </script>
 
 <main class="container">
@@ -47,5 +32,5 @@
     <Calibration />
   {/if}
 
-  <Throwables items={[...testData, ...testData, ...testData]} />
+  <Throwables items={$appData.items} />
 </main>

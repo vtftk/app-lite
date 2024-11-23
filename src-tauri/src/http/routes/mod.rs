@@ -20,4 +20,5 @@ pub fn router() -> Router {
         .route("/app-data", get(data::get_app_data))
         .route("/runtime-app-data", get(data::get_runtime_data))
         .route("/runtime-app-data", post(data::set_runtime_data))
+        .route("/content/:folder/:name", get(data::get_content_file))
 }

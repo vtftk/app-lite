@@ -4,13 +4,23 @@
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
   import { scale } from "svelte/transition";
-  import type { ThrowableConfig } from "$lib/api/types";
+  import type {
+    ImpactSoundConfig,
+    ThrowableConfig,
+    ThrowableImageConfig,
+  } from "$lib/api/types";
+  import { invoke } from "@tauri-apps/api/core";
+  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
 
   type Props = {
     onClose: VoidFunction;
   };
 
   const { onClose }: Props = $props();
+
+  const appData = getAppData();
+
+  const appDataMutation = createAppDateMutation();
 
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
@@ -36,10 +46,43 @@
       volume: 1,
     },
     extend: [validator({ schema }), reporterDom()],
-    onSubmit(values, context) {
-      const throwableConfig: ThrowableConfig = {};
+    async onSubmit(values, context) {
+      const imageURL = await invoke<string>("upload_file", {
+        fileType: "ThrowableImage",
+        fileName: values.image.name,
+        fileData: await values.image.arrayBuffer(),
+      });
 
-      console.log("submitted", values);
+      const imageConfig: ThrowableImageConfig = {
+        src: imageURL,
+        pixelate: values.pixelate,
+        scale: values.scale,
+        weight: values.weight,
+      };
+
+      let soundConfig: ImpactSoundConfig | null = null;
+      if (values.sound !== undefined) {
+        const soundURL = await invoke<string>("upload_file", {
+          fileType: "ImpactSound",
+          fileName: values.sound.name,
+          fileData: await values.sound.arrayBuffer(),
+        });
+        soundConfig = {
+          src: soundURL,
+          volume: values.volume,
+        };
+      }
+
+      const throwableConfig: ThrowableConfig = {
+        image: imageConfig,
+        sound: soundConfig,
+        name: values.name,
+      };
+
+      await $appDataMutation.mutateAsync({
+        ...$appData,
+        items: [...$appData.items, throwableConfig],
+      });
     },
   });
 </script>

@@ -84,6 +84,8 @@ pub fn run() {
             commands::throw::test_throw,
             commands::data::get_app_data,
             commands::data::get_runtime_app_data,
+            commands::data::set_app_data,
+            commands::data::upload_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -119,7 +121,7 @@ async fn attempt_twitch_auth_existing_token(
 ) {
     let app_data = app_data_store.read().await;
 
-    let access_token = match app_data.twitch.access_token.as_ref() {
+    let access_token = match app_data.twitch_config.access_token.as_ref() {
         Some(value) => value,
         None => return,
     };
@@ -145,7 +147,7 @@ async fn attempt_twitch_auth_existing_token(
             // Clear twitch token
             _ = app_data_store
                 .write(|app_data| {
-                    app_data.twitch.access_token = None;
+                    app_data.twitch_config.access_token = None;
                 })
                 .await;
 

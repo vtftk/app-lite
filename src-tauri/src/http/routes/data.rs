@@ -1,8 +1,20 @@
-use crate::state::{
-    app_data::{AppData, AppDataStore},
-    runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
+use crate::{
+    http::error::DynHttpError,
+    state::{
+        app_data::{AppData, AppDataStore},
+        runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
+    },
 };
-use axum::{http::StatusCode, Extension, Json};
+use anyhow::Context;
+use axum::{
+    body::{Body, HttpBody},
+    extract::Path,
+    http::{Response, StatusCode},
+    response::IntoResponse,
+    Extension, Json,
+};
+use reqwest::header::CONTENT_TYPE;
+use tauri::{AppHandle, Manager};
 
 /// GET /app-data
 ///
@@ -12,7 +24,7 @@ pub async fn get_app_data(Extension(app_data): Extension<AppDataStore>) -> Json<
     let mut data = app_data.read().await.clone();
 
     // Hide twitch access token from frontend
-    data.twitch.access_token = None;
+    data.twitch_config.access_token = None;
 
     Json(data)
 }
@@ -44,4 +56,37 @@ pub async fn set_runtime_data(
         .await;
 
     StatusCode::OK
+}
+/// GET /content/:folder/:name
+///
+/// Sets the current state of the app at runtime
+pub async fn get_content_file(
+    Path((folder, name)): Path<(String, String)>,
+    Extension(app): Extension<AppHandle>,
+) -> Result<Response<Body>, DynHttpError> {
+    let app_data_path = app
+        .path()
+        .app_data_dir()
+        .context("failed to get app data dir")?;
+    let content_path = app_data_path.join("content");
+    let file_path = content_path.join(folder).join(name);
+
+    if !file_path.exists() {
+        return Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(vec![].into())
+            .context("failed to make response")?);
+    }
+
+    let mime = mime_guess::from_path(&file_path);
+
+    let file_bytes = tokio::fs::read(file_path)
+        .await
+        .context("failed to read content file")?;
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(CONTENT_TYPE, mime.first_or_octet_stream().essence_str())
+        .body(file_bytes.into())
+        .context("failed to make response")?)
 }

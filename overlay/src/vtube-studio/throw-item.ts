@@ -70,7 +70,7 @@ export async function throwItem(
   // Model is not available
   if (!modelPosition) return;
 
-  const { throwables, items } = appData;
+  const { throwables_config: throwables, items_config: items } = appData;
 
   // Determine scale of the model relative to the calibrated minimum and maximum sizes
   const modelScale =
@@ -193,7 +193,8 @@ async function handleThrowableImpact(
   // Play the impact sound
   if (impactAudio !== null && config.sound) {
     try {
-      impactAudio.volume = appData.items.global_volume * config.sound.volume;
+      impactAudio.volume =
+        appData.items_config.global_volume * config.sound.volume;
 
       impactAudio.play();
     } catch (err) {
@@ -204,7 +205,7 @@ async function handleThrowableImpact(
   // Make the VTuber model flinch from the impact
   flinch(socket, modelParameters, {
     angle,
-    eyeState: appData.model.eyes_on_hit,
+    eyeState: appData.model_config.eyes_on_hit,
     magnitude: config.image.weight,
     leftSide,
     returnSpeed: 0.3,

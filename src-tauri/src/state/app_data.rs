@@ -74,12 +74,13 @@ pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct AppData {
-    pub twitch: TwitchConfig,
-    pub throwables: ThrowablesConfig,
-    pub model: ModelConfig,
-    pub items: ItemsConfig,
-    pub vtube_studio: VTubeStudioConfig,
+    pub twitch_config: TwitchConfig,
+    pub throwables_config: ThrowablesConfig,
+    pub model_config: ModelConfig,
+    pub items_config: ItemsConfig,
+    pub vtube_studio_config: VTubeStudioConfig,
     pub models: HashMap<ModelId, ModelData>,
+    pub items: Vec<ThrowableConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

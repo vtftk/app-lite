@@ -6,11 +6,13 @@ export type MinMax = {
 };
 
 export type AppData = {
-  throwables: ThrowablesConfig;
-  items: ItemsConfig;
-  model: ModelConfig;
+  throwables_config: ThrowablesConfig;
+  items_config: ItemsConfig;
+  model_config: ModelConfig;
   vtube_studio: VTubeStudioConfig;
   models: Record<ModelId, ModelData>;
+
+  items: ThrowableConfig[];
 };
 
 export type ThrowablesConfig = {

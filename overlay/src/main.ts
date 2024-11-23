@@ -32,8 +32,8 @@ async function load() {
   createEventSource(eventSourceData);
 
   const vtSocket = new VTubeStudioWebSocket(
-    appData.vtube_studio.host,
-    appData.vtube_studio.port
+    appData.vtube_studio_config.host,
+    appData.vtube_studio_config.port
   );
 
   eventSourceData.vtSocket = vtSocket;

@@ -1,8 +1,13 @@
-import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
+import {
+  createMutation,
+  createQuery,
+  type CreateQueryResult,
+} from "@tanstack/svelte-query";
 import type { AppData, RuntimeAppData } from "./types";
 import { invoke } from "@tauri-apps/api/core";
 import { getContext } from "svelte";
 import type { Readable } from "svelte/store";
+import { queryClient } from "./utils";
 
 export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
 export const RUNTIME_APP_DATA_CONTEXT = Symbol("runtime-app-data");
@@ -38,5 +43,19 @@ export function createAppDataQuery(): CreateQueryResult<RuntimeAppData, Error> {
   return createQuery({
     queryKey: APP_DATA_KEY,
     queryFn: () => invoke<AppData>("get_app_data"),
+  });
+}
+
+export function createAppDateMutation() {
+  return createMutation<boolean, Error, AppData>({
+    mutationFn: (appData) => invoke<boolean>("set_app_data", { appData }),
+    onMutate: async (appData) => {
+      queryClient.cancelQueries({ queryKey: APP_DATA_KEY });
+      queryClient.setQueryData(APP_DATA_KEY, appData);
+      return appData;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: APP_DATA_KEY });
+    },
   });
 }

@@ -49,7 +49,7 @@ pub async fn handle_oauth_complete(
 
     app_data
         .write(|app_data| {
-            app_data.twitch.access_token = Some(access_token);
+            app_data.twitch_config.access_token = Some(access_token);
         })
         .await
         .context("saving app data")?;
