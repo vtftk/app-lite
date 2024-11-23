@@ -1,64 +1,64 @@
 import { loadAudio, loadImage, sleep } from "../utils/async";
 import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
 import { percentRange, randomBool, randomRange } from "../utils/math";
-import { AppData, MinMax, ModelData, ThrowDirection } from "../vtftk/types";
+import {
+  AppData,
+  ThrowableImageConfig,
+  MinMax,
+  ModelData,
+  ThrowDirection,
+  ImpactSoundConfig,
+  ThrowableConfig,
+} from "../vtftk/types";
 import { flinch } from "./flinch";
 import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
 import { VTubeStudioWebSocket } from "./socket";
 
-export type ThrowItemConfig = {
-  imageConfig: ImageConfig;
-  soundConfig: SoundConfig | null;
-  modelParameters: ModelParameters;
-};
+/**
+ * Loads the resources a throwable depends on such as
+ * the image itself and optionally an impact audio
+ *
+ * @param imageConfig The image configuration
+ * @param soundConfig The impact sound configuration
+ * @returns The loaded resources
+ */
+export async function loadThrowableResources(
+  imageConfig: ThrowableImageConfig,
+  soundConfig: ImpactSoundConfig | null
+): Promise<{ image: HTMLImageElement | null; audio: HTMLAudioElement | null }> {
+  // Load the image and audio if present
+  const [imageResult, audioResult] = await Promise.allSettled([
+    // Load the image
+    loadImage(imageConfig.src),
 
-export type ImageConfig = {
-  // Image being thrown
-  src: string;
-  // Weight of thrown item
-  weight: number;
-  // Scale of thrown item
-  scale: number;
-  // Render pixelate
-  pixel: boolean;
-};
+    // Load the sound
+    soundConfig ? loadAudio(soundConfig.src) : Promise.reject(),
+  ]);
 
-export type SoundConfig = {
-  // URL of the sound to play
-  src: string;
-
-  // Volume to play sound at
-  volume: number;
-};
-
-function isRandomDirectionLeft(direction: ThrowDirection): boolean {
-  switch (direction) {
-    case ThrowDirection.Random:
-      return randomBool();
-    case ThrowDirection.LeftOnly:
-      return true;
-    case ThrowDirection.RightOnly:
-      return false;
-    default:
-      return false;
-  }
+  return {
+    image: imageResult.status === "fulfilled" ? imageResult.value : null,
+    audio: audioResult.status === "fulfilled" ? audioResult.value : null,
+  };
 }
 
 /**
  * Throws an item
  *
- * @param appData App data
+ * @param socket Socket for getting model position and sending impact flinches to VTube studio
+ * @param appData Global app data settings
+ * @param modelParameters Parameters for the current model
  * @param config Configuration for the thrown item
- * @param image Preloaded image for the item
- * @param audio Preloaded audio for the item
- * @returns Promise that completes when the item has been thrown and removed
+ * @param image Image element to use for the thrown item
+ * @param impactAudio Audio element to play when the item impacts the target
+ * @returns Promise that completes after the item has been completely thrown and removed
  */
 export async function throwItem(
   socket: VTubeStudioWebSocket,
   appData: AppData,
-  config: ThrowItemConfig,
+  modelParameters: ModelParameters,
+  config: ThrowableConfig,
   image: HTMLImageElement,
-  audio: HTMLAudioElement | null
+  impactAudio: HTMLAudioElement | null
 ) {
   const { modelID, modelPosition } = await requestCurrentModel(socket);
 
@@ -71,7 +71,6 @@ export async function throwItem(
   if (!modelPosition) return;
 
   const { throwables, items } = appData;
-  const { imageConfig } = config;
 
   // Determine scale of the model relative to the calibrated minimum and maximum sizes
   const modelScale =
@@ -93,11 +92,11 @@ export async function throwItem(
     items.item_scale.max
   );
 
-  const scaledImageWidth = image.width * imageConfig.scale * itemScale;
-  const scaledImageHeight = image.height * imageConfig.scale * itemScale;
+  const scaledImageWidth = image.width * config.image.scale * itemScale;
+  const scaledImageHeight = image.height * config.image.scale * itemScale;
 
   const thrown = createThrownImage(
-    imageConfig,
+    config.image,
     image,
     scaledImageWidth,
     scaledImageHeight,
@@ -134,7 +133,15 @@ export async function throwItem(
   await sleep(impactTimeout);
 
   // Handle point of impact
-  handleThrowableImpact(socket, appData, config, audio, angle, leftSide);
+  handleThrowableImpact(
+    socket,
+    appData,
+    modelParameters,
+    config,
+    impactAudio,
+    angle,
+    leftSide
+  );
 
   // Wait remaining duration before removing
   await sleep(throwables.duration / 2);
@@ -143,20 +150,52 @@ export async function throwItem(
   document.body.removeChild(root);
 }
 
+/**
+ * Chooses a direction based on the provided throw direction
+ * config returning whether that direction is left
+ *
+ * @param direction The direction config
+ * @returns Whether the direction is left
+ */
+function isRandomDirectionLeft(direction: ThrowDirection): boolean {
+  switch (direction) {
+    case ThrowDirection.Random:
+      return randomBool();
+    case ThrowDirection.LeftOnly:
+      return true;
+    case ThrowDirection.RightOnly:
+      return false;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Handles the point of impact for a throwable hitting the model
+ *
+ * @param socket Socket for sending impact flinches to VTube studio
+ * @param appData Global app data settings
+ * @param modelParameters Parameters for the current model
+ * @param config Configuration for the thrown item
+ * @param impactAudio Audio element to play when the item impacts the target
+ * @param angle Angle the item was thrown at
+ * @param leftSide Whether the item is coming from the left side
+ */
 async function handleThrowableImpact(
   socket: VTubeStudioWebSocket,
   appData: AppData,
-  config: ThrowItemConfig,
-  audio: HTMLAudioElement | null,
+  modelParameters: ModelParameters,
+  config: ThrowableConfig,
+  impactAudio: HTMLAudioElement | null,
   angle: number,
   leftSide: boolean
 ) {
   // Play the impact sound
-  if (audio !== null && config.soundConfig) {
+  if (impactAudio !== null && config.sound) {
     try {
-      audio.volume = appData.items.global_volume * config.soundConfig.volume;
+      impactAudio.volume = appData.items.global_volume * config.sound.volume;
 
-      audio.play();
+      impactAudio.play();
     } catch (err) {
       console.error("failed to play audio", err);
     }
@@ -166,8 +205,8 @@ async function handleThrowableImpact(
   flinch(socket, {
     angle,
     eyeState: appData.model.eyes_on_hit,
-    magnitude: config.imageConfig.weight,
-    modelParams: config.modelParameters,
+    magnitude: config.image.weight,
+    modelParameters,
     leftSide,
     returnSpeed: 0.3,
   });
@@ -204,7 +243,7 @@ function createRootContainer(modelPosition: ModelPosition) {
  * @returns The image element
  */
 function createThrownImage(
-  config: ImageConfig,
+  config: ThrowableImageConfig,
   image: HTMLImageElement,
 
   scaledWidth: number,
@@ -220,7 +259,7 @@ function createThrownImage(
 
   style.width = `${scaledWidth}px`;
   style.height = `${scaledHeight}px`;
-  style.imageRendering = config.pixel ? "pixelated" : "auto";
+  style.imageRendering = config.pixelate ? "pixelated" : "auto";
 
   // Spin speed is zero, should immediately spin all the way
   if (spinSpeed.max - spinSpeed.min === 0) {
@@ -308,31 +347,4 @@ function createMovementContainer(
   style.animationDelay = `${delayMs}ms`;
 
   return elm;
-}
-/**
- * Loads the resources a throwable depends on (Image and optionally audio)
- *
- * @param imageConfig The image configuration
- * @param soundConfig The sound configuration
- * @returns
- */
-export async function loadThrowableResources(
-  imageConfig: ImageConfig,
-  soundConfig: SoundConfig | null
-): Promise<{ image: HTMLImageElement | null; audio: HTMLAudioElement | null }> {
-  // Load the image and audio if present
-  const [imageResult, audioResult] = await Promise.allSettled([
-    // Load the image
-    loadImage(imageConfig.src),
-
-    // Load the sound
-    soundConfig ? loadAudio(soundConfig.src) : Promise.reject(),
-  ]);
-
-  let image: HTMLImageElement | null =
-    imageResult.status === "fulfilled" ? imageResult.value : null;
-  let audio: HTMLAudioElement | null =
-    audioResult.status === "fulfilled" ? audioResult.value : null;
-
-  return { image, audio };
 }

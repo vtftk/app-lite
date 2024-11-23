@@ -1,3 +1,4 @@
+import { resolve } from "@tauri-apps/api/path";
 import { EyesMode } from "../vtftk/types";
 import {
   injectParameterData,
@@ -10,7 +11,6 @@ type FlinchConfig = {
   leftSide: boolean;
   angle: number;
   magnitude: number;
-  modelParams: ModelParameters;
   returnSpeed: number;
   eyeState: EyesMode;
 };
@@ -18,10 +18,14 @@ type FlinchConfig = {
 let flinchWeight = 0;
 let flinchInterval: number | undefined;
 
-export function flinch(socket: VTubeStudioWebSocket, config: FlinchConfig) {
+export function flinch(
+  socket: VTubeStudioWebSocket,
+  modelParameters: ModelParameters,
+  config: FlinchConfig
+) {
   const parameterValues: InjectParameterValue[] = [];
 
-  for (const param of config.modelParams.horizontal) {
+  for (const param of modelParameters.horizontal) {
     const value = config.leftSide ? param.max : param.min;
 
     parameterValues.push({
@@ -30,7 +34,7 @@ export function flinch(socket: VTubeStudioWebSocket, config: FlinchConfig) {
     });
   }
 
-  for (const param of config.modelParams.vertical) {
+  for (const param of modelParameters.vertical) {
     let value = config.angle > 0 ? param.min : param.max;
     value = (value * Math.abs(config.angle)) / 45;
 
@@ -49,11 +53,55 @@ export function flinch(socket: VTubeStudioWebSocket, config: FlinchConfig) {
   });
 
   flinchWeight = 1;
-  flinchInterval = setInterval(flinchReturn, 1000.0 / 60.0, socket, config);
+  flinchInterval = setInterval(
+    flinchReturn,
+    1000.0 / 60.0,
+    socket,
+    modelParameters,
+    config
+  );
+}
+
+function createFlinchReturn(
+  socket: VTubeStudioWebSocket,
+  modelParameters: ModelParameters,
+  config: FlinchConfig
+) {
+  let flinchWeight: number = 0;
+  let flinchInterval: number | undefined;
+
+  let _resolve: any;
+  let _reject: any;
+
+  // Cancel the flinch return
+  const cancel = () => {
+    if (flinchInterval) clearInterval(flinchInterval);
+    if (_resolve) resolve();
+  };
+
+  const promise = new Promise(async (resolve, reject) => {
+    _resolve = resolve;
+    _reject = reject;
+
+    flinchWeight = 1;
+    flinchInterval = setInterval(
+      flinchReturn,
+      1000.0 / 60.0,
+      socket,
+      modelParameters,
+      config
+    );
+  });
+
+  return {
+    promise,
+    cancel,
+  };
 }
 
 export function flinchReturn(
   socket: VTubeStudioWebSocket,
+  modelParameters: ModelParameters,
   config: FlinchConfig
 ) {
   flinchWeight -= 1 / config.returnSpeed / 60.0;
@@ -61,7 +109,7 @@ export function flinchReturn(
 
   const parameterValues: InjectParameterValue[] = [];
 
-  for (const param of config.modelParams.horizontal) {
+  for (const param of modelParameters.horizontal) {
     const value = config.leftSide ? param.max : param.min;
     parameterValues.push({
       id: param.name,
@@ -69,7 +117,7 @@ export function flinchReturn(
     });
   }
 
-  for (const param of config.modelParams.vertical) {
+  for (const param of modelParameters.vertical) {
     let value = config.angle > 0 ? param.min : param.max;
     value = (value * Math.abs(config.angle)) / 45;
 
@@ -80,7 +128,7 @@ export function flinchReturn(
   }
 
   if (config.eyeState !== EyesMode.Unchanged) {
-    for (const param of config.modelParams.eyes) {
+    for (const param of modelParameters.eyes) {
       let value =
         (config.leftSide ? param.max : param.min) *
         config.magnitude *

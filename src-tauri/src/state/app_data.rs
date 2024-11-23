@@ -216,3 +216,37 @@ pub enum EyesMode {
     /// Eyes should be closed
     Closed,
 }
+
+/// Configuration for an individual throwable item
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThrowableConfig {
+    /// Name of the throwable item
+    pub name: String,
+    /// Image to use for the throwable item
+    pub image: ThrowableImageConfig,
+    /// Optional sound to play upon impact
+    pub sound: Option<ImpactSoundConfig>,
+}
+
+/// Configuration for a throwable image
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThrowableImageConfig {
+    /// Src URL for the image
+    pub src: String,
+    /// Weight of impact the image has
+    pub weight: u32,
+    /// Scale of the image 0-1
+    pub scale: f32,
+    /// Whether to allow pixelation when rendering at a
+    /// different scale
+    pub pixelate: bool,
+}
+
+/// Configuration for a throwable impact sound
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImpactSoundConfig {
+    /// Src URL for the image
+    pub src: String,
+    /// Volume of the sound 0-1
+    pub volume: f32,
+}

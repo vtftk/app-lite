@@ -9,14 +9,11 @@ import {
   requestCurrentModel,
   requestInputParameterList,
 } from "./vtube-studio/model";
-import {
-  ImageConfig,
-  loadThrowableResources,
-  throwItem,
-} from "./vtube-studio/throw-item";
+import { loadThrowableResources, throwItem } from "./vtube-studio/throw-item";
 import { createEventSource } from "./vtftk/events";
 import { beginCalibrationStep } from "./vtftk/calibration";
 import { CalibrationStep } from "./vtftk/calibration-types";
+import { ThrowableConfig } from "./vtftk/types";
 
 async function load() {
   const appData = await getAppData();
@@ -48,14 +45,23 @@ async function load() {
       inputParameters.defaultParameters
     );
 
-    const imageConfig: ImageConfig = {
-      pixel: false,
-      scale: 0.5,
-      src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
-      weight: 1,
+    const throwableConfig: ThrowableConfig = {
+      name: "Heart",
+      image: {
+        pixelate: false,
+        scale: 0.5,
+        src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
+        weight: 1,
+      },
+      sound: null,
     };
 
-    const { image, audio } = await loadThrowableResources(imageConfig, null);
+    const { image, audio } = await loadThrowableResources(
+      throwableConfig.image,
+      throwableConfig.sound
+    );
+
+    // Failed to load the image for the throwable
     if (!image) {
       return;
     }
@@ -65,11 +71,8 @@ async function load() {
         throwItem(
           vtSocket,
           appData,
-          {
-            imageConfig,
-            soundConfig: null,
-            modelParameters,
-          },
+          modelParameters,
+          throwableConfig,
           image,
           audio
         )

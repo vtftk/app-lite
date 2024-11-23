@@ -1,3 +1,5 @@
+type Option<T> = T | null;
+
 export type MinMax = {
   min: number;
   max: number;
@@ -51,4 +53,22 @@ export enum EyesMode {
 export type VTubeStudioConfig = {
   host: string;
   port: number;
+};
+
+export type ThrowableConfig = {
+  name: string;
+  image: ThrowableImageConfig;
+  sound: Option<ImpactSoundConfig>;
+};
+
+export type ThrowableImageConfig = {
+  src: string;
+  weight: number;
+  scale: number;
+  pixelate: boolean;
+};
+
+export type ImpactSoundConfig = {
+  src: string;
+  volume: number;
 };
