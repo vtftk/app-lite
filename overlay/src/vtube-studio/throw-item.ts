@@ -202,11 +202,10 @@ async function handleThrowableImpact(
   }
 
   // Make the VTuber model flinch from the impact
-  flinch(socket, {
+  flinch(socket, modelParameters, {
     angle,
     eyeState: appData.model.eyes_on_hit,
     magnitude: config.image.weight,
-    modelParameters,
     leftSide,
     returnSpeed: 0.3,
   });
