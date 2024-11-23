@@ -82,6 +82,8 @@ pub fn run() {
             commands::auth::open_twitch_oauth_uri,
             commands::calibration::set_calibration_step,
             commands::throw::test_throw,
+            commands::data::get_app_data,
+            commands::data::get_runtime_app_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

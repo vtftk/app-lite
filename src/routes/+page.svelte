@@ -4,6 +4,7 @@
   import { twitchAuthState } from "$lib/globalStores";
   import "$lib/api/events";
   import Calibration from "$lib/sections/Calibration.svelte";
+  import { createRuntimeAppDataQuery } from "$lib/api/runtimeAppData";
 
   let name = $state("");
   let greetMsg = $state("");
@@ -29,11 +30,16 @@
       amount: 11,
     });
   }
+
+  const runtimeAppData = createRuntimeAppDataQuery();
 </script>
 
 <main class="container">
-  {#if $twitchAuthState}
+  {#if $runtimeAppData.isLoading}
+    Loading data...
+  {:else if $twitchAuthState}
     <Calibration />
+
     <button onclick={testThrow}>Test throw</button>
   {:else}
     <TwitchOAuth />
