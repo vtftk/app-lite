@@ -1,12 +1,12 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Context;
-use http::server::EventRecvHandle;
-use log::debug;
+use events::{EventMessage, EventRecvHandle};
+use log::{debug, error};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
-use tauri::Manager;
+use tauri::{App, Manager};
 use tokio::sync::broadcast;
-use twitch::manager::TwitchManager;
+use twitch::manager::{TwitchEvent, TwitchManager};
 use twitch_api::{
     twitch_oauth2::{AccessToken, UserToken},
     HelixClient,
@@ -14,6 +14,7 @@ use twitch_api::{
 
 mod commands;
 mod constants;
+mod events;
 mod http;
 mod state;
 mod twitch;
@@ -25,74 +26,52 @@ pub fn run() {
     run_inner();
 }
 
+fn create_event_channel() -> (broadcast::Sender<EventMessage>, EventRecvHandle) {
+    let (event_tx, rx) = broadcast::channel(10);
+    let event_rx = EventRecvHandle(rx);
+
+    (event_tx, event_rx)
+}
+
 fn run_inner() {
     env_logger::init();
 
     tauri::Builder::default()
         .setup(move |app| {
-            // Create the HelixClient, which is used to make requests to the Twitch API
-            let client: HelixClient<reqwest::Client> = HelixClient::default();
+            let handle = app.handle();
 
-            let (event_tx, rx) = broadcast::channel(10);
-            let event_recv = EventRecvHandle(rx);
+            let (twitch_manager, twitch_event_rx) =
+                TwitchManager::new(HelixClient::default(), handle.clone());
+            let (event_tx, event_rx) = create_event_channel();
 
-            let app_data_path = app
-                .path()
-                .app_data_dir()
-                .expect("failed to get app data dir");
-            let app_data_file = app_data_path.join("data.json");
-
-            debug!("app data path: {:?}", app_data_path);
-
-            let app_data = tauri::async_runtime::block_on(AppDataStore::load(app_data_file))
+            let app_data = tauri::async_runtime::block_on(load_app_data(app))
                 .expect("failed to load app data");
 
             let runtime_app_data = RuntimeAppDataStore::default();
-
-            let handle = app.handle().clone();
-
-            let (twitch_manager, mut twitch_event_rx) =
-                TwitchManager::new(client.clone(), handle.clone());
-            let twitch_manager = Arc::new(twitch_manager);
 
             app.manage(app_data.clone());
             app.manage(runtime_app_data.clone());
             app.manage(event_tx.clone());
             app.manage(twitch_manager.clone());
 
-            _ = tauri::async_runtime::spawn({
-                let twitch_manager = twitch_manager.clone();
-                let helix_client = client.clone();
-                let app_data = app_data.clone();
+            // Attempt to authenticate with twitch using the saved token
+            _ = tauri::async_runtime::spawn(attempt_twitch_auth_existing_token(
+                app_data.clone(),
+                twitch_manager.clone(),
+            ));
 
-                async move {
-                    {
-                        let app_data = app_data.read().await;
-                        if let Some(access_token) = app_data
-                            .twitch
-                            .access_token
-                            .as_ref()
-                            .and_then(|access_token| AccessToken::from_str(access_token).ok())
-                        {
-                            if let Ok(token) =
-                                UserToken::from_existing(&helix_client, access_token, None, None)
-                                    .await
-                                    .context("failed to create user token")
-                            {
-                                twitch_manager.set_authenticated(token).await;
-                            }
-                        }
-                    }
+            // Handle events triggered by twitch
+            _ = tauri::async_runtime::spawn(handle_twitch_events(
+                app_data.clone(),
+                twitch_event_rx,
+                event_tx.clone(),
+            ));
 
-                    while let Ok(_event) = twitch_event_rx.recv().await {}
-                }
-            });
-
+            // Run HTTP server
             _ = tauri::async_runtime::spawn(async move {
                 _ = http::server::start(
-                    client,
-                    event_recv,
-                    handle,
+                    event_rx,
+                    handle.clone(),
                     twitch_manager,
                     app_data,
                     runtime_app_data,
@@ -114,4 +93,72 @@ fn run_inner() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+async fn load_app_data(app: &App) -> anyhow::Result<AppDataStore> {
+    let app_data_path = app
+        .path()
+        .app_data_dir()
+        .context("failed to get app data dir")?;
+    let app_data_file = app_data_path.join("data.json");
+
+    debug!("app data path: {:?}", app_data_path);
+
+    let app_data = AppDataStore::load(app_data_file)
+        .await
+        .context("failed to load app data")?;
+
+    Ok(app_data)
+}
+
+/// Attempts to authenticate with twitch using an existing access token
+async fn attempt_twitch_auth_existing_token(
+    app_data_store: AppDataStore,
+    twitch_manager: Arc<TwitchManager>,
+) {
+    let app_data = app_data_store.read().await;
+
+    let access_token = match app_data.twitch.access_token.as_ref() {
+        Some(value) => value,
+        None => return,
+    };
+
+    let access_token = AccessToken::from(access_token.as_str());
+
+    // Create user token (Validates it with the twitch backend)
+    let user_token = match UserToken::from_existing(
+        &twitch_manager.helix_client,
+        access_token,
+        None,
+        None,
+    )
+    .await
+    {
+        Ok(value) => value,
+        Err(err) => {
+            error!("stored access token is invalid: {}", err);
+
+            // Drop read access to app data
+            drop(app_data);
+
+            // Clear twitch token
+            _ = app_data_store
+                .write(|app_data| {
+                    app_data.twitch.access_token = None;
+                })
+                .await;
+
+            return;
+        }
+    };
+
+    twitch_manager.set_authenticated(user_token).await;
+}
+
+async fn handle_twitch_events(
+    app_data: AppDataStore,
+    mut twitch_event_rx: broadcast::Receiver<TwitchEvent>,
+    event_sender: broadcast::Sender<EventMessage>,
+) {
+    while let Ok(_event) = twitch_event_rx.recv().await {}
 }

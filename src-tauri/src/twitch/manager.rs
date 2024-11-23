@@ -1,9 +1,9 @@
-use std::{arch, os::windows::io::AsRawSocket, sync::Arc};
+use std::sync::Arc;
 
 use log::error;
 use tauri::{AppHandle, Emitter};
 use tokio::{
-    sync::{broadcast, mpsc, Mutex},
+    sync::{broadcast, Mutex},
     task::AbortHandle,
 };
 use twitch_api::{
@@ -22,7 +22,7 @@ use twitch_api::{
 use super::websocket::WebsocketClient;
 
 pub struct TwitchManager {
-    helix_client: HelixClient<'static, reqwest::Client>,
+    pub helix_client: HelixClient<'static, reqwest::Client>,
     state: Mutex<TwitchManagerState>,
     tx: broadcast::Sender<TwitchEvent>,
     app_handle: AppHandle,
@@ -32,15 +32,15 @@ impl TwitchManager {
     pub fn new(
         helix_client: HelixClient<'static, reqwest::Client>,
         app_handle: AppHandle,
-    ) -> (Self, broadcast::Receiver<TwitchEvent>) {
+    ) -> (Arc<Self>, broadcast::Receiver<TwitchEvent>) {
         let (tx, rx) = broadcast::channel(10);
         (
-            Self {
+            Arc::new(Self {
                 helix_client,
                 state: Default::default(),
                 tx,
                 app_handle,
-            },
+            }),
             rx,
         )
     }
@@ -143,12 +143,11 @@ impl Drop for WebsocketManagedTask {
 impl WebsocketManagedTask {
     pub fn create(
         twitch_manager: Arc<TwitchManager>,
-        client: HelixClient<'static, reqwest::Client>,
         tx: broadcast::Sender<TwitchEvent>,
         token: UserToken,
     ) -> WebsocketManagedTask {
         let abort_handle = tokio::spawn(async move {
-            let ws = WebsocketClient::new(client, tx, token);
+            let ws = WebsocketClient::new(twitch_manager.helix_client.clone(), tx, token);
             if let Err(err) = ws.run().await {
                 error!("websocket error: {:?}", err);
                 twitch_manager.reset().await;
@@ -165,12 +164,8 @@ impl TwitchManager {
         {
             let lock = &mut *self.state.lock().await;
 
-            let websocket = WebsocketManagedTask::create(
-                self.clone(),
-                self.helix_client.clone(),
-                self.tx.clone(),
-                token.clone(),
-            );
+            let websocket =
+                WebsocketManagedTask::create(self.clone(), self.tx.clone(), token.clone());
 
             *lock = TwitchManagerState::Authenticated {
                 token,
