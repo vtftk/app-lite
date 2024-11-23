@@ -17,6 +17,9 @@ export class VTubeStudioWebSocket {
   private requestID: number;
   private requestHandlers: Map<number, PromiseExecutor>;
 
+  onDisconnect: VoidFunction | undefined;
+  onConnected: VoidFunction | undefined;
+
   constructor(host: string, port: number) {
     this.host = host;
     this.port = port;
@@ -38,11 +41,14 @@ export class VTubeStudioWebSocket {
 
           console.debug("VTube studio authorization complete");
 
+          if (this.onConnected) this.onConnected();
           resolve(socket);
         };
 
         this.websocket.onmessage = this.handleSocketMessage.bind(this);
         this.websocket.onclose = (event: CloseEvent) => {
+          if (this.onDisconnect) this.onDisconnect();
+
           console.warn(
             "VTube studio WebSocket closed:",
             event.code,

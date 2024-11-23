@@ -12,6 +12,7 @@ import {
 import { createEventSource } from "./vtftk/events";
 import { beginCalibrationStep } from "./vtftk/calibration";
 import { CalibrationStep } from "./vtftk/calibration-types";
+import { setRuntimeData } from "./vtftk/api";
 
 async function load() {
   const appData = await getAppData();
@@ -20,6 +21,7 @@ async function load() {
     appData.vtube_studio.host,
     appData.vtube_studio.port
   );
+
   await vtSocket.connect();
 
   console.debug("Connected to VTube studio");

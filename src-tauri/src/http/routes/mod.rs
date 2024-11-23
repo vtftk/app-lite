@@ -17,5 +17,7 @@ pub fn router() -> Router {
             "/calibration",
             post(calibration::handle_calibration_progress),
         )
-        .route("/app-data", get(data::handle_app_data))
+        .route("/app-data", get(data::get_app_data))
+        .route("/runtime-app-data", get(data::get_runtime_data))
+        .route("/runtime-app-data", post(data::set_runtime_data))
 }

@@ -23,17 +23,6 @@ mod twitch;
 /// from the macro
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    run_inner();
-}
-
-fn create_event_channel() -> (broadcast::Sender<EventMessage>, EventRecvHandle) {
-    let (event_tx, rx) = broadcast::channel(10);
-    let event_rx = EventRecvHandle(rx);
-
-    (event_tx, event_rx)
-}
-
-fn run_inner() {
     env_logger::init();
 
     tauri::Builder::default()
@@ -47,10 +36,13 @@ fn run_inner() {
             let app_data = tauri::async_runtime::block_on(load_app_data(app))
                 .expect("failed to load app data");
 
-            let runtime_app_data = RuntimeAppDataStore::default();
+            let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
+            // Provide app data and runtime app data stores
             app.manage(app_data.clone());
             app.manage(runtime_app_data.clone());
+
+            // Provide access to twitch manager and event sender
             app.manage(event_tx.clone());
             app.manage(twitch_manager.clone());
 
@@ -93,6 +85,13 @@ fn run_inner() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn create_event_channel() -> (broadcast::Sender<EventMessage>, EventRecvHandle) {
+    let (event_tx, rx) = broadcast::channel(10);
+    let event_rx = EventRecvHandle(rx);
+
+    (event_tx, event_rx)
 }
 
 async fn load_app_data(app: &App) -> anyhow::Result<AppDataStore> {

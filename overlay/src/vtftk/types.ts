@@ -72,3 +72,8 @@ export type ImpactSoundConfig = {
   src: string;
   volume: number;
 };
+
+export type RuntimeAppData = {
+  model_id: string | null;
+  vtube_studio_connected: boolean;
+};
