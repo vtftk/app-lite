@@ -264,16 +264,77 @@ pub struct ThrowableCollection {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RedeemConfig {
+pub struct EventConfig {
+    /// Unique ID of the event
+    pub id: Uuid,
+
+    /// Whether the event is enabled
     pub enabled: bool,
-    pub reward_id: String,
-    pub outcome: RedeemOutcome,
+
+    /// Input that should trigger the event
+    pub trigger: EventTrigger,
+
+    /// Outcome the event should trigger
+    pub outcome: EventOutcome,
+
+    /// Cooldown between each trigger of the even
+    pub cooldown: u32,
+
+    /// Minimum required role to trigger the event
+    pub require_role: MinimumRequireRole,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum RedeemOutcome {
+pub enum MinimumRequireRole {
+    None,
+    Mod,
+    Vip,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EventTrigger {
+    /// Redeem was triggered
+    Redeem {
+        /// ID of the reward required
+        reward_id: String,
+    },
+    /// Command was sent
+    Command {
+        /// Command message required
+        message: String,
+    },
+    /// User followed
+    Follow,
+    /// User subscribed
+    Subscription,
+    /// User gifted subscription
+    GiftedSubscription,
+    /// User gifts bits
+    Bits {
+        /// Minimum bits to trigger the event
+        min_bits: u32,
+        /// Maximum throws to produce
+        max_throws: u32,
+    },
+    /// Channel has been raided
+    Raid {
+        /// Minimum raiders required to trigger
+        min_raiders: u32,
+        /// Minimum and maximum throws to create
+        throws: MinMax<u32>,
+        /// Whether to throw channel emotes
+        throw_channel_emotes: bool,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EventOutcome {
+    /// Throw a random throwable
     Random,
+    /// Throw a random barrage of throwables
     RandomBarrage,
+    /// Throw a specific throwable
     Throwable { throwable_id: Uuid },
+    /// Throw a specific throwable collection
     Collection { collection_id: Uuid },
 }
