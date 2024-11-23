@@ -74,6 +74,7 @@
       }
 
       const throwableConfig: ThrowableConfig = {
+        id: self.crypto.randomUUID(),
         image: imageConfig,
         sound: soundConfig,
         name: values.name,

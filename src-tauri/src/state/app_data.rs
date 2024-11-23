@@ -9,6 +9,7 @@ use anyhow::Context;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AppDataStore {
@@ -221,6 +222,7 @@ pub enum EyesMode {
 /// Configuration for an individual throwable item
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThrowableConfig {
+    pub id: Uuid,
     /// Name of the throwable item
     pub name: String,
     /// Image to use for the throwable item
@@ -250,4 +252,28 @@ pub struct ImpactSoundConfig {
     pub src: String,
     /// Volume of the sound 0-1
     pub volume: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThrowableCollection {
+    pub id: Uuid,
+    pub name: String,
+    pub throwable_id: Uuid,
+    pub amount: u32,
+    pub throwables_config_override: ThrowablesConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedeemConfig {
+    pub enabled: bool,
+    pub reward_id: String,
+    pub outcome: RedeemOutcome,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum RedeemOutcome {
+    Random,
+    RandomBarrage,
+    Throwable { throwable_id: Uuid },
+    Collection { collection_id: Uuid },
 }

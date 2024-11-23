@@ -58,6 +58,7 @@ export type VTubeStudioConfig = {
 };
 
 export type ThrowableConfig = {
+  id: string;
   name: string;
   image: ThrowableImageConfig;
   sound: Option<ImpactSoundConfig>;
