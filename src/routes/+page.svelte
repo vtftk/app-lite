@@ -13,11 +13,28 @@
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     greetMsg = await invoke("greet", { name });
   }
+
+  async function testThrow() {
+    await invoke("test_throw", {
+      config: {
+        name: "Heart",
+        image: {
+          pixelate: false,
+          scale: 0.5,
+          src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
+          weight: 1,
+        },
+        sound: null,
+      },
+      amount: 11,
+    });
+  }
 </script>
 
 <main class="container">
   {#if $twitchAuthState}
     <Calibration />
+    <button onclick={testThrow}>Test throw</button>
   {:else}
     <TwitchOAuth />
   {/if}

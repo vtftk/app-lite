@@ -110,6 +110,7 @@ fn run_inner() {
             commands::auth::is_authenticated,
             commands::auth::open_twitch_oauth_uri,
             commands::calibration::set_calibration_step,
+            commands::throw::test_throw,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

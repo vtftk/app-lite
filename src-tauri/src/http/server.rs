@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use super::error::HttpResult;
 use crate::constants::LOCAL_SERVER_PORT;
-use crate::state::app_data::{AppData, AppDataStore, MinMax, ModelData, ModelId};
+use crate::state::app_data::{AppData, AppDataStore, MinMax, ModelData, ModelId, ThrowableConfig};
 use crate::state::runtime_app_data::RuntimeAppDataStore;
 use crate::twitch::manager::TwitchManager;
 use anyhow::Context;
@@ -211,7 +211,18 @@ pub enum EventMessage {
     // Tells any connected browser apps to refresh
     Refresh,
     // Sets the current calibration step
-    SetCalibrationStep { step: CalibrationStep },
+    SetCalibrationStep {
+        step: CalibrationStep,
+    },
+    // Throw an item
+    Throw {
+        config: ThrowableConfig,
+    },
+    // Throw many items
+    ThrowMany {
+        config: ThrowableConfig,
+        amount: u32,
+    },
 }
 
 async fn handle_sse(
