@@ -4,31 +4,8 @@
   import Calibration from "$lib/sections/Calibration.svelte";
   import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
   import { derived } from "svelte/store";
-
-  let name = $state("");
-  let greetMsg = $state("");
-
-  async function greet(event: Event) {
-    event.preventDefault();
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    greetMsg = await invoke("greet", { name });
-  }
-
-  async function testThrow() {
-    await invoke("test_throw", {
-      config: {
-        name: "Heart",
-        image: {
-          pixelate: false,
-          scale: 0.5,
-          src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
-          weight: 1,
-        },
-        sound: null,
-      },
-      amount: 11,
-    });
-  }
+  import Throwables from "$lib/sections/Throwables.svelte";
+  import type { ThrowableConfig } from "$lib/api/types";
 
   const appData = getAppData();
   const runtimeAppData = getRuntimeAppData();
@@ -46,6 +23,19 @@
       return modelData !== undefined;
     }
   );
+
+  const testData: ThrowableConfig[] = [
+    {
+      name: "Heart",
+      image: {
+        pixelate: false,
+        scale: 0.5,
+        src: "https://clipartcraft.com/images/transparent-hearts-tiny-3.png",
+        weight: 1,
+      },
+      sound: null,
+    },
+  ];
 </script>
 
 <main class="container">
@@ -57,5 +47,5 @@
     <Calibration />
   {/if}
 
-  <button onclick={testThrow}>Test throw</button>
+  <Throwables items={[...testData, ...testData, ...testData]} />
 </main>

@@ -1,4 +1,3 @@
-import { twitchAuthState } from "$lib/globalStores";
 import { listen } from "@tauri-apps/api/event";
 import { queryClient } from "./utils";
 import { RUNTIME_APP_DATA_KEY } from "./runtimeAppData";

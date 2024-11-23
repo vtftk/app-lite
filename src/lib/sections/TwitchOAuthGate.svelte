@@ -3,6 +3,7 @@
   import TwitchOAuth from "./TwitchOAuth.svelte";
 
   const isAuthenticated = createIsAuthenticatedQuery();
+  console.log($isAuthenticated);
 </script>
 
 {#if $isAuthenticated.isLoading}
