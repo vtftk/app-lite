@@ -337,4 +337,6 @@ pub enum EventOutcome {
     Throwable { throwable_id: Uuid },
     /// Throw a specific throwable collection
     Collection { collection_id: Uuid },
+    /// Trigger a VTube studio hotkey
+    TriggerHotkey { hotkey_id: String },
 }
