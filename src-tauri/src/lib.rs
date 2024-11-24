@@ -86,6 +86,7 @@ pub fn run() {
             commands::data::get_runtime_app_data,
             commands::data::set_app_data,
             commands::data::upload_file,
+            commands::twitch::get_redeems_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

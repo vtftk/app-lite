@@ -49,6 +49,14 @@ impl TwitchManager {
         let lock = &*self.state.lock().await;
         matches!(lock, TwitchManagerState::Authenticated { .. })
     }
+
+    pub async fn get_user_token(&self) -> Option<UserToken> {
+        let lock = &*self.state.lock().await;
+        match lock {
+            TwitchManagerState::Initial => None,
+            TwitchManagerState::Authenticated { token, _websocket } => Some(token.clone()),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
