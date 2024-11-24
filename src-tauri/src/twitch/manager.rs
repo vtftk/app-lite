@@ -61,68 +61,95 @@ impl TwitchManager {
 
 #[derive(Debug, Clone)]
 #[allow(unused)]
+pub struct TwitchEventRedeem {
+    pub id: RedemptionId,
+    pub reward: Reward,
+    pub user_id: UserId,
+    pub user_name: UserName,
+    pub user_display_name: DisplayName,
+}
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventCheerBits {
+    // Total bits gifted
+    pub bits: i64,
+    pub anonymous: bool,
+
+    // User details empty when cheer is anonymous
+    pub user_id: Option<UserId>,
+    pub user_name: Option<UserName>,
+    pub user_display_name: Option<DisplayName>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventFollow {
+    pub user_id: UserId,
+    pub user_name: UserName,
+    pub user_display_name: DisplayName,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventSub {
+    pub is_gift: bool,
+    pub tier: SubscriptionTier,
+    pub user_id: UserId,
+    pub user_name: UserName,
+    pub user_display_name: DisplayName,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventGiftSub {
+    pub anonymous: bool,
+
+    // Total subs gifted
+    pub total: i64,
+
+    // Total gifts user has given (If not anonymous)
+    pub cumulative_total: Option<i64>,
+    pub tier: SubscriptionTier,
+
+    // User details empty when cheer is anonymous
+    pub user_id: Option<UserId>,
+    pub user_name: Option<DisplayName>,
+    pub user_display_name: Option<UserName>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventReSub {
+    pub cumulative_months: i64,
+    pub duration_months: i64,
+    pub message: SubscriptionMessage,
+    pub streak_months: Option<i64>,
+    pub tier: SubscriptionTier,
+    pub user_id: UserId,
+    pub user_name: UserName,
+    pub user_display_name: DisplayName,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventChatMsg {
+    pub user_id: UserId,
+    pub user_name: UserName,
+    pub user_display_name: UserName,
+    pub message: eventsub::channel::chat::Message,
+    pub cheer: Option<Cheer>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
 pub enum TwitchEvent {
-    Redeem {
-        id: RedemptionId,
-        reward: Reward,
-        user_id: UserId,
-        user_name: UserName,
-        user_display_name: DisplayName,
-    },
-    CheerBits {
-        // Total bits gifted
-        bits: i64,
-        anonymous: bool,
-
-        // User details empty when cheer is anonymous
-        user_id: Option<UserId>,
-        user_name: Option<UserName>,
-        user_display_name: Option<DisplayName>,
-    },
-    Follow {
-        user_id: UserId,
-        user_name: UserName,
-        user_display_name: DisplayName,
-    },
-    Sub {
-        is_gift: bool,
-        tier: SubscriptionTier,
-        user_id: UserId,
-        user_name: UserName,
-        user_display_name: DisplayName,
-    },
-    GiftSub {
-        anonymous: bool,
-
-        // Total subs gifted
-        total: i64,
-
-        // Total gifts user has given (If not anonymous)
-        cumulative_total: Option<i64>,
-        tier: SubscriptionTier,
-
-        // User details empty when cheer is anonymous
-        user_id: Option<UserId>,
-        user_name: Option<DisplayName>,
-        user_display_name: Option<UserName>,
-    },
-    ResubMsg {
-        cumulative_months: i64,
-        duration_months: i64,
-        message: SubscriptionMessage,
-        streak_months: Option<i64>,
-        tier: SubscriptionTier,
-        user_id: UserId,
-        user_name: UserName,
-        user_display_name: DisplayName,
-    },
-    ChatMsg {
-        user_id: UserId,
-        user_name: UserName,
-        user_display_name: UserName,
-        message: eventsub::channel::chat::Message,
-        cheer: Option<Cheer>,
-    },
+    Redeem(TwitchEventRedeem),
+    CheerBits(TwitchEventCheerBits),
+    Follow(TwitchEventFollow),
+    Sub(TwitchEventSub),
+    GiftSub(TwitchEventGiftSub),
+    ResubMsg(TwitchEventReSub),
+    ChatMsg(TwitchEventChatMsg),
 }
 
 #[derive(Default)]

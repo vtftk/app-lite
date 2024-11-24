@@ -16,10 +16,16 @@ pub enum EventMessage {
     Throw {
         config: ThrowableConfig,
     },
+
     // Throw many items
     ThrowMany {
         config: ThrowableConfig,
         amount: u32,
+    },
+
+    // Throw many items
+    ThrowDifferent {
+        configs: Vec<ThrowableConfig>,
     },
 }
 

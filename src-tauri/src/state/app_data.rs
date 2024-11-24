@@ -336,6 +336,8 @@ pub enum EventOutcome {
     RandomBarrage,
     /// Throw a specific throwable
     Throwable { throwable_id: Uuid },
+    /// Throw a throwable barrage
+    ThrowableBarrage { throwable_id: Uuid },
     /// Throw a specific throwable collection
     Collection { collection_id: Uuid },
     /// Trigger a VTube studio hotkey
