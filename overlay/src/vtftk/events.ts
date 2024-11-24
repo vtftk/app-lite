@@ -52,6 +52,18 @@ export function createEventSource(data: EventSourceData) {
         }
         break;
       }
+
+      case "ThrowDifferent": {
+        if (data.vtSocket && data.modelParameters) {
+          onThrowDifferentEvent(
+            data.appData,
+            data.vtSocket,
+            data.modelParameters,
+            event.configs
+          );
+        }
+        break;
+      }
     }
   };
 
@@ -109,5 +121,42 @@ async function onThrowManyEvent(
     Array.from(Array(amount)).map(() =>
       throwItem(vtSocket, appData, modelParameters, config, image, audio)
     )
+  );
+}
+
+async function onThrowDifferentEvent(
+  appData: AppData,
+  vtSocket: VTubeStudioWebSocket,
+  modelParameters: ModelParameters,
+  configs: ThrowableConfig[]
+) {
+  // Load all resources
+  const resources = await Promise.all(
+    configs.map(async (config) => {
+      const { image, audio } = await loadThrowableResources(
+        config.image,
+        config.sound
+      );
+
+      return { config, image, audio };
+    })
+  );
+
+  await Promise.all(
+    resources.map(({ config, image, audio }) => {
+      // Failed to load the image for the throwable
+      if (!image) {
+        return Promise.resolve();
+      }
+
+      return throwItem(
+        vtSocket,
+        appData,
+        modelParameters,
+        config,
+        image,
+        audio
+      );
+    })
   );
 }
