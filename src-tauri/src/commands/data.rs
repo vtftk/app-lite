@@ -12,12 +12,7 @@ use uuid::Uuid;
 
 #[tauri::command]
 pub async fn get_app_data(app_data: tauri::State<'_, AppDataStore>) -> Result<AppData, ()> {
-    let mut data = app_data.read().await.clone();
-
-    // Hide twitch access token from frontend
-    data.twitch_config.access_token = None;
-
-    Ok(data)
+    Ok(app_data.read().await.clone())
 }
 
 #[tauri::command]

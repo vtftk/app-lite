@@ -175,8 +175,10 @@ async fn handle_twitch_events(
         let app_data = &*app_data.read().await;
         let events = &app_data.events;
 
+        debug!("twitch event received: {:?}", event);
+
         match event {
-            TwitchEvent::Redeem(event) => handle_redeem_event(&app_data, &event_sender, event),
+            TwitchEvent::Redeem(event) => handle_redeem_event(app_data, &event_sender, event),
             TwitchEvent::CheerBits(event) => {
                 handle_cheer_bits_event(&events, &event_sender, event).await
             }
@@ -198,15 +200,22 @@ fn handle_redeem_event(
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventRedeem,
 ) {
+    debug!("twitch redeem event received: {:?}", event);
+
     let app_data = Arc::new(app_data.clone());
 
     for event_config in &app_data.events {
-        let expected_reward_id = event.id.to_string();
+        let event_reward_id = event.reward.id.to_string();
         // Filter out events  that don't match
 
-        if !matches!(&event_config.trigger, EventTrigger::Redeem { reward_id } if expected_reward_id.eq(reward_id))
-        {
-            continue;
+        match &event_config.trigger {
+            EventTrigger::Redeem { reward_id } => {
+                debug!("checking reward {} {}", event_reward_id, reward_id);
+                if event_reward_id.ne(reward_id) {
+                    continue;
+                }
+            }
+            _ => continue,
         }
 
         // TODO: TRIGGER
@@ -226,6 +235,8 @@ fn execute_event_config(
 
     // TODO: WAIT FOR COOLDOWN TO COMPLETE
     // TODO: CHECK USER HAS REQUIRED ROLE
+
+    debug!("executing event outcome: {:?}", event_config);
 
     match event_config.outcome {
         EventOutcome::Random => {

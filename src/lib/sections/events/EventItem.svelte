@@ -13,7 +13,7 @@
 
 <div class="event">
   <div class="event__content">
-    <p class="event__name">{config.trigger.type}</p>
+    <p class="event__name">{JSON.stringify(config)}</p>
   </div>
 
   <div class="event__actions">
