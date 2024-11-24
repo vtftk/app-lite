@@ -12,7 +12,6 @@
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
 
   const appData = getAppData();
-
   const appDataMutation = createAppDateMutation();
 
   const schema = z.object({
@@ -118,7 +117,7 @@
     </div>
 
     <div>
-      <label for="Scale">Scale</label>
+      <label for="scale">Scale</label>
       <input
         type="number"
         id="scale"

@@ -13,6 +13,7 @@ export type AppData = {
   models: Record<ModelId, ModelData>;
 
   items: ThrowableConfig[];
+  events: EventConfig[];
 };
 
 export type ThrowablesConfig = {
@@ -80,3 +81,124 @@ export type RuntimeAppData = {
   model_id: string | null;
   vtube_studio_connected: boolean;
 };
+
+export type ThrowableCollection = {
+  id: string;
+  name: string;
+  throwable_ids: string[];
+  amount: number;
+  throwables_config_override: ThrowablesConfig;
+};
+
+export type EventConfig = {
+  id: string;
+  enabled: boolean;
+  trigger: EventTrigger;
+  outcome: EventOutcome;
+  cooldown: number;
+  require_role: MinimumRequiredRole;
+};
+
+export enum MinimumRequiredRole {
+  None = "None",
+  Vip = "Vip",
+  Mod = "Mod",
+}
+
+export const MINIMUM_REQUIRED_ROLE_VALUES = [
+  MinimumRequiredRole.None,
+  MinimumRequiredRole.Vip,
+  MinimumRequiredRole.Mod,
+] as const;
+
+export const MINIMUM_REQUIRED_ROLE_NAMES: Record<MinimumRequiredRole, string> =
+  {
+    [MinimumRequiredRole.None]: "None",
+    [MinimumRequiredRole.Vip]: "Vip",
+    [MinimumRequiredRole.Mod]: "Moderator",
+  } as const;
+
+export enum EventTriggerType {
+  Redeem = "Redeem",
+  Command = "Command",
+  Follow = "Follow",
+  Subscription = "Subscription",
+  GiftedSubscription = "GiftedSubscription",
+  Bits = "Bits",
+  Raid = "Raid",
+}
+
+export const EVENT_TRIGGER_TYPES = [
+  EventTriggerType.Redeem,
+  EventTriggerType.Command,
+  EventTriggerType.Follow,
+  EventTriggerType.Subscription,
+  EventTriggerType.GiftedSubscription,
+  EventTriggerType.Bits,
+  EventTriggerType.Raid,
+] as const;
+
+export const EVENT_TRIGGER_NAMES: Record<EventTriggerType, string> = {
+  [EventTriggerType.Redeem]: "Redeem",
+  [EventTriggerType.Command]: "Command",
+  [EventTriggerType.Follow]: "Follow",
+  [EventTriggerType.Subscription]: "Subscription",
+  [EventTriggerType.GiftedSubscription]: "Gifted Subscription",
+  [EventTriggerType.Bits]: "Bits",
+  [EventTriggerType.Raid]: "Raid",
+} as const;
+
+export type EventTrigger =
+  | {
+      type: EventTriggerType.Redeem;
+      reward_id: string;
+    }
+  | { type: EventTriggerType.Command; message: string }
+  | { type: EventTriggerType.Follow }
+  | { type: EventTriggerType.Subscription }
+  | { type: EventTriggerType.GiftedSubscription }
+  | { type: EventTriggerType.Bits; min_bits: number; max_throws: number }
+  | {
+      type: EventTriggerType.Raid;
+      min_raiders: number;
+      throws: MinMax;
+    };
+
+export enum EventOutcomeType {
+  Random = "Random",
+  RandomBarrage = "RandomBarrage",
+  Throwable = "Throwable",
+  Collection = "Collection",
+  TriggerHotkey = "TriggerHotkey",
+}
+
+export type EventOutcome =
+  | { type: EventOutcomeType.Random }
+  | { type: EventOutcomeType.RandomBarrage }
+  | {
+      type: EventOutcomeType.Throwable;
+      throwable_id: string;
+    }
+  | {
+      type: EventOutcomeType.Collection;
+      collection_id: string;
+    }
+  | { type: EventOutcomeType.TriggerHotkey; hotkey_id: string };
+
+export const EVENT_OUTCOME_TYPES = [
+  EventOutcomeType.Random,
+  EventOutcomeType.RandomBarrage,
+  EventOutcomeType.Throwable,
+  EventOutcomeType.Collection,
+  EventOutcomeType.TriggerHotkey,
+] as const;
+
+export const EVENT_OUTCOME_NAMES: Record<EventOutcomeType, string> = {
+  [EventOutcomeType.Random]: "Random",
+  [EventOutcomeType.RandomBarrage]: "Random Barrage",
+  [EventOutcomeType.Throwable]: "Throwable",
+  [EventOutcomeType.Collection]: "Collection",
+  [EventOutcomeType.TriggerHotkey]: "Trigger Hotkey",
+} as const;
+
+export type CustomReward = any;

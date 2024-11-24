@@ -135,7 +135,7 @@
     </div>
 
     <div>
-      <label for="Scale">Scale</label>
+      <label for="scale">Scale</label>
       <input
         type="number"
         id="scale"

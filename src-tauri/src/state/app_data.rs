@@ -82,6 +82,7 @@ pub struct AppData {
     pub vtube_studio_config: VTubeStudioConfig,
     pub models: HashMap<ModelId, ModelData>,
     pub items: Vec<ThrowableConfig>,
+    pub events: Vec<EventConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -258,7 +259,7 @@ pub struct ImpactSoundConfig {
 pub struct ThrowableCollection {
     pub id: Uuid,
     pub name: String,
-    pub throwable_id: Uuid,
+    pub throwable_ids: Vec<Uuid>,
     pub amount: u32,
     pub throwables_config_override: ThrowablesConfig,
 }
@@ -292,6 +293,7 @@ pub enum MinimumRequireRole {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum EventTrigger {
     /// Redeem was triggered
     Redeem {
@@ -322,12 +324,11 @@ pub enum EventTrigger {
         min_raiders: u32,
         /// Minimum and maximum throws to create
         throws: MinMax<u32>,
-        /// Whether to throw channel emotes
-        throw_channel_emotes: bool,
     },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum EventOutcome {
     /// Throw a random throwable
     Random,
