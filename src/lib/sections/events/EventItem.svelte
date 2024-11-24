@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import type { EventConfig } from "$lib/api/types";
 
   import SettingsIcon from "~icons/solar/settings-bold";
@@ -9,6 +10,20 @@
   };
 
   const { config }: Props = $props();
+
+  const appData = getAppData();
+  const appDataMutation = createAppDateMutation();
+
+  async function onDelete() {
+    if (!confirm("Are you sure you want to delete this event item?")) {
+      return;
+    }
+
+    await $appDataMutation.mutateAsync({
+      ...$appData,
+      events: $appData.events.filter((event) => event.id !== config.id),
+    });
+  }
 </script>
 
 <div class="event">
@@ -20,7 +35,7 @@
     <a class="throw-button" href="/events/{config.id}">
       <SettingsIcon />
     </a>
-    <button class="throw-button" onclick={() => {}}> <DeleteIcon /> </button>
+    <button class="throw-button" onclick={onDelete}> <DeleteIcon /> </button>
   </div>
 </div>
 
