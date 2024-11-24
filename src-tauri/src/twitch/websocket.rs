@@ -22,7 +22,10 @@ use tungstenite::{
     Message as WebsocketMessage,
 };
 
-use super::manager::TwitchEvent;
+use super::manager::{
+    TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
+    TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
+};
 
 #[derive(Debug, Error)]
 pub enum WebsocketError {
@@ -176,53 +179,53 @@ impl WebsocketClient {
             Event::ChannelPointsCustomRewardRedemptionAddV1(payload) => {
                 let msg: eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1Payload =
                     map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::Redeem {
+                _ = self.tx.send(TwitchEvent::Redeem(TwitchEventRedeem {
                     id: msg.id,
                     reward: msg.reward,
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
-                });
+                }));
             }
 
             // User sends bits
             Event::ChannelCheerV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::CheerBits {
+                _ = self.tx.send(TwitchEvent::CheerBits(TwitchEventCheerBits {
                     bits: msg.bits,
                     anonymous: msg.is_anonymous,
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
-                });
+                }));
             }
 
             // User follows the channel
             Event::ChannelFollowV2(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::Follow {
+                _ = self.tx.send(TwitchEvent::Follow(TwitchEventFollow {
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
-                });
+                }));
             }
 
             // User subscribes to channel (does not include resub)
             Event::ChannelSubscribeV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::Sub {
+                _ = self.tx.send(TwitchEvent::Sub(TwitchEventSub {
                     is_gift: msg.is_gift,
                     tier: msg.tier,
 
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
-                });
+                }));
             }
             // User gifts subscription (1 or more)
             Event::ChannelSubscriptionGiftV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::GiftSub {
+                _ = self.tx.send(TwitchEvent::GiftSub(TwitchEventGiftSub {
                     anonymous: msg.is_anonymous,
                     total: msg.total,
                     cumulative_total: msg.cumulative_total,
@@ -230,12 +233,12 @@ impl WebsocketClient {
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
-                });
+                }));
             }
             // User sends resubscription message (User sub has resubbed, runs when user sends the resub message to chat)
             Event::ChannelSubscriptionMessageV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::ResubMsg {
+                _ = self.tx.send(TwitchEvent::ResubMsg(TwitchEventReSub {
                     cumulative_months: msg.cumulative_months,
                     duration_months: msg.duration_months,
                     message: msg.message,
@@ -245,19 +248,19 @@ impl WebsocketClient {
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
-                });
+                }));
             }
 
             // User sends chat message
             Event::ChannelChatMessageV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::ChatMsg {
+                _ = self.tx.send(TwitchEvent::ChatMsg(TwitchEventChatMsg {
                     user_id: msg.chatter_user_id,
                     user_name: msg.chatter_user_login,
                     user_display_name: msg.chatter_user_name,
                     message: msg.message,
                     cheer: msg.cheer,
-                });
+                }));
             }
 
             _ => {}
