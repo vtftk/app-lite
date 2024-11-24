@@ -40,7 +40,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
-    padding: 1rem;
   }
 
   .create {
