@@ -31,13 +31,19 @@ pub enum EventMessage {
         configs: Vec<ThrowableConfig>,
     },
 
+    // Request the latest set of vtube studio hotkeys
     UpdateHotkeys,
+
+    // Trigger a vtube studio hotkey
     TriggerHotkey {
         hotkey_id: String,
     },
 
+    // Play a sound
     PlaySound {
         config: SoundConfig,
+        /// Delay in milliseconds before the sound is played
+        delay: u32,
     },
 }
 

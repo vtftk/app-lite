@@ -270,6 +270,9 @@ pub struct EventConfig {
     /// Unique ID of the event
     pub id: Uuid,
 
+    /// Name of the event handler
+    pub name: String,
+
     /// Whether the event is enabled
     pub enabled: bool,
 
@@ -344,13 +347,19 @@ pub enum EventOutcome {
     /// Trigger a VTube studio hotkey
     TriggerHotkey { hotkey_id: String },
     /// Trigger a sound
-    PlaySound { sound_id: Uuid },
+    PlaySound {
+        sound_id: Uuid,
+        /// Delay in milliseconds before the sound is played
+        delay: u32,
+    },
 }
 
 /// Configuration for a sound
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SoundConfig {
     pub id: Uuid,
+    /// Name of the sound
+    pub name: String,
     /// Src URL for the image
     pub src: String,
     /// Volume of the sound 0-1

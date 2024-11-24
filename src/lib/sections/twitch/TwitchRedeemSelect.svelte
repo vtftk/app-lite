@@ -11,7 +11,7 @@
   const redeemsList = createGetRedeemsList();
 </script>
 
-<button onclick={refreshRedeemsList}>Refresh Redeems</button>
+<button type="button" onclick={refreshRedeemsList}>Refresh Redeems</button>
 <select {name} {id}>
   {#if $redeemsList.isLoading}
     <option value="" disabled selected>Loading...</option>

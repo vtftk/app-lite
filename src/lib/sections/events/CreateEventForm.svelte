@@ -20,11 +20,13 @@
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
+  import { goto } from "$app/navigation";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
   const schema = z.object({
+    name: z.string().min(1, "You must specify a name"),
     enabled: z.boolean(),
     triggerType: z.enum(EVENT_TRIGGER_TYPES),
     minimumRole: z.enum(MINIMUM_REQUIRED_ROLE_VALUES),
@@ -46,10 +48,13 @@
     throwableThrowableId: z.string(),
     collectionCollectionId: z.string(),
     triggerHotkeyHotkeyId: z.string(),
+    soundId: z.string(),
+    soundDelay: z.number(),
   });
 
   const { form, data } = createForm<z.infer<typeof schema>>({
     initialValues: {
+      name: "",
       enabled: true,
       triggerType: EventTriggerType.Redeem,
       minimumRole: MinimumRequiredRole.None,
@@ -71,6 +76,8 @@
       throwableThrowableId: "",
       collectionCollectionId: "",
       triggerHotkeyHotkeyId: "",
+      soundId: "",
+      soundDelay: 0,
     },
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
@@ -144,10 +151,18 @@
             hotkey_id: values.triggerHotkeyHotkeyId,
           };
           break;
+        case EventOutcomeType.PlaySound:
+          eventOutcome = {
+            type: EventOutcomeType.PlaySound,
+            sound_id: values.soundId,
+            delay: values.soundDelay,
+          };
+          break;
       }
 
       const eventConfig: EventConfig = {
         id: self.crypto.randomUUID(),
+        name: values.name,
         enabled: values.enabled,
         trigger: eventTrigger,
         outcome: eventOutcome,
@@ -159,11 +174,28 @@
         ...$appData,
         events: [...$appData.events, eventConfig],
       });
+
+      goto("/events");
     },
   });
 </script>
 
 <form use:form>
+  <div>
+    <label for="name">Name</label>
+    <input
+      type="text"
+      id="name"
+      name="name"
+      aria-describedby="name-validation"
+    />
+    <p
+      id="name-validation"
+      data-felte-reporter-dom-for="name"
+      aria-live="polite"
+    ></p>
+  </div>
+
   <div>
     <label for="enabled">Enabled</label>
     <input type="checkbox" name="enabled" id="enabled" />
@@ -337,7 +369,9 @@
 
   {#if $data.eventOutcomeType === EventOutcomeType.Throwable}
     <select name="throwableThrowableId" id="throwableThrowableId">
-      <option value={"test"}>TEST</option>
+      {#each $appData.items as item}
+        <option value={item.id}>{item.name}</option>
+      {/each}
     </select>
   {:else if $data.eventOutcomeType === EventOutcomeType.Collection}
     <select name="collectionCollectionId" id="collectionCollectionId">
@@ -345,6 +379,32 @@
     </select>
   {:else if $data.eventOutcomeType === EventOutcomeType.TriggerHotkey}
     <HotkeySelect name="triggerHotkeyHotkeyId" id="triggerHotkeyHotkeyId" />
+  {:else if $data.eventOutcomeType === EventOutcomeType.PlaySound}
+    <select name="soundId" id="soundId">
+      {#each $appData.sounds as sound}
+        <option value={sound.id}>{sound.name}</option>
+      {/each}
+    </select>
+
+    <div>
+      <label for="soundDelay">Sound Delay</label>
+      <p>Delay before the sound is trigged</p>
+      <input
+        type="number"
+        id="soundDelay"
+        name="soundDelay"
+        min="0"
+        max="1"
+        step="0.1"
+        aria-describedby="soundDelay-validation"
+      />
+
+      <p
+        id="soundDelay-validation"
+        data-felte-reporter-dom-for="soundDelay"
+        aria-live="polite"
+      ></p>
+    </div>
   {/if}
 
   <button type="submit">Create</button>

@@ -7,12 +7,7 @@ import { loadThrowableResources, throwItem } from "../vtube-studio/throw-item";
 import { updateRuntimeData } from "./api";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
-import {
-  AppData,
-  ImpactSoundConfig,
-  SoundConfig,
-  ThrowableConfig,
-} from "./types";
+import { AppData, SoundConfig, ThrowableConfig } from "./types";
 
 export type EventSourceData = {
   appData: AppData;
@@ -91,7 +86,7 @@ export function createEventSource(data: EventSourceData) {
 
       case "PlaySound": {
         if (data.vtSocket) {
-          onPlaySoundEvent(event.config);
+          onPlaySoundEvent(event.config, event.delay);
         }
 
         break;
@@ -119,10 +114,11 @@ async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
   return hotkeys;
 }
 
-async function onPlaySoundEvent(config: SoundConfig) {
+async function onPlaySoundEvent(config: SoundConfig, delay: number) {
   const audio = await loadAudio(config.src);
   audio.volume = config.volume;
-  audio.play();
+
+  setTimeout(() => audio.play(), delay);
 }
 
 async function onTriggerHotkeyEvent(

@@ -14,6 +14,7 @@ export type AppData = {
 
   items: ThrowableConfig[];
   events: EventConfig[];
+  sounds: SoundConfig[];
 };
 
 export type ThrowablesConfig = {
@@ -96,8 +97,16 @@ export type ThrowableCollection = {
   throwables_config_override: ThrowablesConfig;
 };
 
+export type SoundConfig = {
+  id: string;
+  name: string;
+  src: string;
+  volume: number;
+};
+
 export type EventConfig = {
   id: string;
+  name: string;
   enabled: boolean;
   trigger: EventTrigger;
   outcome: EventOutcome;
@@ -176,6 +185,7 @@ export enum EventOutcomeType {
   Throwable = "Throwable",
   Collection = "Collection",
   TriggerHotkey = "TriggerHotkey",
+  PlaySound = "PlaySound",
 }
 
 export type EventOutcome =
@@ -189,7 +199,8 @@ export type EventOutcome =
       type: EventOutcomeType.Collection;
       collection_id: string;
     }
-  | { type: EventOutcomeType.TriggerHotkey; hotkey_id: string };
+  | { type: EventOutcomeType.TriggerHotkey; hotkey_id: string }
+  | { type: EventOutcomeType.PlaySound; sound_id: string; delay: number };
 
 export const EVENT_OUTCOME_TYPES = [
   EventOutcomeType.Random,
@@ -197,6 +208,7 @@ export const EVENT_OUTCOME_TYPES = [
   EventOutcomeType.Throwable,
   EventOutcomeType.Collection,
   EventOutcomeType.TriggerHotkey,
+  EventOutcomeType.PlaySound,
 ] as const;
 
 export const EVENT_OUTCOME_NAMES: Record<EventOutcomeType, string> = {
@@ -205,6 +217,7 @@ export const EVENT_OUTCOME_NAMES: Record<EventOutcomeType, string> = {
   [EventOutcomeType.Throwable]: "Throwable",
   [EventOutcomeType.Collection]: "Collection",
   [EventOutcomeType.TriggerHotkey]: "Trigger Hotkey",
+  [EventOutcomeType.PlaySound]: "Play Sound",
 } as const;
 
 export type CustomReward = any;

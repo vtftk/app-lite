@@ -6,6 +6,7 @@
   import SolarBellBoldDuotone from "~icons/solar/bell-bold-duotone";
   import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
 </script>
 
 <nav>
@@ -32,6 +33,14 @@
         href="/events"
         title="Events"
         text="Events that can trigger actions"
+      />
+    </li>
+    <li>
+      <NavButton
+        icon={SolarHeadphonesRoundSoundBoldDuotone}
+        href="/sounds"
+        title="Sounds"
+        text="Sounds that can be triggered"
       />
     </li>
     <li>

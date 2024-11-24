@@ -75,6 +75,7 @@ export type ImpactSoundConfig = {
 
 export type SoundConfig = {
   id: string;
+  name: string;
   src: string;
   volume: number;
 };

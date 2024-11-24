@@ -52,6 +52,7 @@ pub enum FileType {
     ThrowableImage,
     ImpactSound,
     ImpactImage,
+    Sound,
 }
 
 fn get_type_folder(file_type: FileType) -> &'static str {
@@ -59,6 +60,7 @@ fn get_type_folder(file_type: FileType) -> &'static str {
         FileType::ThrowableImage => "throwable_images",
         FileType::ImpactSound => "impact_sounds",
         FileType::ImpactImage => "impact_images",
+        FileType::Sound => "sounds",
     }
 }
 

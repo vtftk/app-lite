@@ -1,12 +1,12 @@
 <script lang="ts">
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type { EventConfig } from "$lib/api/types";
+  import type { SoundConfig } from "$lib/api/types";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   type Props = {
-    config: EventConfig;
+    config: SoundConfig;
   };
 
   const { config }: Props = $props();
@@ -15,24 +15,24 @@
   const appDataMutation = createAppDateMutation();
 
   async function onDelete() {
-    if (!confirm("Are you sure you want to delete this event item?")) {
+    if (!confirm("Are you sure you want to delete this sound item?")) {
       return;
     }
 
     await $appDataMutation.mutateAsync({
       ...$appData,
-      events: $appData.events.filter((event) => event.id !== config.id),
+      sounds: $appData.sounds.filter((sound) => sound.id !== config.id),
     });
   }
 </script>
 
-<div class="event">
-  <div class="event__content">
-    <p class="event__name">{config.name}</p>
+<div class="sound">
+  <div class="sound__content">
+    <p class="sound__name">{config.name}</p>
   </div>
 
-  <div class="event__actions">
-    <a class="throw-button" href="/events/{config.id}">
+  <div class="sound__actions">
+    <a class="throw-button" href="/sounds/{config.id}">
       <SettingsIcon />
     </a>
     <button class="throw-button" onclick={onDelete}> <DeleteIcon /> </button>
@@ -40,7 +40,7 @@
 </div>
 
 <style>
-  .event {
+  .sound {
     background-color: #222;
     border: 1px solid #333;
 
@@ -51,19 +51,19 @@
     padding: 0.5rem;
   }
 
-  .event__content {
+  .sound__content {
     display: flex;
     gap: 0.75rem;
     align-items: center;
   }
 
-  .event__actions {
+  .sound__actions {
     display: flex;
     gap: 0.5rem;
     align-items: center;
   }
 
-  .event__name {
+  .sound__name {
     color: #fff;
     font-weight: bold;
   }

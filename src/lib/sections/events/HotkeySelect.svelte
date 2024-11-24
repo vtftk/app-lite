@@ -11,18 +11,16 @@
   const { name, id }: Props = $props();
 
   const updateHotkeys = () => {
-    console.log($runtimeAppData);
     invoke("update_hotkeys");
   };
 
   const runtimeAppData = getRuntimeAppData();
-  console.log($runtimeAppData);
   onMount(() => {
     updateHotkeys();
   });
 </script>
 
-<button onclick={updateHotkeys}>Refresh Hotkeys</button>
+<button type="button" onclick={updateHotkeys}>Refresh Hotkeys</button>
 <select {name} {id}>
   {#each $runtimeAppData.hotkeys as hotkey}
     <option value={hotkey.hotkey_id}>{hotkey.name}</option>

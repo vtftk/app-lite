@@ -10,6 +10,7 @@
   } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import { goto } from "$app/navigation";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -76,6 +77,8 @@
         ...$appData,
         items: [...$appData.items, throwableConfig],
       });
+
+      goto("/throwables");
     },
   });
 </script>

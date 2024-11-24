@@ -294,7 +294,7 @@ fn execute_event_config(
         EventOutcome::TriggerHotkey { hotkey_id } => {
             _ = event_sender.send(EventMessage::TriggerHotkey { hotkey_id });
         }
-        EventOutcome::PlaySound { sound_id } => {
+        EventOutcome::PlaySound { sound_id, delay } => {
             let sound = app_data.sounds.iter().find(|item| item.id == sound_id);
             let sound = match sound {
                 Some(value) => value,
@@ -303,6 +303,7 @@ fn execute_event_config(
             };
             _ = event_sender.send(EventMessage::PlaySound {
                 config: sound.clone(),
+                delay,
             });
         }
     }
