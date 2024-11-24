@@ -11,12 +11,6 @@
   import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
 
-  type Props = {
-    onClose: VoidFunction;
-  };
-
-  const { onClose }: Props = $props();
-
   const appData = getAppData();
 
   const appDataMutation = createAppDateMutation();
@@ -87,10 +81,7 @@
   });
 </script>
 
-<button type="button" onclick={onClose}>Back</button>
-
 <form use:form>
-  <h1>Create Throwable</h1>
   <div>
     <label for="name">Name</label>
     <input

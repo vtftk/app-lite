@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { ThrowableConfig } from "$lib/api/types";
-  import CreateThrowable from "./CreateThrowable.svelte";
   import ThrowableItem from "./ThrowableItem.svelte";
 
   type Props = {
@@ -8,38 +7,22 @@
   };
 
   const { items }: Props = $props();
-
-  let creating = $state(false);
 </script>
 
-{#if creating}
-  <CreateThrowable
-    onClose={() => {
-      creating = false;
-    }}
-  />
-{:else}
-  <div class="grid">
-    <button
-      class="create"
-      onclick={() => {
-        creating = true;
-      }}
-    >
-      Create Throwable
-    </button>
+<div class="grid">
+  <a class="create" href="/throwables/create"> Create Throwable </a>
 
-    {#each items as item}
-      <ThrowableItem config={item} />
-    {/each}
-  </div>
-{/if}
+  {#each items as item}
+    <ThrowableItem config={item} />
+  {/each}
+</div>
 
 <style>
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 0.5rem;
+    gap: 0.5rem;
   }
 
   .create {

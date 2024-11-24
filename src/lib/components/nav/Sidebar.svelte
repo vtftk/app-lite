@@ -33,7 +33,10 @@
 
 <style>
   .sidebar {
-    width: 16rem;
+    padding: 0.5rem;
+    width: 18rem;
     flex-shrink: 0;
+    background-color: #151515;
+    border-right: 1px solid #222;
   }
 </style>

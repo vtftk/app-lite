@@ -2,6 +2,13 @@
   import type { ThrowableConfig } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
 
+  import SettingsIcon from "~icons/solar/settings-bold";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import PlayIcon from "~icons/solar/play-bold";
+
+  import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import BallIcon from "~icons/solar/basketball-bold-duotone";
+
   type Props = {
     config: ThrowableConfig;
   };
@@ -32,22 +39,24 @@
   </div>
 
   <div class="throwable__actions">
-    <button class="throw-button" onclick={() => {}}>Edit</button>
-    <button class="throw-button" onclick={() => {}}>Delete</button>
-    <button class="throw-button" onclick={testThrow}>Throw</button>
-    <button class="throw-button" onclick={testThrowMany}>Throw Many</button>
+    <button class="throw-button" onclick={() => {}}> <SettingsIcon /> </button>
+    <button class="throw-button" onclick={() => {}}> <DeleteIcon /> </button>
+
+    <button class="throw-button" onclick={testThrow}><BallIcon /></button>
+    <button class="throw-button" onclick={testThrowMany}><BallsIcon /></button>
   </div>
 </div>
 
 <style>
   .throwable {
     background-color: #222;
+    border: 1px solid #333;
 
     display: flex;
-    flex-flow: column;
-    gap: 0.75rem;
+    justify-content: space-between;
+    gap: 0.5rem;
 
-    padding: 1rem;
+    padding: 0.5rem;
   }
 
   .throwable__content {
@@ -58,13 +67,13 @@
 
   .throwable__actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
     align-items: center;
   }
 
   .throwable__image {
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     object-fit: contain;
     background-color: #333;
     border-radius: 2rem;
@@ -76,12 +85,15 @@
   }
 
   .throw-button {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem;
     background-color: #333;
     border: 1px solid #666;
     color: #fff;
     border-radius: 0.25rem;
     cursor: pointer;
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
   }
 
   .throw-button:hover {
