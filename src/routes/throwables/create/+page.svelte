@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { getAppData } from "$lib/api/runtimeAppData";
   import CreateThrowable from "$lib/sections/throwables/CreateThrowableForm.svelte";
-
-  const appData = getAppData();
 </script>
 
 <div class="container">

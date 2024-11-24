@@ -39,7 +39,9 @@
   </div>
 
   <div class="throwable__actions">
-    <button class="throw-button" onclick={() => {}}> <SettingsIcon /> </button>
+    <a class="throw-button" href="/throwables/{config.id}">
+      <SettingsIcon />
+    </a>
     <button class="throw-button" onclick={() => {}}> <DeleteIcon /> </button>
 
     <button class="throw-button" onclick={testThrow}><BallIcon /></button>
