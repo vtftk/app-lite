@@ -17,7 +17,7 @@ listen("logout", () => {
 });
 
 // Update the runtime app data when the change event is received
-listen<RuntimeAppData>("runtime_app_data_changed", (runtimeAppData) => {
+listen<RuntimeAppData>("runtime_app_data_changed", ({ payload }) => {
   queryClient.cancelQueries({ queryKey: RUNTIME_APP_DATA_KEY });
-  queryClient.setQueryData(RUNTIME_APP_DATA_KEY, runtimeAppData);
+  queryClient.setQueryData(RUNTIME_APP_DATA_KEY, payload);
 });
