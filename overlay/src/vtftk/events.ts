@@ -1,10 +1,18 @@
 import { BACKEND_EVENTS } from "../constants";
+import { loadAudio } from "../utils";
+import { requestHotkeys, triggerHotkey } from "../vtube-studio/hotkeys";
 import { ModelParameters } from "../vtube-studio/model";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 import { loadThrowableResources, throwItem } from "../vtube-studio/throw-item";
+import { updateRuntimeData } from "./api";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
-import { AppData, ThrowableConfig } from "./types";
+import {
+  AppData,
+  ImpactSoundConfig,
+  SoundConfig,
+  ThrowableConfig,
+} from "./types";
 
 export type EventSourceData = {
   appData: AppData;
@@ -64,6 +72,30 @@ export function createEventSource(data: EventSourceData) {
         }
         break;
       }
+
+      case "UpdateHotkeys": {
+        if (data.vtSocket) {
+          onUpdateHotkeysEvent(data.vtSocket);
+        }
+
+        break;
+      }
+
+      case "TriggerHotkey": {
+        if (data.vtSocket) {
+          onTriggerHotkeyEvent(data.vtSocket, event.hotkey_id);
+        }
+
+        break;
+      }
+
+      case "PlaySound": {
+        if (data.vtSocket) {
+          onPlaySoundEvent(event.config);
+        }
+
+        break;
+      }
     }
   };
 
@@ -72,6 +104,34 @@ export function createEventSource(data: EventSourceData) {
   };
 
   return eventSource;
+}
+
+async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
+  const hotkeys = await requestHotkeys(vtSocket);
+
+  await updateRuntimeData({
+    hotkeys: hotkeys.map((hotkey) => ({
+      hotkey_id: hotkey.hotkeyID,
+      name: hotkey.name,
+    })),
+  });
+
+  return hotkeys;
+}
+
+async function onPlaySoundEvent(config: SoundConfig) {
+  const audio = await loadAudio(config.src);
+  audio.volume = config.volume;
+  audio.play();
+}
+
+async function onTriggerHotkeyEvent(
+  vtSocket: VTubeStudioWebSocket,
+  hotkeyID: string
+) {
+  const hotkeys = await triggerHotkey(vtSocket, hotkeyID);
+
+  return hotkeys;
 }
 
 async function onSetCalibrationStepEvent(

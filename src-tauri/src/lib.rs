@@ -93,6 +93,7 @@ pub fn run() {
             commands::data::get_runtime_app_data,
             commands::data::set_app_data,
             commands::data::upload_file,
+            commands::data::update_hotkeys,
             commands::twitch::get_redeems_list,
         ])
         .run(tauri::generate_context!())
@@ -290,7 +291,20 @@ fn execute_event_config(
             });
         }
         EventOutcome::Collection { collection_id } => {}
-        EventOutcome::TriggerHotkey { hotkey_id } => {}
+        EventOutcome::TriggerHotkey { hotkey_id } => {
+            _ = event_sender.send(EventMessage::TriggerHotkey { hotkey_id });
+        }
+        EventOutcome::PlaySound { sound_id } => {
+            let sound = app_data.sounds.iter().find(|item| item.id == sound_id);
+            let sound = match sound {
+                Some(value) => value,
+                // Throwable no longer exists
+                None => return,
+            };
+            _ = event_sender.send(EventMessage::PlaySound {
+                config: sound.clone(),
+            });
+        }
     }
 }
 

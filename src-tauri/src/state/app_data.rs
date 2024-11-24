@@ -83,6 +83,7 @@ pub struct AppData {
     pub models: HashMap<ModelId, ModelData>,
     pub items: Vec<ThrowableConfig>,
     pub events: Vec<EventConfig>,
+    pub sounds: Vec<SoundConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -342,4 +343,16 @@ pub enum EventOutcome {
     Collection { collection_id: Uuid },
     /// Trigger a VTube studio hotkey
     TriggerHotkey { hotkey_id: String },
+    /// Trigger a sound
+    PlaySound { sound_id: Uuid },
+}
+
+/// Configuration for a sound
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SoundConfig {
+    pub id: Uuid,
+    /// Src URL for the image
+    pub src: String,
+    /// Volume of the sound 0-1
+    pub volume: f32,
 }

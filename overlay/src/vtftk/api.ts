@@ -10,10 +10,10 @@ export async function notifyProgressCalibration(body: CalibrationStepData) {
   });
 }
 
-export async function setRuntimeData(body: RuntimeAppData) {
+export async function updateRuntimeData(body: Partial<RuntimeAppData>) {
   try {
     await fetch(new URL("/runtime-app-data", BACKEND_HTTP), {
-      method: "POST",
+      method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });

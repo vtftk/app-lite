@@ -1,5 +1,6 @@
 use crate::{
     constants::LOCAL_SERVER_PORT,
+    events::EventMessage,
     state::{
         app_data::{AppData, AppDataStore},
         runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
@@ -8,7 +9,19 @@ use crate::{
 use serde::Deserialize;
 use std::path::Path;
 use tauri::{AppHandle, Manager};
+use tokio::sync::broadcast;
 use uuid::Uuid;
+
+#[tauri::command]
+pub fn update_hotkeys(
+    event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
+) -> Result<bool, ()> {
+    event_sender
+        .send(EventMessage::UpdateHotkeys)
+        .map_err(|_| ())?;
+
+    Ok(true)
+}
 
 #[tauri::command]
 pub async fn get_app_data(app_data: tauri::State<'_, AppDataStore>) -> Result<AppData, ()> {

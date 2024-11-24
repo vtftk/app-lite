@@ -12,11 +12,11 @@ import {
 import { createEventSource, EventSourceData } from "./vtftk/events";
 import { beginCalibrationStep } from "./vtftk/calibration";
 import { CalibrationStep } from "./vtftk/calibration-types";
-import { setRuntimeData } from "./vtftk/api";
+import { updateRuntimeData } from "./vtftk/api";
 
 async function load() {
   // Tell the backend we aren't connected
-  await setRuntimeData({
+  await updateRuntimeData({
     model_id: null,
     vtube_studio_connected: false,
   });
@@ -41,7 +41,7 @@ async function load() {
   // Run when the socket is connected
   vtSocket.onConnected = async () => {
     // Tell the backend we aren't connected
-    setRuntimeData({
+    updateRuntimeData({
       model_id: null,
       vtube_studio_connected: true,
     });
@@ -51,7 +51,7 @@ async function load() {
     const { modelID } = await requestCurrentModel(vtSocket);
 
     // Tell the backend we aren't connected
-    setRuntimeData({
+    updateRuntimeData({
       model_id: modelID,
       vtube_studio_connected: true,
     });
@@ -75,7 +75,7 @@ async function load() {
 
   vtSocket.onDisconnect = () => {
     // Tell the backend we aren't connected
-    setRuntimeData({
+    updateRuntimeData({
       model_id: null,
       vtube_studio_connected: false,
     });

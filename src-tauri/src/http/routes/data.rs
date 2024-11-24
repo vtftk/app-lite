@@ -2,15 +2,14 @@ use crate::{
     http::error::DynHttpError,
     state::{
         app_data::{AppData, AppDataStore},
-        runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
+        runtime_app_data::{RuntimeAppData, RuntimeAppDataStore, UpdateRuntimeAppData},
     },
 };
 use anyhow::Context;
 use axum::{
-    body::{Body, HttpBody},
+    body::Body,
     extract::Path,
     http::{Response, StatusCode},
-    response::IntoResponse,
     Extension, Json,
 };
 use reqwest::header::CONTENT_TYPE;
@@ -41,22 +40,33 @@ pub async fn get_runtime_data(
     Json(runtime_app_data.read().await.clone())
 }
 
-/// POST /runtime-app-data
+/// PUT /runtime-app-data
 ///
 /// Sets the current state of the app at runtime
-pub async fn set_runtime_data(
+pub async fn update_runtime_data(
     Extension(runtime_app_data): Extension<RuntimeAppDataStore>,
-    Json(req): Json<RuntimeAppData>,
+    Json(req): Json<UpdateRuntimeAppData>,
 ) -> StatusCode {
     // Update the stored runtime data
     runtime_app_data
         .write(|runtime_app_data| {
-            *runtime_app_data = req.clone();
+            if let Some(model_id) = req.model_id {
+                runtime_app_data.model_id = model_id;
+            }
+
+            if let Some(vtube_studio_connected) = req.vtube_studio_connected {
+                runtime_app_data.vtube_studio_connected = vtube_studio_connected;
+            }
+
+            if let Some(hotkeys) = req.hotkeys {
+                runtime_app_data.hotkeys = hotkeys;
+            }
         })
         .await;
 
     StatusCode::OK
 }
+
 /// GET /content/:folder/:name
 ///
 /// Sets the current state of the app at runtime

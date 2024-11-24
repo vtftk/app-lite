@@ -1,7 +1,10 @@
 use serde::Serialize;
 use tokio::sync::broadcast;
 
-use crate::{http::models::calibration::CalibrationStep, state::app_data::ThrowableConfig};
+use crate::{
+    http::models::calibration::CalibrationStep,
+    state::app_data::{SoundConfig, ThrowableConfig},
+};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
@@ -26,6 +29,15 @@ pub enum EventMessage {
     // Throw many items
     ThrowDifferent {
         configs: Vec<ThrowableConfig>,
+    },
+
+    UpdateHotkeys,
+    TriggerHotkey {
+        hotkey_id: String,
+    },
+
+    PlaySound {
+        config: SoundConfig,
     },
 }
 

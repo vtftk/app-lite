@@ -19,6 +19,7 @@
   } from "$lib/api/types";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
+  import HotkeySelect from "./HotkeySelect.svelte";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -343,9 +344,7 @@
       <option value={"test"}>TEST</option>
     </select>
   {:else if $data.eventOutcomeType === EventOutcomeType.TriggerHotkey}
-    <select name="triggerHotkeyHotkeyId" id="triggerHotkeyHotkeyId">
-      <option value={"test"}>TEST</option>
-    </select>
+    <HotkeySelect name="triggerHotkeyHotkeyId" id="triggerHotkeyHotkeyId" />
   {/if}
 
   <button type="submit">Create</button>
