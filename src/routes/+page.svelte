@@ -1,9 +1,9 @@
 <script lang="ts">
   import "$lib/api/events";
-  import Calibration from "$lib/sections/Calibration.svelte";
+  import Calibration from "$lib/sections/calibration/Calibration.svelte";
   import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
   import { derived } from "svelte/store";
-  import Throwables from "$lib/sections/Throwables.svelte";
+  import Throwables from "$lib/sections/throwables/Throwables.svelte";
 
   const appData = getAppData();
   const runtimeAppData = getRuntimeAppData();

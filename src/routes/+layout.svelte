@@ -4,7 +4,7 @@
   import { queryClient } from "$lib/api/utils";
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
-  import TwitchOAuthGate from "$lib/sections/TwitchOAuthGate.svelte";
+  import TwitchOAuthGate from "$lib/sections/twitch/TwitchOAuthGate.svelte";
 </script>
 
 <QueryClientProvider client={queryClient}>

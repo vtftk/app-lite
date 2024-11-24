@@ -3,7 +3,6 @@
   import { validator } from "@felte/validator-zod";
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import { scale } from "svelte/transition";
   import type {
     ImpactSoundConfig,
     ThrowableConfig,
