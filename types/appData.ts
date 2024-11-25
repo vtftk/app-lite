@@ -15,6 +15,7 @@ export type AppData = {
   items: ThrowableConfig[];
   events: EventConfig[];
   sounds: SoundConfig[];
+  collections: ThrowableCollection[];
 };
 
 export type ThrowablesConfig = {

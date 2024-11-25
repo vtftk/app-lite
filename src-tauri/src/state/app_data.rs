@@ -84,6 +84,7 @@ pub struct AppData {
     pub items: Vec<ThrowableConfig>,
     pub events: Vec<EventConfig>,
     pub sounds: Vec<SoundConfig>,
+    pub collections: Vec<ThrowableCollection>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
