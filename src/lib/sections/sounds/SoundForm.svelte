@@ -7,6 +7,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
+  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
 
   type Props = {
     existing?: SoundConfig;
@@ -116,11 +117,8 @@
         name="sound"
         aria-describedby="sound-validation"
       />
-      <p
-        id="sound-validation"
-        data-felte-reporter-dom-for="sound"
-        aria-live="polite"
-      ></p>
+
+      <FormErrorLabel name="sound" />
     </div>
 
     <div>
@@ -134,11 +132,7 @@
         step="0.1"
         aria-describedby="volume-validation"
       />
-      <p
-        id="volume-validation"
-        data-felte-reporter-dom-for="volume"
-        aria-live="polite"
-      ></p>
+      <FormErrorLabel name="volume" />
     </div>
   </div>
 
