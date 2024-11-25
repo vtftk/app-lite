@@ -17,88 +17,93 @@ export type EventSourceData = {
 
 export function createEventSource(data: EventSourceData) {
   const eventSource = new EventSource(new URL("/events", BACKEND_HTTP));
+
   eventSource.onopen = () => {
     console.debug("listening to events");
   };
+
   eventSource.onmessage = (msg) => {
     const event = JSON.parse(msg.data);
-
-    switch (event.type) {
-      case "SetCalibrationStep": {
-        if (data.vtSocket) {
-          onSetCalibrationStepEvent(data.vtSocket, event.step);
-        }
-        break;
-      }
-      case "Throw": {
-        if (data.vtSocket && data.modelParameters) {
-          onThrowEvent(
-            data.appData,
-            data.vtSocket,
-            data.modelParameters,
-            event.config
-          );
-        }
-
-        break;
-      }
-
-      case "ThrowMany": {
-        if (data.vtSocket && data.modelParameters) {
-          onThrowManyEvent(
-            data.appData,
-            data.vtSocket,
-            data.modelParameters,
-            event.config,
-            event.amount
-          );
-        }
-        break;
-      }
-
-      case "ThrowDifferent": {
-        if (data.vtSocket && data.modelParameters) {
-          onThrowDifferentEvent(
-            data.appData,
-            data.vtSocket,
-            data.modelParameters,
-            event.configs
-          );
-        }
-        break;
-      }
-
-      case "UpdateHotkeys": {
-        if (data.vtSocket) {
-          onUpdateHotkeysEvent(data.vtSocket);
-        }
-
-        break;
-      }
-
-      case "TriggerHotkey": {
-        if (data.vtSocket) {
-          onTriggerHotkeyEvent(data.vtSocket, event.hotkey_id);
-        }
-
-        break;
-      }
-
-      case "PlaySound": {
-        if (data.vtSocket) {
-          onPlaySoundEvent(event.config);
-        }
-
-        break;
-      }
-    }
+    onMessage(data, event);
   };
 
   eventSource.onerror = (event) => {
-    console.error(event);
+    console.error("event source error", event);
   };
 
   return eventSource;
+}
+
+async function onMessage(data: EventSourceData, event: any) {
+  switch (event.type) {
+    case "SetCalibrationStep": {
+      if (data.vtSocket) {
+        onSetCalibrationStepEvent(data.vtSocket, event.step);
+      }
+      break;
+    }
+    case "Throw": {
+      if (data.vtSocket && data.modelParameters) {
+        onThrowEvent(
+          data.appData,
+          data.vtSocket,
+          data.modelParameters,
+          event.config
+        );
+      }
+
+      break;
+    }
+
+    case "ThrowMany": {
+      if (data.vtSocket && data.modelParameters) {
+        onThrowManyEvent(
+          data.appData,
+          data.vtSocket,
+          data.modelParameters,
+          event.config,
+          event.amount
+        );
+      }
+      break;
+    }
+
+    case "ThrowDifferent": {
+      if (data.vtSocket && data.modelParameters) {
+        onThrowDifferentEvent(
+          data.appData,
+          data.vtSocket,
+          data.modelParameters,
+          event.configs
+        );
+      }
+      break;
+    }
+
+    case "UpdateHotkeys": {
+      if (data.vtSocket) {
+        onUpdateHotkeysEvent(data.vtSocket);
+      }
+
+      break;
+    }
+
+    case "TriggerHotkey": {
+      if (data.vtSocket) {
+        onTriggerHotkeyEvent(data.vtSocket, event.hotkey_id);
+      }
+
+      break;
+    }
+
+    case "PlaySound": {
+      if (data.vtSocket) {
+        onPlaySoundEvent(event.config);
+      }
+
+      break;
+    }
+  }
 }
 
 async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
