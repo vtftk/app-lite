@@ -4,7 +4,6 @@
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import PlayIcon from "~icons/solar/play-bold";
 
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import BallIcon from "~icons/solar/basketball-bold-duotone";

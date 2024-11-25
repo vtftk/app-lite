@@ -89,13 +89,6 @@
 </script>
 
 <form use:form>
-  {#if existing}
-    <audio controls>
-      <source src={existing.src} />
-      Your browser does not support the audio tag.
-    </audio>
-  {/if}
-
   <div>
     <label for="name">Name</label>
     <input
@@ -114,6 +107,13 @@
   <div>
     <h2>Sound</h2>
     <p>Sound to play</p>
+
+    {#if existing}
+      <audio controls>
+        <source src={existing.src} />
+        Your browser does not support the audio tag.
+      </audio>
+    {/if}
 
     <div>
       <label for="sound">{existing ? "Replace" : "Upload"} Sound</label>

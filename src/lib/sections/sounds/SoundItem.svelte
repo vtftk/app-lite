@@ -1,9 +1,11 @@
 <script lang="ts">
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import type { SoundConfig } from "$lib/api/types";
+  import { invoke } from "@tauri-apps/api/core";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import PlayIcon from "~icons/solar/play-bold";
 
   type Props = {
     config: SoundConfig;
@@ -13,6 +15,12 @@
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
+
+  async function testSound() {
+    await invoke("test_sound", {
+      config,
+    });
+  }
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this sound item?")) {
@@ -32,10 +40,11 @@
   </div>
 
   <div class="sound__actions">
-    <a class="throw-button" href="/sounds/{config.id}">
+    <button class="sound-button" onclick={testSound}><PlayIcon /></button>
+    <a class="sound-button" href="/sounds/{config.id}">
       <SettingsIcon />
     </a>
-    <button class="throw-button" onclick={onDelete}> <DeleteIcon /> </button>
+    <button class="sound-button" onclick={onDelete}> <DeleteIcon /> </button>
   </div>
 </div>
 
@@ -68,7 +77,7 @@
     font-weight: bold;
   }
 
-  .throw-button {
+  .sound-button {
     padding: 0.5rem;
     background-color: #333;
     border: 1px solid #666;
@@ -80,7 +89,7 @@
     gap: 0.5rem;
   }
 
-  .throw-button:hover {
+  .sound-button:hover {
     background-color: #444;
   }
 </style>
