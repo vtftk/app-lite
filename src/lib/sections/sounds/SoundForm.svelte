@@ -8,43 +8,79 @@
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
 
+  type Props = {
+    existing?: SoundConfig;
+  };
+
+  const { existing }: Props = $props();
+
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
-    sound: z.instanceof(File, {
-      message: "Sound file is required",
-      fatal: true,
-    }),
+    sound:
+      // Allow not specifying file when updating existing
+      existing !== undefined
+        ? z.union([z.instanceof(File), z.undefined()])
+        : z.instanceof(File, {
+            message: "Sound file is required",
+            fatal: true,
+          }),
     volume: z.number(),
   });
 
   const { form } = createForm<z.infer<typeof schema>>({
-    initialValues: {
-      name: "",
-      sound: undefined,
-      volume: 1,
-    },
+    initialValues: existing
+      ? {
+          name: existing.name,
+          sound: undefined,
+          volume: existing.volume,
+        }
+      : {
+          name: "",
+          sound: undefined,
+          volume: 1,
+        },
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
-      const soundURL = await invoke<string>("upload_file", {
-        fileType: "Sound",
-        fileName: values.sound.name,
-        fileData: await values.sound.arrayBuffer(),
-      });
+      let soundURL: string;
+
+      if (values.sound) {
+        soundURL = await invoke<string>("upload_file", {
+          fileType: "Sound",
+          fileName: values.sound.name,
+          fileData: await values.sound.arrayBuffer(),
+        });
+      } else if (existing) {
+        soundURL = existing.src;
+      } else {
+        throw new Error("sound was missing in create mode");
+      }
 
       const soundConfig: SoundConfig = {
-        id: self.crypto.randomUUID(),
+        id: existing ? existing.id : self.crypto.randomUUID(),
         src: soundURL,
         volume: values.volume,
         name: values.name,
       };
 
-      await $appDataMutation.mutateAsync({
-        ...$appData,
-        sounds: [...$appData.sounds, soundConfig],
-      });
+      if (existing !== undefined) {
+        // Update existing
+        await $appDataMutation.mutateAsync({
+          ...$appData,
+          sounds: $appData.sounds.map((item) => {
+            if (item.id !== existing.id) return item;
+            return soundConfig;
+          }),
+        });
+      } else {
+        // Add new
+        await $appDataMutation.mutateAsync({
+          ...$appData,
+          sounds: [...$appData.sounds, soundConfig],
+        });
+      }
 
       goto("/sounds");
     },
@@ -106,7 +142,9 @@
     </div>
   </div>
 
-  <button type="submit">Submit</button>
+  <button type="submit">
+    {existing ? "Save" : "Create"}
+  </button>
 </form>
 
 <style>

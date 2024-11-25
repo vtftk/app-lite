@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CreateSoundForm from "$lib/sections/sounds/CreateSoundForm.svelte";
+  import SoundForm from "$lib/sections/sounds/SoundForm.svelte";
 </script>
 
 <div class="container">
@@ -7,7 +7,7 @@
   <p class="text">Create a sound that can be triggered</p>
   <a type="button" href="/sounds">Back</a>
 
-  <CreateSoundForm />
+  <SoundForm />
 </div>
 
 <style>
