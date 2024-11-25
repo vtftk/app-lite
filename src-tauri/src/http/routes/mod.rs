@@ -7,6 +7,7 @@ mod calibration;
 mod data;
 mod events;
 mod oauth;
+mod overlay;
 
 pub fn router() -> Router {
     Router::new()
@@ -21,4 +22,5 @@ pub fn router() -> Router {
         .route("/runtime-app-data", get(data::get_runtime_data))
         .route("/runtime-app-data", put(data::update_runtime_data))
         .route("/content/:folder/:name", get(data::get_content_file))
+        .route("/overlay", get(overlay::page))
 }
