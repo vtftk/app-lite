@@ -15,12 +15,20 @@
     MinimumRequiredRole,
     type EventConfig,
     type EventOutcome,
+    type EventOutcomeVariant,
     type EventTrigger,
   } from "$lib/api/types";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
   import { goto } from "$app/navigation";
+  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
+
+  type Props = {
+    existing?: EventConfig;
+  };
+
+  const { existing }: Props = $props();
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -52,33 +60,122 @@
     outcomeDelay: z.number(),
   });
 
-  const { form, data } = createForm<z.infer<typeof schema>>({
-    initialValues: {
-      name: "",
-      enabled: true,
-      triggerType: EventTriggerType.Redeem,
-      minimumRole: MinimumRequiredRole.None,
-      eventOutcomeType: EventOutcomeType.Random,
+  type Schema = z.infer<typeof schema>;
 
-      redeemRewardId: "",
+  const defaultValues: Schema = {
+    name: "",
+    enabled: true,
+    triggerType: EventTriggerType.Redeem,
+    minimumRole: MinimumRequiredRole.None,
+    eventOutcomeType: EventOutcomeType.Random,
 
-      commandMessage: "",
+    redeemRewardId: "",
 
-      bitsMinBits: 1,
-      bitsMaxItems: 50,
+    commandMessage: "",
 
-      raidMinRaiders: 1,
-      raidMinItems: 1,
-      raidMaxItems: 50,
+    bitsMinBits: 1,
+    bitsMaxItems: 50,
 
-      cooldown: 500,
+    raidMinRaiders: 1,
+    raidMinItems: 1,
+    raidMaxItems: 50,
 
-      throwableThrowableId: "",
-      collectionCollectionId: "",
-      triggerHotkeyHotkeyId: "",
-      soundId: "",
-      outcomeDelay: 0,
-    },
+    cooldown: 500,
+
+    throwableThrowableId: "",
+    collectionCollectionId: "",
+    triggerHotkeyHotkeyId: "",
+    soundId: "",
+    outcomeDelay: 0,
+  };
+
+  function createInitialValues({
+    trigger,
+    outcome,
+    ...existing
+  }: EventConfig): Schema {
+    let redeemRewardId = defaultValues.redeemRewardId;
+    let commandMessage = defaultValues.commandMessage;
+
+    let bitsMinBits = defaultValues.bitsMinBits;
+    let bitsMaxItems = defaultValues.bitsMaxItems;
+
+    let raidMinRaiders = defaultValues.raidMinRaiders;
+    let raidMinItems = defaultValues.raidMinItems;
+    let raidMaxItems = defaultValues.raidMaxItems;
+
+    let throwableThrowableId = defaultValues.throwableThrowableId;
+    let collectionCollectionId = defaultValues.collectionCollectionId;
+    let triggerHotkeyHotkeyId = defaultValues.triggerHotkeyHotkeyId;
+    let soundId = defaultValues.soundId;
+
+    switch (trigger.type) {
+      case EventTriggerType.Redeem:
+        redeemRewardId = trigger.reward_id;
+        break;
+      case EventTriggerType.Command:
+        commandMessage = trigger.message;
+        break;
+      case EventTriggerType.Bits:
+        bitsMinBits = trigger.min_bits;
+        bitsMaxItems = trigger.max_throws;
+        break;
+      case EventTriggerType.Raid:
+        raidMinRaiders = trigger.min_raiders;
+        raidMinItems = trigger.throws.min;
+        raidMaxItems = trigger.throws.max;
+        break;
+      default:
+        break;
+    }
+
+    switch (outcome.type) {
+      case EventOutcomeType.Throwable: {
+        throwableThrowableId = outcome.throwable_id;
+        break;
+      }
+      case EventOutcomeType.Collection: {
+        collectionCollectionId = outcome.collection_id;
+        break;
+      }
+      case EventOutcomeType.TriggerHotkey: {
+        triggerHotkeyHotkeyId = outcome.hotkey_id;
+        break;
+      }
+      case EventOutcomeType.PlaySound: {
+        soundId = outcome.sound_id;
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    return {
+      name: existing.name,
+      enabled: existing.enabled,
+      triggerType: trigger.type,
+      minimumRole: existing.require_role,
+      eventOutcomeType: outcome.type,
+      cooldown: existing.cooldown,
+      outcomeDelay: existing.outcome_delay,
+
+      redeemRewardId,
+      commandMessage,
+      bitsMinBits,
+      bitsMaxItems,
+      raidMinRaiders,
+      raidMinItems,
+      raidMaxItems,
+      throwableThrowableId,
+      collectionCollectionId,
+      triggerHotkeyHotkeyId,
+      soundId,
+    };
+  }
+
+  const { form, data } = createForm<Schema>({
+    initialValues: existing ? createInitialValues(existing) : defaultValues,
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
       let eventTrigger: EventTrigger;
@@ -189,16 +286,13 @@
       name="name"
       aria-describedby="name-validation"
     />
-    <p
-      id="name-validation"
-      data-felte-reporter-dom-for="name"
-      aria-live="polite"
-    ></p>
+    <FormErrorLabel name="name" />
   </div>
 
   <div>
     <label for="enabled">Enabled</label>
     <input type="checkbox" name="enabled" id="enabled" />
+    <FormErrorLabel name="enabled" />
   </div>
 
   <div>
@@ -208,6 +302,7 @@
         <option value={eventType}>{EVENT_TRIGGER_NAMES[eventType]}</option>
       {/each}
     </select>
+    <FormErrorLabel name="triggerType" />
   </div>
 
   {#if $data.triggerType === EventTriggerType.Redeem}
@@ -225,11 +320,7 @@
         step="0.1"
         aria-describedby="commandMessage-validation"
       />
-      <p
-        id="commandMessage-validation"
-        data-felte-reporter-dom-for="commandMessage"
-        aria-live="polite"
-      ></p>
+      <FormErrorLabel name="commandMessage" />
     </div>
   {:else if $data.triggerType === EventTriggerType.Bits}
     <div>
@@ -244,11 +335,7 @@
         step="0.1"
         aria-describedby="bitsMinBits-validation"
       />
-      <p
-        id="bitsMinBits-validation"
-        data-felte-reporter-dom-for="bitsMinBits"
-        aria-live="polite"
-      ></p>
+      <FormErrorLabel name="bitsMinBits" />
     </div>
 
     <div>
@@ -263,11 +350,7 @@
         step="0.1"
         aria-describedby="bitsMaxItems-validation"
       />
-      <p
-        id="bitsMaxItems-validation"
-        data-felte-reporter-dom-for="bitsMaxItems"
-        aria-live="polite"
-      ></p>
+      <FormErrorLabel name="bitsMaxItems" />
     </div>
   {:else if $data.triggerType === EventTriggerType.Raid}
     <div>
@@ -282,11 +365,7 @@
         step="0.1"
         aria-describedby="raidMinRaiders-validation"
       />
-      <p
-        id="raidMinRaiders-validation"
-        data-felte-reporter-dom-for="raidMinRaiders"
-        aria-live="polite"
-      ></p>
+      <FormErrorLabel name="raidMinRaiders" />
     </div>
     <div>
       <label for="raidMinItems">Min Items</label>
@@ -300,11 +379,8 @@
         step="0.1"
         aria-describedby="raidMinItems-validation"
       />
-      <p
-        id="raidMinItems-validation"
-        data-felte-reporter-dom-for="raidMinItems"
-        aria-live="polite"
-      ></p>
+
+      <FormErrorLabel name="raidMinItems" />
     </div>
     <div>
       <label for="raidMaxItems">Max Items</label>
@@ -318,11 +394,7 @@
         step="0.1"
         aria-describedby="raidMaxItems-validation"
       />
-      <p
-        id="raidMaxItems-validation"
-        data-felte-reporter-dom-for="raidMaxItems"
-        aria-live="polite"
-      ></p>
+      <FormErrorLabel name="raidMaxItems" />
     </div>
   {/if}
 
@@ -338,11 +410,7 @@
       step="0.1"
       aria-describedby="cooldown-validation"
     />
-    <p
-      id="cooldown-validation"
-      data-felte-reporter-dom-for="cooldown"
-      aria-live="polite"
-    ></p>
+    <FormErrorLabel name="cooldown" />
   </div>
 
   <div>
@@ -354,6 +422,7 @@
         >
       {/each}
     </select>
+    <FormErrorLabel name="minimumRole" />
   </div>
 
   <div>
@@ -365,6 +434,7 @@
         >
       {/each}
     </select>
+    <FormErrorLabel name="eventOutcomeType" />
   </div>
 
   {#if $data.eventOutcomeType === EventOutcomeType.Throwable}
@@ -373,18 +443,22 @@
         <option value={item.id}>{item.name}</option>
       {/each}
     </select>
+    <FormErrorLabel name="throwableThrowableId" />
   {:else if $data.eventOutcomeType === EventOutcomeType.Collection}
     <select name="collectionCollectionId" id="collectionCollectionId">
       <option value={"test"}>TEST</option>
     </select>
+    <FormErrorLabel name="collectionCollectionId" />
   {:else if $data.eventOutcomeType === EventOutcomeType.TriggerHotkey}
     <HotkeySelect name="triggerHotkeyHotkeyId" id="triggerHotkeyHotkeyId" />
+    <FormErrorLabel name="triggerHotkeyHotkeyId" />
   {:else if $data.eventOutcomeType === EventOutcomeType.PlaySound}
     <select name="soundId" id="soundId">
       {#each $appData.sounds as sound}
         <option value={sound.id}>{sound.name}</option>
       {/each}
     </select>
+    <FormErrorLabel name="soundId" />
   {/if}
 
   <div>
@@ -396,13 +470,16 @@
       name="outcomeDelay"
       aria-describedby="outcomeDelay-validation"
     />
-
-    <p
-      id="outcomeDelay-validation"
-      data-felte-reporter-dom-for="outcomeDelay"
-      aria-live="polite"
-    ></p>
+    <FormErrorLabel name="outcomeDelay" />
   </div>
 
-  <button type="submit">Create</button>
+  <button type="submit">{existing ? "Save" : "Create"}</button>
 </form>
+
+<style>
+  form {
+    display: flex;
+    flex-flow: column;
+    gap: 1rem;
+  }
+</style>

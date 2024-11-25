@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CreateEventForm from "$lib/sections/events/CreateEventForm.svelte";
+  import EventForm from "$lib/sections/events/EventForm.svelte";
 </script>
 
 <div class="container">
@@ -7,7 +7,7 @@
   <p class="text">Create an event that will trigger some outcome</p>
   <a type="button" href="/events">Back</a>
 
-  <CreateEventForm />
+  <EventForm />
 </div>
 
 <style>
@@ -17,6 +17,8 @@
     gap: 0.5rem;
 
     padding: 1rem;
+    height: 100%;
+    overflow: auto;
   }
 
   .title {

@@ -97,11 +97,7 @@
       name="name"
       aria-describedby="name-validation"
     />
-    <p
-      id="name-validation"
-      data-felte-reporter-dom-for="name"
-      aria-live="polite"
-    ></p>
+    <FormErrorLabel name="name" />
   </div>
 
   <div>

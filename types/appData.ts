@@ -193,6 +193,11 @@ export type EventOutcome =
   | { type: EventOutcomeType.TriggerHotkey; hotkey_id: string }
   | { type: EventOutcomeType.PlaySound; sound_id: string };
 
+export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
+  EventOutcome,
+  { type: T }
+>;
+
 export const EVENT_OUTCOME_TYPES = [
   EventOutcomeType.Random,
   EventOutcomeType.RandomBarrage,
