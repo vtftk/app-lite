@@ -1,4 +1,4 @@
-import { BACKEND_EVENTS } from "../constants";
+import { BACKEND_HTTP } from "../constants";
 import { loadAudio } from "../utils";
 import { requestHotkeys, triggerHotkey } from "../vtube-studio/hotkeys";
 import { ModelParameters } from "../vtube-studio/model";
@@ -16,7 +16,7 @@ export type EventSourceData = {
 };
 
 export function createEventSource(data: EventSourceData) {
-  const eventSource = new EventSource(BACKEND_EVENTS);
+  const eventSource = new EventSource(new URL("/events", BACKEND_HTTP));
   eventSource.onopen = () => {
     console.debug("listening to events");
   };
