@@ -4,7 +4,7 @@ pub mod auth;
 pub mod calibration;
 pub mod data;
 pub mod edit;
-pub mod throw;
+pub mod test;
 pub mod twitch;
 
 type CmdResult<T> = Result<T, CmdError>;

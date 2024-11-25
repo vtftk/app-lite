@@ -42,8 +42,6 @@ pub enum EventMessage {
     // Play a sound
     PlaySound {
         config: SoundConfig,
-        /// Delay in milliseconds before the sound is played
-        delay: u32,
     },
 }
 

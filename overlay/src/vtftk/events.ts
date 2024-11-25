@@ -86,7 +86,7 @@ export function createEventSource(data: EventSourceData) {
 
       case "PlaySound": {
         if (data.vtSocket) {
-          onPlaySoundEvent(event.config, event.delay);
+          onPlaySoundEvent(event.config);
         }
 
         break;
@@ -114,11 +114,10 @@ async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
   return hotkeys;
 }
 
-async function onPlaySoundEvent(config: SoundConfig, delay: number) {
+async function onPlaySoundEvent(config: SoundConfig) {
   const audio = await loadAudio(config.src);
   audio.volume = config.volume;
-
-  setTimeout(() => audio.play(), delay);
+  audio.play();
 }
 
 async function onTriggerHotkeyEvent(

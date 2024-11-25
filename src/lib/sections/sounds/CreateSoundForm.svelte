@@ -18,7 +18,6 @@
       fatal: true,
     }),
     volume: z.number(),
-    delay: z.number(),
   });
 
   const { form } = createForm<z.infer<typeof schema>>({
@@ -26,7 +25,6 @@
       name: "",
       sound: undefined,
       volume: 1,
-      delay: 100,
     },
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
@@ -41,7 +39,6 @@
         src: soundURL,
         volume: values.volume,
         name: values.name,
-        delay: values.delay,
       };
 
       await $appDataMutation.mutateAsync({
@@ -104,23 +101,6 @@
       <p
         id="volume-validation"
         data-felte-reporter-dom-for="volume"
-        aria-live="polite"
-      ></p>
-    </div>
-    <div>
-      <label for="delay">Delay</label>
-      <input
-        type="number"
-        id="delay"
-        name="delay"
-        min="0"
-        max="1"
-        step="0.1"
-        aria-describedby="delay-validation"
-      />
-      <p
-        id="delay-validation"
-        data-felte-reporter-dom-for="delay"
         aria-live="polite"
       ></p>
     </div>

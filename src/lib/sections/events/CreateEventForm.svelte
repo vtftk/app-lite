@@ -49,7 +49,7 @@
     collectionCollectionId: z.string(),
     triggerHotkeyHotkeyId: z.string(),
     soundId: z.string(),
-    soundDelay: z.number(),
+    outcomeDelay: z.number(),
   });
 
   const { form, data } = createForm<z.infer<typeof schema>>({
@@ -77,7 +77,7 @@
       collectionCollectionId: "",
       triggerHotkeyHotkeyId: "",
       soundId: "",
-      soundDelay: 0,
+      outcomeDelay: 0,
     },
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
@@ -155,7 +155,6 @@
           eventOutcome = {
             type: EventOutcomeType.PlaySound,
             sound_id: values.soundId,
-            delay: values.soundDelay,
           };
           break;
       }
@@ -168,6 +167,7 @@
         outcome: eventOutcome,
         cooldown: values.cooldown,
         require_role: values.minimumRole,
+        outcome_delay: values.outcomeDelay,
       };
 
       await $appDataMutation.mutateAsync({
@@ -385,27 +385,24 @@
         <option value={sound.id}>{sound.name}</option>
       {/each}
     </select>
-
-    <div>
-      <label for="soundDelay">Sound Delay</label>
-      <p>Delay before the sound is trigged</p>
-      <input
-        type="number"
-        id="soundDelay"
-        name="soundDelay"
-        min="0"
-        max="1"
-        step="0.1"
-        aria-describedby="soundDelay-validation"
-      />
-
-      <p
-        id="soundDelay-validation"
-        data-felte-reporter-dom-for="soundDelay"
-        aria-live="polite"
-      ></p>
-    </div>
   {/if}
+
+  <div>
+    <label for="outcomeDelay">Outcome Delay</label>
+    <p>Delay before the outcome is triggered</p>
+    <input
+      type="number"
+      id="outcomeDelay"
+      name="outcomeDelay"
+      aria-describedby="outcomeDelay-validation"
+    />
+
+    <p
+      id="outcomeDelay-validation"
+      data-felte-reporter-dom-for="outcomeDelay"
+      aria-live="polite"
+    ></p>
+  </div>
 
   <button type="submit">Create</button>
 </form>

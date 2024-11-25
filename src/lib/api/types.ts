@@ -112,6 +112,7 @@ export type EventConfig = {
   outcome: EventOutcome;
   cooldown: number;
   require_role: MinimumRequiredRole;
+  outcome_delay: number;
 };
 
 export enum MinimumRequiredRole {
@@ -200,7 +201,7 @@ export type EventOutcome =
       collection_id: string;
     }
   | { type: EventOutcomeType.TriggerHotkey; hotkey_id: string }
-  | { type: EventOutcomeType.PlaySound; sound_id: string; delay: number };
+  | { type: EventOutcomeType.PlaySound; sound_id: string };
 
 export const EVENT_OUTCOME_TYPES = [
   EventOutcomeType.Random,

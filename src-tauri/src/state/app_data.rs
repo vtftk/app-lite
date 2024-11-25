@@ -287,6 +287,9 @@ pub struct EventConfig {
 
     /// Minimum required role to trigger the event
     pub require_role: MinimumRequireRole,
+
+    /// Delay before executing the outcome
+    pub outcome_delay: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -347,11 +350,7 @@ pub enum EventOutcome {
     /// Trigger a VTube studio hotkey
     TriggerHotkey { hotkey_id: String },
     /// Trigger a sound
-    PlaySound {
-        sound_id: Uuid,
-        /// Delay in milliseconds before the sound is played
-        delay: u32,
-    },
+    PlaySound { sound_id: Uuid },
 }
 
 /// Configuration for a sound

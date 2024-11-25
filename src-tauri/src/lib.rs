@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use anyhow::Context;
 use events::{EventMessage, EventRecvHandle};
 use log::{debug, error};
 use rand::{rngs::StdRng, SeedableRng};
 use state::{
-    app_data::{AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger},
+    app_data::{AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger, ThrowableConfig},
     runtime_app_data::RuntimeAppDataStore,
 };
 use tauri::{App, Manager};
@@ -88,7 +88,8 @@ pub fn run() {
             commands::auth::is_authenticated,
             commands::auth::open_twitch_oauth_uri,
             commands::calibration::set_calibration_step,
-            commands::throw::test_throw,
+            commands::test::test_throw,
+            commands::test::test_sound,
             commands::data::get_app_data,
             commands::data::get_runtime_app_data,
             commands::data::set_app_data,
@@ -239,30 +240,42 @@ fn execute_event_config(
 
     debug!("executing event outcome: {:?}", event_config);
 
+    let delay = Duration::from_millis(event_config.outcome_delay as u64);
+
     match event_config.outcome {
         EventOutcome::Random => {
             use rand::seq::SliceRandom;
             let mut rand = StdRng::from_entropy();
             let throwable = app_data.items.choose(&mut rand);
             let throwable = match throwable {
-                Some(value) => value,
+                Some(value) => value.clone(),
                 // Throwable no longer exists
                 None => return,
             };
 
-            _ = event_sender.send(EventMessage::Throw {
-                config: throwable.clone(),
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+
+                _ = event_sender.send(EventMessage::Throw {
+                    config: throwable.clone(),
+                });
             });
         }
         EventOutcome::RandomBarrage => {
             use rand::seq::SliceRandom;
             let mut rand = StdRng::from_entropy();
-            let throwables = app_data.items.choose_multiple(&mut rand, 10);
+            let configs: Vec<ThrowableConfig> = app_data
+                .items
+                .choose_multiple(&mut rand, 10)
+                .cloned()
+                .collect();
 
             // TODO: Optimize by sending config and amount instead of duplicate configs
 
-            _ = event_sender.send(EventMessage::ThrowDifferent {
-                configs: throwables.cloned().collect(),
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+
+                _ = event_sender.send(EventMessage::ThrowDifferent { configs });
             });
         }
         EventOutcome::Throwable { throwable_id } => {
@@ -273,8 +286,12 @@ fn execute_event_config(
                 None => return,
             };
 
-            _ = event_sender.send(EventMessage::Throw {
-                config: throwable.clone(),
+            let config = throwable.clone();
+
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+
+                _ = event_sender.send(EventMessage::Throw { config });
             });
         }
         EventOutcome::ThrowableBarrage { throwable_id } => {
@@ -284,26 +301,33 @@ fn execute_event_config(
                 // Throwable no longer exists
                 None => return,
             };
+            let config = throwable.clone();
 
-            _ = event_sender.send(EventMessage::ThrowMany {
-                config: throwable.clone(),
-                amount: 10,
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+
+                _ = event_sender.send(EventMessage::ThrowMany { config, amount: 10 });
             });
         }
         EventOutcome::Collection { collection_id } => {}
         EventOutcome::TriggerHotkey { hotkey_id } => {
-            _ = event_sender.send(EventMessage::TriggerHotkey { hotkey_id });
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                _ = event_sender.send(EventMessage::TriggerHotkey { hotkey_id });
+            });
         }
-        EventOutcome::PlaySound { sound_id, delay } => {
+        EventOutcome::PlaySound { sound_id } => {
             let sound = app_data.sounds.iter().find(|item| item.id == sound_id);
             let sound = match sound {
                 Some(value) => value,
                 // Throwable no longer exists
                 None => return,
             };
-            _ = event_sender.send(EventMessage::PlaySound {
-                config: sound.clone(),
-                delay,
+            let config = sound.clone();
+
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                _ = event_sender.send(EventMessage::PlaySound { config });
             });
         }
     }
