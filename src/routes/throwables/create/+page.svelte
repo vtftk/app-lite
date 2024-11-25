@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CreateThrowable from "$lib/sections/throwables/CreateThrowableForm.svelte";
+  import ThrowableForm from "$lib/sections/throwables/ThrowableForm.svelte";
 </script>
 
 <div class="container">
@@ -7,7 +7,7 @@
   <p class="text">Create a new item that can be thrown</p>
   <a type="button" href="/throwables">Back</a>
 
-  <CreateThrowable />
+  <ThrowableForm />
 </div>
 
 <style>
