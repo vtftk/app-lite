@@ -13,6 +13,7 @@ import { createEventSource, EventSourceData } from "./vtftk/events";
 import { beginCalibrationStep } from "./vtftk/calibration";
 import { CalibrationStep } from "./vtftk/calibration-types";
 import { updateRuntimeData } from "./vtftk/api";
+import { RuntimeAppData } from "./vtftk/types";
 
 async function load() {
   // Tell the backend we aren't connected
@@ -29,7 +30,7 @@ async function load() {
     modelParameters: undefined,
   };
 
-  createEventSource(eventSourceData);
+  const eventSource = createEventSource(eventSourceData);
 
   const vtSocket = new VTubeStudioWebSocket(
     appData.vtube_studio_config.host,
@@ -37,6 +38,11 @@ async function load() {
   );
 
   eventSourceData.vtSocket = vtSocket;
+
+  // Handle reporting the current app state when the event source is established
+  eventSource.addEventListener("open", () => {
+    reportCurrentRuntimeData(vtSocket);
+  });
 
   // Run when the socket is connected
   vtSocket.onConnected = async () => {
@@ -82,6 +88,24 @@ async function load() {
   };
 
   vtSocket.connect();
+}
+
+async function reportCurrentRuntimeData(vtSocket: VTubeStudioWebSocket) {
+  let runtimeData: Partial<RuntimeAppData> = {};
+
+  if (vtSocket.isConnected()) {
+    runtimeData.vtube_studio_connected = true;
+
+    try {
+      const { modelID } = await requestCurrentModel(vtSocket);
+      runtimeData.model_id = modelID;
+    } catch (e) {
+      console.error("failed to request current model");
+    }
+  }
+
+  // Report current state to backend
+  updateRuntimeData(runtimeData);
 }
 
 load();

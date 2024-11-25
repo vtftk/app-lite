@@ -52,9 +52,17 @@ impl RuntimeAppDataStore {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct RuntimeAppData {
+    /// ID of current model
     pub model_id: Option<String>,
+
+    /// vtube studio connection state
     pub vtube_studio_connected: bool,
+
+    /// Current hotkey list from vtube studio
     pub hotkeys: Vec<VTubeStudioHotkey>,
+
+    /// Current number of active connected overlays
+    pub active_overlay_count: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

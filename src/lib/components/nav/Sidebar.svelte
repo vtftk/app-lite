@@ -27,6 +27,7 @@
   <p>Connected to VTube Studio: {$runtimeAppData.vtube_studio_connected}</p>
   <p>Current Model ID: {$runtimeAppData.model_id}</p>
   <p>Model Calibrated: {$isModelCalibrated}</p>
+  <p>Active Overlays: {$runtimeAppData.active_overlay_count}</p>
 
   <a href="/calibration">Begin Calibration</a>
 </div>

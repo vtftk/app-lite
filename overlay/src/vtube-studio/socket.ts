@@ -28,6 +28,12 @@ export class VTubeStudioWebSocket {
     this.requestHandlers = new Map();
   }
 
+  isConnected(): boolean {
+    return (
+      this.websocket !== null && this.websocket.readyState === WebSocket.OPEN
+    );
+  }
+
   connect() {
     const tryConnect = () => {
       this.websocket = new WebSocket(`ws://${this.host}:${this.port}/`);

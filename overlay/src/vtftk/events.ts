@@ -18,18 +18,18 @@ export type EventSourceData = {
 export function createEventSource(data: EventSourceData) {
   const eventSource = new EventSource(new URL("/events", BACKEND_HTTP));
 
-  eventSource.onopen = () => {
+  eventSource.addEventListener("open", () => {
     console.debug("listening to events");
-  };
+  });
 
-  eventSource.onmessage = (msg) => {
-    const event = JSON.parse(msg.data);
-    onMessage(data, event);
-  };
+  eventSource.addEventListener("message", (event) => {
+    const eventData = JSON.parse(event.data);
+    onMessage(data, eventData);
+  });
 
-  eventSource.onerror = (event) => {
+  eventSource.addEventListener("error", (event) => {
     console.error("event source error", event);
-  };
+  });
 
   return eventSource;
 }
