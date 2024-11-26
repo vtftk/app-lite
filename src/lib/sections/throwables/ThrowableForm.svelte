@@ -12,6 +12,7 @@
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { goto } from "$app/navigation";
+  import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
 
   type Props = {
     existing?: ItemConfig;
@@ -34,6 +35,7 @@
     scale: z.number(),
     weight: z.number(),
     pixelate: z.boolean(),
+    impactSoundIds: z.array(z.string()),
   });
 
   type Schema = z.infer<typeof schema>;
@@ -46,6 +48,7 @@
           scale: existing.image.scale,
           weight: existing.image.weight,
           pixelate: existing.image.pixelate,
+          impactSoundIds: [],
         }
       : {
           name: "",
@@ -53,6 +56,7 @@
           scale: 1,
           weight: 1,
           pixelate: false,
+          impactSoundIds: [],
         }) satisfies Schema,
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
@@ -188,6 +192,9 @@
       Sound played when the throwable impacts
       <span>Optional</span>
     </p>
+
+    <SoundPicker items={$appData.sounds} name="impactSoundIds" />
+    <FormErrorLabel name="impactSoundIds" />
   </div>
 
   <button type="submit"> {existing ? "Save" : "Create"}</button>

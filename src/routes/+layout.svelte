@@ -1,5 +1,5 @@
 <script lang="ts">
-  import "$lib/styles/app.css";
+  import "$lib/styles/global.scss";
   import "$lib/api/events";
 
   import { queryClient } from "$lib/api/utils";
