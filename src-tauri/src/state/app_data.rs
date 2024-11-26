@@ -84,7 +84,6 @@ pub struct AppData {
     pub items: Vec<ThrowableConfig>,
     pub events: Vec<EventConfig>,
     pub sounds: Vec<SoundConfig>,
-    pub collections: Vec<ThrowableCollection>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -258,15 +257,6 @@ pub struct ImpactSoundConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ThrowableCollection {
-    pub id: Uuid,
-    pub name: String,
-    pub throwable_ids: Vec<Uuid>,
-    pub amount: u32,
-    pub throwables_config_override: ThrowablesConfig,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventConfig {
     /// Unique ID of the event
     pub id: Uuid,
@@ -337,17 +327,35 @@ pub enum EventTrigger {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum EventOutcome {
-    /// Throw a random throwable
+pub enum ThrowableSelection {
+    /// Choose from all throwables randomly
     Random,
-    /// Throw a random barrage of throwables
-    RandomBarrage,
-    /// Throw a specific throwable
-    Throwable { throwable_id: Uuid },
-    /// Throw a throwable barrage
-    ThrowableBarrage { throwable_id: Uuid },
-    /// Throw a specific throwable collection
-    Collection { collection_id: Uuid },
+
+    /// Specified collection of throwables
+    Selection { throwable_ids: Vec<Uuid> },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum EventOutcome {
+    /// Throw items (All at once)
+    Throwable {
+        /// IDs of the items that can be thrown
+        selection: ThrowableSelection,
+        /// Amount to throw
+        amount: u32,
+    },
+    /// Throw a throwable barrage ()
+    ThrowableBarrage {
+        /// IDs of the items that can be thrown
+        selection: ThrowableSelection,
+        /// Amount to throw for each throw
+        amount_per_throw: u32,
+        /// Time between each thrown item (Milliseconds)
+        frequency: u32,
+        /// Total amount of items to throw
+        amount: u32,
+    },
     /// Trigger a VTube studio hotkey
     TriggerHotkey { hotkey_id: String },
     /// Trigger a sound

@@ -1,9 +1,12 @@
 import { BACKEND_HTTP } from "../constants";
-import { loadAudio } from "../utils";
+import { executeInterval, loadAudio } from "../utils";
 import { requestHotkeys, triggerHotkey } from "../vtube-studio/hotkeys";
 import { ModelParameters } from "../vtube-studio/model";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
-import { loadThrowableResources, throwItem } from "../vtube-studio/throw-item";
+import {
+  loadThrowableResources,
+  throwItemMany,
+} from "../vtube-studio/throw-item";
 import { updateRuntimeData } from "./api";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
@@ -42,22 +45,9 @@ async function onMessage(data: EventSourceData, event: any) {
       }
       break;
     }
-    case "Throw": {
+    case "ThrowItem": {
       if (data.vtSocket && data.modelParameters) {
-        onThrowEvent(
-          data.appData,
-          data.vtSocket,
-          data.modelParameters,
-          event.config
-        );
-      }
-
-      break;
-    }
-
-    case "ThrowMany": {
-      if (data.vtSocket && data.modelParameters) {
-        onThrowManyEvent(
+        onThrowItemEvent(
           data.appData,
           data.vtSocket,
           data.modelParameters,
@@ -65,16 +55,20 @@ async function onMessage(data: EventSourceData, event: any) {
           event.amount
         );
       }
+
       break;
     }
 
-    case "ThrowDifferent": {
+    case "ThrowItemBarrage": {
       if (data.vtSocket && data.modelParameters) {
-        onThrowDifferentEvent(
+        onThrowItemBarrageEvent(
           data.appData,
           data.vtSocket,
           data.modelParameters,
-          event.configs
+          event.configs,
+          event.amount_per_throw,
+          event.amount,
+          event.frequency
         );
       }
       break;
@@ -141,31 +135,12 @@ async function onSetCalibrationStepEvent(
   beginCalibrationStep(vtSocket, step);
 }
 
-async function onThrowEvent(
-  appData: AppData,
-  vtSocket: VTubeStudioWebSocket,
-  modelParameters: ModelParameters,
-  config: ThrowableConfig
-) {
-  const { image, audio } = await loadThrowableResources(
-    config.image,
-    config.sound
-  );
-
-  // Failed to load the image for the throwable
-  if (!image) {
-    return;
-  }
-
-  throwItem(vtSocket, appData, modelParameters, config, image, audio);
-}
-
-async function onThrowManyEvent(
+async function onThrowItemEvent(
   appData: AppData,
   vtSocket: VTubeStudioWebSocket,
   modelParameters: ModelParameters,
   config: ThrowableConfig,
-  amount: number = 1
+  amount: number
 ) {
   const { image, audio } = await loadThrowableResources(
     config.image,
@@ -177,18 +152,25 @@ async function onThrowManyEvent(
     return;
   }
 
-  await Promise.all(
-    Array.from(Array(amount)).map(() =>
-      throwItem(vtSocket, appData, modelParameters, config, image, audio)
-    )
+  await throwItemMany(
+    vtSocket,
+    appData,
+    modelParameters,
+    config,
+    image,
+    audio,
+    amount
   );
 }
 
-async function onThrowDifferentEvent(
+async function onThrowItemBarrageEvent(
   appData: AppData,
   vtSocket: VTubeStudioWebSocket,
   modelParameters: ModelParameters,
-  configs: ThrowableConfig[]
+  configs: ThrowableConfig[],
+  amountPerThrow: number,
+  amount: number,
+  frequency: number
 ) {
   // Load all resources
   const resources = await Promise.all(
@@ -202,21 +184,29 @@ async function onThrowDifferentEvent(
     })
   );
 
-  await Promise.all(
-    resources.map(({ config, image, audio }) => {
-      // Failed to load the image for the throwable
-      if (!image) {
-        return Promise.resolve();
-      }
+  await executeInterval(
+    async () => {
+      await Promise.all(
+        resources.map(({ config, image, audio }) => {
+          // Failed to load the image for the throwable
+          if (!image) {
+            return Promise.resolve();
+          }
 
-      return throwItem(
-        vtSocket,
-        appData,
-        modelParameters,
-        config,
-        image,
-        audio
+          return throwItemMany(
+            vtSocket,
+            appData,
+            modelParameters,
+            config,
+            image,
+            // Clone audio source to allow playing multiple times
+            audio,
+            amountPerThrow
+          );
+        })
       );
-    })
+    },
+    frequency,
+    amount
   );
 }

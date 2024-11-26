@@ -3,9 +3,16 @@ use std::{sync::Arc, time::Duration};
 use anyhow::Context;
 use events::{EventMessage, EventRecvHandle};
 use log::{debug, error};
-use rand::{rngs::StdRng, SeedableRng};
+use rand::{
+    rngs::StdRng,
+    seq::{IteratorRandom, SliceRandom},
+    SeedableRng,
+};
 use state::{
-    app_data::{AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger, ThrowableConfig},
+    app_data::{
+        AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger, ThrowableConfig,
+        ThrowableSelection,
+    },
     runtime_app_data::RuntimeAppDataStore,
 };
 use tauri::{App, Manager};
@@ -89,6 +96,7 @@ pub fn run() {
             commands::auth::open_twitch_oauth_uri,
             commands::calibration::set_calibration_step,
             commands::test::test_throw,
+            commands::test::test_throw_barrage,
             commands::test::test_sound,
             commands::data::get_app_data,
             commands::data::get_runtime_app_data,
@@ -225,6 +233,21 @@ fn handle_redeem_event(
     }
 }
 
+fn pick_from_selection<'a>(
+    rand: &mut StdRng,
+    items: &'a [ThrowableConfig],
+    selection: &ThrowableSelection,
+    amount: usize,
+) -> Vec<&'a ThrowableConfig> {
+    match selection {
+        ThrowableSelection::Random => items.iter().choose_multiple(rand, amount),
+        ThrowableSelection::Selection { throwable_ids } => items
+            .iter()
+            .filter(|item| throwable_ids.iter().any(|id| item.id.eq(id)))
+            .choose_multiple(rand, amount),
+    }
+}
+
 fn execute_event_config(
     app_data: Arc<AppData>,
     event_config: EventConfig,
@@ -243,73 +266,51 @@ fn execute_event_config(
     let delay = Duration::from_millis(event_config.outcome_delay as u64);
 
     match event_config.outcome {
-        EventOutcome::Random => {
-            use rand::seq::SliceRandom;
+        EventOutcome::Throwable { selection, amount } => {
             let mut rand = StdRng::from_entropy();
-            let throwable = app_data.items.choose(&mut rand);
-            let throwable = match throwable {
+
+            let configs =
+                pick_from_selection(&mut rand, &app_data.items, &selection, amount as usize);
+
+            let throwable = match configs.first() {
                 Some(value) => value.clone(),
                 // Throwable no longer exists
                 None => return,
             };
 
+            let config = throwable.clone();
+
             tokio::spawn(async move {
                 tokio::time::sleep(delay).await;
 
-                _ = event_sender.send(EventMessage::Throw {
-                    config: throwable.clone(),
+                _ = event_sender.send(EventMessage::ThrowItem { config, amount });
+            });
+        }
+        EventOutcome::ThrowableBarrage {
+            selection,
+            amount_per_throw,
+            amount,
+            frequency,
+        } => {
+            let mut rand = StdRng::from_entropy();
+
+            let configs: Vec<ThrowableConfig> =
+                pick_from_selection(&mut rand, &app_data.items, &selection, amount as usize)
+                    .into_iter()
+                    .cloned()
+                    .collect();
+
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+
+                _ = event_sender.send(EventMessage::ThrowItemBarrage {
+                    configs,
+                    amount,
+                    frequency,
+                    amount_per_throw,
                 });
             });
         }
-        EventOutcome::RandomBarrage => {
-            use rand::seq::SliceRandom;
-            let mut rand = StdRng::from_entropy();
-            let configs: Vec<ThrowableConfig> = app_data
-                .items
-                .choose_multiple(&mut rand, 10)
-                .cloned()
-                .collect();
-
-            // TODO: Optimize by sending config and amount instead of duplicate configs
-
-            tokio::spawn(async move {
-                tokio::time::sleep(delay).await;
-
-                _ = event_sender.send(EventMessage::ThrowDifferent { configs });
-            });
-        }
-        EventOutcome::Throwable { throwable_id } => {
-            let throwable = app_data.items.iter().find(|item| item.id == throwable_id);
-            let throwable = match throwable {
-                Some(value) => value,
-                // Throwable no longer exists
-                None => return,
-            };
-
-            let config = throwable.clone();
-
-            tokio::spawn(async move {
-                tokio::time::sleep(delay).await;
-
-                _ = event_sender.send(EventMessage::Throw { config });
-            });
-        }
-        EventOutcome::ThrowableBarrage { throwable_id } => {
-            let throwable = app_data.items.iter().find(|item| item.id == throwable_id);
-            let throwable = match throwable {
-                Some(value) => value,
-                // Throwable no longer exists
-                None => return,
-            };
-            let config = throwable.clone();
-
-            tokio::spawn(async move {
-                tokio::time::sleep(delay).await;
-
-                _ = event_sender.send(EventMessage::ThrowMany { config, amount: 10 });
-            });
-        }
-        EventOutcome::Collection { collection_id } => {}
         EventOutcome::TriggerHotkey { hotkey_id } => {
             tokio::spawn(async move {
                 tokio::time::sleep(delay).await;

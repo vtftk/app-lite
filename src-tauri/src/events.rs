@@ -15,20 +15,19 @@ pub enum EventMessage {
     SetCalibrationStep {
         step: CalibrationStep,
     },
-    // Throw an item
-    Throw {
-        config: ThrowableConfig,
-    },
 
-    // Throw many items
-    ThrowMany {
+    /// Throw a specific item
+    ThrowItem {
         config: ThrowableConfig,
         amount: u32,
     },
 
-    // Throw many items
-    ThrowDifferent {
+    /// Throw a barrage of many items
+    ThrowItemBarrage {
         configs: Vec<ThrowableConfig>,
+        amount_per_throw: u32,
+        amount: u32,
+        frequency: u32,
     },
 
     // Request the latest set of vtube studio hotkeys

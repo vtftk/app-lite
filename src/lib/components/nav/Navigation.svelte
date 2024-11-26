@@ -21,14 +21,6 @@
     </li>
     <li>
       <NavButton
-        icon={SolarBallsBoldDuotone}
-        href="/collections"
-        title="Collections"
-        text="Collections of throwables"
-      />
-    </li>
-    <li>
-      <NavButton
         icon={SolarBellBoldDuotone}
         href="/events"
         title="Events"

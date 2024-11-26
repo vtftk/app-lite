@@ -40,6 +40,40 @@ export async function loadThrowableResources(
     audio: audioResult.status === "fulfilled" ? audioResult.value : null,
   };
 }
+export async function throwItemMany(
+  socket: VTubeStudioWebSocket,
+  appData: AppData,
+  modelParameters: ModelParameters,
+  config: ThrowableConfig,
+  image: HTMLImageElement,
+  impactAudio: HTMLAudioElement | null,
+  amount: number
+) {
+  if (amount === 1) {
+    return throwItem(
+      socket,
+      appData,
+      modelParameters,
+      config,
+      image,
+      impactAudio
+    );
+  }
+
+  return Promise.all(
+    Array.from(Array(amount)).map(() =>
+      throwItem(
+        socket,
+        appData,
+        modelParameters,
+        config,
+        image,
+        // Clone audio source to allow playing multiple times
+        (impactAudio?.cloneNode() ?? null) as HTMLAudioElement | null
+      )
+    )
+  );
+}
 
 /**
  * Throws an item
@@ -181,7 +215,7 @@ function isRandomDirectionLeft(direction: ThrowDirection): boolean {
  * @param angle Angle the item was thrown at
  * @param leftSide Whether the item is coming from the left side
  */
-async function handleThrowableImpact(
+function handleThrowableImpact(
   socket: VTubeStudioWebSocket,
   appData: AppData,
   modelParameters: ModelParameters,

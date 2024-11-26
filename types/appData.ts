@@ -1,5 +1,7 @@
 type Option<T> = T | null;
 
+type Uuid = string;
+
 export type MinMax = {
   min: number;
   max: number;
@@ -15,7 +17,6 @@ export type AppData = {
   items: ThrowableConfig[];
   events: EventConfig[];
   sounds: SoundConfig[];
-  collections: ThrowableCollection[];
 };
 
 export type ThrowablesConfig = {
@@ -61,7 +62,7 @@ export type VTubeStudioConfig = {
 };
 
 export type ThrowableConfig = {
-  id: string;
+  id: Uuid;
   name: string;
   image: ThrowableImageConfig;
   sound: Option<ImpactSoundConfig>;
@@ -79,23 +80,15 @@ export type ImpactSoundConfig = {
   volume: number;
 };
 
-export type ThrowableCollection = {
-  id: string;
-  name: string;
-  throwable_ids: string[];
-  amount: number;
-  throwables_config_override: ThrowablesConfig;
-};
-
 export type SoundConfig = {
-  id: string;
+  id: Uuid;
   name: string;
   src: string;
   volume: number;
 };
 
 export type EventConfig = {
-  id: string;
+  id: Uuid;
   name: string;
   enabled: boolean;
   trigger: EventTrigger;
@@ -170,28 +163,47 @@ export type EventTrigger =
       throws: MinMax;
     };
 
-export enum EventOutcomeType {
+export enum ThrowableSelectionType {
   Random = "Random",
-  RandomBarrage = "RandomBarrage",
+  Selection = "Selection",
+}
+
+export type ThrowableSelection =
+  | { type: ThrowableSelectionType.Random }
+  | { type: ThrowableSelectionType.Selection; throwable_ids: Uuid[] };
+
+export const THROWABLE_SELECTION_TYPES = [
+  ThrowableSelectionType.Random,
+  ThrowableSelectionType.Selection,
+] as const;
+
+export const THROWABLE_SELECTION_NAMES: Record<ThrowableSelectionType, string> =
+  {
+    [ThrowableSelectionType.Random]: "Random",
+    [ThrowableSelectionType.Selection]: "Choose specific throwables",
+  } as const;
+
+export enum EventOutcomeType {
   Throwable = "Throwable",
-  Collection = "Collection",
+  ThrowableBarrage = "ThrowableBarrage",
   TriggerHotkey = "TriggerHotkey",
   PlaySound = "PlaySound",
 }
 
 export type EventOutcome =
-  | { type: EventOutcomeType.Random }
-  | { type: EventOutcomeType.RandomBarrage }
   | {
       type: EventOutcomeType.Throwable;
-      throwable_id: string;
+      selection: ThrowableSelection;
+      amount: number;
     }
   | {
-      type: EventOutcomeType.Collection;
-      collection_id: string;
+      type: EventOutcomeType.ThrowableBarrage;
+      selection: ThrowableSelection;
+      frequency: number;
+      amount: number;
     }
-  | { type: EventOutcomeType.TriggerHotkey; hotkey_id: string }
-  | { type: EventOutcomeType.PlaySound; sound_id: string };
+  | { type: EventOutcomeType.TriggerHotkey; hotkey_id: Uuid }
+  | { type: EventOutcomeType.PlaySound; sound_id: Uuid };
 
 export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
   EventOutcome,
@@ -199,19 +211,15 @@ export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
 >;
 
 export const EVENT_OUTCOME_TYPES = [
-  EventOutcomeType.Random,
-  EventOutcomeType.RandomBarrage,
   EventOutcomeType.Throwable,
-  EventOutcomeType.Collection,
+  EventOutcomeType.ThrowableBarrage,
   EventOutcomeType.TriggerHotkey,
   EventOutcomeType.PlaySound,
 ] as const;
 
 export const EVENT_OUTCOME_NAMES: Record<EventOutcomeType, string> = {
-  [EventOutcomeType.Random]: "Random",
-  [EventOutcomeType.RandomBarrage]: "Random Barrage",
   [EventOutcomeType.Throwable]: "Throwable",
-  [EventOutcomeType.Collection]: "Collection",
+  [EventOutcomeType.ThrowableBarrage]: "Throwable Barrage",
   [EventOutcomeType.TriggerHotkey]: "Trigger Hotkey",
   [EventOutcomeType.PlaySound]: "Play Sound",
 } as const;

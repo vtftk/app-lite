@@ -22,9 +22,11 @@
   }
 
   async function testThrowMany() {
-    await invoke("test_throw", {
-      config,
-      amount: 10,
+    await invoke("test_throw_barrage", {
+      configs: [config],
+      amount: 50,
+      amountPerThrow: 2,
+      frequency: 100,
     });
   }
 </script>
