@@ -5,7 +5,7 @@
   import { z } from "zod";
   import type {
     ImpactSoundConfig,
-    ThrowableConfig,
+    ItemConfig,
     ThrowableImageConfig,
   } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
@@ -14,7 +14,7 @@
   import { goto } from "$app/navigation";
 
   type Props = {
-    existing?: ThrowableConfig;
+    existing?: ItemConfig;
   };
 
   const { existing }: Props = $props();
@@ -34,8 +34,6 @@
     scale: z.number(),
     weight: z.number(),
     pixelate: z.boolean(),
-    sound: z.union([z.instanceof(File), z.undefined()]),
-    volume: z.number(),
   });
 
   type Schema = z.infer<typeof schema>;
@@ -48,8 +46,6 @@
           scale: existing.image.scale,
           weight: existing.image.weight,
           pixelate: existing.image.pixelate,
-          sound: undefined,
-          volume: existing.sound?.volume ?? 1,
         }
       : {
           name: "",
@@ -57,8 +53,6 @@
           scale: 1,
           weight: 1,
           pixelate: false,
-          sound: undefined,
-          volume: 1,
         }) satisfies Schema,
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
@@ -83,31 +77,10 @@
         weight: values.weight,
       };
 
-      let soundURL: string | null;
-      if (values.sound) {
-        soundURL = await invoke<string>("upload_file", {
-          fileType: "ImpactSound",
-          fileName: values.sound.name,
-          fileData: await values.sound.arrayBuffer(),
-        });
-      } else if (existing && existing.sound) {
-        soundURL = existing.sound.src;
-      } else {
-        soundURL = null;
-      }
-
-      let soundConfig: ImpactSoundConfig | null =
-        soundURL !== null
-          ? {
-              src: soundURL,
-              volume: values.volume,
-            }
-          : null;
-
-      const throwableConfig: ThrowableConfig = {
+      const throwableConfig: ItemConfig = {
         id: existing ? existing.id : self.crypto.randomUUID(),
         image: imageConfig,
-        sound: soundConfig,
+        impact_sounds_ids: [],
         name: values.name,
       };
 
@@ -210,44 +183,11 @@
   </div>
 
   <div>
-    <h2>Impact Sound</h2>
+    <h2>Impact Sounds</h2>
     <p>
       Sound played when the throwable impacts
       <span>Optional</span>
     </p>
-
-    {#if existing && existing.sound}
-      <audio controls>
-        <source src={existing.sound.src} />
-        Your browser does not support the audio tag.
-      </audio>
-    {/if}
-
-    <div>
-      <label for="sound">{existing ? "Replace" : "Upload"} Sound</label>
-      <input
-        accept="audio/*"
-        type="file"
-        id="sound"
-        name="sound"
-        aria-describedby="sound-validation"
-      />
-      <FormErrorLabel name="sound" />
-    </div>
-
-    <div>
-      <label for="volume">Volume</label>
-      <input
-        type="number"
-        id="volume"
-        name="volume"
-        min="0"
-        max="1"
-        step="0.1"
-        aria-describedby="volume-validation"
-      />
-      <FormErrorLabel name="volume" />
-    </div>
   </div>
 
   <button type="submit"> {existing ? "Save" : "Create"}</button>

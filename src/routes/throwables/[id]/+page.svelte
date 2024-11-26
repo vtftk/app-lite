@@ -1,13 +1,13 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { getAppData } from "$lib/api/runtimeAppData";
-  import type { ThrowableConfig } from "$lib/api/types";
+  import type { ItemConfig } from "$lib/api/types";
   import ThrowableForm from "$lib/sections/throwables/ThrowableForm.svelte";
   import { derived, type Readable } from "svelte/store";
 
   const appData = getAppData();
 
-  const item: Readable<ThrowableConfig | undefined> = derived(
+  const item: Readable<ItemConfig | undefined> = derived(
     [appData, page],
     ([$appData, $page]) => {
       const id = $page.params.id;

@@ -1,20 +1,13 @@
-use std::{sync::Arc, time::Duration};
-
 use anyhow::Context;
 use events::{EventMessage, EventRecvHandle};
 use log::{debug, error};
-use rand::{
-    rngs::StdRng,
-    seq::{IteratorRandom, SliceRandom},
-    SeedableRng,
-};
 use state::{
     app_data::{
-        AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger, ThrowableConfig,
-        ThrowableSelection,
+        AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger, ItemConfig, ThrowableConfig,
     },
     runtime_app_data::RuntimeAppDataStore,
 };
+use std::{sync::Arc, time::Duration};
 use tauri::{App, Manager};
 use tokio::sync::broadcast;
 use twitch::manager::{
@@ -189,18 +182,12 @@ async fn handle_twitch_events(
 
         match event {
             TwitchEvent::Redeem(event) => handle_redeem_event(app_data, &event_sender, event),
-            TwitchEvent::CheerBits(event) => {
-                handle_cheer_bits_event(&events, &event_sender, event).await
-            }
-            TwitchEvent::Follow(event) => handle_follow_event(&events, &event_sender, event).await,
-            TwitchEvent::Sub(event) => handle_sub_event(&events, &event_sender, event).await,
-            TwitchEvent::GiftSub(event) => {
-                handle_gift_sub_event(&events, &event_sender, event).await
-            }
-            TwitchEvent::ResubMsg(event) => handle_resub_event(&events, &event_sender, event).await,
-            TwitchEvent::ChatMsg(event) => {
-                handle_chat_msg_event(&events, &event_sender, event).await
-            }
+            TwitchEvent::CheerBits(event) => handle_cheer_bits_event(events, &event_sender, event),
+            TwitchEvent::Follow(event) => handle_follow_event(events, &event_sender, event),
+            TwitchEvent::Sub(event) => handle_sub_event(events, &event_sender, event),
+            TwitchEvent::GiftSub(event) => handle_gift_sub_event(events, &event_sender, event),
+            TwitchEvent::ResubMsg(event) => handle_resub_event(events, &event_sender, event),
+            TwitchEvent::ChatMsg(event) => handle_chat_msg_event(events, &event_sender, event),
         }
     }
 }
@@ -233,21 +220,6 @@ fn handle_redeem_event(
     }
 }
 
-fn pick_from_selection<'a>(
-    rand: &mut StdRng,
-    items: &'a [ThrowableConfig],
-    selection: &ThrowableSelection,
-    amount: usize,
-) -> Vec<&'a ThrowableConfig> {
-    match selection {
-        ThrowableSelection::Random => items.iter().choose_multiple(rand, amount),
-        ThrowableSelection::Selection { throwable_ids } => items
-            .iter()
-            .filter(|item| throwable_ids.iter().any(|id| item.id.eq(id)))
-            .choose_multiple(rand, amount),
-    }
-}
-
 fn execute_event_config(
     app_data: Arc<AppData>,
     event_config: EventConfig,
@@ -266,45 +238,80 @@ fn execute_event_config(
     let delay = Duration::from_millis(event_config.outcome_delay as u64);
 
     match event_config.outcome {
-        EventOutcome::Throwable { selection, amount } => {
-            let mut rand = StdRng::from_entropy();
+        EventOutcome::Throwable {
+            throwable_ids,
+            amount,
+        } => {
+            let items = app_data
+                .items
+                .iter()
+                .find(|item| throwable_ids.contains(&item.id));
 
-            let configs =
-                pick_from_selection(&mut rand, &app_data.items, &selection, amount as usize);
-
-            let throwable = match configs.first() {
+            let item = match items {
                 Some(value) => value.clone(),
                 // Throwable no longer exists
                 None => return,
             };
 
-            let config = throwable.clone();
+            let item = item.clone();
+
+            // Find all the referenced sounds
+            let impact_sounds = app_data
+                .sounds
+                .iter()
+                .filter(|sound| item.impact_sounds_ids.contains(&sound.id))
+                .cloned()
+                .collect();
+
+            let throwable_config = ThrowableConfig {
+                items: vec![item],
+                impact_sounds,
+            };
 
             tokio::spawn(async move {
                 tokio::time::sleep(delay).await;
 
-                _ = event_sender.send(EventMessage::ThrowItem { config, amount });
+                _ = event_sender.send(EventMessage::ThrowItem {
+                    config: throwable_config,
+                    amount,
+                });
             });
         }
         EventOutcome::ThrowableBarrage {
-            selection,
+            throwable_ids,
             amount_per_throw,
             amount,
             frequency,
         } => {
-            let mut rand = StdRng::from_entropy();
+            let items: Vec<ItemConfig> = app_data
+                .items
+                .iter()
+                .filter(|item| throwable_ids.contains(&item.id))
+                .cloned()
+                .collect();
 
-            let configs: Vec<ThrowableConfig> =
-                pick_from_selection(&mut rand, &app_data.items, &selection, amount as usize)
-                    .into_iter()
-                    .cloned()
-                    .collect();
+            // Find all the referenced sounds
+            let impact_sounds = app_data
+                .sounds
+                .iter()
+                .filter(|sound| {
+                    items
+                        .iter()
+                        .any(|item| item.impact_sounds_ids.contains(&sound.id))
+                })
+                .cloned()
+                .collect();
+
+            let throwable_config = ThrowableConfig {
+                items,
+                impact_sounds,
+            };
 
             tokio::spawn(async move {
                 tokio::time::sleep(delay).await;
 
                 _ = event_sender.send(EventMessage::ThrowItemBarrage {
-                    configs,
+                    config: throwable_config,
                     amount,
                     frequency,
                     amount_per_throw,
@@ -334,7 +341,7 @@ fn execute_event_config(
     }
 }
 
-async fn handle_cheer_bits_event(
+fn handle_cheer_bits_event(
     events: &[EventConfig],
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventCheerBits,
@@ -344,72 +351,72 @@ async fn handle_cheer_bits_event(
             state::app_data::EventTrigger::Bits {
                 max_throws,
                 min_bits,
-            } => todo!(),
+            } => {}
             _ => {}
         };
     }
 }
 
-async fn handle_follow_event(
+fn handle_follow_event(
     events: &[EventConfig],
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventFollow,
 ) {
     for event in events {
         let trigger = match &event.trigger {
-            state::app_data::EventTrigger::Follow => todo!(),
+            state::app_data::EventTrigger::Follow => {}
             _ => {}
         };
     }
 }
 
-async fn handle_sub_event(
+fn handle_sub_event(
     events: &[EventConfig],
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventSub,
 ) {
     for event in events {
         let trigger = match &event.trigger {
-            state::app_data::EventTrigger::Subscription => todo!(),
+            state::app_data::EventTrigger::Subscription => {}
             _ => {}
         };
     }
 }
 
-async fn handle_gift_sub_event(
+fn handle_gift_sub_event(
     events: &[EventConfig],
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventGiftSub,
 ) {
     for event in events {
         let trigger = match &event.trigger {
-            state::app_data::EventTrigger::GiftedSubscription => todo!(),
+            state::app_data::EventTrigger::GiftedSubscription => {}
             _ => {}
         };
     }
 }
 
-async fn handle_resub_event(
+fn handle_resub_event(
     events: &[EventConfig],
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventReSub,
 ) {
     for event in events {
         let trigger = match &event.trigger {
-            state::app_data::EventTrigger::Subscription => todo!(),
+            state::app_data::EventTrigger::Subscription => {}
             _ => {}
         };
     }
 }
 
-async fn handle_chat_msg_event(
+fn handle_chat_msg_event(
     events: &[EventConfig],
     event_sender: &broadcast::Sender<EventMessage>,
     event: TwitchEventChatMsg,
 ) {
     for event in events {
         let trigger = match &event.trigger {
-            state::app_data::EventTrigger::Command { message } => todo!(),
+            state::app_data::EventTrigger::Command { message } => {}
             _ => {}
         };
     }

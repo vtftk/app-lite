@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { getAppData } from "$lib/api/runtimeAppData";
-  import type { SoundConfig, ThrowableConfig } from "$lib/api/types";
+  import type { SoundConfig, ItemConfig } from "$lib/api/types";
   import SoundForm from "$lib/sections/sounds/SoundForm.svelte";
   import EditThrowableForm from "$lib/sections/throwables/EditThrowableForm.svelte";
   import { derived, type Readable } from "svelte/store";

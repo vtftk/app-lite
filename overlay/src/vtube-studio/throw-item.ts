@@ -1,4 +1,4 @@
-import { loadAudio, loadImage, sleep } from "../utils/async";
+import { loadAudio, LoadedSoundData, loadImage, sleep } from "../utils/async";
 import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
 import { percentRange, randomBool, randomRange } from "../utils/math";
 import {
@@ -9,6 +9,8 @@ import {
   ThrowDirection,
   ImpactSoundConfig,
   ThrowableConfig,
+  SoundConfig,
+  ItemConfig,
 } from "../vtftk/types";
 import { flinch } from "./flinch";
 import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
@@ -40,40 +42,6 @@ export async function loadThrowableResources(
     audio: audioResult.status === "fulfilled" ? audioResult.value : null,
   };
 }
-export async function throwItemMany(
-  socket: VTubeStudioWebSocket,
-  appData: AppData,
-  modelParameters: ModelParameters,
-  config: ThrowableConfig,
-  image: HTMLImageElement,
-  impactAudio: HTMLAudioElement | null,
-  amount: number
-) {
-  if (amount === 1) {
-    return throwItem(
-      socket,
-      appData,
-      modelParameters,
-      config,
-      image,
-      impactAudio
-    );
-  }
-
-  return Promise.all(
-    Array.from(Array(amount)).map(() =>
-      throwItem(
-        socket,
-        appData,
-        modelParameters,
-        config,
-        image,
-        // Clone audio source to allow playing multiple times
-        (impactAudio?.cloneNode() ?? null) as HTMLAudioElement | null
-      )
-    )
-  );
-}
 
 /**
  * Throws an item
@@ -90,9 +58,9 @@ export async function throwItem(
   socket: VTubeStudioWebSocket,
   appData: AppData,
   modelParameters: ModelParameters,
-  config: ThrowableConfig,
+  config: ItemConfig,
   image: HTMLImageElement,
-  impactAudio: HTMLAudioElement | null
+  impactAudio: LoadedSoundData | null
 ) {
   const { modelID, modelPosition } = await requestCurrentModel(socket);
 
@@ -219,18 +187,18 @@ function handleThrowableImpact(
   socket: VTubeStudioWebSocket,
   appData: AppData,
   modelParameters: ModelParameters,
-  config: ThrowableConfig,
-  impactAudio: HTMLAudioElement | null,
+  config: ItemConfig,
+  impactAudio: LoadedSoundData | null,
   angle: number,
   leftSide: boolean
 ) {
   // Play the impact sound
-  if (impactAudio !== null && config.sound) {
+  if (impactAudio !== null) {
     try {
-      impactAudio.volume =
-        appData.items_config.global_volume * config.sound.volume;
+      impactAudio.sound.volume =
+        appData.items_config.global_volume * impactAudio.config.volume;
 
-      impactAudio.play();
+      impactAudio.sound.play();
     } catch (err) {
       console.error("failed to play audio", err);
     }

@@ -25,7 +25,7 @@ pub fn test_throw(
 /// Plays a test throw item event
 #[tauri::command]
 pub fn test_throw_barrage(
-    configs: Vec<ThrowableConfig>,
+    config: ThrowableConfig,
     amount_per_throw: u32,
     amount: u32,
     frequency: u32,
@@ -33,7 +33,7 @@ pub fn test_throw_barrage(
 ) -> Result<bool, ()> {
     event_sender
         .send(EventMessage::ThrowItemBarrage {
-            configs,
+            config,
             amount_per_throw,
             amount,
             frequency,

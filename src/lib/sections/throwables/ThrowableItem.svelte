@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ThrowableConfig } from "$lib/api/types";
+  import type { ItemConfig, ThrowableConfig } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
 
   import SettingsIcon from "~icons/solar/settings-bold";
@@ -7,23 +7,44 @@
 
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import { getAppData } from "$lib/api/runtimeAppData";
+  import { app } from "@tauri-apps/api";
 
   type Props = {
-    config: ThrowableConfig;
+    config: ItemConfig;
   };
 
+  const appData = getAppData();
   const { config }: Props = $props();
 
   async function testThrow() {
+    const impact_sounds = $appData.sounds.filter((sound) =>
+      config.impact_sounds_ids.includes(sound.id)
+    );
+
+    const throwable: ThrowableConfig = {
+      items: [config],
+      impact_sounds,
+    };
+
     await invoke("test_throw", {
-      config,
+      config: throwable,
       amount: 1,
     });
   }
 
   async function testThrowMany() {
+    const impact_sounds = $appData.sounds.filter((sound) =>
+      config.impact_sounds_ids.includes(sound.id)
+    );
+
+    const throwable: ThrowableConfig = {
+      items: [config],
+      impact_sounds,
+    };
+
     await invoke("test_throw_barrage", {
-      configs: [config],
+      config: [throwable],
       amount: 50,
       amountPerThrow: 2,
       frequency: 100,

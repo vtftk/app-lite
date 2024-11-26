@@ -81,7 +81,7 @@ pub struct AppData {
     pub items_config: ItemsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
     pub models: HashMap<ModelId, ModelData>,
-    pub items: Vec<ThrowableConfig>,
+    pub items: Vec<ItemConfig>,
     pub events: Vec<EventConfig>,
     pub sounds: Vec<SoundConfig>,
 }
@@ -224,13 +224,22 @@ pub enum EyesMode {
 /// Configuration for an individual throwable item
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThrowableConfig {
+    /// All the referenced items
+    pub items: Vec<ItemConfig>,
+    /// All the referenced sounds
+    pub impact_sounds: Vec<SoundConfig>,
+}
+
+/// Configuration for an individual throwable item
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ItemConfig {
     pub id: Uuid,
     /// Name of the throwable item
     pub name: String,
     /// Image to use for the throwable item
     pub image: ThrowableImageConfig,
-    /// Optional sound to play upon impact
-    pub sound: Option<ImpactSoundConfig>,
+    /// Selection of sounds for impact
+    pub impact_sounds_ids: Vec<Uuid>,
 }
 
 /// Configuration for a throwable image
@@ -247,9 +256,14 @@ pub struct ThrowableImageConfig {
     pub pixelate: bool,
 }
 
-/// Configuration for a throwable impact sound
+/// Configuration for a sound
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ImpactSoundConfig {
+pub struct SoundConfig {
+    /// The ID of the sound
+    pub id: Uuid,
+
+    /// Name of the sound
+    pub name: String,
     /// Src URL for the image
     pub src: String,
     /// Volume of the sound 0-1
@@ -327,28 +341,18 @@ pub enum EventTrigger {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum ThrowableSelection {
-    /// Choose from all throwables randomly
-    Random,
-
-    /// Specified collection of throwables
-    Selection { throwable_ids: Vec<Uuid> },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum EventOutcome {
     /// Throw items (All at once)
     Throwable {
         /// IDs of the items that can be thrown
-        selection: ThrowableSelection,
+        throwable_ids: Vec<Uuid>,
         /// Amount to throw
         amount: u32,
     },
     /// Throw a throwable barrage ()
     ThrowableBarrage {
         /// IDs of the items that can be thrown
-        selection: ThrowableSelection,
+        throwable_ids: Vec<Uuid>,
         /// Amount to throw for each throw
         amount_per_throw: u32,
         /// Time between each thrown item (Milliseconds)
@@ -360,16 +364,4 @@ pub enum EventOutcome {
     TriggerHotkey { hotkey_id: String },
     /// Trigger a sound
     PlaySound { sound_id: Uuid },
-}
-
-/// Configuration for a sound
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SoundConfig {
-    pub id: Uuid,
-    /// Name of the sound
-    pub name: String,
-    /// Src URL for the image
-    pub src: String,
-    /// Volume of the sound 0-1
-    pub volume: f32,
 }

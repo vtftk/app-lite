@@ -1,3 +1,5 @@
+import { ItemConfig, SoundConfig } from "$shared/appData";
+
 export async function sleep(duration: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, duration));
 }
@@ -48,4 +50,49 @@ export async function loadAudio(src: string): Promise<HTMLAudioElement> {
     audio.oncanplaythrough = () => resolve(audio);
     audio.onerror = () => reject();
   });
+}
+
+export type LoadedItemMap = Map<string, HTMLImageElement>;
+export type LoadedSoundMap = Map<string, LoadedSoundData>;
+export type LoadedSoundData = {
+  config: SoundConfig;
+  sound: HTMLAudioElement;
+};
+
+export async function loadItems(items: ItemConfig[]): Promise<LoadedItemMap> {
+  const results = await Promise.allSettled(
+    items.map(async (item) => ({
+      id: item.id,
+      image: await loadImage(item.image.src),
+    }))
+  );
+
+  const output = new Map();
+
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    output.set(result.value.id, result.value.image);
+  }
+
+  return output;
+}
+
+export async function loadSounds(
+  sounds: SoundConfig[]
+): Promise<LoadedSoundMap> {
+  const results = await Promise.allSettled(
+    sounds.map(async (config) => ({
+      sound: await loadAudio(config.src),
+      config,
+    }))
+  );
+
+  const output = new Map();
+
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    output.set(result.value.config.id, result.value.sound);
+  }
+
+  return output;
 }

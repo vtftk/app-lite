@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { ThrowableConfig } from "$lib/api/types";
+  import type { ItemConfig } from "$lib/api/types";
   import ThrowableItem from "./ThrowableItem.svelte";
 
   type Props = {
-    items: ThrowableConfig[];
+    items: ItemConfig[];
   };
 
   const { items }: Props = $props();

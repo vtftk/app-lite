@@ -14,7 +14,7 @@ export type AppData = {
   vtube_studio_config: VTubeStudioConfig;
   models: Record<ModelId, ModelData>;
 
-  items: ThrowableConfig[];
+  items: ItemConfig[];
   events: EventConfig[];
   sounds: SoundConfig[];
 };
@@ -62,10 +62,15 @@ export type VTubeStudioConfig = {
 };
 
 export type ThrowableConfig = {
+  items: ItemConfig[];
+  impact_sounds: SoundConfig[];
+};
+
+export type ItemConfig = {
   id: Uuid;
   name: string;
   image: ThrowableImageConfig;
-  sound: Option<ImpactSoundConfig>;
+  impact_sounds_ids: Uuid[];
 };
 
 export type ThrowableImageConfig = {

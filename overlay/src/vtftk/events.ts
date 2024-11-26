@@ -1,16 +1,21 @@
 import { BACKEND_HTTP } from "../constants";
-import { executeInterval, loadAudio } from "../utils";
+import {
+  arrayRandom,
+  executeInterval,
+  loadAudio,
+  LoadedItemMap,
+  LoadedSoundMap,
+  loadItems,
+  loadSounds,
+} from "../utils";
 import { requestHotkeys, triggerHotkey } from "../vtube-studio/hotkeys";
 import { ModelParameters } from "../vtube-studio/model";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
-import {
-  loadThrowableResources,
-  throwItemMany,
-} from "../vtube-studio/throw-item";
+import { throwItem } from "../vtube-studio/throw-item";
 import { updateRuntimeData } from "./api";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
-import { AppData, SoundConfig, ThrowableConfig } from "./types";
+import { AppData, ItemConfig, SoundConfig, ThrowableConfig } from "./types";
 
 export type EventSourceData = {
   appData: AppData;
@@ -142,24 +147,123 @@ async function onThrowItemEvent(
   config: ThrowableConfig,
   amount: number
 ) {
-  const { image, audio } = await loadThrowableResources(
-    config.image,
-    config.sound
-  );
-
-  // Failed to load the image for the throwable
-  if (!image) {
-    return;
-  }
+  const [loadedItems, loadedSounds] = await Promise.all([
+    loadItems(config.items),
+    loadSounds(config.impact_sounds),
+  ]);
 
   await throwItemMany(
     vtSocket,
     appData,
     modelParameters,
-    config,
-    image,
-    audio,
+    config.items,
+    loadedItems,
+    loadedSounds,
     amount
+  );
+}
+
+function pickRandomSound(
+  item: ItemConfig,
+  sounds: LoadedSoundMap,
+  clone: boolean = false
+) {
+  if (item.impact_sounds_ids.length > 0) {
+    const randomSoundId = arrayRandom(item.impact_sounds_ids);
+    const audio = sounds.get(randomSoundId);
+    if (audio) {
+      return {
+        config: audio.config,
+        sound: clone
+          ? (audio.sound.cloneNode() as HTMLAudioElement)
+          : audio.sound,
+      };
+    }
+  }
+
+  return null;
+}
+
+function pickRandomItem(items: ItemConfig[], images: LoadedItemMap) {
+  if (items.length === 1) {
+    const item = items[0];
+    const image = images.get(item.id);
+    if (image === undefined) return null;
+    return { config: item, image };
+  }
+
+  if (items.length > 0) {
+    const randomItem = arrayRandom(items);
+    const image = images.get(randomItem.id);
+    if (image !== undefined) {
+      return {
+        config: randomItem,
+        image,
+      };
+    }
+  }
+
+  return null;
+}
+
+function throwRandomItem(
+  socket: VTubeStudioWebSocket,
+  appData: AppData,
+  modelParameters: ModelParameters,
+
+  items: ItemConfig[],
+  loadedItems: LoadedItemMap,
+  loadedSounds: LoadedSoundMap
+): Promise<void> {
+  const item = pickRandomItem(items, loadedItems);
+
+  // No item found
+  if (item === null) return Promise.resolve();
+
+  const impactAudio = pickRandomSound(item.config, loadedSounds);
+
+  return throwItem(
+    socket,
+    appData,
+    modelParameters,
+    item.config,
+    item.image,
+    impactAudio
+  );
+}
+
+async function throwItemMany(
+  socket: VTubeStudioWebSocket,
+  appData: AppData,
+  modelParameters: ModelParameters,
+
+  items: ItemConfig[],
+  loadedItems: LoadedItemMap,
+  loadedSounds: LoadedSoundMap,
+  amount: number
+) {
+  if (amount === 1) {
+    return throwRandomItem(
+      socket,
+      appData,
+      modelParameters,
+      items,
+      loadedItems,
+      loadedSounds
+    );
+  }
+
+  return Promise.all(
+    Array.from(Array(amount)).map(() =>
+      throwRandomItem(
+        socket,
+        appData,
+        modelParameters,
+        items,
+        loadedItems,
+        loadedSounds
+      )
+    )
   );
 }
 
@@ -167,43 +271,26 @@ async function onThrowItemBarrageEvent(
   appData: AppData,
   vtSocket: VTubeStudioWebSocket,
   modelParameters: ModelParameters,
-  configs: ThrowableConfig[],
+  config: ThrowableConfig,
   amountPerThrow: number,
   amount: number,
   frequency: number
 ) {
-  // Load all resources
-  const resources = await Promise.all(
-    configs.map(async (config) => {
-      const { image, audio } = await loadThrowableResources(
-        config.image,
-        config.sound
-      );
-
-      return { config, image, audio };
-    })
-  );
+  const [loadedItems, loadedSounds] = await Promise.all([
+    loadItems(config.items),
+    loadSounds(config.impact_sounds),
+  ]);
 
   await executeInterval(
     async () => {
-      await Promise.all(
-        resources.map(({ config, image, audio }) => {
-          // Failed to load the image for the throwable
-          if (!image) {
-            return Promise.resolve();
-          }
-
-          return throwItemMany(
-            vtSocket,
-            appData,
-            modelParameters,
-            config,
-            image,
-            // Clone audio source to allow playing multiple times
-            audio,
-            amountPerThrow
-          );
-        })
+      return throwItemMany(
+        vtSocket,
+        appData,
+        modelParameters,
+        config.items,
+        loadedItems,
+        loadedSounds,
+        amountPerThrow
       );
     },
     frequency,

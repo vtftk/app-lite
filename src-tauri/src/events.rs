@@ -24,7 +24,7 @@ pub enum EventMessage {
 
     /// Throw a barrage of many items
     ThrowItemBarrage {
-        configs: Vec<ThrowableConfig>,
+        config: ThrowableConfig,
         amount_per_throw: u32,
         amount: u32,
         frequency: u32,
