@@ -6,15 +6,26 @@
     id: string;
     name: string;
     label: string;
+
+    checked: boolean;
+    onChecked: (checked: boolean) => void;
   };
 
-  const { id, name, label }: Props = $props();
+  const { id, name, label, checked, onChecked }: Props = $props();
 </script>
 
 <div class="form-input">
   <label for={id}>{label}</label>
 
-  <Checkbox.Root {id} {name} aria-labelledby="{name}-label">
+  <Checkbox.Root
+    {id}
+    {name}
+    aria-labelledby="{name}-label"
+    {checked}
+    onCheckedChange={(checked) => {
+      onChecked(checked === true);
+    }}
+  >
     <Checkbox.Indicator let:isChecked>
       {#if isChecked}
         <span>&#10003;</span>

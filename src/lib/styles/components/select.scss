@@ -12,6 +12,7 @@
   padding: 1rem;
   border-top: 1px solid #444;
   border-bottom: 1px solid #444;
+  color: #fff;
 }
 
 [data-select-trigger] {
@@ -26,14 +27,15 @@
   text-decoration: none;
   min-width: 12rem;
   min-height: 2rem;
+  color: #fff;
 }
 
 [data-select-content] {
   border-radius: 0.5rem;
-  border: 0.1rem solid #dfe3e8;
-  background-color: #fff;
+  border: 0.1rem solid #333;
+  background-color: #222;
   padding: 0.5rem;
-  max-height: 30rem;
+  max-height: 40vh;
   overflow: auto;
   box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.1);
 }
@@ -42,6 +44,7 @@
   cursor: pointer;
   display: flex;
   border-radius: 0.25rem;
+  padding: 0.5rem;
 
   &[data-disabled] {
     cursor: not-allowed;

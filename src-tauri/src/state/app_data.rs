@@ -332,8 +332,6 @@ pub enum EventTrigger {
     Raid {
         /// Minimum raiders required to trigger
         min_raiders: u32,
-        /// Minimum and maximum throws to create
-        throws: MinMax<u32>,
     },
 }
 

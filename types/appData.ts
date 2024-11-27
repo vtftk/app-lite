@@ -161,11 +161,10 @@ export type EventTrigger =
   | { type: EventTriggerType.Follow }
   | { type: EventTriggerType.Subscription }
   | { type: EventTriggerType.GiftedSubscription }
-  | { type: EventTriggerType.Bits; min_bits: number; max_throws: number }
+  | { type: EventTriggerType.Bits; min_bits: number }
   | {
       type: EventTriggerType.Raid;
       min_raiders: number;
-      throws: MinMax;
     };
 
 export enum ThrowableDataType {
@@ -174,12 +173,12 @@ export enum ThrowableDataType {
 }
 
 export type ThrowableDataThrow = {
-  throwables_ids: Uuid[];
+  throwable_ids: Uuid[];
   amount: number;
 };
 
 export type ThrowableDataBarrage = {
-  throwables_ids: Uuid[];
+  throwable_ids: Uuid[];
   amount_per_throw: number;
   frequency: number;
   amount: number;
@@ -204,7 +203,7 @@ export type BitsAmountDynamic = {
 
 export type BitsAmount =
   | ({ type: BitsAmountType.Fixed } & BitsAmountFixed)
-  | ({ tpe: BitsAmountType.Dynamic } & BitsAmountDynamic);
+  | ({ type: BitsAmountType.Dynamic } & BitsAmountDynamic);
 
 export enum EventOutcomeType {
   ThrowBits = "ThrowBits",

@@ -34,3 +34,20 @@ body {
   background-color: #444;
   border-color: #777;
 }
+
+.text-stack {
+  display: flex;
+  flex-flow: column;
+  gap: 0.2rem;
+}
+
+.text-stack--top {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.text-stack--bottom {
+  color: #ccc;
+  font-size: 1rem;
+}

@@ -2,13 +2,19 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
-
+  import { derived } from "svelte/store";
+  import FormSelect from "$lib/components/form/FormSelect.svelte";
+  import SolarRefreshBold from "~icons/solar/refresh-bold";
   type Props = {
-    name: string;
     id: string;
+    name: string;
+    label: string;
+
+    selected: any;
+    onChangeSelected: (value: any) => void;
   };
 
-  const { name, id }: Props = $props();
+  const { id, label, name, selected, onChangeSelected }: Props = $props();
 
   const updateHotkeys = () => {
     invoke("update_hotkeys");
@@ -18,11 +24,42 @@
   onMount(() => {
     updateHotkeys();
   });
+
+  const options = derived([runtimeAppData], ([$runtimeAppData]) =>
+    $runtimeAppData.hotkeys.map((item) => ({
+      value: item.hotkey_id,
+      label: item.name,
+    }))
+  );
 </script>
 
-<button type="button" onclick={updateHotkeys}>Refresh Hotkeys</button>
-<select {name} {id}>
-  {#each $runtimeAppData.hotkeys as hotkey}
-    <option value={hotkey.hotkey_id}>{hotkey.name}</option>
-  {/each}
-</select>
+{#snippet hotkeyItem(item: (typeof $options)[0])}
+  <div class="text-stack">
+    <p class="text-stack--top">{item.label}</p>
+  </div>
+{/snippet}
+
+<div class="container">
+  <FormSelect
+    {id}
+    {name}
+    {label}
+    items={$options}
+    item={hotkeyItem}
+    {selected}
+    {onChangeSelected}
+  />
+
+  <button type="button" class="btn" onclick={updateHotkeys}>
+    <SolarRefreshBold /> Refresh Hotkeys
+  </button>
+</div>
+
+<style>
+  .container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    width: 100%;
+  }
+</style>
