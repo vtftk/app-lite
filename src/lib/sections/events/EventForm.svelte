@@ -436,8 +436,8 @@
     />
   {:else if $data.trigger.type === EventTriggerType.Command}
     <FormTextInput
-      id="trigger.command"
-      name="trigger.command"
+      id="trigger.message"
+      name="trigger.message"
       label="Command Message"
     />
   {:else if $data.trigger.type === EventTriggerType.Bits}
