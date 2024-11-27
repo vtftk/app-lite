@@ -6,12 +6,16 @@
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import PlayIcon from "~icons/solar/play-bold";
+  import { Checkbox } from "bits-ui";
 
   type Props = {
     config: SoundConfig;
+
+    selected: boolean;
+    onToggleSelected: VoidFunction;
   };
 
-  const { config }: Props = $props();
+  const { config, selected, onToggleSelected }: Props = $props();
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -35,9 +39,15 @@
 </script>
 
 <div class="sound">
-  <div class="sound__content">
-    <p class="sound__name">{config.name}</p>
-  </div>
+  <Checkbox.Root checked={selected} onCheckedChange={onToggleSelected}>
+    <Checkbox.Indicator let:isChecked>
+      {#if isChecked}
+        <span>&#10003;</span>
+      {/if}
+    </Checkbox.Indicator>
+  </Checkbox.Root>
+
+  <a class="sound__name" href="/sounds/{config.id}">{config.name}</a>
 
   <div class="sound__actions">
     <button class="sound-button" onclick={testSound}><PlayIcon /></button>
@@ -55,14 +65,9 @@
 
     display: flex;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: 1rem;
 
     padding: 0.5rem;
-  }
-
-  .sound__content {
-    display: flex;
-    gap: 0.75rem;
     align-items: center;
   }
 
@@ -73,8 +78,12 @@
   }
 
   .sound__name {
+    flex: 1;
     color: #fff;
     font-weight: bold;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .sound-button {

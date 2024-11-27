@@ -167,7 +167,6 @@
     grid-template-columns: 1fr;
     gap: 0.5rem;
     width: 100%;
-    margin-top: 0.5rem;
   }
   .actions {
     display: flex;
