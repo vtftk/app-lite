@@ -80,6 +80,7 @@
     width: 300px;
     background-color: #000;
     margin: 1rem 0;
+    overflow: hidden;
   }
 
   .image-preview {

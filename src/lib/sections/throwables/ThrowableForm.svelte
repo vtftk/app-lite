@@ -44,7 +44,7 @@
 
   type Schema = z.infer<typeof schema>;
 
-  const { form, data, touched } = createForm<Schema>({
+  const { form, data, touched, setFields } = createForm<Schema>({
     initialValues: (existing
       ? {
           name: existing.name,
@@ -144,7 +144,7 @@
         name="scale"
         label="Scale"
         min={0.1}
-        max={1}
+        max={10}
         step={0.1}
       />
 
@@ -157,7 +157,15 @@
         step={0.1}
       />
 
-      <FormCheckbox id="pixelate" name="pixelate" label="Pixelate" />
+      <FormCheckbox
+        id="pixelate"
+        name="pixelate"
+        label="Pixelate"
+        checked={$data.pixelate}
+        onChecked={(checked) => {
+          setFields("pixelate", checked, true);
+        }}
+      />
     </div>
   </section>
 
