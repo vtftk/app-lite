@@ -1,0 +1,26 @@
+[data-checkbox-indicator] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+[data-checkbox-root] {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  border: 1px solid #333;
+  background-color: #222;
+  transition: all 150ms ease-in-out;
+}
+
+[data-checkbox-root][data-state="checked"] {
+  background-color: #333;
+}
+
+[data-checkbox-root][data-state="unchecked"]:hover {
+  border-color: rgba(0, 0, 0, 0.4);
+}

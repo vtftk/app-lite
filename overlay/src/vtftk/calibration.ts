@@ -85,8 +85,6 @@ export async function beginCalibrationStep(
   const currentStepIndex = STEPS.indexOf(currentStep);
   const stepIndex = STEPS.indexOf(step);
 
-  console.log(stepIndex, currentStepIndex);
-
   // Handle out of sync with server
   if (
     stepIndex !== currentStepIndex + 1 ||

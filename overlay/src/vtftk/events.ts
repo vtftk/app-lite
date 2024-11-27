@@ -70,7 +70,7 @@ async function onMessage(data: EventSourceData, event: any) {
           data.appData,
           data.vtSocket,
           data.modelParameters,
-          event.configs,
+          event.config,
           event.amount_per_throw,
           event.amount,
           event.frequency

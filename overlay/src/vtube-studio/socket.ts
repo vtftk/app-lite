@@ -63,7 +63,7 @@ export class VTubeStudioWebSocket {
         this.websocket = null;
 
         setTimeout(() => {
-          console.log(`Reconnecting...`);
+          console.debug(`Reconnecting...`);
           tryConnect();
         }, RETRY_TIMEOUT);
       };

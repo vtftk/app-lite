@@ -7,7 +7,6 @@
 
   async function setCalibrationStep(step: CalibrationStep) {
     await invoke("set_calibration_step", { step });
-    console.log("SET CALIBRATION STEP");
   }
 </script>
 

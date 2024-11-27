@@ -23,6 +23,5 @@ listen<{ step: CalibrationStep }>(
   "calibration_state",
   ({ payload: { step } }) => {
     calibrationState.set(step);
-    console.log(step);
   }
 );

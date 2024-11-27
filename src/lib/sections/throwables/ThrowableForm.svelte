@@ -40,7 +40,7 @@
 
   type Schema = z.infer<typeof schema>;
 
-  const { form, data } = createForm<Schema>({
+  const { form, data, touched } = createForm<Schema>({
     initialValues: (existing
       ? {
           name: existing.name,
@@ -48,7 +48,7 @@
           scale: existing.image.scale,
           weight: existing.image.weight,
           pixelate: existing.image.pixelate,
-          impactSoundIds: [],
+          impactSoundIds: existing.impact_sounds_ids,
         }
       : {
           name: "",
@@ -84,7 +84,7 @@
       const throwableConfig: ItemConfig = {
         id: existing ? existing.id : self.crypto.randomUUID(),
         image: imageConfig,
-        impact_sounds_ids: [],
+        impact_sounds_ids: values.impactSoundIds,
         name: values.name,
       };
 
@@ -105,6 +105,15 @@
 
       goto("/throwables");
     },
+  });
+
+  const initialImpactSoundIds = $data.impactSoundIds;
+
+  // Touched state for impact sound IDs must be manually updated
+  $effect(() => {
+    if (initialImpactSoundIds !== $data.impactSoundIds) {
+      $touched.impactSoundIds = true;
+    }
   });
 </script>
 
@@ -193,7 +202,10 @@
       <span>Optional</span>
     </p>
 
-    <SoundPicker items={$appData.sounds} name="impactSoundIds" />
+    <SoundPicker
+      sounds={$appData.sounds}
+      bind:selected={$data.impactSoundIds}
+    />
     <FormErrorLabel name="impactSoundIds" />
   </div>
 

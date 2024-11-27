@@ -91,7 +91,7 @@ export async function loadSounds(
 
   for (const result of results) {
     if (result.status !== "fulfilled") continue;
-    output.set(result.value.config.id, result.value.sound);
+    output.set(result.value.config.id, result.value);
   }
 
   return output;

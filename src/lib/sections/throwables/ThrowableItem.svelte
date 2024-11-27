@@ -44,7 +44,7 @@
     };
 
     await invoke("test_throw_barrage", {
-      config: [throwable],
+      config: throwable,
       amount: 50,
       amountPerThrow: 2,
       frequency: 100,
