@@ -1,20 +1,20 @@
 <script lang="ts">
+  import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
   import type { SoundConfig } from "$shared/appData";
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
-  import SoundPreview from "./SoundPreview.svelte";
+  import SettingsIcon from "~icons/solar/settings-bold";
 
   type Props = {
     sounds: Readonly<SoundConfig[]>;
-    selected: string[];
+    onSubmit: (sounds: SoundConfig[]) => void;
   };
 
-  let { sounds, selected = $bindable() }: Props = $props();
+  const { sounds, onSubmit }: Props = $props();
+
+  let selected: string[] = $state([]);
 
   const isAllSelected = $derived(selected.length === sounds.length);
-  const selectedOptions = $derived(
-    sounds.filter((sound) => selected.includes(sound.id))
-  );
 
   const onSelectSound = (sound: SoundConfig) => {
     if (selected.includes(sound.id)) {
@@ -31,18 +31,24 @@
       selected = sounds.map((sound) => sound.id);
     }
   };
+
+  const onSave = () => {
+    onSubmit(sounds.filter((sound) => selected.includes(sound.id)));
+  };
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger>Select Sounds</Dialog.Trigger>
+  <Dialog.Trigger class="btn">
+    <SettingsIcon />Add Impact Sounds
+  </Dialog.Trigger>
   <Dialog.Portal>
     <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />
     <Dialog.Content transition={scale}>
       <Dialog.Title>Select Sounds</Dialog.Title>
 
       <Dialog.Description class="text-sm text-foreground-alt">
-        Choose which sounds will be played on impact. Add sounds from the sounds
-        menu on the sidebar. You can do this after creating the throwable.
+        Choose which impact sounds you'd like to add the the selected
+        throwables.
       </Dialog.Description>
 
       <Separator.Root />
@@ -100,20 +106,15 @@
 
       <div data-dialog-actions>
         <Dialog.Close>
-          <span class="sr-only">Close</span>
+          <span class="sr-only">Cancel</span>
+        </Dialog.Close>
+        <Dialog.Close onclick={onSave}>
+          <span class="sr-only">Save</span>
         </Dialog.Close>
       </div>
     </Dialog.Content>
   </Dialog.Portal>
 </Dialog.Root>
-
-<div>Selected Sounds</div>
-
-<ul>
-  {#each selectedOptions as option}
-    <li>{option.name}</li>
-  {/each}
-</ul>
 
 <style>
   .sound-table-wrapper {

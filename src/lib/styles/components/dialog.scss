@@ -17,6 +17,7 @@ $border: $borderWidth $borderStyle $borderColor;
   height: 100vh;
   background-color: #f4f6f8;
   background-color: rgba($color: #000000, $alpha: 0.5);
+  backdrop-filter: blur(2px);
 }
 
 [data-dialog-content] {
