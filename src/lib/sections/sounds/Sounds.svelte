@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { SoundConfig } from "$lib/api/types";
+  import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import SoundItem from "./SoundItem.svelte";
 
   type Props = {
@@ -10,7 +11,11 @@
 </script>
 
 <div class="grid">
-  <a class="create" href="/sounds/create"> Create Sound </a>
+  <div class="actions">
+    <a class="btn" href="/sounds/create"> Create Sound </a>
+
+    <BulkSoundImport />
+  </div>
 
   {#each sounds as event}
     <SoundItem config={event} />
@@ -24,20 +29,9 @@
     gap: 0.5rem;
   }
 
-  .create {
-    background-color: #222;
-
-    display: flex;
-    flex-flow: column;
-    gap: 0.75rem;
-
-    padding: 1rem;
-
-    cursor: pointer;
-    border: none;
-    color: #fff;
-    align-items: center;
-    justify-content: center;
-    font-size: 1em;
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 </style>

@@ -6,11 +6,15 @@
 </script>
 
 <div class="container">
-  <h1 class="title">Sounds</h1>
-  <p class="text">Create sounds that can be triggered</p>
+  <div class="title-area">
+    <h1 class="title">Sounds</h1>
+    <p class="text">Create sounds that can be triggered</p>
+  </div>
 
-  <div class="grid">
-    <Sounds sounds={$appData.sounds} />
+  <div class="content-area">
+    <div class="grid">
+      <Sounds sounds={$appData.sounds} />
+    </div>
   </div>
 </div>
 
@@ -21,6 +25,7 @@
     gap: 0.5rem;
 
     padding: 1rem;
+    height: 100%;
   }
 
   .title {
@@ -29,5 +34,10 @@
 
   .grid {
     margin-top: 0.5rem;
+  }
+
+  .content-area {
+    flex: auto;
+    overflow-y: auto;
   }
 </style>

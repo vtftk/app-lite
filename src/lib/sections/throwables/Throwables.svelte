@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ItemConfig } from "$lib/api/types";
+  import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import ThrowableItem from "./ThrowableItem.svelte";
 
   type Props = {
@@ -10,7 +11,9 @@
 </script>
 
 <div class="grid">
-  <a class="create" href="/throwables/create"> Create Throwable </a>
+  <a class="btn" href="/throwables/create"> Create Throwable </a>
+
+  <BulkThrowableImport />
 
   {#each items as item}
     <ThrowableItem config={item} />
@@ -23,22 +26,5 @@
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     gap: 0.5rem;
-  }
-
-  .create {
-    background-color: #222;
-
-    display: flex;
-    flex-flow: column;
-    gap: 0.75rem;
-
-    padding: 1rem;
-
-    cursor: pointer;
-    border: none;
-    color: #fff;
-    align-items: center;
-    justify-content: center;
-    font-size: 1em;
   }
 </style>
