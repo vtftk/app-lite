@@ -67,6 +67,31 @@ pub async fn update_runtime_data(
     StatusCode::OK
 }
 
+static BITS_1: &[u8] = include_bytes!("../resources/bits/1.png");
+static BITS_100: &[u8] = include_bytes!("../resources/bits/100.png");
+static BITS_1000: &[u8] = include_bytes!("../resources/bits/1000.png");
+static BITS_5000: &[u8] = include_bytes!("../resources/bits/5000.png");
+static BITS_10000: &[u8] = include_bytes!("../resources/bits/10000.png");
+
+/// GET /bits/:amount
+///
+/// Sets the current state of the app at runtime
+pub async fn get_bits_icon(Path(amount): Path<u32>) -> Result<Response<Body>, DynHttpError> {
+    let data = match amount {
+        1..=99 => BITS_1,
+        100..=999 => BITS_100,
+        1000..=4999 => BITS_1000,
+        5000..=9999 => BITS_5000,
+        _ => BITS_10000,
+    };
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(CONTENT_TYPE, "image/png")
+        .body(data.into())
+        .context("failed to make response")?)
+}
+
 /// GET /content/:folder/:name
 ///
 /// Sets the current state of the app at runtime

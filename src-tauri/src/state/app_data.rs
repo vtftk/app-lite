@@ -327,8 +327,6 @@ pub enum EventTrigger {
     Bits {
         /// Minimum bits to trigger the event
         min_bits: u32,
-        /// Maximum throws to produce
-        max_throws: u32,
     },
     /// Channel has been raided
     Raid {
@@ -341,16 +339,17 @@ pub enum EventTrigger {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum EventOutcome {
+pub enum ThrowableData {
     /// Throw items (All at once)
-    Throwable {
+    Throw {
         /// IDs of the items that can be thrown
         throwable_ids: Vec<Uuid>,
         /// Amount to throw
         amount: u32,
     },
-    /// Throw a throwable barrage ()
-    ThrowableBarrage {
+
+    /// Throw a throwable barrage
+    Barrage {
         /// IDs of the items that can be thrown
         throwable_ids: Vec<Uuid>,
         /// Amount to throw for each throw
@@ -360,8 +359,62 @@ pub enum EventOutcome {
         /// Total amount of items to throw
         amount: u32,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventOutcomeBits {
+    /// Throwable to throw for 1 bit (Override, defaults to builtin)
+    pub _1: Option<Uuid>,
+    /// Throwable to throw for 100 bits (Override, defaults to builtin)
+    pub _100: Option<Uuid>,
+    /// Throwable to throw for 1000 bits (Override, defaults to builtin)
+    pub _1000: Option<Uuid>,
+    /// Throwable to throw for 5000 bits (Override, defaults to builtin)
+    pub _5000: Option<Uuid>,
+    /// Throwable to throw for 10000 bits (Override, defaults to builtin)
+    pub _10000: Option<Uuid>,
+    /// How many bits to throw
+    pub amount: BitsAmount,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum BitsAmount {
+    /// Throw fixed amount of bits
+    Fixed { amount: u32 },
+
+    /// Throw the number of bits the user provided
+    Dynamic {
+        /// Maximum number to throw
+        max_amount: u32,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventOutcomeThrowable {
+    /// Throwable data
+    pub data: ThrowableData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventOutcomeTriggerHotkey {
+    pub hotkey_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventOutcomePlaySound {
+    pub sound_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum EventOutcome {
+    /// Throw bits (Only compatible with bits trigger)
+    ThrowBits(EventOutcomeBits),
+    /// Throw something
+    Throwable(EventOutcomeThrowable),
     /// Trigger a VTube studio hotkey
-    TriggerHotkey { hotkey_id: String },
+    TriggerHotkey(EventOutcomeTriggerHotkey),
     /// Trigger a sound
-    PlaySound { sound_id: Uuid },
+    PlaySound(EventOutcomePlaySound),
 }

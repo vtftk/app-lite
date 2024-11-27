@@ -3,7 +3,8 @@ use events::{EventMessage, EventRecvHandle};
 use log::{debug, error};
 use state::{
     app_data::{
-        AppData, AppDataStore, EventConfig, EventOutcome, EventTrigger, ItemConfig, ThrowableConfig,
+        AppData, AppDataStore, BitsAmount, EventConfig, EventOutcome, EventTrigger, ItemConfig,
+        ThrowableConfig, ThrowableImageConfig,
     },
     runtime_app_data::RuntimeAppDataStore,
 };
@@ -18,6 +19,7 @@ use twitch_api::{
     twitch_oauth2::{AccessToken, UserToken},
     HelixClient,
 };
+use uuid::Uuid;
 
 mod commands;
 mod constants;
@@ -216,14 +218,43 @@ fn handle_redeem_event(
         }
 
         // TODO: TRIGGER
-        execute_event_config(app_data.clone(), event_config.clone(), event_sender.clone());
+        execute_event_config(
+            app_data.clone(),
+            event_config.clone(),
+            event_sender.clone(),
+            None,
+        );
     }
 }
 
+fn create_throwable_config(items: Vec<ItemConfig>, app_data: &AppData) -> ThrowableConfig {
+    // Find all the referenced sounds
+    let impact_sounds = app_data
+        .sounds
+        .iter()
+        .filter(|sound| {
+            items
+                .iter()
+                .any(|item| item.impact_sounds_ids.contains(&sound.id))
+        })
+        .cloned()
+        .collect();
+
+    ThrowableConfig {
+        items,
+        impact_sounds,
+    }
+}
+
+///
+///
+/// `input` represents the data provided by the trigger, i.e amount of bits
+/// total number of subs, number of raiders etc
 fn execute_event_config(
     app_data: Arc<AppData>,
     event_config: EventConfig,
     event_sender: broadcast::Sender<EventMessage>,
+    input: Option<u32>,
 ) {
     // Skip disabled events
     if !event_config.enabled {
@@ -238,34 +269,52 @@ fn execute_event_config(
     let delay = Duration::from_millis(event_config.outcome_delay as u64);
 
     match event_config.outcome {
-        EventOutcome::Throwable {
-            throwable_ids,
-            amount,
-        } => {
-            let items = app_data
-                .items
-                .iter()
-                .find(|item| throwable_ids.contains(&item.id));
-
-            let item = match items {
-                Some(value) => value.clone(),
-                // Throwable no longer exists
+        EventOutcome::ThrowBits(data) => {
+            let input = match input {
+                Some(value) => value,
                 None => return,
             };
 
-            let item = item.clone();
+            let sets = [data._1, data._100, data._1000, data._5000, data._10000];
+            let mut bit_index: usize = match input {
+                1..=99 => 0,
+                100..=999 => 1,
+                1000..=4999 => 2,
+                5000..=9999 => 3,
+                _ => 4,
+            };
 
-            // Find all the referenced sounds
-            let impact_sounds = app_data
-                .sounds
-                .iter()
-                .filter(|sound| item.impact_sounds_ids.contains(&sound.id))
-                .cloned()
-                .collect();
+            let mut bit_icon: Option<Uuid> = None;
 
-            let throwable_config = ThrowableConfig {
-                items: vec![item],
-                impact_sounds,
+            // Go through the bit icons till we find one
+            while bit_icon.is_none() {
+                bit_icon = sets.get(bit_index).and_then(|value| *value);
+
+                // Move to index before
+                match bit_index.checked_sub(1) {
+                    Some(value) => {
+                        bit_index = value;
+                    }
+                    None => break,
+                }
+            }
+
+            let bit_icon = match bit_icon {
+                Some(bit_icon) => bit_icon,
+                None => return,
+            };
+
+            let item = app_data.items.iter().find(|item| bit_icon.eq(&item.id));
+            let item = match item {
+                Some(value) => value.clone(),
+                None => return,
+            };
+
+            let throwable_config = create_throwable_config(vec![item], &app_data);
+
+            let amount = match data.amount {
+                BitsAmount::Dynamic { max_amount } => input.min(max_amount),
+                BitsAmount::Fixed { amount } => amount,
             };
 
             tokio::spawn(async move {
@@ -277,55 +326,71 @@ fn execute_event_config(
                 });
             });
         }
-        EventOutcome::ThrowableBarrage {
-            throwable_ids,
-            amount_per_throw,
-            amount,
-            frequency,
-        } => {
-            let items: Vec<ItemConfig> = app_data
-                .items
-                .iter()
-                .filter(|item| throwable_ids.contains(&item.id))
-                .cloned()
-                .collect();
+        EventOutcome::Throwable(data) => match data.data {
+            state::app_data::ThrowableData::Throw {
+                throwable_ids,
+                amount,
+            } => {
+                let items = app_data
+                    .items
+                    .iter()
+                    .find(|item| throwable_ids.contains(&item.id));
 
-            // Find all the referenced sounds
-            let impact_sounds = app_data
-                .sounds
-                .iter()
-                .filter(|sound| {
-                    items
-                        .iter()
-                        .any(|item| item.impact_sounds_ids.contains(&sound.id))
-                })
-                .cloned()
-                .collect();
+                let item = match items {
+                    Some(value) => value.clone(),
+                    // Throwable no longer exists
+                    None => return,
+                };
 
-            let throwable_config = ThrowableConfig {
-                items,
-                impact_sounds,
-            };
+                let throwable_config = create_throwable_config(vec![item], &app_data);
 
+                tokio::spawn(async move {
+                    tokio::time::sleep(delay).await;
+
+                    _ = event_sender.send(EventMessage::ThrowItem {
+                        config: throwable_config,
+                        amount,
+                    });
+                });
+            }
+            state::app_data::ThrowableData::Barrage {
+                throwable_ids,
+                amount_per_throw,
+                frequency,
+                amount,
+            } => {
+                let items: Vec<ItemConfig> = app_data
+                    .items
+                    .iter()
+                    .filter(|item| throwable_ids.contains(&item.id))
+                    .cloned()
+                    .collect();
+
+                let throwable_config = create_throwable_config(items, &app_data);
+
+                tokio::spawn(async move {
+                    tokio::time::sleep(delay).await;
+
+                    _ = event_sender.send(EventMessage::ThrowItemBarrage {
+                        config: throwable_config,
+                        amount,
+                        frequency,
+                        amount_per_throw,
+                    });
+                });
+            }
+        },
+
+        EventOutcome::TriggerHotkey(data) => {
             tokio::spawn(async move {
                 tokio::time::sleep(delay).await;
-
-                _ = event_sender.send(EventMessage::ThrowItemBarrage {
-                    config: throwable_config,
-                    amount,
-                    frequency,
-                    amount_per_throw,
+                _ = event_sender.send(EventMessage::TriggerHotkey {
+                    hotkey_id: data.hotkey_id,
                 });
             });
         }
-        EventOutcome::TriggerHotkey { hotkey_id } => {
-            tokio::spawn(async move {
-                tokio::time::sleep(delay).await;
-                _ = event_sender.send(EventMessage::TriggerHotkey { hotkey_id });
-            });
-        }
-        EventOutcome::PlaySound { sound_id } => {
-            let sound = app_data.sounds.iter().find(|item| item.id == sound_id);
+        EventOutcome::PlaySound(data) => {
+            let sound = app_data.sounds.iter().find(|item| item.id == data.sound_id);
             let sound = match sound {
                 Some(value) => value,
                 // Throwable no longer exists
@@ -348,10 +413,7 @@ fn handle_cheer_bits_event(
 ) {
     for event in events {
         let trigger = match &event.trigger {
-            state::app_data::EventTrigger::Bits {
-                max_throws,
-                min_bits,
-            } => {}
+            state::app_data::EventTrigger::Bits { min_bits } => {}
             _ => {}
         };
     }

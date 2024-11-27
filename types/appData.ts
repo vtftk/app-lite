@@ -168,65 +168,72 @@ export type EventTrigger =
       throws: MinMax;
     };
 
-export enum ThrowableSelectionType {
-  Random = "Random",
-  Selection = "Selection",
+export enum ThrowableDataType {
+  Throw = "Throw",
+  Barrage = "Barrage",
 }
 
-export type ThrowableSelection =
-  | { type: ThrowableSelectionType.Random }
-  | { type: ThrowableSelectionType.Selection; throwable_ids: Uuid[] };
+export type ThrowableDataThrow = {
+  throwables_ids: Uuid[];
+  amount: number;
+};
 
-export const THROWABLE_SELECTION_TYPES = [
-  ThrowableSelectionType.Random,
-  ThrowableSelectionType.Selection,
-] as const;
+export type ThrowableDataBarrage = {
+  throwables_ids: Uuid[];
+  amount_per_throw: number;
+  frequency: number;
+  amount: number;
+};
 
-export const THROWABLE_SELECTION_NAMES: Record<ThrowableSelectionType, string> =
-  {
-    [ThrowableSelectionType.Random]: "Random",
-    [ThrowableSelectionType.Selection]: "Choose specific throwables",
-  } as const;
+export type ThrowableData =
+  | ({ type: ThrowableDataType.Throw } & ThrowableDataThrow)
+  | ({ type: ThrowableDataType.Barrage } & ThrowableDataBarrage);
+
+export enum BitsAmountType {
+  Fixed = "Fixed",
+  Dynamic = "Dynamic",
+}
+
+export type BitsAmountFixed = {
+  amount: number;
+};
+
+export type BitsAmountDynamic = {
+  max_amount: number;
+};
+
+export type BitsAmount =
+  | ({ type: BitsAmountType.Fixed } & BitsAmountFixed)
+  | ({ tpe: BitsAmountType.Dynamic } & BitsAmountDynamic);
 
 export enum EventOutcomeType {
+  ThrowBits = "ThrowBits",
   Throwable = "Throwable",
-  ThrowableBarrage = "ThrowableBarrage",
   TriggerHotkey = "TriggerHotkey",
   PlaySound = "PlaySound",
 }
 
+export type EventOutcomeBits = {
+  _1: Option<Uuid>;
+  _100: Option<Uuid>;
+  _1000: Option<Uuid>;
+  _5000: Option<Uuid>;
+  _10000: Option<Uuid>;
+  amount: BitsAmount;
+};
+export type EventOutcomeThrowable = { data: ThrowableData };
+export type EventOutcomeTriggerHotkey = { hotkey_id: Uuid };
+export type EventOutcomePlaySound = { sound_id: Uuid };
+
 export type EventOutcome =
-  | {
-      type: EventOutcomeType.Throwable;
-      selection: ThrowableSelection;
-      amount: number;
-    }
-  | {
-      type: EventOutcomeType.ThrowableBarrage;
-      selection: ThrowableSelection;
-      frequency: number;
-      amount: number;
-    }
-  | { type: EventOutcomeType.TriggerHotkey; hotkey_id: Uuid }
-  | { type: EventOutcomeType.PlaySound; sound_id: Uuid };
+  | ({ type: EventOutcomeType.ThrowBits } & EventOutcomeBits)
+  | ({ type: EventOutcomeType.Throwable } & EventOutcomeThrowable)
+  | ({ type: EventOutcomeType.TriggerHotkey } & EventOutcomeTriggerHotkey)
+  | ({ type: EventOutcomeType.PlaySound } & EventOutcomePlaySound);
 
 export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
   EventOutcome,
   { type: T }
 >;
-
-export const EVENT_OUTCOME_TYPES = [
-  EventOutcomeType.Throwable,
-  EventOutcomeType.ThrowableBarrage,
-  EventOutcomeType.TriggerHotkey,
-  EventOutcomeType.PlaySound,
-] as const;
-
-export const EVENT_OUTCOME_NAMES: Record<EventOutcomeType, string> = {
-  [EventOutcomeType.Throwable]: "Throwable",
-  [EventOutcomeType.ThrowableBarrage]: "Throwable Barrage",
-  [EventOutcomeType.TriggerHotkey]: "Trigger Hotkey",
-  [EventOutcomeType.PlaySound]: "Play Sound",
-} as const;
 
 export type CustomReward = any;
