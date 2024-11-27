@@ -15,3 +15,20 @@ body {
   overflow: auto;
   color: #ccc;
 }
+
+.btn {
+  padding: 0.5rem;
+  background-color: #333;
+  border: 1px solid #666;
+  color: #fff;
+  border-radius: 0.25rem;
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #444;
+  border-color: #777;
+}

@@ -6,15 +6,20 @@
   const { name }: Props = $props();
 </script>
 
-<p
+<ul
   class="error-label"
   id="{name}-validation"
   data-felte-reporter-dom-for={name}
   aria-live="polite"
-></p>
+></ul>
 
 <style>
   .error-label {
     color: #c53939;
+  }
+
+  .error-label {
+    list-style: circle;
+    list-style-position: inside;
   }
 </style>

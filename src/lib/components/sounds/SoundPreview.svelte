@@ -52,6 +52,7 @@
 <div class="sound-preview">
   <!-- Play/Pause Button -->
   <button
+    type="button"
     class="play-button"
     onclick={togglePlay}
     aria-pressed={isPlaying ? "true" : "false"}
@@ -65,6 +66,7 @@
   </button>
 
   <button
+    type="button"
     class="progress-bar"
     role="slider"
     aria-valuemin="0"
@@ -89,7 +91,7 @@
   .sound-preview {
     display: flex;
     gap: 1rem;
-    width: 300px;
+    width: 100%;
   }
 
   .play-button {

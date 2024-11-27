@@ -19,11 +19,15 @@
 
 {#if $item !== undefined}
   <div class="container">
-    <h1 class="title">Edit Throwable</h1>
-    <p class="text">Edit</p>
-    <a type="button" href="/throwables">Back</a>
+    <div class="title-area">
+      <h1 class="title">Edit Throwable</h1>
+      <p class="text">Edit</p>
+      <a type="button" href="/throwables">Back</a>
+    </div>
 
-    <ThrowableForm existing={$item} />
+    <div class="content-area">
+      <ThrowableForm existing={$item} />
+    </div>
   </div>
 {:else}
   <div class="container">
@@ -40,9 +44,15 @@
     gap: 0.5rem;
 
     padding: 1rem;
+    height: 100%;
   }
 
   .title {
     line-height: 1;
+  }
+
+  .content-area {
+    flex: auto;
+    overflow-y: auto;
   }
 </style>

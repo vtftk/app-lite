@@ -8,6 +8,9 @@
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
+  import SoundUpload from "$lib/components/form/SoundUpload.svelte";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
 
   type Props = {
     existing?: SoundConfig;
@@ -31,7 +34,7 @@
     volume: z.number(),
   });
 
-  const { form } = createForm<z.infer<typeof schema>>({
+  const { form, data, setFields } = createForm<z.infer<typeof schema>>({
     initialValues: existing
       ? {
           name: existing.name,
@@ -89,57 +92,35 @@
 </script>
 
 <form use:form>
-  <div>
-    <label for="name">Name</label>
-    <input
-      type="text"
-      id="name"
-      name="name"
-      aria-describedby="name-validation"
+  <section class="section">
+    <FormTextInput id="name" name="name" label="Name" />
+  </section>
+
+  <section class="section">
+    <SoundUpload
+      id="sound"
+      name="sound"
+      label="Sound"
+      existing={existing?.src}
+      onChangeSound={(file) => {
+        // Use the file name if the name hasn't been touched yet
+        if ($data.name.length < 1 && file) {
+          setFields("name", file.name);
+        }
+      }}
     />
-    <FormErrorLabel name="name" />
-  </div>
 
-  <div>
-    <h2>Sound</h2>
-    <p>Sound to play</p>
+    <FormNumberInput
+      id="volume"
+      name="volume"
+      label="Volume"
+      min={0}
+      max={1}
+      step={0.1}
+    />
+  </section>
 
-    {#if existing}
-      <audio controls>
-        <source src={existing.src} />
-        Your browser does not support the audio tag.
-      </audio>
-    {/if}
-
-    <div>
-      <label for="sound">{existing ? "Replace" : "Upload"} Sound</label>
-      <input
-        accept="audio/*"
-        type="file"
-        id="sound"
-        name="sound"
-        aria-describedby="sound-validation"
-      />
-
-      <FormErrorLabel name="sound" />
-    </div>
-
-    <div>
-      <label for="volume">Volume</label>
-      <input
-        type="number"
-        id="volume"
-        name="volume"
-        min="0"
-        max="1"
-        step="0.1"
-        aria-describedby="volume-validation"
-      />
-      <FormErrorLabel name="volume" />
-    </div>
-  </div>
-
-  <button type="submit">
+  <button type="submit" class="btn">
     {existing ? "Save" : "Create"}
   </button>
 </form>
@@ -149,5 +130,14 @@
     display: flex;
     flex-flow: column;
     gap: 1rem;
+  }
+
+  .section {
+    display: flex;
+    flex-flow: column;
+
+    border: 1px solid #333;
+    padding: 1rem;
+    gap: 1.5rem;
   }
 </style>

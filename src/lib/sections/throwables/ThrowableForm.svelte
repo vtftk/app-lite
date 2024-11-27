@@ -13,6 +13,10 @@
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { goto } from "$app/navigation";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
+  import ImageUpload from "$lib/components/form/ImageUpload.svelte";
 
   type Props = {
     existing?: ItemConfig;
@@ -118,84 +122,46 @@
 </script>
 
 <form use:form>
-  <div>
-    <label for="name">Name</label>
-    <input
-      type="text"
-      id="name"
-      name="name"
-      aria-describedby="name-validation"
-    />
-    <FormErrorLabel name="name" />
-  </div>
+  <section class="section">
+    <FormTextInput id="name" name="name" label="Name" />
+  </section>
 
-  <div>
+  <section class="section">
     <h2>Image</h2>
     <p>Image that gets thrown at the model</p>
 
-    {#if existing}
-      <div>
-        <img
-          src={existing.image.src}
-          style="transform: scale({$data.scale})"
-          alt=""
-        />
-      </div>
-    {/if}
+    <ImageUpload
+      id="image"
+      name="image"
+      label="Image"
+      existing={existing?.image?.src}
+      scale={$data.scale}
+    />
 
-    <div>
-      <label for="image">{existing ? "Replace" : "Upload"} Image</label>
-      <input
-        accept="image/*"
-        type="file"
-        id="image"
-        name="image"
-        aria-describedby="image-validation"
-      />
-      <FormErrorLabel name="image" />
-    </div>
-
-    <div>
-      <label for="scale">Scale</label>
-      <input
-        type="number"
+    <div class="row-group">
+      <FormNumberInput
         id="scale"
         name="scale"
-        min="0.1"
-        max="1"
-        step="0.1"
-        aria-describedby="scale-validation"
+        label="Scale"
+        min={0.1}
+        max={1}
+        step={0.1}
       />
-      <FormErrorLabel name="scale" />
-    </div>
 
-    <div>
-      <label for="weight">Weight</label>
-      <input
-        type="number"
+      <FormNumberInput
         id="weight"
         name="weight"
-        min="0"
-        max="10"
-        step="0.1"
-        aria-describedby="weight-validation"
+        label="Weight"
+        min={0}
+        max={10}
+        step={0.1}
       />
-      <FormErrorLabel name="weight" />
-    </div>
 
-    <div>
-      <label for="pixelate">Pixelate</label>
-      <input
-        type="checkbox"
-        id="pixelate"
-        name="pixelate"
-        aria-describedby="pixelate-validation"
-      />
-      <FormErrorLabel name="pixelate" />
+      <FormCheckbox id="pixelate" name="pixelate" label="Pixelate" />
     </div>
-  </div>
+  </section>
 
-  <div>
+  <section class="section">
     <h2>Impact Sounds</h2>
     <p>
       Sound played when the throwable impacts
@@ -207,9 +173,9 @@
       bind:selected={$data.impactSoundIds}
     />
     <FormErrorLabel name="impactSoundIds" />
-  </div>
+  </section>
 
-  <button type="submit"> {existing ? "Save" : "Create"}</button>
+  <button type="submit" class="btn"> {existing ? "Save" : "Create"}</button>
 </form>
 
 <style>
@@ -217,5 +183,20 @@
     display: flex;
     flex-flow: column;
     gap: 1rem;
+  }
+
+  .section {
+    display: flex;
+    flex-flow: column;
+
+    border: 1px solid #333;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .row-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
   }
 </style>

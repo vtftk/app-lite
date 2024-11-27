@@ -3,11 +3,15 @@
 </script>
 
 <div class="container">
-  <h1 class="title">Create Throwable</h1>
-  <p class="text">Create a new item that can be thrown</p>
-  <a type="button" href="/throwables">Back</a>
+  <div class="title-area">
+    <h1 class="title">Create Throwable</h1>
+    <p class="text">Create a new item that can be thrown</p>
+    <a type="button" href="/throwables">Back</a>
+  </div>
 
-  <ThrowableForm />
+  <div class="content-area">
+    <ThrowableForm />
+  </div>
 </div>
 
 <style>
@@ -17,9 +21,16 @@
     gap: 0.5rem;
 
     padding: 1rem;
+
+    height: 100%;
   }
 
   .title {
     line-height: 1;
+  }
+
+  .content-area {
+    flex: auto;
+    overflow-y: auto;
   }
 </style>
