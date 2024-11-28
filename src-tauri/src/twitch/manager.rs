@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use anyhow::{anyhow, Context};
+use futures::TryStreamExt;
 use log::error;
 use tauri::{AppHandle, Emitter};
 use tokio::{
@@ -14,6 +16,7 @@ use twitch_api::{
             subscription::message::SubscriptionMessage,
         },
     },
+    helix::{channels::Vip, moderation::Moderator},
     twitch_oauth2::UserToken,
     types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
     HelixClient,
@@ -26,6 +29,28 @@ pub struct TwitchManager {
     state: Mutex<TwitchManagerState>,
     tx: broadcast::Sender<TwitchEvent>,
     app_handle: AppHandle,
+}
+
+pub struct TwitchManagerStateAuthenticated {
+    // Token for the authenticated user
+    token: UserToken,
+    // Currently active websocket connection
+    _websocket: WebsocketManagedTask,
+
+    // Current loaded list of moderators
+    moderators: Option<Arc<[Moderator]>>,
+    // Current loaded list of vips
+    vips: Option<Arc<[Vip]>>,
+}
+
+#[derive(Default)]
+#[allow(clippy::large_enum_variant)]
+enum TwitchManagerState {
+    // Twitch is not yet authenticated
+    #[default]
+    Initial,
+    // Twitch is authenticated
+    Authenticated(TwitchManagerStateAuthenticated),
 }
 
 impl TwitchManager {
@@ -45,6 +70,48 @@ impl TwitchManager {
         )
     }
 
+    pub async fn get_moderator_list(&self) -> anyhow::Result<Arc<[Moderator]>> {
+        let state = &mut *self.state.lock().await;
+
+        // Use existing list
+        match state {
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                if let Some(moderators) = state.moderators.as_ref() {
+                    return Ok(moderators.clone());
+                }
+
+                // Load new list
+                let moderators = self.request_moderator_list().await?;
+                let moderators: Arc<[Moderator]> = moderators.into();
+                state.moderators = Some(moderators.clone());
+
+                Ok(moderators)
+            }
+        }
+    }
+
+    pub async fn get_vip_list(&self) -> anyhow::Result<Arc<[Vip]>> {
+        let state = &mut *self.state.lock().await;
+
+        // Use existing list
+        match state {
+            TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                if let Some(vips) = state.vips.as_ref() {
+                    return Ok(vips.clone());
+                }
+
+                // Load new list
+                let vips = self.request_vip_list().await?;
+                let vips: Arc<[Vip]> = vips.into();
+                state.vips = Some(vips.clone());
+
+                Ok(vips)
+            }
+        }
+    }
+
     pub async fn is_authenticated(&self) -> bool {
         let lock = &*self.state.lock().await;
         matches!(lock, TwitchManagerState::Authenticated { .. })
@@ -54,9 +121,72 @@ impl TwitchManager {
         let lock = &*self.state.lock().await;
         match lock {
             TwitchManagerState::Initial => None,
-            TwitchManagerState::Authenticated { token, _websocket } => Some(token.clone()),
+            TwitchManagerState::Authenticated(state) => Some(state.token.clone()),
         }
     }
+
+    pub async fn request_moderator_list(&self) -> anyhow::Result<Vec<Moderator>> {
+        let user_token = self.get_user_token().await.context("not authenticated")?;
+        let user_id = user_token.user_id.clone();
+
+        let moderators: Vec<Moderator> = self
+            .helix_client
+            .get_moderators_in_channel_from_id(user_id, &user_token)
+            .try_collect()
+            .await?;
+
+        Ok(moderators)
+    }
+
+    pub async fn request_vip_list(&self) -> anyhow::Result<Vec<Vip>> {
+        let user_token = self.get_user_token().await.context("not authenticated")?;
+        let user_id = user_token.user_id.clone();
+
+        let moderators: Vec<Vip> = self
+            .helix_client
+            .get_vips_in_channel(user_id, &user_token)
+            .try_collect()
+            .await?;
+
+        Ok(moderators)
+    }
+
+    pub async fn set_authenticated(self: &Arc<Self>, token: UserToken) {
+        {
+            let lock = &mut *self.state.lock().await;
+
+            let websocket =
+                WebsocketManagedTask::create(self.clone(), self.tx.clone(), token.clone());
+
+            *lock = TwitchManagerState::Authenticated(TwitchManagerStateAuthenticated {
+                token,
+                _websocket: websocket,
+                moderators: None,
+                vips: None,
+            });
+        }
+
+        // Tell the app we are authenticated
+        _ = self.app_handle.emit("authenticated", ());
+    }
+
+    pub async fn reset(&self) {
+        {
+            let lock = &mut *self.state.lock().await;
+            *lock = TwitchManagerState::Initial;
+        }
+
+        // Tell the app we are authenticated
+        _ = self.app_handle.emit("logout", ());
+    }
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct TwitchEventUser {
+    pub user_id: UserId,
+    pub user_name: UserName,
+    pub user_display_name: DisplayName,
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +198,7 @@ pub struct TwitchEventRedeem {
     pub user_name: UserName,
     pub user_display_name: DisplayName,
 }
+
 #[derive(Debug, Clone)]
 #[allow(unused)]
 pub struct TwitchEventCheerBits {
@@ -152,21 +283,6 @@ pub enum TwitchEvent {
     ChatMsg(TwitchEventChatMsg),
 }
 
-#[derive(Default)]
-#[allow(clippy::large_enum_variant)]
-enum TwitchManagerState {
-    // Twitch is not yet authenticated
-    #[default]
-    Initial,
-    // Twitch is authenticated
-    Authenticated {
-        // Token for the authenticated user
-        token: UserToken,
-        // Currently active websocket connection
-        _websocket: WebsocketManagedTask,
-    },
-}
-
 struct WebsocketManagedTask(AbortHandle);
 
 impl Drop for WebsocketManagedTask {
@@ -191,38 +307,5 @@ impl WebsocketManagedTask {
         .abort_handle();
 
         WebsocketManagedTask(abort_handle)
-    }
-}
-
-impl TwitchManager {
-    pub async fn set_authenticated(self: &Arc<Self>, token: UserToken) {
-        {
-            let lock = &mut *self.state.lock().await;
-
-            let websocket =
-                WebsocketManagedTask::create(self.clone(), self.tx.clone(), token.clone());
-
-            *lock = TwitchManagerState::Authenticated {
-                token,
-                _websocket: websocket,
-            };
-        }
-
-        // Tell the app we are authenticated
-        _ = self.app_handle.emit("authenticated", ());
-    }
-
-    pub async fn reset(&self) {
-        {
-            let lock = &mut *self.state.lock().await;
-            *lock = TwitchManagerState::Initial;
-        }
-
-        // Tell the app we are authenticated
-        _ = self.app_handle.emit("logout", ());
-    }
-
-    pub fn events(&self) -> broadcast::Receiver<TwitchEvent> {
-        self.tx.subscribe()
     }
 }

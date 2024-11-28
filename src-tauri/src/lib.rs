@@ -13,7 +13,7 @@ use tauri::{App, Manager};
 use tokio::sync::broadcast;
 use twitch::manager::{
     TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
-    TwitchEventReSub, TwitchEventRedeem, TwitchEventSub, TwitchManager,
+    TwitchEventReSub, TwitchEventRedeem, TwitchEventSub, TwitchEventUser, TwitchManager,
 };
 use twitch_api::{
     twitch_oauth2::{AccessToken, UserToken},
@@ -257,6 +257,11 @@ fn handle_redeem_event(
             event_config.clone(),
             event_sender.clone(),
             None,
+            Some(TwitchEventUser {
+                user_id: event.user_id.clone(),
+                user_name: event.user_name.clone(),
+                user_display_name: event.user_display_name.to_string().into(),
+            }),
         ));
     }
 }
@@ -278,6 +283,19 @@ fn handle_cheer_bits_event(
             _ => continue,
         };
 
+        let user = match (
+            event.user_id.as_ref(),
+            event.user_name.as_ref(),
+            event.user_display_name.as_ref(),
+        ) {
+            (Some(user_id), Some(user_name), Some(user_display_name)) => Some(TwitchEventUser {
+                user_id: user_id.clone(),
+                user_name: user_name.to_string().into(),
+                user_display_name: user_display_name.to_string().into(),
+            }),
+            _ => None,
+        };
+
         // TODO: TRIGGER
         tokio::spawn(execute_event_config(
             app_data.clone(),
@@ -285,6 +303,7 @@ fn handle_cheer_bits_event(
             event_config.clone(),
             event_sender.clone(),
             Some(event.bits as u32),
+            user,
         ));
     }
 }
@@ -308,6 +327,11 @@ fn handle_follow_event(
             event_config.clone(),
             event_sender.clone(),
             None,
+            Some(TwitchEventUser {
+                user_id: event.user_id.clone(),
+                user_name: event.user_name.clone(),
+                user_display_name: event.user_display_name.to_string().into(),
+            }),
         ));
     }
 }
@@ -330,6 +354,11 @@ fn handle_sub_event(
             event_config.clone(),
             event_sender.clone(),
             None,
+            Some(TwitchEventUser {
+                user_id: event.user_id.clone(),
+                user_name: event.user_name.clone(),
+                user_display_name: event.user_display_name.to_string().into(),
+            }),
         ));
     }
 }
@@ -346,12 +375,26 @@ fn handle_gift_sub_event(
             continue;
         }
 
+        let user = match (
+            event.user_id.as_ref(),
+            event.user_name.as_ref(),
+            event.user_display_name.as_ref(),
+        ) {
+            (Some(user_id), Some(user_name), Some(user_display_name)) => Some(TwitchEventUser {
+                user_id: user_id.clone(),
+                user_name: user_name.to_string().into(),
+                user_display_name: user_display_name.to_string().into(),
+            }),
+            _ => None,
+        };
+
         tokio::spawn(execute_event_config(
             app_data.clone(),
             twitch_manager.clone(),
             event_config.clone(),
             event_sender.clone(),
             None,
+            user,
         ));
     }
 }
@@ -374,6 +417,11 @@ fn handle_resub_event(
             event_config.clone(),
             event_sender.clone(),
             None,
+            Some(TwitchEventUser {
+                user_id: event.user_id.clone(),
+                user_name: event.user_name.clone(),
+                user_display_name: event.user_display_name.to_string().into(),
+            }),
         ));
     }
 }
@@ -411,6 +459,11 @@ fn handle_chat_msg_event(
             event_config.clone(),
             event_sender.clone(),
             None,
+            Some(TwitchEventUser {
+                user_id: event.user_id.clone(),
+                user_name: event.user_name.clone(),
+                user_display_name: event.user_display_name.to_string().into(),
+            }),
         ));
     }
 }
@@ -425,6 +478,7 @@ async fn execute_event_config(
     event_config: EventConfig,
     event_sender: broadcast::Sender<EventMessage>,
     input: Option<u32>,
+    user: Option<TwitchEventUser>,
 ) {
     // Skip disabled events
     if !event_config.enabled {
@@ -434,7 +488,43 @@ async fn execute_event_config(
     // TODO: WAIT FOR COOLDOWN TO COMPLETE
     // TODO: CHECK USER HAS REQUIRED ROLE
 
-    if !matches!(event_config.require_role, MinimumRequireRole::None) {}
+    match event_config.require_role {
+        MinimumRequireRole::None => {}
+        MinimumRequireRole::Vip => {
+            let user = match user {
+                Some(user) => user,
+                None => return,
+            };
+
+            let vips = match twitch_manager.get_vip_list().await {
+                Ok(value) => value,
+                Err(_) => {
+                    return;
+                }
+            };
+
+            if !vips.iter().any(|vip| vip.user_id == user.user_id) {
+                return;
+            }
+        }
+        MinimumRequireRole::Mod => {
+            let user = match user {
+                Some(user) => user,
+                None => return,
+            };
+
+            let mods = match twitch_manager.get_moderator_list().await {
+                Ok(value) => value,
+                Err(_) => {
+                    return;
+                }
+            };
+
+            if !mods.iter().any(|mods| mods.user_id == user.user_id) {
+                return;
+            }
+        }
+    }
 
     debug!("executing event outcome: {:?}", event_config);
 
