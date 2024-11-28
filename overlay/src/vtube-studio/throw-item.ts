@@ -8,8 +8,6 @@ import {
   ModelData,
   ThrowDirection,
   ImpactSoundConfig,
-  ThrowableConfig,
-  SoundConfig,
   ItemConfig,
 } from "../vtftk/types";
 import { flinch } from "./flinch";
