@@ -81,6 +81,12 @@ impl Drop for OverlayEventStream {
             runtime_app_data
                 .write(|app_data| {
                     app_data.active_overlay_count = app_data.active_overlay_count.saturating_sub(1);
+
+                    // No longer connected to vtube studio or model
+                    if app_data.active_overlay_count == 0 {
+                        app_data.vtube_studio_connected = false;
+                        app_data.model_id = None;
+                    }
                 })
                 .await;
         });
