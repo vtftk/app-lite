@@ -3,11 +3,18 @@
 </script>
 
 <div class="container">
-  <h1 class="title">Create Event</h1>
-  <p class="text">Create an event that will trigger some outcome</p>
-  <a type="button" href="/events">Back</a>
-
-  <EventForm />
+  <div class="title-area">
+    <div>
+      <h1 class="title">Create Event</h1>
+      <p class="text">Create an event that will trigger some outcome</p>
+    </div>
+    <div class="actions">
+      <a type="button" class="btn" href="/events">Back</a>
+    </div>
+  </div>
+  <div class="content-area">
+    <EventForm />
+  </div>
 </div>
 
 <style>
@@ -18,10 +25,33 @@
 
     padding: 1rem;
     height: 100%;
-    overflow: auto;
   }
 
   .title {
+    color: #fff;
+    margin-bottom: 0.25rem;
     line-height: 1;
+    font-size: 1.75rem;
+  }
+
+  .text {
+    color: #ccc;
+  }
+
+  .title-area {
+    display: flex;
+  }
+
+  .actions {
+    display: flex;
+    flex: auto;
+    justify-content: flex-end;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .content-area {
+    flex: auto;
+    overflow-y: auto;
   }
 </style>

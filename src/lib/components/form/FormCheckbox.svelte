@@ -5,18 +5,18 @@
   type Props = {
     id: string;
     name: string;
+
     label: string;
+    description?: string;
 
     checked: boolean;
     onChecked: (checked: boolean) => void;
   };
 
-  const { id, name, label, checked, onChecked }: Props = $props();
+  const { id, name, label, description, checked, onChecked }: Props = $props();
 </script>
 
 <div class="form-input">
-  <label for={id}>{label}</label>
-
   <Checkbox.Root
     {id}
     {name}
@@ -33,17 +33,34 @@
     </Checkbox.Indicator>
   </Checkbox.Root>
 
-  <FormErrorLabel {name} />
+  <div>
+    <label for={id}>{label}</label>
+
+    {#if description}
+      <p class="description">{description}</p>
+    {/if}
+
+    <FormErrorLabel {name} />
+  </div>
 </div>
 
 <style>
   .form-input {
     display: inline-flex;
-    flex-flow: column;
-    gap: 0.5rem;
+    flex-flow: row;
+    gap: 0.75rem;
+    align-items: center;
   }
 
   .form-input label {
     font-size: 1rem;
+    color: #fff;
+    margin-bottom: 0.25rem;
+    display: block;
+  }
+
+  .description {
+    font-size: 0.9rem;
+    color: #ccc;
   }
 </style>

@@ -392,93 +392,33 @@
 
 <form use:form>
   <!-- Base options -->
+  <section class="section">
+    <div class="section__head">
+      <h2>Details</h2>
+      <p>Basic details about the event</p>
+    </div>
 
-  <FormTextInput id="name" name="name" label="Name" />
-  <FormCheckbox
-    id="enabled"
-    name="enabled"
-    label="Enabled"
-    checked={$data.enabled}
-    onChecked={(checked) => {
-      setFields("enabled", checked, true);
-    }}
-  />
+    <FormTextInput id="name" name="name" label="Name" />
+    <FormCheckbox
+      id="enabled"
+      name="enabled"
+      label="Enabled"
+      description="Whether this event can be triggered"
+      checked={$data.enabled}
+      onChecked={(checked) => {
+        setFields("enabled", checked, true);
+      }}
+    />
+  </section>
 
   <!-- Trigger options -->
-
-  {#snippet eventTriggerTypeItem(item: (typeof triggerOptions)[0])}
-    <div class="text-stack">
-      <p class="text-stack--top">{item.label}</p>
-      <p class="text-stack--bottom">{item.description}</p>
+  <section class="section">
+    <div class="section__head">
+      <h2>Trigger</h2>
+      <p>What should trigger this event</p>
     </div>
-  {/snippet}
 
-  <FormSelect
-    id="trigger.type"
-    name="trigger.type"
-    label="Event Trigger"
-    items={triggerOptions}
-    item={eventTriggerTypeItem}
-    selected={$data.trigger.type}
-    onChangeSelected={(selected) => {
-      onChangeTriggerType(selected);
-    }}
-  />
-
-  {#if $data.trigger.type === EventTriggerType.Redeem}
-    <TwitchRedeemSelect
-      id="trigger.reward_id"
-      name="trigger.reward_id"
-      label="Reward"
-      selected={$data.trigger.reward_id}
-      onChangeSelected={(selected) =>
-        setFields("trigger.reward_id", selected, true)}
-    />
-  {:else if $data.trigger.type === EventTriggerType.Command}
-    <FormTextInput
-      id="trigger.message"
-      name="trigger.message"
-      label="Command Message"
-    />
-  {:else if $data.trigger.type === EventTriggerType.Bits}
-    <FormNumberInput
-      id="trigger.min_bits"
-      name="trigger.min_bits"
-      label="Minimum Bits"
-    />
-  {:else if $data.trigger.type === EventTriggerType.Raid}
-    <FormNumberInput
-      id="trigger.min_raiders"
-      name="trigger.min_raiders"
-      label="Minimum Raiders"
-    />
-  {/if}
-
-  <!-- Outcome options -->
-
-  {#snippet eventOutcomeTypeItem(item: (typeof outcomeOptions)[0])}
-    <div class="text-stack">
-      <p class="text-stack--top">{item.label}</p>
-      <p class="text-stack--bottom">{item.description}</p>
-    </div>
-  {/snippet}
-
-  <FormSelect
-    id="outcome.type"
-    name="outcome.type"
-    label="Event Outcome"
-    items={outcomeOptions}
-    item={eventOutcomeTypeItem}
-    selected={$data.outcome.type}
-    onChangeSelected={(selected) => {
-      onChangeOutcomeType(selected);
-    }}
-  />
-
-  {#if $data.outcome.type === EventOutcomeType.ThrowBits}
-    <div></div>
-  {:else if $data.outcome.type === EventOutcomeType.Throwable}
-    {#snippet throwableDataTypeItem(item: (typeof throwableDataOptions)[0])}
+    {#snippet eventTriggerTypeItem(item: (typeof triggerOptions)[0])}
       <div class="text-stack">
         <p class="text-stack--top">{item.label}</p>
         <p class="text-stack--bottom">{item.description}</p>
@@ -486,114 +426,203 @@
     {/snippet}
 
     <FormSelect
-      id="outcome.data.type"
-      name="outcome.data.type"
-      label="Throwable Type"
-      items={throwableDataOptions}
-      item={throwableDataTypeItem}
-      selected={$data.outcome.data.type}
+      id="trigger.type"
+      name="trigger.type"
+      label="Event Trigger"
+      items={triggerOptions}
+      item={eventTriggerTypeItem}
+      selected={$data.trigger.type}
       onChangeSelected={(selected) => {
-        onChangeThrowableDataType(selected);
+        onChangeTriggerType(selected);
       }}
     />
 
-    {#if $data.outcome.data.type === ThrowableDataType.Throw}
-      <div>
-        <ThrowablePicker
-          items={$appData.items}
-          selected={$data.outcome.data.throwable_ids}
-          onChangeSelect={(selected) => {
-            setFields("outcome.data.throwable_ids", selected, true);
-          }}
-        />
-        <FormNumberInput
-          id="outcome.data.amount"
-          name="outcome.data.amount"
-          label="Total number of items to throw"
-        />
-      </div>
-    {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
-      <div>
-        <ThrowablePicker
-          items={$appData.items}
-          selected={$data.outcome.data.throwable_ids}
-          onChangeSelect={(selected) => {
-            setFields("outcome.data.throwable_ids", selected, true);
-          }}
-        />
-
-        <FormNumberInput
-          id="outcome.data.amount_per_throw"
-          name="outcome.data.amount_per_throw"
-          label="Amount of items per throw"
-        />
-
-        <FormNumberInput
-          id="outcome.data.frequency"
-          name="outcome.data.frequency"
-          label="Frequency"
-        />
-
-        <FormNumberInput
-          id="outcome.data.amount"
-          name="outcome.data.amount"
-          label="Total number of throws"
-        />
-      </div>
+    {#if $data.trigger.type === EventTriggerType.Redeem}
+      <TwitchRedeemSelect
+        id="trigger.reward_id"
+        name="trigger.reward_id"
+        label="Reward"
+        selected={$data.trigger.reward_id}
+        onChangeSelected={(selected) =>
+          setFields("trigger.reward_id", selected, true)}
+      />
+    {:else if $data.trigger.type === EventTriggerType.Command}
+      <FormTextInput
+        id="trigger.message"
+        name="trigger.message"
+        label="Command Message"
+      />
+    {:else if $data.trigger.type === EventTriggerType.Bits}
+      <FormNumberInput
+        id="trigger.min_bits"
+        name="trigger.min_bits"
+        label="Minimum Bits"
+      />
+    {:else if $data.trigger.type === EventTriggerType.Raid}
+      <FormNumberInput
+        id="trigger.min_raiders"
+        name="trigger.min_raiders"
+        label="Minimum Raiders"
+      />
     {/if}
-  {:else if $data.outcome.type === EventOutcomeType.TriggerHotkey}
-    <HotkeySelect
-      id="outcome.hotkey_id"
-      name="outcome.hotkey_id"
-      label="Hotkey"
-      selected={$data.outcome.hotkey_id}
-      onChangeSelected={(selected) =>
-        setFields("outcome.hotkey_id", selected, true)}
-    />
-  {:else if $data.outcome.type === EventOutcomeType.PlaySound}
-    {#snippet soundItem(item: (typeof soundOptions)[0])}
+  </section>
+
+  <!-- Outcome options -->
+  <section class="section">
+    <div class="section__head">
+      <h2>Outcome</h2>
+      <p>What should happen when this event is triggered</p>
+    </div>
+
+    {#snippet eventOutcomeTypeItem(item: (typeof outcomeOptions)[0])}
       <div class="text-stack">
         <p class="text-stack--top">{item.label}</p>
+        <p class="text-stack--bottom">{item.description}</p>
       </div>
     {/snippet}
 
     <FormSelect
-      id="outcome.sound_id"
-      name="outcome.sound_id"
-      label="Sound"
-      items={soundOptions}
-      item={soundItem}
-      selected={$data.outcome.sound_id}
-      onChangeSelected={(selected) =>
-        setFields("outcome.sound_id", selected, true)}
+      id="outcome.type"
+      name="outcome.type"
+      label="Event Outcome"
+      items={outcomeOptions}
+      item={eventOutcomeTypeItem}
+      selected={$data.outcome.type}
+      onChangeSelected={(selected) => {
+        onChangeOutcomeType(selected);
+      }}
     />
-  {/if}
+
+    {#if $data.outcome.type === EventOutcomeType.ThrowBits}
+      <div></div>
+    {:else if $data.outcome.type === EventOutcomeType.Throwable}
+      {#snippet throwableDataTypeItem(item: (typeof throwableDataOptions)[0])}
+        <div class="text-stack">
+          <p class="text-stack--top">{item.label}</p>
+          <p class="text-stack--bottom">{item.description}</p>
+        </div>
+      {/snippet}
+
+      <FormSelect
+        id="outcome.data.type"
+        name="outcome.data.type"
+        label="Throwable Type"
+        items={throwableDataOptions}
+        item={throwableDataTypeItem}
+        selected={$data.outcome.data.type}
+        onChangeSelected={(selected) => {
+          onChangeThrowableDataType(selected);
+        }}
+      />
+
+      {#if $data.outcome.data.type === ThrowableDataType.Throw}
+        <div>
+          <ThrowablePicker
+            items={$appData.items}
+            selected={$data.outcome.data.throwable_ids}
+            onChangeSelect={(selected) => {
+              setFields("outcome.data.throwable_ids", selected, true);
+            }}
+          />
+          <FormNumberInput
+            id="outcome.data.amount"
+            name="outcome.data.amount"
+            label="Total number of items to throw"
+          />
+        </div>
+      {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
+        <div>
+          <ThrowablePicker
+            items={$appData.items}
+            selected={$data.outcome.data.throwable_ids}
+            onChangeSelect={(selected) => {
+              setFields("outcome.data.throwable_ids", selected, true);
+            }}
+          />
+
+          <div class="throwable-config-grid">
+            <FormNumberInput
+              id="outcome.data.amount_per_throw"
+              name="outcome.data.amount_per_throw"
+              label="Amount of items per throw"
+            />
+
+            <FormNumberInput
+              id="outcome.data.frequency"
+              name="outcome.data.frequency"
+              label="Frequency"
+            />
+
+            <FormNumberInput
+              id="outcome.data.amount"
+              name="outcome.data.amount"
+              label="Total number of throws"
+            />
+          </div>
+        </div>
+      {/if}
+    {:else if $data.outcome.type === EventOutcomeType.TriggerHotkey}
+      <HotkeySelect
+        id="outcome.hotkey_id"
+        name="outcome.hotkey_id"
+        label="Hotkey"
+        selected={$data.outcome.hotkey_id}
+        onChangeSelected={(selected) =>
+          setFields("outcome.hotkey_id", selected, true)}
+      />
+    {:else if $data.outcome.type === EventOutcomeType.PlaySound}
+      {#snippet soundItem(item: (typeof soundOptions)[0])}
+        <div class="text-stack">
+          <p class="text-stack--top">{item.label}</p>
+        </div>
+      {/snippet}
+
+      <FormSelect
+        id="outcome.sound_id"
+        name="outcome.sound_id"
+        label="Sound"
+        items={soundOptions}
+        item={soundItem}
+        selected={$data.outcome.sound_id}
+        onChangeSelected={(selected) =>
+          setFields("outcome.sound_id", selected, true)}
+      />
+    {/if}
+  </section>
 
   <!-- Cooldown and role requirements -->
-
-  {#snippet requiredRoleItem(item: (typeof requiredRoles)[0])}
-    <div class="text-stack">
-      <p class="text-stack--top">{item.label}</p>
-      <p class="text-stack--bottom">{item.description}</p>
+  <section class="section">
+    <div class="section__head">
+      <h2>Delays, cooldown, and requirements</h2>
+      <p>
+        Configure any delays, cooldown, or requirements on this events trigger
+      </p>
     </div>
-  {/snippet}
 
-  <FormSelect
-    id="require_role"
-    name="require_role"
-    label="Minimum Required Role"
-    items={requiredRoles}
-    item={requiredRoleItem}
-    selected={$data.require_role}
-    onChangeSelected={(selected) => setFields("require_role", selected, true)}
-  />
+    {#snippet requiredRoleItem(item: (typeof requiredRoles)[0])}
+      <div class="text-stack">
+        <p class="text-stack--top">{item.label}</p>
+        <p class="text-stack--bottom">{item.description}</p>
+      </div>
+    {/snippet}
 
-  <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
-  <FormNumberInput
-    id="outcome_delay"
-    name="outcome_delay"
-    label="Outcome Delay"
-  />
+    <FormSelect
+      id="require_role"
+      name="require_role"
+      label="Minimum Required Role"
+      items={requiredRoles}
+      item={requiredRoleItem}
+      selected={$data.require_role}
+      onChangeSelected={(selected) => setFields("require_role", selected, true)}
+    />
+
+    <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
+    <FormNumberInput
+      id="outcome_delay"
+      name="outcome_delay"
+      label="Outcome Delay"
+    />
+  </section>
 
   <button type="submit" class="btn">{existing ? "Save" : "Create"}</button>
 </form>
@@ -603,5 +632,36 @@
     display: flex;
     flex-flow: column;
     gap: 1rem;
+  }
+
+  .section {
+    display: flex;
+    flex-flow: column;
+
+    border: 1px solid #333;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .throwable-config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .section__head {
+    margin-bottom: 0.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+  }
+
+  .section__head h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .section__head p {
+    color: #ccc;
   }
 </style>
