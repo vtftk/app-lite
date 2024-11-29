@@ -1,6 +1,7 @@
 use anyhow::Context;
 use futures::StreamExt;
 use log::warn;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{net::TcpStream, sync::broadcast};
 use tokio_tungstenite::{
@@ -11,9 +12,10 @@ use twitch_api::{
     eventsub::{
         self,
         event::websocket::{EventsubWebsocketData, SessionData},
-        Event, EventSubscription, PayloadParseError,
+        Event, EventSubscription, EventType, PayloadParseError,
     },
-    twitch_oauth2::{TwitchToken, UserToken},
+    twitch_oauth2::{self, TwitchToken, UserToken},
+    types::{DisplayName, UserId, UserName},
     HelixClient,
 };
 
@@ -380,3 +382,28 @@ impl WebsocketClient {
         Ok(())
     }
 }
+
+// #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+// pub struct ChannelSubscriptionModeratorAdd {
+//     /// The broadcaster user ID.
+//     pub broadcaster_user_id: UserId,
+// }
+
+// impl EventSubscription for ChannelSubscriptionModeratorAdd {
+//     type Payload = ChannelSubscriptionModeratorAddPayload;
+
+//     const EVENT_TYPE: EventType = EventType::ChannelSubscription;
+//     const SCOPE: twitch_oauth2::Validator =
+//         twitch_oauth2::validator![twitch_oauth2::Scope::ModerationRead];
+//     const VERSION: &'static str = "1";
+// }
+
+// #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+// pub struct ChannelSubscriptionModeratorAddPayload {
+//     /// The broadcaster user ID.
+//     pub broadcaster_user_id: UserId,
+//     /// The broadcaster login.
+//     pub broadcaster_user_login: DisplayName,
+//     /// The broadcaster display name.
+//     pub broadcaster_user_name: UserName,
+// }

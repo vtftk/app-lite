@@ -5,7 +5,8 @@ use futures::TryStreamExt;
 use log::error;
 use tauri::{AppHandle, Emitter};
 use tokio::{
-    sync::{broadcast, Mutex},
+    join,
+    sync::{broadcast, RwLock},
     task::AbortHandle,
 };
 use twitch_api::{
@@ -26,7 +27,7 @@ use super::websocket::WebsocketClient;
 
 pub struct TwitchManager {
     pub helix_client: HelixClient<'static, reqwest::Client>,
-    state: Mutex<TwitchManagerState>,
+    state: RwLock<TwitchManagerState>,
     tx: broadcast::Sender<TwitchEvent>,
     app_handle: AppHandle,
 }
@@ -70,90 +71,25 @@ impl TwitchManager {
         )
     }
 
-    pub async fn get_moderator_list(&self) -> anyhow::Result<Arc<[Moderator]>> {
-        let state = &mut *self.state.lock().await;
-
-        // Use existing list
-        match state {
-            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
-            TwitchManagerState::Authenticated(state) => {
-                if let Some(moderators) = state.moderators.as_ref() {
-                    return Ok(moderators.clone());
-                }
-
-                // Load new list
-                let moderators = self.request_moderator_list().await?;
-                let moderators: Arc<[Moderator]> = moderators.into();
-                state.moderators = Some(moderators.clone());
-
-                Ok(moderators)
-            }
-        }
-    }
-
-    pub async fn get_vip_list(&self) -> anyhow::Result<Arc<[Vip]>> {
-        let state = &mut *self.state.lock().await;
-
-        // Use existing list
-        match state {
-            TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
-            TwitchManagerState::Authenticated(state) => {
-                if let Some(vips) = state.vips.as_ref() {
-                    return Ok(vips.clone());
-                }
-
-                // Load new list
-                let vips = self.request_vip_list().await?;
-                let vips: Arc<[Vip]> = vips.into();
-                state.vips = Some(vips.clone());
-
-                Ok(vips)
-            }
-        }
-    }
-
     pub async fn is_authenticated(&self) -> bool {
-        let lock = &*self.state.lock().await;
+        let lock = &*self.state.read().await;
         matches!(lock, TwitchManagerState::Authenticated { .. })
     }
 
     pub async fn get_user_token(&self) -> Option<UserToken> {
-        let lock = &*self.state.lock().await;
+        let lock = &*self.state.read().await;
         match lock {
             TwitchManagerState::Initial => None,
             TwitchManagerState::Authenticated(state) => Some(state.token.clone()),
         }
     }
 
-    pub async fn request_moderator_list(&self) -> anyhow::Result<Vec<Moderator>> {
-        let user_token = self.get_user_token().await.context("not authenticated")?;
-        let user_id = user_token.user_id.clone();
-
-        let moderators: Vec<Moderator> = self
-            .helix_client
-            .get_moderators_in_channel_from_id(user_id, &user_token)
-            .try_collect()
-            .await?;
-
-        Ok(moderators)
-    }
-
-    pub async fn request_vip_list(&self) -> anyhow::Result<Vec<Vip>> {
-        let user_token = self.get_user_token().await.context("not authenticated")?;
-        let user_id = user_token.user_id.clone();
-
-        let moderators: Vec<Vip> = self
-            .helix_client
-            .get_vips_in_channel(user_id, &user_token)
-            .try_collect()
-            .await?;
-
-        Ok(moderators)
-    }
-
     pub async fn set_authenticated(self: &Arc<Self>, token: UserToken) {
+        let this_1 = self.clone();
+        let this_2 = self.clone();
+
         {
-            let lock = &mut *self.state.lock().await;
+            let lock = &mut *self.state.write().await;
 
             let websocket =
                 WebsocketManagedTask::create(self.clone(), self.tx.clone(), token.clone());
@@ -168,16 +104,129 @@ impl TwitchManager {
 
         // Tell the app we are authenticated
         _ = self.app_handle.emit("authenticated", ());
+
+        // Load initial moderator and VIP lists
+        join!(this_1.get_vip_list(), this_2.get_moderator_list());
     }
 
     pub async fn reset(&self) {
         {
-            let lock = &mut *self.state.lock().await;
+            let lock = &mut *self.state.write().await;
             *lock = TwitchManagerState::Initial;
         }
 
         // Tell the app we are authenticated
         _ = self.app_handle.emit("logout", ());
+    }
+
+    pub async fn get_moderator_list(&self) -> anyhow::Result<Arc<[Moderator]>> {
+        // First attempt to read existing list
+        {
+            let state = &*self.state.read().await;
+            match state {
+                TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+                TwitchManagerState::Authenticated(state) => {
+                    if let Some(moderators) = state.moderators.as_ref() {
+                        return Ok(moderators.clone());
+                    }
+                }
+            }
+        }
+
+        // Write new list
+        let state = &mut *self.state.write().await;
+        match state {
+            TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                let moderators = self.request_moderator_list().await?;
+                let moderators: Arc<[Moderator]> = moderators.into();
+                state.moderators = Some(moderators.clone());
+
+                Ok(moderators)
+            }
+        }
+    }
+
+    pub async fn get_vip_list(&self) -> anyhow::Result<Arc<[Vip]>> {
+        // First attempt to read existing list
+        {
+            let state = &*self.state.read().await;
+            match state {
+                TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+                TwitchManagerState::Authenticated(state) => {
+                    if let Some(vips) = state.vips.as_ref() {
+                        return Ok(vips.clone());
+                    }
+                }
+            }
+        }
+
+        // Write new list
+        let state = &mut *self.state.write().await;
+        match state {
+            TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                let vips = self.request_vip_list().await?;
+                let vips: Arc<[Vip]> = vips.into();
+                state.vips = Some(vips.clone());
+
+                Ok(vips)
+            }
+        }
+    }
+
+    pub async fn reload_moderator_list(&self) {
+        self.clear_moderator_list().await;
+        _ = self.get_moderator_list().await;
+    }
+
+    pub async fn reload_vip_list(&self) {
+        self.clear_vip_list().await;
+        _ = self.get_vip_list().await;
+    }
+
+    async fn clear_moderator_list(&self) {
+        let state = &mut *self.state.write().await;
+
+        // Use existing list
+        if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
+            inner_state.moderators = None;
+        }
+    }
+
+    async fn clear_vip_list(&self) {
+        let state = &mut *self.state.write().await;
+
+        // Use existing list
+        if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
+            inner_state.vips = None;
+        }
+    }
+
+    async fn request_moderator_list(&self) -> anyhow::Result<Vec<Moderator>> {
+        let user_token = self.get_user_token().await.context("not authenticated")?;
+        let user_id = user_token.user_id.clone();
+
+        let moderators: Vec<Moderator> = self
+            .helix_client
+            .get_moderators_in_channel_from_id(user_id, &user_token)
+            .try_collect()
+            .await?;
+
+        Ok(moderators)
+    }
+
+    async fn request_vip_list(&self) -> anyhow::Result<Vec<Vip>> {
+        let user_token = self.get_user_token().await.context("not authenticated")?;
+        let user_id = user_token.user_id.clone();
+
+        let moderators: Vec<Vip> = self
+            .helix_client
+            .get_vips_in_channel(user_id, &user_token)
+            .try_collect()
+            .await?;
+
+        Ok(moderators)
     }
 }
 

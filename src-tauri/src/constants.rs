@@ -17,7 +17,14 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     // View your channel's Bits information
     Scope::BitsRead,
     // Read the list of followers in channels where you are a moderator.
+    // (Followers list & Follower event sub)
     Scope::Other(Cow::Borrowed("moderator:read:followers")),
+    // View a channel’s moderation data including Moderators, Bans, Timeouts, and Automod settings.
+    // (Moderators list & Moderator event sub)
+    Scope::ModerationRead,
+    // Read the list of VIPs in your channel.
+    // (Vip list and VIP event sub)
+    Scope::ChannelReadVips,
 ];
 
 /// Redirect URI for twitch OAuth, port should match below
@@ -25,5 +32,3 @@ pub const TWITCH_REDIRECT_URI: &str = "http://localhost:58371/oauth";
 
 /// Port to run the local server on
 pub const LOCAL_SERVER_PORT: u16 = 58371;
-
-
