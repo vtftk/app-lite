@@ -1,6 +1,6 @@
 use anyhow::Context;
 use futures::StreamExt;
-use log::{debug, warn};
+use log::warn;
 use thiserror::Error;
 use tokio::{net::TcpStream, sync::broadcast};
 use tokio_tungstenite::{
