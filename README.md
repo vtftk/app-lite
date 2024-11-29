@@ -1,4 +1,6 @@
 ## TODO
 
 - Cooldowns
-- Loading moderator and VIP lists for checking access
+
+cd twitch_api
+git submodule update --init --recursive

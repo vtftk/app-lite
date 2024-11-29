@@ -22,7 +22,9 @@ export function createGetRedeemsList(): CreateQueryResult<
   });
 }
 
-export function refreshRedeemsList() {
+export async function refreshRedeemsList() {
+  await invoke<boolean>("refresh_redeems_list");
+
   queryClient.cancelQueries({ queryKey: GET_REDEEMS_LIST_KEY });
   queryClient.invalidateQueries({ queryKey: GET_REDEEMS_LIST_KEY });
 }

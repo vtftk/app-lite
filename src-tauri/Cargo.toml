@@ -18,16 +18,16 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-shell = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 twitch_api = { version = "0.7.0-rc.8", features = [
     "helix",
     "eventsub",
     "all",
     "reqwest",
 ] }
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 reqwest = { version = "0.12.9", default-features = false, features = [
     "charset",
     "http2",
@@ -54,9 +54,16 @@ mime_guess = "2.0.5"
 rand = "0.8.5"
 moka = { version = "0.12.8", features = ["future"] }
 
-# Temporary while moderation and vip eventsub isn't landed on release version
-[patch.crates-io]
-twitch_api = { git = 'https://github.com/twitch-rs/twitch_api.git', branch = "feat/small-eventsub" }
+# Temporary dependency overrides until new eventsub payloads land
+# (https://github.com/twitch-rs/twitch_api/pull/457)
+[patch.crates-io.twitch_api]
+git = 'https://github.com/twitch-rs/twitch_api.git'
+rev = "866de1f"
+
+[patch.crates-io.twitch_types]
+git = 'https://github.com/twitch-rs/twitch_api.git'
+rev = "866de1f"
+
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

@@ -268,24 +268,42 @@ impl WebsocketClient {
             // Channel moderator is added
             Event::ChannelModeratorAddV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::ModAdd)
+                _ = self.tx.send(TwitchEvent::ModeratorsChanged)
             }
             // Channel moderator is removed
             Event::ChannelModeratorRemoveV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::ModRemove)
+                _ = self.tx.send(TwitchEvent::ModeratorsChanged)
             }
 
             // Channel vip is added
             Event::ChannelVipAddV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::VipAdd)
+                _ = self.tx.send(TwitchEvent::VipsChanged)
             }
 
             // Channel vip is removed
             Event::ChannelVipRemoveV1(payload) => {
                 let msg = map_message(payload.message)?;
-                _ = self.tx.send(TwitchEvent::VipRemove)
+                _ = self.tx.send(TwitchEvent::VipsChanged)
+            }
+
+            // Channel reward is added
+            Event::ChannelPointsCustomRewardAddV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::RewardsChanged)
+            }
+
+            // Channel reward is removed
+            Event::ChannelPointsCustomRewardRemoveV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::RewardsChanged)
+            }
+
+            // Channel reward is update
+            Event::ChannelPointsCustomRewardUpdateV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::RewardsChanged)
             }
 
             _ => {}
@@ -321,9 +339,10 @@ impl WebsocketClient {
     async fn create_subscriptions(&self) -> anyhow::Result<()> {
         use eventsub::channel::{
             ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2, ChannelModeratorAddV1,
-            ChannelModeratorRemoveV1, ChannelPointsCustomRewardRedemptionAddV1, ChannelSubscribeV1,
-            ChannelSubscriptionGiftV1, ChannelSubscriptionMessageV1, ChannelVipAddV1,
-            ChannelVipRemoveV1,
+            ChannelModeratorRemoveV1, ChannelPointsCustomRewardAddV1,
+            ChannelPointsCustomRewardRedemptionAddV1, ChannelPointsCustomRewardRemoveV1,
+            ChannelPointsCustomRewardUpdateV1, ChannelSubscribeV1, ChannelSubscriptionGiftV1,
+            ChannelSubscriptionMessageV1, ChannelVipAddV1, ChannelVipRemoveV1,
         };
 
         let session_id = self.session_id.as_deref().context("no active session")?;
@@ -437,6 +456,36 @@ impl WebsocketClient {
         self.client
             .create_eventsub_subscription(
                 ChannelModeratorRemoveV1::new(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
+        // Subscribe to reward added
+        self.client
+            .create_eventsub_subscription(
+                ChannelPointsCustomRewardAddV1::broadcaster_user_id(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
+        // Subscribe to reward removed
+        self.client
+            .create_eventsub_subscription(
+                ChannelPointsCustomRewardRemoveV1::broadcaster_user_id(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
+        // Subscribe to reward updated
+        self.client
+            .create_eventsub_subscription(
+                ChannelPointsCustomRewardUpdateV1::broadcaster_user_id(user_id.clone()),
                 transport.clone(),
                 token,
             )

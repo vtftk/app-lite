@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
-use log::error;
+use log::{debug, error};
 use tauri::{AppHandle, Emitter};
 use tokio::{
     join,
@@ -17,7 +17,7 @@ use twitch_api::{
             subscription::message::SubscriptionMessage,
         },
     },
-    helix::{channels::Vip, moderation::Moderator},
+    helix::{channels::Vip, moderation::Moderator, points::CustomReward},
     twitch_oauth2::UserToken,
     types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
     HelixClient,
@@ -38,6 +38,8 @@ pub struct TwitchManagerStateAuthenticated {
     // Currently active websocket connection
     _websocket: WebsocketManagedTask,
 
+    // List of available rewards
+    rewards: Option<Arc<[CustomReward]>>,
     // Current loaded list of moderators
     moderators: Option<Arc<[Moderator]>>,
     // Current loaded list of vips
@@ -85,9 +87,6 @@ impl TwitchManager {
     }
 
     pub async fn set_authenticated(self: &Arc<Self>, token: UserToken) {
-        let this_1 = self.clone();
-        let this_2 = self.clone();
-
         {
             let lock = &mut *self.state.write().await;
 
@@ -99,6 +98,7 @@ impl TwitchManager {
                 _websocket: websocket,
                 moderators: None,
                 vips: None,
+                rewards: None,
             });
         }
 
@@ -106,7 +106,23 @@ impl TwitchManager {
         _ = self.app_handle.emit("authenticated", ());
 
         // Load initial moderator and VIP lists
-        join!(this_1.get_vip_list(), this_2.get_moderator_list());
+        let (rewards_result, vips_result, mods_result) = join!(
+            self.get_rewards_list(),
+            self.get_vip_list(),
+            self.get_moderator_list()
+        );
+
+        if let Err(err) = rewards_result {
+            error!("failed to load rewards: {:?}", err);
+        }
+
+        if let Err(err) = vips_result {
+            error!("failed to load vips: {:?}", err);
+        }
+
+        if let Err(err) = mods_result {
+            error!("failed to load mods: {:?}", err);
+        }
     }
 
     pub async fn reset(&self) {
@@ -133,15 +149,15 @@ impl TwitchManager {
             }
         }
 
+        let moderators = self.request_moderator_list().await?;
+        let moderators: Arc<[Moderator]> = moderators.into();
+
         // Write new list
         let state = &mut *self.state.write().await;
         match state {
-            TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
             TwitchManagerState::Authenticated(state) => {
-                let moderators = self.request_moderator_list().await?;
-                let moderators: Arc<[Moderator]> = moderators.into();
                 state.moderators = Some(moderators.clone());
-
                 Ok(moderators)
             }
         }
@@ -160,17 +176,46 @@ impl TwitchManager {
                 }
             }
         }
+        let vips = self.request_vip_list().await?;
 
         // Write new list
         let state = &mut *self.state.write().await;
         match state {
-            TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
             TwitchManagerState::Authenticated(state) => {
-                let vips = self.request_vip_list().await?;
                 let vips: Arc<[Vip]> = vips.into();
                 state.vips = Some(vips.clone());
 
                 Ok(vips)
+            }
+        }
+    }
+
+    pub async fn get_rewards_list(&self) -> anyhow::Result<Arc<[CustomReward]>> {
+        // First attempt to read existing list
+        {
+            let state = &*self.state.read().await;
+            match state {
+                TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
+                TwitchManagerState::Authenticated(state) => {
+                    if let Some(rewards) = state.rewards.as_ref() {
+                        return Ok(rewards.clone());
+                    }
+                }
+            }
+        }
+
+        let rewards = self.request_rewards_list().await?;
+        let rewards: Arc<[CustomReward]> = rewards.into();
+
+        // Write new list
+        let state = &mut *self.state.write().await;
+        match state {
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                state.rewards = Some(rewards.clone());
+
+                Ok(rewards)
             }
         }
     }
@@ -185,6 +230,12 @@ impl TwitchManager {
         debug!("reloading vip list");
         self.clear_vip_list().await;
         _ = self.get_vip_list().await;
+    }
+
+    pub async fn reload_rewards_list(&self) {
+        debug!("reloading rewards list");
+        self.clear_rewards_list().await;
+        _ = self.get_rewards_list().await;
     }
 
     async fn clear_moderator_list(&self) {
@@ -202,6 +253,15 @@ impl TwitchManager {
         // Use existing list
         if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
             inner_state.vips = None;
+        }
+    }
+
+    async fn clear_rewards_list(&self) {
+        let state = &mut *self.state.write().await;
+
+        // Use existing list
+        if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
+            inner_state.rewards = None;
         }
     }
 
@@ -229,6 +289,17 @@ impl TwitchManager {
             .await?;
 
         Ok(moderators)
+    }
+
+    async fn request_rewards_list(&self) -> anyhow::Result<Vec<CustomReward>> {
+        let user_token = self.get_user_token().await.context("not authenticated")?;
+        let user_id = user_token.user_id.clone();
+        let rewards = self
+            .helix_client
+            .get_all_custom_rewards(user_id, false, &user_token)
+            .await?;
+
+        Ok(rewards)
     }
 }
 
@@ -295,8 +366,8 @@ pub struct TwitchEventGiftSub {
 
     // User details empty when cheer is anonymous
     pub user_id: Option<UserId>,
-    pub user_name: Option<DisplayName>,
-    pub user_display_name: Option<UserName>,
+    pub user_name: Option<UserName>,
+    pub user_display_name: Option<DisplayName>,
 }
 
 #[derive(Debug, Clone)]
@@ -317,7 +388,7 @@ pub struct TwitchEventReSub {
 pub struct TwitchEventChatMsg {
     pub user_id: UserId,
     pub user_name: UserName,
-    pub user_display_name: UserName,
+    pub user_display_name: DisplayName,
     pub message: eventsub::channel::chat::Message,
     pub cheer: Option<Cheer>,
 }
@@ -333,10 +404,9 @@ pub enum TwitchEvent {
     ResubMsg(TwitchEventReSub),
     ChatMsg(TwitchEventChatMsg),
 
-    ModAdd,
-    ModRemove,
-    VipAdd,
-    VipRemove,
+    ModeratorsChanged,
+    VipsChanged,
+    RewardsChanged,
 }
 
 struct WebsocketManagedTask(AbortHandle);

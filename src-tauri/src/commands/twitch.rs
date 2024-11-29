@@ -12,19 +12,18 @@ use crate::{commands::CmdResult, twitch::manager::TwitchManager};
 #[tauri::command]
 pub async fn get_redeems_list(
     twitch_manager: State<'_, Arc<TwitchManager>>,
-) -> CmdResult<Vec<CustomReward>> {
-    let user_token = twitch_manager
-        .get_user_token()
+) -> CmdResult<Arc<[CustomReward]>> {
+    Ok(twitch_manager
+        .get_rewards_list()
         .await
-        .context("not authenticated")?;
+        .context("failed to load redeems")?)
+}
 
-    let broadcaster_id = &user_token.user_id;
-
-    let rewards = twitch_manager
-        .helix_client
-        .get_all_custom_rewards(broadcaster_id, false, &user_token)
-        .await
-        .context("failed to load redeems")?;
-
-    Ok(rewards)
+/// Reloads the list of available redeems
+#[tauri::command]
+pub async fn refresh_redeems_list(
+    twitch_manager: State<'_, Arc<TwitchManager>>,
+) -> CmdResult<bool> {
+    twitch_manager.reload_rewards_list().await;
+    Ok(true)
 }
