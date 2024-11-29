@@ -39,8 +39,8 @@
       <NavButton
         icon={SolarChatSquareCodeBoldDuotone}
         href="/scripts"
-        title="Command Scripts"
-        text="Custom command scripts"
+        title="Scripts"
+        text="Custom code scripts to run"
       />
     </li>
     <li>
