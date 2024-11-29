@@ -6,7 +6,7 @@ use log::{debug, error};
 use tauri::{AppHandle, Emitter};
 use tokio::{
     join,
-    sync::{broadcast, RwLock},
+    sync::{broadcast, futures::Notified, Notify, RwLock},
     task::AbortHandle,
 };
 use twitch_api::{
@@ -40,6 +40,7 @@ pub struct TwitchManagerStateAuthenticated {
 
     // List of available rewards
     rewards: Option<Arc<[CustomReward]>>,
+
     // Current loaded list of moderators
     moderators: Option<Arc<[Moderator]>>,
     // Current loaded list of vips
@@ -107,9 +108,9 @@ impl TwitchManager {
 
         // Load initial moderator and VIP lists
         let (rewards_result, vips_result, mods_result) = join!(
-            self.get_rewards_list(),
-            self.get_vip_list(),
-            self.get_moderator_list()
+            self.load_rewards_list(),
+            self.load_vip_list(),
+            self.load_moderator_list()
         );
 
         if let Err(err) = rewards_result {
@@ -192,19 +193,50 @@ impl TwitchManager {
     }
 
     pub async fn get_rewards_list(&self) -> anyhow::Result<Arc<[CustomReward]>> {
-        // First attempt to read existing list
-        {
-            let state = &*self.state.read().await;
-            match state {
-                TwitchManagerState::Initial => return Err(anyhow!("not authenticated")),
-                TwitchManagerState::Authenticated(state) => {
-                    if let Some(rewards) = state.rewards.as_ref() {
-                        return Ok(rewards.clone());
-                    }
+        let state = &*self.state.read().await;
+        match state {
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                if let Some(rewards) = state.rewards.as_ref() {
+                    Ok(rewards.clone())
+                } else {
+                    Err(anyhow!(""))
                 }
             }
         }
+    }
 
+    pub async fn load_moderator_list(&self) -> anyhow::Result<()> {
+        let moderators = self.request_moderator_list().await?;
+        let moderators: Arc<[Moderator]> = moderators.into();
+
+        // Write new list
+        let state = &mut *self.state.write().await;
+        match state {
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                state.moderators = Some(moderators);
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn load_vip_list(&self) -> anyhow::Result<()> {
+        let vips = self.request_vip_list().await?;
+        let vips: Arc<[Vip]> = vips.into();
+
+        // Write new list
+        let state = &mut *self.state.write().await;
+        match state {
+            TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
+            TwitchManagerState::Authenticated(state) => {
+                state.vips = Some(vips);
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn load_rewards_list(&self) -> anyhow::Result<()> {
         let rewards = self.request_rewards_list().await?;
         let rewards: Arc<[CustomReward]> = rewards.into();
 
@@ -213,55 +245,9 @@ impl TwitchManager {
         match state {
             TwitchManagerState::Initial => Err(anyhow!("not authenticated")),
             TwitchManagerState::Authenticated(state) => {
-                state.rewards = Some(rewards.clone());
-
-                Ok(rewards)
+                state.rewards = Some(rewards);
+                Ok(())
             }
-        }
-    }
-
-    pub async fn reload_moderator_list(&self) {
-        debug!("reloading mods list");
-        self.clear_moderator_list().await;
-        _ = self.get_moderator_list().await;
-    }
-
-    pub async fn reload_vip_list(&self) {
-        debug!("reloading vip list");
-        self.clear_vip_list().await;
-        _ = self.get_vip_list().await;
-    }
-
-    pub async fn reload_rewards_list(&self) {
-        debug!("reloading rewards list");
-        self.clear_rewards_list().await;
-        _ = self.get_rewards_list().await;
-    }
-
-    async fn clear_moderator_list(&self) {
-        let state = &mut *self.state.write().await;
-
-        // Use existing list
-        if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
-            inner_state.moderators = None;
-        }
-    }
-
-    async fn clear_vip_list(&self) {
-        let state = &mut *self.state.write().await;
-
-        // Use existing list
-        if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
-            inner_state.vips = None;
-        }
-    }
-
-    async fn clear_rewards_list(&self) {
-        let state = &mut *self.state.write().await;
-
-        // Use existing list
-        if let TwitchManagerState::Authenticated(inner_state) = &mut *state {
-            inner_state.rewards = None;
         }
     }
 

@@ -1,4 +1,5 @@
 use anyhow::Context;
+use log::debug;
 use std::sync::Arc;
 use tauri::State;
 use twitch_api::helix::points::CustomReward;
@@ -24,6 +25,7 @@ pub async fn get_redeems_list(
 pub async fn refresh_redeems_list(
     twitch_manager: State<'_, Arc<TwitchManager>>,
 ) -> CmdResult<bool> {
-    twitch_manager.reload_rewards_list().await;
+    debug!("reloading rewards list");
+    twitch_manager.load_rewards_list().await;
     Ok(true)
 }

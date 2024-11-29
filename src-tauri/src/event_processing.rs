@@ -7,7 +7,11 @@ use crate::twitch::manager::{
     TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
     TwitchEventReSub, TwitchEventRedeem, TwitchEventSub, TwitchEventUser, TwitchManager,
 };
-use log::debug;
+use anyhow::Context;
+use futures::future::BoxFuture;
+use futures::stream::FuturesUnordered;
+use futures::StreamExt;
+use log::{debug, error};
 use std::collections::HashMap;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{broadcast, RwLock};
@@ -32,12 +36,10 @@ impl EventsStateShared {
         let inner = &*self.inner.read().await;
         if let Some(last_instant) = inner.event_last_execution.get(uuid) {
             let elapsed = now.duration_since(*last_instant);
-            if elapsed > cooldown {
-                return true;
-            }
+            elapsed > cooldown
+        } else {
+            true
         }
-
-        false
     }
 
     pub async fn set_last_executed(&self, uuid: &Uuid) {
@@ -47,14 +49,8 @@ impl EventsStateShared {
     }
 }
 
-pub struct HandleEventData {
-    app_data: Arc<AppData>,
-    twitch_manager: Arc<TwitchManager>,
-    event_sender: broadcast::Sender<EventMessage>,
-}
-
 pub async fn handle_twitch_events(
-    app_data: AppDataStore,
+    app_data_store: AppDataStore,
     twitch_manager: Arc<TwitchManager>,
     mut twitch_event_rx: broadcast::Receiver<TwitchEvent>,
     event_sender: broadcast::Sender<EventMessage>,
@@ -62,289 +58,286 @@ pub async fn handle_twitch_events(
     let events_state = EventsStateShared::default();
 
     while let Ok(event) = twitch_event_rx.recv().await {
-        let app_data = &*app_data.read().await;
+        let app_data = &*app_data_store.read().await;
 
         debug!("twitch event received: {:?}", event);
 
-        match event {
-            TwitchEvent::Redeem(event) => {
-                handle_redeem_event(app_data, &twitch_manager, &event_sender, event)
-            }
-            TwitchEvent::CheerBits(event) => {
-                handle_cheer_bits_event(app_data, &twitch_manager, &event_sender, event)
-            }
-            TwitchEvent::Follow(event) => {
-                handle_follow_event(app_data, &twitch_manager, &event_sender, event)
-            }
-            TwitchEvent::Sub(event) => {
-                handle_sub_event(app_data, &twitch_manager, &event_sender, event)
-            }
-            TwitchEvent::GiftSub(event) => {
-                handle_gift_sub_event(app_data, &twitch_manager, &event_sender, event)
-            }
-            TwitchEvent::ResubMsg(event) => {
-                handle_resub_event(app_data, &twitch_manager, &event_sender, event)
-            }
-            TwitchEvent::ChatMsg(event) => {
-                handle_chat_msg_event(app_data, &twitch_manager, &event_sender, event)
-            }
+        let mut data = match event {
+            // Handle trigger events
+            TwitchEvent::Redeem(event) => get_redeem_event_data(app_data, event),
+            TwitchEvent::CheerBits(event) => get_cheer_bits_event_data(app_data, event),
+            TwitchEvent::Follow(event) => get_follow_event_data(app_data, event),
+            TwitchEvent::Sub(event) => get_sub_event_data(app_data, event),
+            TwitchEvent::GiftSub(event) => get_gift_sub_event_data(app_data, event),
+            TwitchEvent::ResubMsg(event) => get_resub_event_data(app_data, event),
+            TwitchEvent::ChatMsg(event) => get_chat_event_data(app_data, event),
+
+            // Handle change events from websockets
             TwitchEvent::ModeratorsChanged => {
                 let twitch_manager = twitch_manager.clone();
                 tokio::spawn(async move {
-                    twitch_manager.reload_moderator_list().await;
+                    debug!("reloading mods list");
+                    _ = twitch_manager.load_moderator_list().await;
                 });
+
+                return;
             }
             TwitchEvent::VipsChanged => {
                 let twitch_manager = twitch_manager.clone();
                 tokio::spawn(async move {
-                    twitch_manager.reload_vip_list().await;
+                    debug!("reloading vips list");
+                    _ = twitch_manager.load_vip_list().await;
                 });
+
+                return;
             }
             TwitchEvent::RewardsChanged => {
                 let twitch_manager = twitch_manager.clone();
                 tokio::spawn(async move {
-                    twitch_manager.reload_rewards_list().await;
+                    debug!("reloading rewards list");
+                    _ = twitch_manager.load_rewards_list().await;
                 });
+
+                return;
             }
+        };
+
+        // Remove any events that aren't enabled
+        data.event_configs
+            .retain(|event_config| event_config.enabled);
+
+        // Skip expensive cloning when no events
+        if data.event_configs.is_empty() {
+            continue;
         }
+
+        // Create futures to execute for each config
+        let mut futures = data
+            .event_configs
+            .into_iter()
+            .map(|event_config| -> BoxFuture<'static, ()> {
+                Box::pin(process_event_config(
+                    app_data_store.clone(),
+                    twitch_manager.clone(),
+                    event_sender.clone(),
+                    events_state.clone(),
+                    data.event_data.clone(),
+                    event_config,
+                ))
+            })
+            .collect::<FuturesUnordered<BoxFuture<'static, ()>>>();
+
+        // Spawn task to poll the execute futures
+        tokio::spawn(async move { while (futures.next().await).is_some() {} });
     }
 }
 
-fn create_throwable_config(items: Vec<ItemConfig>, app_data: &AppData) -> ThrowableConfig {
-    // Find all the referenced sounds
-    let impact_sounds = app_data
-        .sounds
+async fn process_event_config(
+    app_data_store: AppDataStore,
+    twitch_manager: Arc<TwitchManager>,
+    event_sender: broadcast::Sender<EventMessage>,
+    events_state: EventsStateShared,
+    event_data: EventData,
+    event_config: EventConfig,
+) {
+    // Ensure required role is present
+    if !assert_required_role(
+        &twitch_manager,
+        &event_data.user,
+        &event_config.require_role,
+    )
+    .await
+    {
+        return;
+    }
+
+    let id = event_config.id;
+
+    // Ensure cooldown is not active
+    if events_state
+        .is_cooldown_elapsed(&id, Duration::from_millis(event_config.cooldown as u64))
+        .await
+    {
+        return;
+    }
+
+    // Wait for the delay to complete
+    let delay = Duration::from_millis(event_config.outcome_delay as u64);
+    tokio::time::sleep(delay).await;
+
+    // Read the current app data and execute
+    let app_data = &*app_data_store.read().await;
+    match get_outcome_event_message(app_data, event_config, event_data) {
+        Ok(msg) => {
+            _ = event_sender.send(msg);
+            events_state.set_last_executed(&id).await;
+        }
+        Err(err) => {
+            error!("failed to produce event outcome:\n{err:?}");
+        }
+    };
+}
+
+pub struct EventHandleData {
+    event_configs: Vec<EventConfig>,
+    event_data: EventData,
+}
+
+fn get_redeem_event_data(app_data: &AppData, event: TwitchEventRedeem) -> EventHandleData {
+    let event_reward_id = event.reward.id.to_string();
+    let event_configs: Vec<EventConfig> = app_data
+        .events
         .iter()
-        .filter(|sound| {
-            items
-                .iter()
-                .any(|item| item.impact_sounds_ids.contains(&sound.id))
+        .filter(|event_config| {
+            matches!(&event_config.trigger, EventTrigger::Redeem { reward_id } if event_reward_id.eq(reward_id))
         })
         .cloned()
         .collect();
 
-    ThrowableConfig {
-        items,
-        impact_sounds,
+    let event_data = EventData {
+        input: None,
+        user: Some(TwitchEventUser {
+            user_id: event.user_id,
+            user_name: event.user_name,
+            user_display_name: event.user_display_name,
+        }),
+    };
+
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
-fn handle_redeem_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventRedeem,
-) {
-    debug!("twitch redeem event received: {:?}", event);
+fn get_cheer_bits_event_data(app_data: &AppData, event: TwitchEventCheerBits) -> EventHandleData {
+    let event_configs: Vec<EventConfig> = app_data
+        .events
+        .iter()
+        .filter(|event_config| {
+            matches!(&event_config.trigger, EventTrigger::Bits { min_bits } if event.bits >= *min_bits as i64)
+        })
+        .cloned()
+        .collect();
 
-    let app_data = Arc::new(app_data.clone());
+    let user = match (event.user_id, event.user_name, event.user_display_name) {
+        (Some(user_id), Some(user_name), Some(user_display_name)) => Some(TwitchEventUser {
+            user_id,
+            user_name,
+            user_display_name,
+        }),
+        _ => None,
+    };
 
-    for event_config in &app_data.events {
-        let event_reward_id = event.reward.id.to_string();
-        // Filter out events  that don't match
-        match &event_config.trigger {
-            EventTrigger::Redeem { reward_id } => {
-                debug!("checking reward {} {}", event_reward_id, reward_id);
-                if event_reward_id.ne(reward_id) {
-                    continue;
-                }
-            }
-            _ => continue,
-        }
+    let event_data = EventData {
+        input: Some(event.bits as u32),
+        user,
+    };
 
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData {
-                input: None,
-                user: Some(TwitchEventUser {
-                    user_id: event.user_id.clone(),
-                    user_name: event.user_name.clone(),
-                    user_display_name: event.user_display_name.to_string().into(),
-                }),
-            },
-        ));
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
-fn handle_cheer_bits_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventCheerBits,
-) {
-    let app_data = Arc::new(app_data.clone());
-    for event_config in &app_data.events {
-        match &event_config.trigger {
-            EventTrigger::Bits { min_bits } => {
-                if event.bits < *min_bits as i64 {
-                    continue;
-                }
-            }
-            _ => continue,
-        };
+fn get_follow_event_data(app_data: &AppData, event: TwitchEventFollow) -> EventHandleData {
+    let event_configs: Vec<EventConfig> = app_data
+        .events
+        .iter()
+        .filter(|event_config| matches!(&event_config.trigger, EventTrigger::Follow))
+        .cloned()
+        .collect();
 
-        let user = match (
-            event.user_id.as_ref(),
-            event.user_name.as_ref(),
-            event.user_display_name.as_ref(),
-        ) {
-            (Some(user_id), Some(user_name), Some(user_display_name)) => Some(TwitchEventUser {
-                user_id: user_id.clone(),
-                user_name: user_name.to_string().into(),
-                user_display_name: user_display_name.to_string().into(),
-            }),
-            _ => None,
-        };
+    let event_data = EventData {
+        input: None,
+        user: Some(TwitchEventUser {
+            user_id: event.user_id,
+            user_name: event.user_name,
+            user_display_name: event.user_display_name,
+        }),
+    };
 
-        // TODO: TRIGGER
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData {
-                input: Some(event.bits as u32),
-                user,
-            },
-        ));
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
-fn handle_follow_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventFollow,
-) {
-    let app_data = Arc::new(app_data.clone());
+fn get_sub_event_data(app_data: &AppData, event: TwitchEventSub) -> EventHandleData {
+    let event_configs: Vec<EventConfig> = app_data
+        .events
+        .iter()
+        .filter(|event_config| matches!(&event_config.trigger, EventTrigger::Subscription))
+        .cloned()
+        .collect();
 
-    for event_config in &app_data.events {
-        if !matches!(&event_config.trigger, EventTrigger::Follow) {
-            continue;
-        }
+    let event_data = EventData {
+        input: None,
+        user: Some(TwitchEventUser {
+            user_id: event.user_id,
+            user_name: event.user_name,
+            user_display_name: event.user_display_name,
+        }),
+    };
 
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData {
-                input: None,
-                user: Some(TwitchEventUser {
-                    user_id: event.user_id.clone(),
-                    user_name: event.user_name.clone(),
-                    user_display_name: event.user_display_name.to_string().into(),
-                }),
-            },
-        ));
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
-fn handle_sub_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventSub,
-) {
-    let app_data = Arc::new(app_data.clone());
-    for event_config in &app_data.events {
-        if !matches!(&event_config.trigger, EventTrigger::Subscription) {
-            continue;
-        }
+fn get_gift_sub_event_data(app_data: &AppData, event: TwitchEventGiftSub) -> EventHandleData {
+    let event_configs: Vec<EventConfig> = app_data
+        .events
+        .iter()
+        .filter(|event_config| matches!(&event_config.trigger, EventTrigger::GiftedSubscription))
+        .cloned()
+        .collect();
 
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData {
-                input: None,
-                user: Some(TwitchEventUser {
-                    user_id: event.user_id.clone(),
-                    user_name: event.user_name.clone(),
-                    user_display_name: event.user_display_name.to_string().into(),
-                }),
-            },
-        ));
+    let user = match (event.user_id, event.user_name, event.user_display_name) {
+        (Some(user_id), Some(user_name), Some(user_display_name)) => Some(TwitchEventUser {
+            user_id,
+            user_name,
+            user_display_name,
+        }),
+        _ => None,
+    };
+
+    let event_data = EventData { input: None, user };
+
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
-fn handle_gift_sub_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventGiftSub,
-) {
-    let app_data = Arc::new(app_data.clone());
-    for event_config in &app_data.events {
-        if !matches!(&event_config.trigger, EventTrigger::GiftedSubscription) {
-            continue;
-        }
+fn get_resub_event_data(app_data: &AppData, event: TwitchEventReSub) -> EventHandleData {
+    let event_configs: Vec<EventConfig> = app_data
+        .events
+        .iter()
+        .filter(|event_config| matches!(&event_config.trigger, EventTrigger::Subscription))
+        .cloned()
+        .collect();
 
-        let user = match (
-            event.user_id.as_ref(),
-            event.user_name.as_ref(),
-            event.user_display_name.as_ref(),
-        ) {
-            (Some(user_id), Some(user_name), Some(user_display_name)) => Some(TwitchEventUser {
-                user_id: user_id.clone(),
-                user_name: user_name.to_string().into(),
-                user_display_name: user_display_name.to_string().into(),
-            }),
-            _ => None,
-        };
+    let event_data = EventData {
+        input: None,
+        user: Some(TwitchEventUser {
+            user_id: event.user_id,
+            user_name: event.user_name,
+            user_display_name: event.user_display_name,
+        }),
+    };
 
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData { input: None, user },
-        ));
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
-fn handle_resub_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventReSub,
-) {
-    let app_data = Arc::new(app_data.clone());
-    for event_config in &app_data.events {
-        if !matches!(&event_config.trigger, EventTrigger::Subscription) {
-            continue;
-        }
-
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData {
-                input: None,
-                user: Some(TwitchEventUser {
-                    user_id: event.user_id.clone(),
-                    user_name: event.user_name.clone(),
-                    user_display_name: event.user_display_name.to_string().into(),
-                }),
-            },
-        ));
-    }
-}
-
-fn handle_chat_msg_event(
-    app_data: &AppData,
-    twitch_manager: &Arc<TwitchManager>,
-    event_sender: &broadcast::Sender<EventMessage>,
-    event: TwitchEventChatMsg,
-) {
-    let app_data = Arc::new(app_data.clone());
-    for event_config in &app_data.events {
-        match &event_config.trigger {
+fn get_chat_event_data(app_data: &AppData, event: TwitchEventChatMsg) -> EventHandleData {
+    let event_configs: Vec<EventConfig> = app_data
+        .events
+        .iter()
+        .filter(|event_config| match &event_config.trigger {
             EventTrigger::Command { message } => {
                 let left = message.trim().to_lowercase();
                 let right = event
@@ -356,30 +349,29 @@ fn handle_chat_msg_event(
                     .trim()
                     .to_lowercase();
 
-                if left != right {
-                    continue;
-                }
+                left == right
             }
-            _ => continue,
-        };
+            _ => false,
+        })
+        .cloned()
+        .collect();
 
-        tokio::spawn(execute_event_config(
-            app_data.clone(),
-            twitch_manager.clone(),
-            event_config.clone(),
-            event_sender.clone(),
-            EventData {
-                input: None,
-                user: Some(TwitchEventUser {
-                    user_id: event.user_id.clone(),
-                    user_name: event.user_name.clone(),
-                    user_display_name: event.user_display_name.to_string().into(),
-                }),
-            },
-        ));
+    let event_data = EventData {
+        input: None,
+        user: Some(TwitchEventUser {
+            user_id: event.user_id,
+            user_name: event.user_name,
+            user_display_name: event.user_display_name,
+        }),
+    };
+
+    EventHandleData {
+        event_configs,
+        event_data,
     }
 }
 
+#[derive(Clone)]
 pub struct EventData {
     /// Represents the data provided by the trigger, i.e amount of bits
     /// total number of subs, number of raiders etc
@@ -429,41 +421,14 @@ async fn assert_required_role(
     }
 }
 
-async fn execute_event_config(
-    app_data: Arc<AppData>,
-    twitch_manager: Arc<TwitchManager>,
+fn get_outcome_event_message(
+    app_data: &AppData,
     event_config: EventConfig,
-    event_sender: broadcast::Sender<EventMessage>,
     event_data: EventData,
-) {
-    // Skip disabled events
-    if !event_config.enabled {
-        return;
-    }
-
-    // TODO: WAIT FOR COOLDOWN TO COMPLETE
-    if !assert_required_role(
-        &twitch_manager,
-        &event_data.user,
-        &event_config.require_role,
-    )
-    .await
-    {
-        return;
-    }
-
-    debug!("executing event outcome: {:?}", event_config);
-
-    let delay = Duration::from_millis(event_config.outcome_delay as u64);
-    tokio::time::sleep(delay).await;
-
+) -> anyhow::Result<EventMessage> {
     match event_config.outcome {
         EventOutcome::ThrowBits(data) => {
-            let input = match event_data.input {
-                Some(value) => value,
-                None => return,
-            };
-
+            let input = event_data.input.context("throw bits missing input")?;
             let sets = [data._1, data._100, data._1000, data._5000, data._10000];
             let mut bit_index: usize = match input {
                 1..=99 => 0,
@@ -488,51 +453,45 @@ async fn execute_event_config(
                 }
             }
 
-            let bit_icon = match bit_icon {
-                Some(bit_icon) => bit_icon,
-                None => return,
-            };
+            let bit_icon = bit_icon.context("no bit icon available")?;
 
-            let item = app_data.items.iter().find(|item| bit_icon.eq(&item.id));
-            let item = match item {
-                Some(value) => value.clone(),
-                None => return,
-            };
+            let item = app_data
+                .items
+                .iter()
+                .find(|item| bit_icon.eq(&item.id))
+                .cloned()
+                .context("bit icon item missing")?;
 
-            let throwable_config = create_throwable_config(vec![item], &app_data);
+            let throwable_config = create_throwable_config(vec![item], app_data);
 
             let amount = match data.amount {
                 BitsAmount::Dynamic { max_amount } => input.min(max_amount),
                 BitsAmount::Fixed { amount } => amount,
             };
 
-            _ = event_sender.send(EventMessage::ThrowItem {
+            Ok(EventMessage::ThrowItem {
                 config: throwable_config,
                 amount,
-            });
+            })
         }
         EventOutcome::Throwable(data) => match data.data {
             ThrowableData::Throw {
                 throwable_ids,
                 amount,
             } => {
-                let items = app_data
+                let item = app_data
                     .items
                     .iter()
-                    .find(|item| throwable_ids.contains(&item.id));
+                    .find(|item| throwable_ids.contains(&item.id))
+                    .cloned()
+                    .context("throwable item not found")?;
 
-                let item = match items {
-                    Some(value) => value.clone(),
-                    // Throwable no longer exists
-                    None => return,
-                };
+                let throwable_config = create_throwable_config(vec![item], app_data);
 
-                let throwable_config = create_throwable_config(vec![item], &app_data);
-
-                _ = event_sender.send(EventMessage::ThrowItem {
+                Ok(EventMessage::ThrowItem {
                     config: throwable_config,
                     amount,
-                });
+                })
             }
             ThrowableData::Barrage {
                 throwable_ids,
@@ -547,31 +506,48 @@ async fn execute_event_config(
                     .cloned()
                     .collect();
 
-                let throwable_config = create_throwable_config(items, &app_data);
+                let throwable_config = create_throwable_config(items, app_data);
 
-                _ = event_sender.send(EventMessage::ThrowItemBarrage {
+                Ok(EventMessage::ThrowItemBarrage {
                     config: throwable_config,
                     amount,
                     frequency,
                     amount_per_throw,
-                });
+                })
             }
         },
 
-        EventOutcome::TriggerHotkey(data) => {
-            _ = event_sender.send(EventMessage::TriggerHotkey {
-                hotkey_id: data.hotkey_id,
-            });
-        }
+        EventOutcome::TriggerHotkey(data) => Ok(EventMessage::TriggerHotkey {
+            hotkey_id: data.hotkey_id,
+        }),
         EventOutcome::PlaySound(data) => {
-            let sound = app_data.sounds.iter().find(|item| item.id == data.sound_id);
-            let config = match sound {
-                Some(value) => value.clone(),
-                // Throwable no longer exists
-                None => return,
-            };
+            let config = app_data
+                .sounds
+                .iter()
+                .find(|item| item.id == data.sound_id)
+                .cloned()
+                .context("sound config not found")?;
 
-            _ = event_sender.send(EventMessage::PlaySound { config });
+            Ok(EventMessage::PlaySound { config })
         }
+    }
+}
+
+fn create_throwable_config(items: Vec<ItemConfig>, app_data: &AppData) -> ThrowableConfig {
+    // Find all the referenced sounds
+    let impact_sounds = app_data
+        .sounds
+        .iter()
+        .filter(|sound| {
+            items
+                .iter()
+                .any(|item| item.impact_sounds_ids.contains(&sound.id))
+        })
+        .cloned()
+        .collect();
+
+    ThrowableConfig {
+        items,
+        impact_sounds,
     }
 }
