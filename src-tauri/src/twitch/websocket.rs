@@ -1,7 +1,6 @@
 use anyhow::Context;
 use futures::StreamExt;
 use log::warn;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{net::TcpStream, sync::broadcast};
 use tokio_tungstenite::{
@@ -12,10 +11,9 @@ use twitch_api::{
     eventsub::{
         self,
         event::websocket::{EventsubWebsocketData, SessionData},
-        Event, EventSubscription, EventType, PayloadParseError,
+        Event, EventSubscription, PayloadParseError,
     },
-    twitch_oauth2::{self, TwitchToken, UserToken},
-    types::{DisplayName, UserId, UserName},
+    twitch_oauth2::{TwitchToken, UserToken},
     HelixClient,
 };
 
@@ -267,42 +265,42 @@ impl WebsocketClient {
 
             // Channel moderator is added
             Event::ChannelModeratorAddV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::ModeratorsChanged)
             }
             // Channel moderator is removed
             Event::ChannelModeratorRemoveV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::ModeratorsChanged)
             }
 
             // Channel vip is added
             Event::ChannelVipAddV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::VipsChanged)
             }
 
             // Channel vip is removed
             Event::ChannelVipRemoveV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::VipsChanged)
             }
 
             // Channel reward is added
             Event::ChannelPointsCustomRewardAddV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::RewardsChanged)
             }
 
             // Channel reward is removed
             Event::ChannelPointsCustomRewardRemoveV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::RewardsChanged)
             }
 
             // Channel reward is update
             Event::ChannelPointsCustomRewardUpdateV1(payload) => {
-                let msg = map_message(payload.message)?;
+                let _msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::RewardsChanged)
             }
 

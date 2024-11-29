@@ -9,8 +9,6 @@ use crate::{
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum EventMessage {
-    // Tells any connected browser apps to refresh
-    Refresh,
     // Sets the current calibration step
     SetCalibrationStep {
         step: CalibrationStep,

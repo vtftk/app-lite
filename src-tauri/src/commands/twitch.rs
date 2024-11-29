@@ -26,6 +26,6 @@ pub async fn refresh_redeems_list(
     twitch_manager: State<'_, Arc<TwitchManager>>,
 ) -> CmdResult<bool> {
     debug!("reloading rewards list");
-    twitch_manager.load_rewards_list().await;
+    _ = twitch_manager.load_rewards_list().await;
     Ok(true)
 }

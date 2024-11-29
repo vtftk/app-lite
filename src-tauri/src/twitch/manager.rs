@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
-use log::{debug, error};
+use log::error;
 use tauri::{AppHandle, Emitter};
 use tokio::{
     join,
-    sync::{broadcast, futures::Notified, Notify, RwLock},
+    sync::{broadcast, RwLock},
     task::AbortHandle,
 };
 use twitch_api::{
