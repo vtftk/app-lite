@@ -176,11 +176,13 @@ impl TwitchManager {
     }
 
     pub async fn reload_moderator_list(&self) {
+        debug!("reloading mods list");
         self.clear_moderator_list().await;
         _ = self.get_moderator_list().await;
     }
 
     pub async fn reload_vip_list(&self) {
+        debug!("reloading vip list");
         self.clear_vip_list().await;
         _ = self.get_vip_list().await;
     }
