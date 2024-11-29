@@ -9,6 +9,18 @@ import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
+import libraryDefinition from "../../script/api.d.ts?raw";
+
+monaco.languages.typescript.typescriptDefaults.addExtraLib(
+  libraryDefinition,
+  "file:///global.d.ts"
+);
+
+monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+  noSemanticValidation: false,
+  noSyntaxValidation: false,
+});
+
 self.MonacoEnvironment = {
   getWorker: function (_: string, label: string) {
     switch (label) {

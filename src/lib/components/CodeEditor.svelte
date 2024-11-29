@@ -13,8 +13,15 @@
     editor = monaco.editor.create(editorContainer!, {
       theme: "vs-dark",
       automaticLayout: true,
+      language: "typescript",
     });
-    const model = monaco.editor.createModel("", "javascript");
+    const model = monaco.editor.createModel(
+      `on("chat", (event) => {
+    console.log(event.message);
+});`,
+      "typescript",
+      monaco.Uri.parse("file:///main.ts")
+    );
     editor.setModel(model);
   });
 

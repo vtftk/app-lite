@@ -17,6 +17,7 @@ mod constants;
 mod event_processing;
 mod events;
 mod http;
+mod script;
 mod state;
 mod twitch;
 
