@@ -1,12 +1,15 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import PlayIcon from "~icons/solar/play-bold";
   import StopIcon from "~icons/solar/stop-bold";
 
   type Props = {
     src: string;
+
+    button?: Snippet<[{ onClick: VoidFunction; isPlaying: boolean }]>;
   };
 
-  let { src }: Props = $props();
+  let { src, button }: Props = $props();
 
   let audio: HTMLAudioElement | undefined = $state(undefined);
   let isPlaying = $state(false);
@@ -32,10 +35,12 @@
   }
 </script>
 
-<div>
-  <!-- Play/Pause Button -->
+<!-- Play/Pause Button -->
+{#if button}
+  {@render button({ onClick: togglePlay, isPlaying })}
+{:else}
   <button
-    class="play-button"
+    class="btn"
     onclick={togglePlay}
     aria-pressed={isPlaying ? "true" : "false"}
     aria-label={isPlaying ? "Pause audio" : "Play audio"}
@@ -46,30 +51,12 @@
       <PlayIcon />
     {/if}
   </button>
+{/if}
 
-  <audio
-    bind:this={audio}
-    ontimeupdate={updateProgress}
-    {src}
-    aria-label="Audio file"
-  >
-  </audio>
-</div>
-
-<style>
-  .play-button {
-    padding: 0.5rem;
-    background-color: #333;
-    border: 1px solid #666;
-    color: #fff;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    align-items: center;
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .play-button:hover {
-    background-color: #444;
-  }
-</style>
+<audio
+  bind:this={audio}
+  ontimeupdate={updateProgress}
+  {src}
+  aria-label="Audio file"
+>
+</audio>

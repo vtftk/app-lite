@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
   import type { SoundConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
@@ -43,18 +44,12 @@
   }
 </script>
 
-<div class="container">
-  <div class="title-area">
-    <div>
-      <h1 class="title">Sounds</h1>
-      <p class="text">Create sounds that can be triggered</p>
-    </div>
-    <div class="actions">
-      <a class="btn" href="/sounds/create"> Create Sound </a>
+{#snippet actions()}
+  <a class="btn" href="/sounds/create"> Create Sound </a>
+  <BulkSoundImport />
+{/snippet}
 
-      <BulkSoundImport />
-    </div>
-  </div>
+{#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
       checked={isAllSelected}
@@ -78,30 +73,26 @@
       </div>
     {/if}
   </div>
+{/snippet}
 
-  <div class="content-area">
-    <div class="grid">
-      {#each $appData.sounds as sound}
-        <SoundItem
-          config={sound}
-          selected={selected.includes(sound.id)}
-          onToggleSelected={() => onToggleSelected(sound)}
-        />
-      {/each}
-    </div>
+<PageLayoutList
+  title="Sounds"
+  description="Create sounds that can be triggered"
+  {actions}
+  {beforeContent}
+>
+  <div class="grid">
+    {#each $appData.sounds as sound}
+      <SoundItem
+        config={sound}
+        selected={selected.includes(sound.id)}
+        onToggleSelected={() => onToggleSelected(sound)}
+      />
+    {/each}
   </div>
-</div>
+</PageLayoutList>
 
 <style>
-  .container {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-
-    padding: 1rem;
-    height: 100%;
-  }
-
   .selection {
     display: flex;
     align-items: center;
@@ -118,29 +109,11 @@
     display: flex;
     gap: 1rem;
   }
-  .title {
-    line-height: 1;
-  }
+
   .grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.5rem;
     width: 100%;
-  }
-  .actions {
-    display: flex;
-    flex: auto;
-    justify-content: flex-end;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .title-area {
-    display: flex;
-  }
-
-  .content-area {
-    flex: auto;
-    overflow-y: auto;
   }
 </style>

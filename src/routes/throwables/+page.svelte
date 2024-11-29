@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
   import type { ItemConfig, SoundConfig } from "$shared/appData";
@@ -76,20 +77,12 @@
   }
 </script>
 
-<div class="container">
-  <div class="title-area">
-    <div>
-      <h1 class="title">Throwables</h1>
-      <p class="text">Items that can be thrown. Configure them below</p>
-    </div>
+{#snippet actions()}
+  <a class="btn" href="/throwables/create"> Create Throwable </a>
+  <BulkThrowableImport />
+{/snippet}
 
-    <div class="actions">
-      <a class="btn" href="/throwables/create"> Create Throwable </a>
-
-      <BulkThrowableImport />
-    </div>
-  </div>
-
+{#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
       checked={isAllSelected}
@@ -118,30 +111,26 @@
       </div>
     {/if}
   </div>
+{/snippet}
 
-  <div class="content-area">
-    <div class="grid">
-      {#each $appData.items as item}
-        <ThrowableItem
-          config={item}
-          selected={selected.includes(item.id)}
-          onToggleSelected={() => onToggleSelected(item)}
-        />
-      {/each}
-    </div>
+<PageLayoutList
+  title="Throwables"
+  description="Items that can be thrown. Configure them below"
+  {actions}
+  {beforeContent}
+>
+  <div class="grid">
+    {#each $appData.items as item}
+      <ThrowableItem
+        config={item}
+        selected={selected.includes(item.id)}
+        onToggleSelected={() => onToggleSelected(item)}
+      />
+    {/each}
   </div>
-</div>
+</PageLayoutList>
 
 <style>
-  .container {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-
-    padding: 1rem;
-    height: 100%;
-  }
-
   .selection {
     display: flex;
     align-items: center;
@@ -159,29 +148,10 @@
     gap: 1rem;
   }
 
-  .title {
-    line-height: 1;
-  }
   .grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.5rem;
     width: 100%;
-  }
-  .actions {
-    display: flex;
-    flex: auto;
-    justify-content: flex-end;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .title-area {
-    display: flex;
-  }
-
-  .content-area {
-    flex: auto;
-    overflow-y: auto;
   }
 </style>

@@ -7,6 +7,7 @@
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import PlayIcon from "~icons/solar/play-bold";
   import { Checkbox } from "bits-ui";
+  import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
 
   type Props = {
     config: SoundConfig;
@@ -19,12 +20,6 @@
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
-
-  async function testSound() {
-    await invoke("test_sound", {
-      config,
-    });
-  }
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this sound item?")) {
@@ -50,7 +45,7 @@
   <a class="sound__name" href="/sounds/{config.id}">{config.name}</a>
 
   <div class="sound__actions">
-    <button class="sound-button" onclick={testSound}><PlayIcon /></button>
+    <SoundPlayButton src={config.src} />
     <a class="sound-button" href="/sounds/{config.id}">
       <SettingsIcon />
     </a>

@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import { getAppData } from "$lib/api/runtimeAppData";
   import type { SoundConfig } from "$lib/api/types";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundForm from "$lib/sections/sounds/SoundForm.svelte";
   import { derived, type Readable } from "svelte/store";
 
@@ -18,31 +19,19 @@
 </script>
 
 {#if $item !== undefined}
-  <div class="container">
-    <h1 class="title">Edit Sound</h1>
-    <p class="text">Edit</p>
+  {#snippet actions()}
     <a type="button" href="/sounds">Back</a>
+  {/snippet}
 
+  <PageLayoutList title="Edit Sound" description="Editing a sound" {actions}>
     <SoundForm existing={$item} />
-  </div>
+  </PageLayoutList>
 {:else}
-  <div class="container">
-    <h1 class="title">Sound Not Found</h1>
-    <p class="text">Unknown sound</p>
+  {#snippet actions()}
     <a type="button" href="/sounds">Back</a>
-  </div>
+  {/snippet}
+
+  <PageLayoutList title="Sound Not Found" description="Unknown sound" {actions}>
+    <SoundForm existing={$item} />
+  </PageLayoutList>
 {/if}
-
-<style>
-  .container {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-
-    padding: 1rem;
-  }
-
-  .title {
-    line-height: 1;
-  }
-</style>

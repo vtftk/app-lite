@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import { getAppData } from "$lib/api/runtimeAppData";
   import type { EventConfig } from "$lib/api/types";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import EventForm from "$lib/sections/events/EventForm.svelte";
   import { derived, type Readable } from "svelte/store";
 
@@ -18,33 +19,23 @@
 </script>
 
 {#if $item !== undefined}
-  <div class="container">
-    <h1 class="title">Edit Event</h1>
-    <p class="text">Edit</p>
-    <a type="button" href="/events">Back</a>
+  {#snippet actions()}
+    <a type="button" class="btn" href="/events">Back</a>
+  {/snippet}
 
+  <PageLayoutList
+    title="Create Event"
+    description="Create an event that will trigger some outcome"
+    {actions}
+  >
     <EventForm existing={$item} />
-  </div>
+  </PageLayoutList>
 {:else}
-  <div class="container">
-    <h1 class="title">Event Not Found</h1>
-    <p class="text">Unknown event</p>
-    <a type="button" href="/events">Back</a>
-  </div>
+  {#snippet actions()}
+    <a type="button" class="btn" href="/events">Back</a>
+  {/snippet}
+
+  <PageLayoutList title="Event Not Found" description="Unknown event" {actions}>
+    <EventForm existing={$item} />
+  </PageLayoutList>
 {/if}
-
-<style>
-  .container {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-
-    padding: 1rem;
-    height: 100%;
-    overflow: auto;
-  }
-
-  .title {
-    line-height: 1;
-  }
-</style>

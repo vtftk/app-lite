@@ -1,36 +1,31 @@
 <script lang="ts">
   import { getAppData } from "$lib/api/runtimeAppData";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import EventItem from "$lib/sections/events/EventItem.svelte";
 
-  import Events from "$lib/sections/events/Events.svelte";
   const appData = getAppData();
 </script>
 
-<div class="container">
-  <h1 class="title">Events</h1>
-  <p class="text">
-    Setup specific triggers for events, such as throwing when a specific redeem
-    is redeemed
-  </p>
+{#snippet actions()}
+  <a class="btn" href="/events/create"> Create Event </a>
+{/snippet}
 
+<PageLayoutList
+  title="Events"
+  description="Setup specific triggers for events, such as throwing when a specific redeem is redeemed"
+  {actions}
+>
   <div class="grid">
-    <Events events={$appData.events} />
+    {#each $appData.events as event}
+      <EventItem config={event} />
+    {/each}
   </div>
-</div>
+</PageLayoutList>
 
 <style>
-  .container {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-
-    padding: 1rem;
-  }
-
-  .title {
-    line-height: 1;
-  }
-
   .grid {
-    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 </style>
