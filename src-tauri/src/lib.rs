@@ -205,6 +205,18 @@ async fn handle_twitch_events(
             TwitchEvent::ChatMsg(event) => {
                 handle_chat_msg_event(app_data, twitch_manager.clone(), &event_sender, event)
             }
+            TwitchEvent::ModAdd | TwitchEvent::ModRemove => {
+                let twitch_manager = twitch_manager.clone();
+                tokio::spawn(async move {
+                    twitch_manager.reload_moderator_list().await;
+                })
+            }
+            TwitchEvent::VipAdd | TwitchEvent::VipRemove => {
+                let twitch_manager = twitch_manager.clone();
+                tokio::spawn(async move {
+                    twitch_manager.reload_vip_list().await;
+                })
+            }
         }
     }
 }

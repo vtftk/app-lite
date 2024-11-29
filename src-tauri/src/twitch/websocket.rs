@@ -265,6 +265,29 @@ impl WebsocketClient {
                 }));
             }
 
+            // Channel moderator is added
+            Event::ChannelModeratorAddV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::ModAdd)
+            }
+            // Channel moderator is removed
+            Event::ChannelModeratorRemoveV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::ModRemove)
+            }
+
+            // Channel vip is added
+            Event::ChannelVipAddV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::VipAdd)
+            }
+
+            // Channel vip is removed
+            Event::ChannelVipRemoveV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::VipRemove)
+            }
+
             _ => {}
         }
 
@@ -297,9 +320,10 @@ impl WebsocketClient {
     /// websocket events session
     async fn create_subscriptions(&self) -> anyhow::Result<()> {
         use eventsub::channel::{
-            ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2,
-            ChannelPointsCustomRewardRedemptionAddV1, ChannelSubscribeV1,
-            ChannelSubscriptionGiftV1, ChannelSubscriptionMessageV1,
+            ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2, ChannelModeratorAddV1,
+            ChannelModeratorRemoveV1, ChannelPointsCustomRewardRedemptionAddV1, ChannelSubscribeV1,
+            ChannelSubscriptionGiftV1, ChannelSubscriptionMessageV1, ChannelVipAddV1,
+            ChannelVipRemoveV1,
         };
 
         let session_id = self.session_id.as_deref().context("no active session")?;
@@ -379,31 +403,46 @@ impl WebsocketClient {
             .await
             .context("subscribe message")?;
 
+        // Subscribe to vip added
+        self.client
+            .create_eventsub_subscription(
+                ChannelVipAddV1::new(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
+        // Subscribe to vip removed
+        self.client
+            .create_eventsub_subscription(
+                ChannelVipRemoveV1::new(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
+        // Subscribe to mod added
+        self.client
+            .create_eventsub_subscription(
+                ChannelModeratorAddV1::new(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
+        // Subscribe to mod removed
+        self.client
+            .create_eventsub_subscription(
+                ChannelModeratorRemoveV1::new(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe message")?;
+
         Ok(())
     }
 }
-
-// #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-// pub struct ChannelSubscriptionModeratorAdd {
-//     /// The broadcaster user ID.
-//     pub broadcaster_user_id: UserId,
-// }
-
-// impl EventSubscription for ChannelSubscriptionModeratorAdd {
-//     type Payload = ChannelSubscriptionModeratorAddPayload;
-
-//     const EVENT_TYPE: EventType = EventType::ChannelSubscription;
-//     const SCOPE: twitch_oauth2::Validator =
-//         twitch_oauth2::validator![twitch_oauth2::Scope::ModerationRead];
-//     const VERSION: &'static str = "1";
-// }
-
-// #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-// pub struct ChannelSubscriptionModeratorAddPayload {
-//     /// The broadcaster user ID.
-//     pub broadcaster_user_id: UserId,
-//     /// The broadcaster login.
-//     pub broadcaster_user_login: DisplayName,
-//     /// The broadcaster display name.
-//     pub broadcaster_user_name: UserName,
-// }

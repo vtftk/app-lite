@@ -330,6 +330,11 @@ pub enum TwitchEvent {
     GiftSub(TwitchEventGiftSub),
     ResubMsg(TwitchEventReSub),
     ChatMsg(TwitchEventChatMsg),
+
+    ModAdd,
+    ModRemove,
+    VipAdd,
+    VipRemove,
 }
 
 struct WebsocketManagedTask(AbortHandle);

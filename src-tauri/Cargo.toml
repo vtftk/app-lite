@@ -54,6 +54,10 @@ mime_guess = "2.0.5"
 rand = "0.8.5"
 moka = { version = "0.12.8", features = ["future"] }
 
+# Temporary while moderation and vip eventsub isn't landed on release version
+[patch.crates-io]
+twitch_api = { git = 'https://github.com/twitch-rs/twitch_api.git', branch = "feat/small-eventsub" }
+
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
 

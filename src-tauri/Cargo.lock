@@ -4474,8 +4474,7 @@ dependencies = [
 [[package]]
 name = "twitch_api"
 version = "0.7.0-rc.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "488122b30ae05a8a737ea33b9130cb1dc473d5e47b918e3a22e99532123ea037"
+source = "git+https://github.com/twitch-rs/twitch_api.git?branch=feat/small-eventsub#866de1f37c2cf2c192793450c7653e0aa1aed147"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -4495,7 +4494,7 @@ dependencies = [
  "tower 0.4.13",
  "tracing",
  "twitch_oauth2",
- "twitch_types",
+ "twitch_types 0.4.8",
  "url",
  "version_check",
 ]
@@ -4503,8 +4502,7 @@ dependencies = [
 [[package]]
 name = "twitch_oauth2"
 version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afe0e74e5e648344b71a69ed6e79df17bca3954fc1332c4d02c46abe8fec7fc0"
+source = "git+https://github.com/twitch-rs/twitch_api.git?branch=feat/small-eventsub#866de1f37c2cf2c192793450c7653e0aa1aed147"
 dependencies = [
  "aliri_braid",
  "async-trait",
@@ -4518,7 +4516,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "thiserror 1.0.69",
- "twitch_types",
+ "twitch_types 0.4.7",
  "url",
 ]
 
@@ -4527,6 +4525,15 @@ name = "twitch_types"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a606afbe1c30c4772ee8d814c32f743520b479949349ea2b2acc8904a3476c50"
+dependencies = [
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
+name = "twitch_types"
+version = "0.4.8"
+source = "git+https://github.com/twitch-rs/twitch_api.git?branch=feat/small-eventsub#866de1f37c2cf2c192793450c7653e0aa1aed147"
 dependencies = [
  "serde",
  "serde_derive",
