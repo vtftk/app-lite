@@ -143,7 +143,7 @@
       },
     },
     require_role: MinimumRequiredRole.None,
-    cooldown: 500,
+    cooldown: 0,
     outcome_delay: 0,
   };
 
