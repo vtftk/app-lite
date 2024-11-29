@@ -11,7 +11,7 @@
 <style>
   .sidebar {
     padding: 0.5rem;
-    width: 18rem;
+    width: 16rem;
     flex-shrink: 0;
     background-color: #151515;
     border-right: 1px solid #222;
