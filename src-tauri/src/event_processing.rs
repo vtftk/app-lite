@@ -58,47 +58,48 @@ pub async fn handle_twitch_events(
     let events_state = EventsStateShared::default();
 
     while let Ok(event) = twitch_event_rx.recv().await {
-        let app_data = &*app_data_store.read().await;
-
         debug!("twitch event received: {:?}", event);
 
-        let mut data = match event {
-            // Handle trigger events
-            TwitchEvent::Redeem(event) => get_redeem_event_data(app_data, event),
-            TwitchEvent::CheerBits(event) => get_cheer_bits_event_data(app_data, event),
-            TwitchEvent::Follow(event) => get_follow_event_data(app_data, event),
-            TwitchEvent::Sub(event) => get_sub_event_data(app_data, event),
-            TwitchEvent::GiftSub(event) => get_gift_sub_event_data(app_data, event),
-            TwitchEvent::ResubMsg(event) => get_resub_event_data(app_data, event),
-            TwitchEvent::ChatMsg(event) => get_chat_event_data(app_data, event),
+        let mut data = {
+            let app_data = &*app_data_store.read().await;
+            match event {
+                // Handle trigger events
+                TwitchEvent::Redeem(event) => get_redeem_event_data(app_data, event),
+                TwitchEvent::CheerBits(event) => get_cheer_bits_event_data(app_data, event),
+                TwitchEvent::Follow(event) => get_follow_event_data(app_data, event),
+                TwitchEvent::Sub(event) => get_sub_event_data(app_data, event),
+                TwitchEvent::GiftSub(event) => get_gift_sub_event_data(app_data, event),
+                TwitchEvent::ResubMsg(event) => get_resub_event_data(app_data, event),
+                TwitchEvent::ChatMsg(event) => get_chat_event_data(app_data, event),
 
-            // Handle change events from websockets
-            TwitchEvent::ModeratorsChanged => {
-                let twitch_manager = twitch_manager.clone();
-                tokio::spawn(async move {
-                    debug!("reloading mods list");
-                    _ = twitch_manager.load_moderator_list().await;
-                });
+                // Handle change events from websockets
+                TwitchEvent::ModeratorsChanged => {
+                    let twitch_manager = twitch_manager.clone();
+                    tokio::spawn(async move {
+                        debug!("reloading mods list");
+                        _ = twitch_manager.load_moderator_list().await;
+                    });
 
-                return;
-            }
-            TwitchEvent::VipsChanged => {
-                let twitch_manager = twitch_manager.clone();
-                tokio::spawn(async move {
-                    debug!("reloading vips list");
-                    _ = twitch_manager.load_vip_list().await;
-                });
+                    continue;
+                }
+                TwitchEvent::VipsChanged => {
+                    let twitch_manager = twitch_manager.clone();
+                    tokio::spawn(async move {
+                        debug!("reloading vips list");
+                        _ = twitch_manager.load_vip_list().await;
+                    });
 
-                return;
-            }
-            TwitchEvent::RewardsChanged => {
-                let twitch_manager = twitch_manager.clone();
-                tokio::spawn(async move {
-                    debug!("reloading rewards list");
-                    _ = twitch_manager.load_rewards_list().await;
-                });
+                    continue;
+                }
+                TwitchEvent::RewardsChanged => {
+                    let twitch_manager = twitch_manager.clone();
+                    tokio::spawn(async move {
+                        debug!("reloading rewards list");
+                        _ = twitch_manager.load_rewards_list().await;
+                    });
 
-                return;
+                    continue;
+                }
             }
         };
 
@@ -148,16 +149,18 @@ async fn process_event_config(
     )
     .await
     {
+        debug!("skipping event: missing required role");
         return;
     }
 
     let id = event_config.id;
 
     // Ensure cooldown is not active
-    if events_state
+    if !events_state
         .is_cooldown_elapsed(&id, Duration::from_millis(event_config.cooldown as u64))
         .await
     {
+        debug!("skipping event: cooldown");
         return;
     }
 
@@ -178,6 +181,7 @@ async fn process_event_config(
     };
 }
 
+#[derive(Debug)]
 pub struct EventHandleData {
     event_configs: Vec<EventConfig>,
     event_data: EventData,
@@ -371,7 +375,7 @@ fn get_chat_event_data(app_data: &AppData, event: TwitchEventChatMsg) -> EventHa
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct EventData {
     /// Represents the data provided by the trigger, i.e amount of bits
     /// total number of subs, number of raiders etc
