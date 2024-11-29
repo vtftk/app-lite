@@ -12,8 +12,8 @@
   "app": {
     "windows": [
       {
-        "title": "vtftk",
-        "width": 1000,
+        "title": "VTuber Fun ToolKit (VTFTK)",
+        "width": 1100,
         "height": 600
       }
     ],
