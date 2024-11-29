@@ -51,14 +51,14 @@ function onMouseMove(event: MouseEvent) {
 }
 
 function subscribeCalibrate() {
-  if (calibrationEl) calibrationEl.hidden = false;
+  if (calibrationEl) calibrationEl.style.visibility = "visible";
   window.addEventListener("mousedown", onMouseDown);
   window.addEventListener("mouseup", onMouseUp);
   window.addEventListener("mousemove", onMouseMove);
 }
 
 function unsubscribeCalibrate() {
-  if (calibrationEl) calibrationEl.hidden = true;
+  if (calibrationEl) calibrationEl.style.visibility = "hidden";
   window.removeEventListener("mousedown", onMouseDown);
   window.removeEventListener("mouseup", onMouseUp);
   window.removeEventListener("mousemove", onMouseMove);
