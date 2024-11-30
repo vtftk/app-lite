@@ -17,6 +17,7 @@ export type AppData = {
   items: ItemConfig[];
   events: EventConfig[];
   sounds: SoundConfig[];
+  scripts: UserScriptConfig[];
 };
 
 export type ThrowablesConfig = {
@@ -236,3 +237,11 @@ export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
 >;
 
 export type CustomReward = any;
+
+export type UserScriptConfig = {
+  id: Uuid;
+  enabled: boolean;
+  name: string;
+  script: string;
+  events: string[];
+};

@@ -84,6 +84,7 @@ pub struct AppData {
     pub items: Vec<ItemConfig>,
     pub events: Vec<EventConfig>,
     pub sounds: Vec<SoundConfig>,
+    pub scripts: Vec<UserScriptConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -415,4 +416,20 @@ pub enum EventOutcome {
     TriggerHotkey(EventOutcomeTriggerHotkey),
     /// Trigger a sound
     PlaySound(EventOutcomePlaySound),
+}
+
+/// Configuration for a user made script
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserScriptConfig {
+    /// Unique ID for the script
+    pub id: Uuid,
+    /// Whether the script is enabled and runnable
+    pub enabled: bool,
+    /// Name of the script
+    pub name: String,
+    /// The actual script contents
+    pub script: String,
+    /// Names for events the script is known to be subscribed to
+    /// script will be run for these events
+    pub events: Vec<String>,
 }

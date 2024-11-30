@@ -1,5 +1,7 @@
+export {};
+
 declare global {
-  interface RuntimeApi {
+  export interface RuntimeApi {
     /// Twitch related APIs
     twitch: RuntimeTwitchApi;
     /// HTTP related APIs
@@ -7,7 +9,10 @@ declare global {
     /// ... TODO: Local persistent storage APIs for variables
   }
 
-  interface RuntimeTwitchApi {
+  // Global API access
+  export const api: RuntimeApi;
+
+  export interface RuntimeTwitchApi {
     /**
      * Send a chat message to twitch
      *
@@ -17,7 +22,7 @@ declare global {
     sendChat: (message: string) => Promise<void>;
   }
 
-  interface RuntimeHttpApi {
+  export interface RuntimeHttpApi {
     /**
      * Perform an HTTP get request
      *
@@ -27,7 +32,7 @@ declare global {
     get: (url: string) => Promise<HttpResponse>;
   }
 
-  interface HttpResponse {
+  export interface HttpResponse {
     // Whether the status code is a 2xx status code
     ok: boolean;
     // HTTP status code
@@ -36,14 +41,11 @@ declare global {
     response: string;
   }
 
-  // Global API access
-  export const api: RuntimeApi;
-
-  type EventMap = {
+  export type EventMap = {
     chat: ChatEvent;
   };
 
-  interface ChatEvent {
+  export interface ChatEvent {
     message: string;
   }
 

@@ -2,8 +2,11 @@ use tokio::sync::broadcast;
 
 use crate::{
     events::EventMessage,
+    script::get_script_events,
     state::app_data::{SoundConfig, ThrowableConfig},
 };
+
+use super::CmdResult;
 
 /// Plays a test throw item event
 #[tauri::command]
@@ -54,4 +57,11 @@ pub fn test_sound(
         .map_err(|_| ())?;
 
     Ok(true)
+}
+
+/// Test execution of a script to obtain the script list of subscribed events
+#[tauri::command]
+pub fn test_get_script_events(script: String) -> CmdResult<Vec<String>> {
+    let events = get_script_events(script)?;
+    Ok(events)
 }

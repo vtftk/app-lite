@@ -1,6 +1,10 @@
 on("chat", async (event) => {
   const message = event.message;
 
+  if (!message.startsWith("!test")) {
+    return;
+  }
+
   const response = await api.http.get(
     "https://jsonplaceholder.typicode.com/todos/1"
   );

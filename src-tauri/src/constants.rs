@@ -25,6 +25,8 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     // Read the list of VIPs in your channel.
     // (Vip list and VIP event sub)
     Scope::ChannelReadVips,
+    // Send chat messages
+    Scope::UserWriteChat,
 ];
 
 /// Redirect URI for twitch OAuth, port should match below

@@ -35,7 +35,7 @@ pub fn init_script_event_handling(
     *SCRIPT_EVENT_PRODUCER.blocking_lock() = Some(tx);
 
     // Spawn background task to process events
-    tokio::spawn(handle_script_events(app_data_store, twitch_manager, rx));
+    tauri::async_runtime::spawn(handle_script_events(app_data_store, twitch_manager, rx));
 }
 
 /// Asynchronous task handling for receiving events then dispatching tasks

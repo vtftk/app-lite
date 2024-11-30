@@ -1,7 +1,8 @@
 use crate::events::EventMessage;
+use crate::script::{ScriptExecuteEvent, ScriptExecutorMessage};
 use crate::state::app_data::{
     AppData, AppDataStore, BitsAmount, EventConfig, EventOutcome, EventTrigger, ItemConfig,
-    MinimumRequireRole, ThrowableConfig, ThrowableData,
+    MinimumRequireRole, ThrowableConfig, ThrowableData, UserScriptConfig,
 };
 use crate::twitch::manager::{
     TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
@@ -14,7 +15,7 @@ use futures::StreamExt;
 use log::{debug, error};
 use std::collections::HashMap;
 use std::{sync::Arc, time::Duration};
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{broadcast, mpsc, oneshot, RwLock};
 use tokio::time::Instant;
 use uuid::Uuid;
 
@@ -49,11 +50,57 @@ impl EventsStateShared {
     }
 }
 
+pub fn get_scripts_by_event(app_data: &AppData, name: &str) -> Vec<UserScriptConfig> {
+    app_data
+        .scripts
+        .iter()
+        .filter(|script| script.events.iter().any(|event| name.eq(event)))
+        .cloned()
+        .collect()
+}
+
+pub fn execute_scripts(
+    script_tx: &mpsc::Sender<ScriptExecutorMessage>,
+    scripts: Vec<UserScriptConfig>,
+    event: ScriptExecuteEvent,
+) {
+    // Create futures to execute for each config
+    let mut futures = scripts
+        .into_iter()
+        .map(|script_config| -> BoxFuture<'static, anyhow::Result<()>> {
+            let event = event.clone();
+            let script_tx = script_tx.clone();
+            Box::pin(async move {
+                debug!("sending script to executor");
+                let (tx, rx) = oneshot::channel();
+                script_tx
+                    .send(ScriptExecutorMessage {
+                        script: script_config.script,
+                        event,
+                        tx,
+                    })
+                    .await?;
+                rx.await?
+            })
+        })
+        .collect::<FuturesUnordered<BoxFuture<'static, anyhow::Result<()>>>>();
+
+    // Spawn task to poll the execute futures
+    tokio::spawn(async move {
+        while let Some(value) = futures.next().await {
+            if let Err(err) = value {
+                error!("failed to execute script: {:?}", err);
+            }
+        }
+    });
+}
+
 pub async fn handle_twitch_events(
     app_data_store: AppDataStore,
     twitch_manager: Arc<TwitchManager>,
     mut twitch_event_rx: broadcast::Receiver<TwitchEvent>,
     event_sender: broadcast::Sender<EventMessage>,
+    script_tx: mpsc::Sender<ScriptExecutorMessage>,
 ) {
     let events_state = EventsStateShared::default();
 
@@ -70,7 +117,19 @@ pub async fn handle_twitch_events(
                 TwitchEvent::Sub(event) => get_sub_event_data(app_data, event),
                 TwitchEvent::GiftSub(event) => get_gift_sub_event_data(app_data, event),
                 TwitchEvent::ResubMsg(event) => get_resub_event_data(app_data, event),
-                TwitchEvent::ChatMsg(event) => get_chat_event_data(app_data, event),
+                TwitchEvent::ChatMsg(event) => {
+                    let scripts = get_scripts_by_event(app_data, "chat");
+
+                    execute_scripts(
+                        &script_tx,
+                        scripts,
+                        ScriptExecuteEvent::Chat {
+                            message: event.message.text.clone(),
+                        },
+                    );
+
+                    get_chat_event_data(app_data, event)
+                }
 
                 // Handle change events from websockets
                 TwitchEvent::ModeratorsChanged => {
