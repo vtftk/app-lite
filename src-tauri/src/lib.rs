@@ -54,6 +54,9 @@ pub fn run() {
                 twitch_manager.clone(),
             ));
 
+            // Handle scripting events
+            script::events::init_script_event_handling(app_data.clone(), twitch_manager.clone());
+
             // Handle events triggered by twitch
             _ = tauri::async_runtime::spawn(handle_twitch_events(
                 app_data.clone(),
