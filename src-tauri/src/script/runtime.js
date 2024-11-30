@@ -33,7 +33,14 @@ const api = {
     sendChat: Deno.core.ops.op_twitch_send_chat,
   },
   http: {
-    get: Deno.core.ops.op_http_get,
+    get: (url) => {
+      const promise = Deno.core.ops.op_http_get(url);
+
+      return promise.then((result) => {
+        console.info("Promise http resolved", result);
+        return result;
+      });
+    },
   },
   logging: {
     debug,
@@ -60,7 +67,7 @@ function on(key, callback) {
 }
 
 // Called by script runtime to invoke an event handler
-function _triggerEvent({ type, data }) {
+async function _triggerEvent({ type, data }) {
   if (eventHandlers[type] === undefined) {
     api.logging.info("no event handlers to run", type, eventHandlers);
     return Promise.resolve(); // No handlers, resolve immediately
@@ -71,9 +78,14 @@ function _triggerEvent({ type, data }) {
   // Collect promises from all callbacks, handling both sync and async cases
   const promises = eventHandlers[type].map((callback) => {
     try {
+      api.logging.info("running event handler");
       const result = callback(data);
+      api.logging.info("running event handler", result);
       if (result instanceof Promise) {
-        return result;
+        return result.then((resolved) => {
+          api.logging.info("promise resolved");
+          return resolved;
+        });
       } else {
         return Promise.resolve(result);
       }
@@ -83,8 +95,13 @@ function _triggerEvent({ type, data }) {
     }
   });
 
-  // Wait for all promises to resolve
-  return Promise.all(promises);
+  try {
+    // Wait for all promises to resolve
+    await Promise.all(promises);
+  } catch (error) {
+    console.error(`Error in callback for event "${type}":`, error);
+    return Promise.resolve(); // Return a resolved promise on error
+  }
 }
 
 // Called by script runtime to determine which events are used

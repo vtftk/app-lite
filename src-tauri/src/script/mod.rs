@@ -190,7 +190,7 @@ pub async fn execute_script(script: String, event: ScriptExecuteEvent) -> anyhow
     let _ = runtime.execute_script("<anon>", script)?;
 
     // Trigger events and wait till they complete
-    {
+    let global_promise: v8::Global<v8::Value> = {
         // Get the handle scope
         let scope = &mut runtime.handle_scope();
 
@@ -212,16 +212,17 @@ pub async fn execute_script(script: String, event: ScriptExecuteEvent) -> anyhow
             .call(scope, global.into(), &[event_data_object])
             .context("failed to call event trigger")?;
 
-        let global_promise: v8::Global<v8::Value> = Global::new(scope, result);
+        Global::new(scope, result)
+    };
 
-        // Wait for all events to run
-        let _result = JsRuntime::scoped_resolve(scope, global_promise).await?;
-    }
+    debug!("fully executed local");
 
     // Run event loop to completion
     runtime
         .run_event_loop(PollEventLoopOptions::default())
         .await?;
+
+    let _result = runtime.resolve(global_promise).await?;
 
     debug!("fully executed script");
 
