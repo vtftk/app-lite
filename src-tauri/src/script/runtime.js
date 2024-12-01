@@ -24,9 +24,13 @@ function debug(...args) {
 }
 
 function argsToMessage(...args) {
-  return args
-    .map((arg) => JSON.stringify(arg, Object.getOwnPropertyNames(arg)))
-    .join(" ");
+  return args.map((arg) => argToStr(arg)).join(" ");
+}
+
+function argToStr(value) {
+  if (value === undefined) return "undefined";
+  if (value === null) return "null";
+  return JSON.stringify(value, Object.getOwnPropertyNames(value));
 }
 
 function on(key, callback) {

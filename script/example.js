@@ -1,24 +1,23 @@
-on("chat", async (event) => {
-  const message = event.message;
+createCommand({
+  command: "!test",
+  handle: async (ctx) => {
+    const message = ctx.message;
 
-  if (!message.startsWith("!test")) {
-    return;
-  }
+    const response = await api.http.get(
+      "https://jsonplaceholder.typicode.com/todos/1"
+    );
 
-  const response = await api.http.get(
-    "https://jsonplaceholder.typicode.com/todos/1"
-  );
+    // Failed to get a response
+    if (!response.ok) {
+      await api.twitch.sendChat("Failed to retrieve response from API");
+      return;
+    }
 
-  // Failed to get a response
-  if (!response.ok) {
-    await api.twitch.sendChat("Failed to retrieve response from API");
-    return;
-  }
+    const data = JSON.parse(response.response);
+    const title = data.title;
 
-  const data = JSON.parse(response.response);
-  const title = data.title;
+    const randomNumber = Math.floor(Math.random() * 100000);
 
-  await api.twitch.sendChat(
-    `You said: "${message}"; Heres a random title: ${title}`
-  );
+    return `You said: "${message}"; Heres a random title: ${title}, Heres a random number: ${randomNumber}`;
+  },
 });

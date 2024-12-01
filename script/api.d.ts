@@ -18,8 +18,8 @@ declare global {
     http: RuntimeHttpApi;
     /// Logging related APIs
     logging: LoggingApi;
-
-    /// ... TODO: Local persistent storage APIs for variables
+    /// Key value store
+    kv: KvStoreApi;
   }
 
   // Global API access
