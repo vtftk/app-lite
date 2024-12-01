@@ -3,14 +3,16 @@ use std::sync::Arc;
 use anyhow::Context;
 use serde::Serialize;
 use tokio::sync::{mpsc, oneshot, Mutex};
-use twitch_api::helix::chat::{
-    SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse,
+use twitch_api::{
+    helix::chat::{SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse},
+    types::{DisplayName, UserId, UserName},
 };
 
 use crate::{state::app_data::AppDataStore, twitch::manager::TwitchManager};
 
 /// Events coming from the JS runtime to be executed by a locally
 /// managed handler with state accessible only from the main app
+#[allow(clippy::enum_variant_names)]
 pub enum JsEventMessage {
     /// Trigger sending a twitch chat message
     TwitchSendChat {
@@ -19,6 +21,24 @@ pub enum JsEventMessage {
         /// Channel to respond through with the outcome to sending the message
         return_tx: oneshot::Sender<anyhow::Result<()>>,
     },
+
+    /// Trigger checking if a user is a twitch moderator for
+    /// the channel
+    TwitchIsMod {
+        /// The ID of the user to check
+        user_id: UserId,
+        /// Channel to respond through with the outcome
+        return_tx: oneshot::Sender<anyhow::Result<bool>>,
+    },
+
+    /// Trigger checking if a user is a twitch vip for
+    /// the channel
+    TwitchIsVip {
+        /// The ID of the user to check
+        user_id: UserId,
+        /// Channel to respond through with the outcome
+        return_tx: oneshot::Sender<anyhow::Result<bool>>,
+    },
 }
 
 /// Event coming from outside the JS runtime to trigger executing
@@ -26,7 +46,12 @@ pub enum JsEventMessage {
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 pub enum ScriptExecuteEvent {
-    Chat { message: String },
+    Chat {
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: DisplayName,
+        message: String,
+    },
 }
 
 /// Currently active sender for [JsEventMessage]s
@@ -63,6 +88,22 @@ pub async fn handle_script_events(
                     _ = return_tx.send(result);
                 });
             }
+
+            JsEventMessage::TwitchIsMod { user_id, return_tx } => {
+                let twitch_manager = twitch_manager.clone();
+                tokio::spawn(async move {
+                    let result = handle_twitch_is_mod_event(twitch_manager, user_id).await;
+                    _ = return_tx.send(result);
+                });
+            }
+
+            JsEventMessage::TwitchIsVip { user_id, return_tx } => {
+                let twitch_manager = twitch_manager.clone();
+                tokio::spawn(async move {
+                    let result = handle_twitch_is_vip_event(twitch_manager, user_id).await;
+                    _ = return_tx.send(result);
+                });
+            }
         }
     }
 }
@@ -86,4 +127,20 @@ async fn handle_twitch_send_chat_event(
         .data;
 
     Ok(())
+}
+
+async fn handle_twitch_is_mod_event(
+    twitch_manager: Arc<TwitchManager>,
+    user_id: UserId,
+) -> anyhow::Result<bool> {
+    let mods = twitch_manager.get_moderator_list().await?;
+    Ok(mods.iter().any(|vip| vip.user_id == user_id))
+}
+
+async fn handle_twitch_is_vip_event(
+    twitch_manager: Arc<TwitchManager>,
+    user_id: UserId,
+) -> anyhow::Result<bool> {
+    let vips = twitch_manager.get_vip_list().await?;
+    Ok(vips.iter().any(|vip| vip.user_id == user_id))
 }

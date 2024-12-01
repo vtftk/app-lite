@@ -81,10 +81,70 @@ function _getEvents() {
   return Object.keys(eventHandlers);
 }
 
+function createCommand(options) {
+  on("chat", async (event) => {
+    const fullMessage = event.message;
+    const args = fullMessage.split(" ");
+
+    if (options.command === undefined) {
+      throw new Error("Command not specified");
+    }
+
+    const firstArg = args[0];
+    const prefix = options.command;
+
+    // Ignore non matching prefix
+    if (firstArg.toLowerCase() !== prefix.toLowerCase()) {
+      return;
+    }
+
+    const withoutPrefix = fullMessage.substring(prefix.length).trim();
+
+    const user = {
+      id: event.user_id,
+      name: event.user_name,
+      display_name: event.display_name,
+    };
+
+    // Check VIP access
+    if (options.requireVip) {
+      if (!(await api.twitch.isVip(user.id))) {
+        return;
+      }
+    }
+
+    // Check moderator access
+    if (options.requireMod) {
+      if (!(await api.twitch.isModerator(user.id))) {
+        return;
+      }
+    }
+
+    if (options.handle === undefined) {
+      throw new Error("Handle is not defined for command");
+    }
+
+    const result = options.handle({
+      fullMessage,
+      message: withoutPrefix,
+      user,
+      args,
+    });
+
+    const value = result instanceof Promise ? await result : result;
+
+    if (typeof value === "string") {
+      await api.twitch.sendChat(value);
+    }
+  });
+}
+
 // API functions provided to the runtime
 const api = {
   twitch: {
     sendChat: (message) => Deno.core.ops.op_twitch_send_chat(message),
+    isModerator: (userId) => Deno.core.ops.op_twitch_is_mod(userId),
+    isVip: (userId) => Deno.core.ops.op_twitch_is_vip(userId),
   },
   http: {
     get: (url) => {
@@ -106,6 +166,7 @@ const api = {
 
 globalThis.api = api;
 globalThis.on = on;
+globalThis.createCommand = createCommand;
 globalThis._getEvents = _getEvents;
 globalThis._triggerEvent = _triggerEvent;
 

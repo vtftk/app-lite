@@ -15,7 +15,7 @@ use super::{
     ops::{
         http::op_http_get,
         logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
-        twitch::op_twitch_send_chat,
+        twitch::{op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat},
     },
 };
 
@@ -31,7 +31,9 @@ deno_core::extension!(
         op_log_debug,
         op_log_info,
         op_log_warn,
-        op_log_error
+        op_log_error,
+        op_twitch_is_mod,
+        op_twitch_is_vip
     ],
     docs = "Extension providing APIs to the JS runtime"
 );

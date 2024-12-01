@@ -108,13 +108,18 @@ pub async fn handle_twitch_events(
                 TwitchEvent::ChatMsg(event) => {
                     let scripts = get_scripts_by_event(app_data, "chat");
 
-                    execute_scripts(
-                        script_handle.clone(),
-                        scripts,
-                        ScriptExecuteEvent::Chat {
-                            message: event.message.text.clone(),
-                        },
-                    );
+                    if !scripts.is_empty() {
+                        execute_scripts(
+                            script_handle.clone(),
+                            scripts,
+                            ScriptExecuteEvent::Chat {
+                                message: event.message.text.clone(),
+                                user_id: event.user_id.clone(),
+                                user_name: event.user_name.clone(),
+                                user_display_name: event.user_display_name.clone(),
+                            },
+                        );
+                    }
 
                     get_chat_event_data(app_data, event)
                 }
