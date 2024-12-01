@@ -1,11 +1,24 @@
 export {};
 
 declare global {
+  // Type of function used for logging
+  type LogFunction = (...arg: any) => void;
+
+  export interface LoggingApi {
+    debug: LogFunction;
+    info: LogFunction;
+    warn: LogFunction;
+    error: LogFunction;
+  }
+
   export interface RuntimeApi {
     /// Twitch related APIs
     twitch: RuntimeTwitchApi;
     /// HTTP related APIs
     http: RuntimeHttpApi;
+    /// Logging related APIs
+    logging: LoggingApi;
+
     /// ... TODO: Local persistent storage APIs for variables
   }
 
