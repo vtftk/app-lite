@@ -14,6 +14,7 @@ use super::{
     events::ScriptExecuteEvent,
     ops::{
         http::op_http_get,
+        kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
         twitch::{op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat},
     },
@@ -33,7 +34,10 @@ deno_core::extension!(
         op_log_warn,
         op_log_error,
         op_twitch_is_mod,
-        op_twitch_is_vip
+        op_twitch_is_vip,
+        op_kv_get,
+        op_kv_set,
+        op_kv_remove
     ],
     docs = "Extension providing APIs to the JS runtime"
 );

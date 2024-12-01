@@ -61,6 +61,12 @@ declare global {
     get: (url: string) => Promise<HttpResponse>;
   }
 
+  export interface KvStoreApi {
+    get: (key: string) => Promise<string | null>;
+    remove: (key: string) => Promise<void>;
+    set: (key: string, value: string) => Promise<void>;
+  }
+
   export interface HttpResponse {
     // Whether the status code is a 2xx status code
     ok: boolean;

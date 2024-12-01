@@ -146,6 +146,11 @@ const api = {
     isModerator: (userId) => Deno.core.ops.op_twitch_is_mod(userId),
     isVip: (userId) => Deno.core.ops.op_twitch_is_vip(userId),
   },
+  kv: {
+    get: (key) => Deno.core.ops.op_kv_get(key),
+    remove: (key) => Deno.core.ops.op_kv_remove(key),
+    set: (key, value) => Deno.core.ops.op_kv_set(key, value),
+  },
   http: {
     get: (url) => {
       const promise = Deno.core.ops.op_http_get(url);
