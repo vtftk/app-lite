@@ -2,7 +2,7 @@ use tokio::sync::broadcast;
 
 use crate::{
     events::EventMessage,
-    script::get_script_events,
+    script::runtime::get_script_events,
     state::app_data::{SoundConfig, ThrowableConfig},
 };
 

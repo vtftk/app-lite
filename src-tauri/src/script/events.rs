@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Context;
+use serde::Serialize;
 use tokio::sync::{mpsc, oneshot, Mutex};
 use twitch_api::helix::chat::{
     SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse,
@@ -18,6 +19,14 @@ pub enum JsEventMessage {
         /// Channel to respond through with the outcome to sending the message
         return_tx: oneshot::Sender<anyhow::Result<()>>,
     },
+}
+
+/// Event coming from outside the JS runtime to trigger executing
+/// code within the runtime event listeners
+#[derive(Clone, Debug, Serialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+pub enum ScriptExecuteEvent {
+    Chat { message: String },
 }
 
 /// Currently active sender for [JsEventMessage]s

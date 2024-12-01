@@ -2,7 +2,7 @@ use anyhow::Context;
 use event_processing::handle_twitch_events;
 use events::{EventMessage, EventRecvHandle};
 use log::{debug, error};
-use script::create_script_handler;
+use script::runtime::create_script_executor;
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use std::sync::Arc;
 use tauri::{App, Manager};
@@ -41,7 +41,7 @@ pub fn run() {
 
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
-            let script_tx = create_script_handler();
+            let script_handle = create_script_executor();
 
             // Provide app data and runtime app data stores
             app.manage(app_data.clone());
@@ -66,7 +66,7 @@ pub fn run() {
                 twitch_manager.clone(),
                 twitch_event_rx,
                 event_tx.clone(),
-                script_tx,
+                script_handle,
             ));
 
             // Run HTTP server

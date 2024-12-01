@@ -3,6 +3,7 @@
     "cooldown",
     "eventsub",
     "Keepalive",
+    "oneshot",
     "reqwest",
     "tauri",
     "tungstenite",
