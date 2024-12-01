@@ -128,7 +128,7 @@ function createCommand(options) {
       fullMessage,
       message: withoutPrefix,
       user,
-      args,
+      args: args.slice(1),
     });
 
     const value = result instanceof Promise ? await result : result;
