@@ -24,6 +24,11 @@ pub fn update_hotkeys(
 }
 
 #[tauri::command]
+pub fn get_overlay_url() -> String {
+    format!("http://localhost:{}/oauth", LOCAL_SERVER_PORT)
+}
+
+#[tauri::command]
 pub async fn get_app_data(app_data: tauri::State<'_, AppDataStore>) -> Result<AppData, ()> {
     Ok(app_data.read().await.clone())
 }

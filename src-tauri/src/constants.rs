@@ -29,8 +29,8 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::UserWriteChat,
 ];
 
-/// Redirect URI for twitch OAuth, port should match below
-pub const TWITCH_REDIRECT_URI: &str = "http://localhost:58371/oauth";
-
 /// Port to run the local server on
+#[cfg(not(debug_assertions))]
 pub const LOCAL_SERVER_PORT: u16 = 58371;
+#[cfg(debug_assertions)]
+pub const LOCAL_SERVER_PORT: u16 = 58372;

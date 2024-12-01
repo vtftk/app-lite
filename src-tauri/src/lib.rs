@@ -107,6 +107,7 @@ pub fn run() {
             commands::data::set_app_data,
             commands::data::upload_file,
             commands::data::update_hotkeys,
+            commands::data::get_overlay_url,
             commands::twitch::get_redeems_list,
             commands::twitch::refresh_redeems_list,
         ])

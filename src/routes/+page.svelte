@@ -31,10 +31,12 @@
     await navigator.clipboard.write(data);
   }
 
-  const overlayLink = "http://localhost:58371/overlay";
-
   async function getTwitchURL(): Promise<string> {
     return await invoke("get_twitch_oauth_uri");
+  }
+
+  async function getOverlayURL(): Promise<string> {
+    return await invoke("get_overlay_url");
   }
 
   async function openTwitchURL() {
@@ -64,12 +66,14 @@
         <h2>Active Overlay</h2>
         <p>Connected OBS overlays</p>
 
-        <div class="actions">
-          <button class="btn" onclick={() => setClipboard(overlayLink)}
-            >Copy Link</button
-          >
-          <p class="url">{overlayLink}</p>
-        </div>
+        {#await getOverlayURL() then overlayURL}
+          <div class="actions">
+            <button class="btn" onclick={() => setClipboard(overlayURL)}
+              >Copy Link</button
+            >
+            <p class="url">{overlayURL}</p>
+          </div>
+        {/await}
       </div>
       <div
         class="status-indicator"

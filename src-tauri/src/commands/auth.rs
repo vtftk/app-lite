@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    constants::{TWITCH_CLIENT_ID, TWITCH_REDIRECT_URI, TWITCH_REQUIRED_SCOPES},
+    constants::{LOCAL_SERVER_PORT, TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES},
     twitch::manager::TwitchManager,
 };
 use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
@@ -10,9 +10,10 @@ use url::Url;
 /// Obtain a URL for use logging into twitch using OAuth2
 #[tauri::command]
 pub fn get_twitch_oauth_uri() -> String {
+    let url = format!("http://localhost:{}/oauth", LOCAL_SERVER_PORT);
     let (url, _) = ImplicitUserTokenBuilder::new(
         ClientId::from_static(TWITCH_CLIENT_ID),
-        Url::parse(TWITCH_REDIRECT_URI).unwrap(),
+        Url::parse(&url).unwrap(),
     )
     .set_scopes(TWITCH_REQUIRED_SCOPES.to_vec())
     .generate_url();
