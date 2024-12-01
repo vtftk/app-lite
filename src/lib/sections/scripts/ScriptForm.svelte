@@ -3,14 +3,11 @@
   import { validator } from "@felte/validator-zod";
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import type { SoundConfig, UserScriptConfig } from "$lib/api/types";
+  import type { UserScriptConfig } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
-  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
-  import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import exampleCode from "../../../../script/example.js?raw";
   import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
@@ -30,7 +27,11 @@
     script: z.string(),
   });
 
-  const { form, data, setFields } = createForm<z.infer<typeof schema>>({
+  type Schema = z.infer<typeof schema>;
+
+  const { form, data, setFields, isDirty, setIsDirty } = createForm<
+    z.infer<typeof schema>
+  >({
     initialValues: existing
       ? {
           name: existing.name,
@@ -45,39 +46,44 @@
 
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
-      // Determine what events the script handles
-      const events = await invoke<string[]>("test_get_script_events", {
-        script: values.script,
-      });
-
-      const scriptConfig: UserScriptConfig = {
-        id: existing ? existing.id : self.crypto.randomUUID(),
-        enabled: values.enabled,
-        name: values.name,
-        script: values.script,
-        events,
-      };
-
-      if (existing !== undefined) {
-        // Update existing
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          scripts: $appData.scripts.map((item) => {
-            if (item.id !== existing.id) return item;
-            return scriptConfig;
-          }),
-        });
-      } else {
-        // Add new
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          scripts: [...$appData.scripts, scriptConfig],
-        });
-      }
-
+      await save(values);
       goto("/scripts");
     },
   });
+
+  async function save(values: Schema) {
+    // Determine what events the script handles
+    const events = await invoke<string[]>("test_get_script_events", {
+      script: values.script,
+    });
+
+    const scriptConfig: UserScriptConfig = {
+      id: existing ? existing.id : self.crypto.randomUUID(),
+      enabled: values.enabled,
+      name: values.name,
+      script: values.script,
+      events,
+    };
+
+    if (existing !== undefined) {
+      // Update existing
+      await $appDataMutation.mutateAsync({
+        ...$appData,
+        scripts: $appData.scripts.map((item) => {
+          if (item.id !== existing.id) return item;
+          return scriptConfig;
+        }),
+      });
+    } else {
+      // Add new
+      await $appDataMutation.mutateAsync({
+        ...$appData,
+        scripts: [...$appData.scripts, scriptConfig],
+      });
+    }
+
+    setIsDirty(false);
+  }
 </script>
 
 <form use:form class="container">
@@ -87,6 +93,10 @@
       <p class="text">Editing Script</p>
     </div>
     <div class="actions">
+      {#if $isDirty}
+        Unsaved changes...
+      {/if}
+
       <FormTextInput id="name" name="name" label="Name" />
 
       <FormCheckbox
@@ -111,6 +121,10 @@
       value={$data.script}
       onChange={(value) => {
         setFields("script", value, true);
+        setIsDirty(true);
+      }}
+      onUserSave={() => {
+        if (existing) save($data);
       }}
     />
   </section>

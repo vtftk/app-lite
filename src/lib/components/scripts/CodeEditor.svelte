@@ -5,9 +5,11 @@
   type Props = {
     value: string;
     onChange: (value: string) => void;
+
+    onUserSave?: VoidFunction;
   };
 
-  const { value, onChange }: Props = $props();
+  const { value, onChange, onUserSave }: Props = $props();
 
   let editor: Monaco.editor.IStandaloneCodeEditor;
   let monaco: typeof Monaco;
@@ -21,6 +23,12 @@
       theme: "vs-dark",
       automaticLayout: true,
       language: "typescript",
+      tabSize: 4,
+      detectIndentation: false,
+    });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      if (onUserSave) onUserSave();
     });
 
     const model = monaco.editor.createModel(
