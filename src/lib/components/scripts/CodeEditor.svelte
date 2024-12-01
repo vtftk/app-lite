@@ -11,8 +11,8 @@
 
   const { value, onChange, onUserSave }: Props = $props();
 
-  let editor: Monaco.editor.IStandaloneCodeEditor;
-  let monaco: typeof Monaco;
+  let editor: Monaco.editor.IStandaloneCodeEditor | undefined;
+  let monaco: typeof Monaco | undefined;
   let editorContainer: HTMLElement | undefined = $state();
 
   onMount(async () => {
@@ -47,6 +47,8 @@
   onDestroy(() => {
     monaco?.editor.getModels().forEach((model) => model.dispose());
     editor?.dispose();
+    editor = undefined;
+    monaco = undefined;
   });
 
   // Change editor value when value changes
@@ -63,7 +65,7 @@
 
     // wait for next frame to ensure last layout finished
     window.requestAnimationFrame(() => {
-      if (!editorContainer) return;
+      if (!editorContainer || !editor) return;
       const rect = editorContainer.getBoundingClientRect();
       editor.layout({ width: rect.width, height: rect.height });
     });
