@@ -3,6 +3,7 @@
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
   import SoundPreview from "./SoundPreview.svelte";
+  import getBackendURL from "$lib/utils/url";
 
   type Props = {
     sounds: Readonly<SoundConfig[]>;
@@ -90,7 +91,7 @@
                 <td class="sound-column sound-column--name"> {sound.name} </td>
 
                 <td class="sound-column sound-column--preview">
-                  <SoundPreview src={sound.src} />
+                  <SoundPreview src={getBackendURL(sound.src)} />
                 </td>
               </tr>
             {/each}

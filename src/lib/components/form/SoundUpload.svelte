@@ -1,4 +1,5 @@
 <script lang="ts">
+  import getBackendURL from "$lib/utils/url";
   import SoundPreview from "../sounds/SoundPreview.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
@@ -45,7 +46,7 @@
 
   <div class="sound-preview-wrapper">
     {#if currentSound !== undefined}
-      <SoundPreview src={currentSound} />
+      <SoundPreview src={getBackendURL(currentSound)} />
     {/if}
   </div>
 

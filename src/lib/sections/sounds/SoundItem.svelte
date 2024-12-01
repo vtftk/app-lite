@@ -8,6 +8,7 @@
   import PlayIcon from "~icons/solar/play-bold";
   import { Checkbox } from "bits-ui";
   import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
+  import getBackendURL from "$lib/utils/url";
 
   type Props = {
     config: SoundConfig;
@@ -45,7 +46,7 @@
   <a class="sound__name" href="/sounds/{config.id}">{config.name}</a>
 
   <div class="sound__actions">
-    <SoundPlayButton src={config.src} />
+    <SoundPlayButton src={getBackendURL(config.src)} />
     <a class="sound-button" href="/sounds/{config.id}">
       <SettingsIcon />
     </a>

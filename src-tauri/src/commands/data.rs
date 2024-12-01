@@ -106,10 +106,7 @@ pub async fn upload_file(
         .await
         .expect("save file");
 
-    let url = format!(
-        "http://localhost:{}/content/{}/{}",
-        LOCAL_SERVER_PORT, type_folder, file_name
-    );
+    let url = format!("backend://content/{}/{}", type_folder, file_name);
 
     Ok(url)
 }

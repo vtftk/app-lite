@@ -1,4 +1,5 @@
 <script lang="ts">
+  import getBackendURL from "$lib/utils/url";
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {
@@ -43,7 +44,7 @@
     {#if currentImage !== undefined}
       <img
         class="image-preview"
-        src={currentImage}
+        src={getBackendURL(currentImage)}
         alt="Preview"
         style="transform: translate(-50%, -50%) scale({scale});"
       />

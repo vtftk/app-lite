@@ -1,5 +1,6 @@
 <script lang="ts">
   import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
+  import getBackendURL from "$lib/utils/url";
   import type { SoundConfig } from "$shared/appData";
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
@@ -96,7 +97,7 @@
                 <td class="sound-column sound-column--name"> {sound.name} </td>
 
                 <td class="sound-column sound-column--preview">
-                  <SoundPreview src={sound.src} />
+                  <SoundPreview src={getBackendURL(sound.src)} />
                 </td>
               </tr>
             {/each}

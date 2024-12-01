@@ -1,4 +1,5 @@
 <script lang="ts">
+  import getBackendURL from "$lib/utils/url";
   import type { ItemConfig } from "$shared/appData";
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
@@ -95,7 +96,7 @@
                   <div class="throwable__image-wrapper">
                     <img
                       class="throwable__image"
-                      src={item.image.src}
+                      src={getBackendURL(item.image.src)}
                       alt="Throwable"
                     />
                   </div>
@@ -126,7 +127,7 @@
         <div class="grid-item__image throwable__image-wrapper">
           <img
             class="throwable__image"
-            src={option.image.src}
+            src={getBackendURL(option.image.src)}
             alt="Throwable"
           />
         </div>

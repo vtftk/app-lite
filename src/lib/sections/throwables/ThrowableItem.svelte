@@ -9,6 +9,7 @@
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { Checkbox } from "bits-ui";
+  import getBackendURL from "$lib/utils/url";
 
   type Props = {
     config: ItemConfig;
@@ -79,7 +80,11 @@
 
   <div class="throwable__content">
     <div class="throwable__image-wrapper">
-      <img class="throwable__image" src={config.image.src} alt="Throwable" />
+      <img
+        class="throwable__image"
+        src={getBackendURL(config.image.src)}
+        alt="Throwable"
+      />
     </div>
   </div>
   <a href="/throwables/{config.id}" class="throwable__name">{config.name}</a>
