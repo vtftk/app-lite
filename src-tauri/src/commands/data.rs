@@ -25,7 +25,7 @@ pub fn update_hotkeys(
 
 #[tauri::command]
 pub fn get_overlay_url() -> String {
-    format!("http://localhost:{}/oauth", LOCAL_SERVER_PORT)
+    format!("http://localhost:{}/overlay", LOCAL_SERVER_PORT)
 }
 
 #[tauri::command]
