@@ -2,11 +2,13 @@
   "words": [
     "cooldown",
     "eventsub",
+    "jacobtread",
     "Keepalive",
     "oneshot",
     "reqwest",
     "tauri",
     "tungstenite",
+    "vtftk",
     "vtube"
   ]
 }
