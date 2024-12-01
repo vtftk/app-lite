@@ -42,6 +42,7 @@
           enabled: true,
           script: exampleCode,
         },
+
     extend: [validator({ schema }), reporterDom()],
     async onSubmit(values, context) {
       // Determine what events the script handles
@@ -79,22 +80,33 @@
   });
 </script>
 
-<form use:form>
-  <section class="section">
-    <FormTextInput id="name" name="name" label="Name" />
+<form use:form class="container">
+  <div class="title-area">
+    <div>
+      <h1 class="title">Edit Script</h1>
+      <p class="text">Editing Script</p>
+    </div>
+    <div class="actions">
+      <FormTextInput id="name" name="name" label="Name" />
 
-    <FormCheckbox
-      id="enabled"
-      name="enabled"
-      label="Enabled"
-      checked={$data.enabled}
-      onChecked={(checked) => {
-        setFields("enabled", checked, true);
-      }}
-    />
-  </section>
+      <FormCheckbox
+        id="enabled"
+        name="enabled"
+        label="Enabled"
+        checked={$data.enabled}
+        onChecked={(checked) => {
+          setFields("enabled", checked, true);
+        }}
+      />
 
-  <section class="section">
+      <button type="submit" class="btn">
+        {existing ? "Save" : "Create"}
+      </button>
+      <a class="btn" href="/scripts">Back</a>
+    </div>
+  </div>
+
+  <section class="editor">
     <CodeEditor
       value={$data.script}
       onChange={(value) => {
@@ -102,25 +114,44 @@
       }}
     />
   </section>
-
-  <button type="submit" class="btn">
-    {existing ? "Save" : "Create"}
-  </button>
 </form>
 
 <style>
-  form {
-    display: flex;
-    flex-flow: column;
-    gap: 1rem;
+  .editor {
+    position: relative;
+    flex: auto;
+    overflow: hidden;
   }
 
-  .section {
+  .container {
     display: flex;
     flex-flow: column;
+    gap: 0.5rem;
 
-    border: 1px solid #333;
     padding: 1rem;
-    gap: 1.5rem;
+    height: 100%;
+  }
+
+  .title {
+    color: #fff;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+    font-size: 1.75rem;
+  }
+
+  .text {
+    color: #ccc;
+  }
+
+  .title-area {
+    display: flex;
+  }
+
+  .actions {
+    display: flex;
+    flex: auto;
+    justify-content: flex-end;
+    gap: 1rem;
+    align-items: center;
   }
 </style>

@@ -19,13 +19,7 @@
 </script>
 
 {#if $item !== undefined}
-  {#snippet actions()}
-    <a type="button" href="/scripts">Back</a>
-  {/snippet}
-
-  <PageLayoutList title="Edit Script" description="Editing a script" {actions}>
-    <ScriptForm existing={$item} />
-  </PageLayoutList>
+  <ScriptForm existing={$item} />
 {:else}
   {#snippet actions()}
     <a type="button" href="/scripts">Back</a>
