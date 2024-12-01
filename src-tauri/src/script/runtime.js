@@ -24,38 +24,10 @@ function debug(...args) {
 }
 
 function argsToMessage(...args) {
-  return args.map((arg) => JSON.stringify(arg)).join(" ");
+  return args
+    .map((arg) => JSON.stringify(arg, Object.getOwnPropertyNames(arg)))
+    .join(" ");
 }
-
-// API functions provided to the runtime
-const api = {
-  twitch: {
-    sendChat: Deno.core.ops.op_twitch_send_chat,
-  },
-  http: {
-    get: (url) => {
-      const promise = Deno.core.ops.op_http_get(url);
-
-      return promise.then((result) => {
-        console.info("Promise http resolved", result);
-        return result;
-      });
-    },
-  },
-  logging: {
-    debug,
-    info,
-    warn,
-    error,
-  },
-};
-
-globalThis.console = {
-  log: info,
-  info,
-  error,
-  debug,
-};
 
 function on(key, callback) {
   if (!eventHandlers[key]) {
@@ -108,3 +80,38 @@ async function _triggerEvent({ type, data }) {
 function _getEvents() {
   return Object.keys(eventHandlers);
 }
+
+// API functions provided to the runtime
+const api = {
+  twitch: {
+    sendChat: (message) => Deno.core.ops.op_twitch_send_chat(message),
+  },
+  http: {
+    get: (url) => {
+      const promise = Deno.core.ops.op_http_get(url);
+
+      return promise.then((result) => {
+        console.info("Promise http resolved", result);
+        return result;
+      });
+    },
+  },
+  logging: {
+    debug,
+    info,
+    warn,
+    error,
+  },
+};
+
+globalThis.api = api;
+globalThis.on = on;
+globalThis._getEvents = _getEvents;
+globalThis._triggerEvent = _triggerEvent;
+
+globalThis.console = {
+  log: info,
+  info,
+  error,
+  debug,
+};

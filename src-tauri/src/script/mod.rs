@@ -10,7 +10,6 @@ use tokio::{
     task::LocalSet,
 };
 use v8::Global;
-
 pub mod events;
 
 #[derive(Debug, Serialize)]
@@ -84,7 +83,9 @@ async fn op_twitch_send_chat(#[string] message: String) -> anyhow::Result<()> {
     }
 }
 
-const WRAPPER_SCRIPT: &str = include_str!("runtime.js");
+/// Snapshot of the script engine runtime, see [build.rs](../../build.rs)
+static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
+    include_bytes!(concat!(env!("OUT_DIR"), "/SCRIPT_RUNTIME_SNAPSHOT.bin"));
 
 deno_core::extension!(
     api_extension,
@@ -108,12 +109,10 @@ pub enum ScriptExecuteEvent {
 /// Executes a script, uses the wrapper code to determine which events the user
 /// has subscribed to
 pub fn get_script_events(script: String) -> anyhow::Result<Vec<String>> {
-    // Apply the wrapper script
-    let script = format!("{}\n\n{}", WRAPPER_SCRIPT, script);
-
     // Create runtime
     let mut runtime = JsRuntime::new(RuntimeOptions {
-        extensions: vec![api_extension::ext()],
+        startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
+        extensions: vec![api_extension::init_ops()],
         ..Default::default()
     });
 
@@ -175,12 +174,10 @@ pub fn handle_script_messages(mut rx: mpsc::Receiver<ScriptExecutorMessage>) {
 
 /// Executes the provided script using the provided event
 pub async fn execute_script(script: String, event: ScriptExecuteEvent) -> anyhow::Result<()> {
-    // Apply the wrapper script
-    let script = format!("{}\n\n{}", WRAPPER_SCRIPT, script);
-
     // Create runtime
     let mut runtime = JsRuntime::new(RuntimeOptions {
-        extensions: vec![api_extension::ext()],
+        startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
+        extensions: vec![api_extension::init_ops()],
         ..Default::default()
     });
 

@@ -16,6 +16,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+deno_core = "0.323.0"
 
 [dependencies]
 twitch_api = { version = "0.7.0-rc.8", features = [
