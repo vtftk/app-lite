@@ -1,6 +1,7 @@
 <script lang="ts">
   import NavButton from "./NavButton.svelte";
 
+  import HomeBoldDuotone from "~icons/solar/home-bold-duotone";
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
   import SolarBallsBoldDuotone from "~icons/solar/balls-bold-duotone";
   import SolarBellBoldDuotone from "~icons/solar/bell-bold-duotone";
@@ -11,6 +12,14 @@
 
 <nav>
   <ul>
+    <li>
+      <NavButton
+        icon={HomeBoldDuotone}
+        href="/"
+        title="Home"
+        text="General details"
+      />
+    </li>
     <li>
       <NavButton
         icon={SolarBasketballBoldDuotone}

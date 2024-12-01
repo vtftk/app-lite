@@ -5,18 +5,15 @@
   import { queryClient } from "$lib/api/utils";
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
-  import TwitchOAuthGate from "$lib/sections/twitch/TwitchOAuthGate.svelte";
   import Sidebar from "$lib/components/nav/Sidebar.svelte";
 </script>
 
 <QueryClientProvider client={queryClient}>
   <AppDataProvider>
-    <TwitchOAuthGate>
-      <main class="main">
-        <Sidebar />
-        <div class="content"><slot /></div>
-      </main>
-    </TwitchOAuthGate>
+    <main class="main">
+      <Sidebar />
+      <div class="content"><slot /></div>
+    </main>
   </AppDataProvider>
 </QueryClientProvider>
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Navigation from "./Navigation.svelte";
   import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
   import { derived } from "svelte/store";
 
@@ -45,8 +44,6 @@
       data-status={$isModelCalibrated ? "green" : "red"}
     ></div>
   </div>
-
-  <a class="btn calibrate" href="/calibration">Calibrate Model</a>
 </div>
 
 <style>

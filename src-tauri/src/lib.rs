@@ -90,6 +90,7 @@ pub fn run() {
             commands::auth::get_twitch_oauth_uri,
             commands::auth::is_authenticated,
             commands::auth::open_twitch_oauth_uri,
+            commands::auth::logout,
             commands::calibration::set_calibration_step,
             commands::test::test_throw,
             commands::test::test_throw_barrage,

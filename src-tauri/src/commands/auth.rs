@@ -33,3 +33,9 @@ pub fn open_twitch_oauth_uri() {
 pub async fn is_authenticated(state: tauri::State<'_, Arc<TwitchManager>>) -> Result<bool, ()> {
     Ok(state.is_authenticated().await)
 }
+
+#[tauri::command]
+pub async fn logout(state: tauri::State<'_, Arc<TwitchManager>>) -> Result<(), ()> {
+    state.reset().await;
+    Ok(())
+}
