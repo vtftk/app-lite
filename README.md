@@ -1,3 +1,6 @@
+
+<img src="./docs/logo_partial_white_bg.png" width="256px"> 
+
 ## VTuber Fun ToolKit (VTFTK)
 
 > **WIP** App for VTubers to create interactive experiences with their viewers
