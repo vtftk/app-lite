@@ -1,4 +1,5 @@
 import { ItemConfig, SoundConfig } from "$shared/appData";
+import getBackendURL from "./url";
 
 export async function sleep(duration: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, duration));
@@ -35,7 +36,7 @@ export async function executeInterval(
 
 export async function loadImage(src: string): Promise<HTMLImageElement> {
   const image = new Image();
-  image.src = src;
+  image.src = getBackendURL(src);
 
   return new Promise((resolve, reject) => {
     image.onload = () => resolve(image);
@@ -44,7 +45,7 @@ export async function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 export async function loadAudio(src: string): Promise<HTMLAudioElement> {
-  const audio = new Audio(src);
+  const audio = new Audio(getBackendURL(src));
 
   return new Promise((resolve, reject) => {
     audio.oncanplaythrough = () => resolve(audio);

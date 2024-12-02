@@ -252,8 +252,7 @@ function createThrownImage(
   angle: number,
   spinSpeed: MinMax
 ): HTMLImageElement {
-  const elm = document.createElement("img");
-  elm.src = image.src;
+  const elm = image.cloneNode(true) as HTMLImageElement;
   elm.classList.add("animated");
   const style = elm.style;
 
