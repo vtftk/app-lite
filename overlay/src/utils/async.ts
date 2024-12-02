@@ -71,7 +71,10 @@ export async function loadItems(items: ItemConfig[]): Promise<LoadedItemMap> {
   const output = new Map();
 
   for (const result of results) {
-    if (result.status !== "fulfilled") continue;
+    if (result.status !== "fulfilled") {
+      console.error(result);
+      continue;
+    }
     output.set(result.value.id, result.value.image);
   }
 
@@ -91,7 +94,10 @@ export async function loadSounds(
   const output = new Map();
 
   for (const result of results) {
-    if (result.status !== "fulfilled") continue;
+    if (result.status !== "fulfilled") {
+      console.error(result);
+      continue;
+    }
     output.set(result.value.config.id, result.value);
   }
 

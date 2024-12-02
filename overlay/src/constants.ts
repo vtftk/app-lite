@@ -12,8 +12,11 @@ export const TOTAL_MODEL_SIZE_RANGE: number = Math.abs(
 export const VTUBE_STUDIO_SOCKET_RETRY_TIMEOUT = 5 * 1000;
 
 export const BACKEND_HTTP = getEndpoint();
+export const BACKEND_URL = BACKEND_HTTP.endsWith("/")
+  ? BACKEND_HTTP
+  : `${BACKEND_HTTP}/`;
 
-function getEndpoint() {
+function getEndpoint(): string {
   // Development override for the endpoint
   const envEndpoint = import.meta.env.VITE_API_ENDPOINT;
   if (envEndpoint !== undefined) {
