@@ -1,4 +1,4 @@
-<table>
+<table width="100%">
 <tr>
 <td><img src="./app-icon.png" width="128px" height="128px"> 
 </td>
