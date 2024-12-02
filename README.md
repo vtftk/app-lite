@@ -1,9 +1,16 @@
+<table>
+<tr>
+<td><img src="./docs/logo_partial_white_bg.png" width="256px"> 
+</td>
+<td>
+<h1>VTuber Fun ToolKit (VTFTK)</h1>
+<p><b>WIP</b> App for VTubers to create interactive experiences with their viewers
+</p>
+</td>
+</tr>
+</table>
 
-<img src="./docs/logo_partial_white_bg.png" width="256px"> 
-
-## VTuber Fun ToolKit (VTFTK)
-
-> **WIP** App for VTubers to create interactive experiences with their viewers
+## 
 
 Create items that can be thrown at you, sounds that can be played, and trigger VTube studio. All using events from twitch such as redeems, commands, subscriptions, follows, raids, bits
 
