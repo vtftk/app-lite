@@ -32,3 +32,10 @@ Built on `deno_core` providing scripting through JavaScript.
 
 
 ![Scripting](./docs/scripts.png)
+
+## Sounds 
+
+Sounds, play custom sounds when events occur. Can be used to create sound alerts. Sounds can also be attached to throwable items to
+play the sound upon impact
+
+![alt text](./docs/sounds.png)
