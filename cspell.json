@@ -1,14 +1,20 @@
 {
   "words": [
+    "cdylib",
     "cooldown",
     "eventsub",
     "jacobtread",
     "Keepalive",
     "oneshot",
     "reqwest",
+    "rlib",
+    "rustls",
+    "serde",
+    "staticlib",
     "tauri",
     "tungstenite",
     "vtftk",
-    "vtube"
+    "vtube",
+    "webbrowser"
   ]
 }

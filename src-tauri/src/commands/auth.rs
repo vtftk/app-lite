@@ -5,7 +5,8 @@ use crate::{
     twitch::manager::TwitchManager,
 };
 use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
-use url::Url;
+
+use reqwest::Url;
 
 /// Obtain a URL for use logging into twitch using OAuth2
 #[tauri::command]
