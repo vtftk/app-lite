@@ -4,9 +4,16 @@
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
-  import type { ItemConfig, SoundConfig } from "$shared/appData";
+  import type {
+    ItemConfig,
+    SoundConfig,
+    ThrowableConfig,
+  } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import { invoke } from "@tauri-apps/api/core";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -75,6 +82,42 @@
       }),
     });
   }
+
+  async function testThrowSelected() {
+    const items = $appData.items.filter((item) => selected.includes(item.id));
+    const impact_sounds = $appData.sounds.filter((sound) =>
+      items.some((item) => item.impact_sounds_ids.includes(sound.id))
+    );
+
+    const throwable: ThrowableConfig = {
+      items,
+      impact_sounds,
+    };
+
+    await invoke("test_throw", {
+      config: throwable,
+      amount: 1,
+    });
+  }
+
+  async function testThrowBarrageSelected() {
+    const items = $appData.items.filter((item) => selected.includes(item.id));
+    const impact_sounds = $appData.sounds.filter((sound) =>
+      items.some((item) => item.impact_sounds_ids.includes(sound.id))
+    );
+
+    const throwable: ThrowableConfig = {
+      items: items,
+      impact_sounds,
+    };
+
+    await invoke("test_throw_barrage", {
+      config: throwable,
+      amount: 50,
+      amountPerThrow: 2,
+      frequency: 100,
+    });
+  }
 </script>
 
 {#snippet actions()}
@@ -101,13 +144,21 @@
       </div>
 
       <div class="selection__actions">
-        <button class="btn" onclick={onBulkDelete}><DeleteIcon /> Delete</button
-        >
+        <button type="button" class="btn" onclick={testThrowSelected}>
+          <BallIcon /> Test
+        </button>
+        <button type="button" class="btn" onclick={testThrowBarrageSelected}>
+          <BallsIcon /> Test Barrage
+        </button>
 
         <BulkAddThrowableSounds
           sounds={$appData.sounds}
           onSubmit={onBulkAddSounds}
         />
+
+        <button class="btn" onclick={onBulkDelete}>
+          <DeleteIcon /> Delete
+        </button>
       </div>
     {/if}
   </div>
@@ -150,7 +201,7 @@
 
   .grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     width: 100%;
   }

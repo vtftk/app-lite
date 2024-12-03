@@ -5,8 +5,6 @@
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
-  import BallsIcon from "~icons/solar/balls-bold-duotone";
-  import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { Checkbox } from "bits-ui";
   import getBackendURL from "$lib/utils/url";
@@ -22,40 +20,6 @@
   const appDataMutation = createAppDateMutation();
 
   const { config, selected, onToggleSelected }: Props = $props();
-
-  async function testThrow() {
-    const impact_sounds = $appData.sounds.filter((sound) =>
-      config.impact_sounds_ids.includes(sound.id)
-    );
-
-    const throwable: ThrowableConfig = {
-      items: [config],
-      impact_sounds,
-    };
-
-    await invoke("test_throw", {
-      config: throwable,
-      amount: 1,
-    });
-  }
-
-  async function testThrowMany() {
-    const impact_sounds = $appData.sounds.filter((sound) =>
-      config.impact_sounds_ids.includes(sound.id)
-    );
-
-    const throwable: ThrowableConfig = {
-      items: [config],
-      impact_sounds,
-    };
-
-    await invoke("test_throw_barrage", {
-      config: throwable,
-      amount: 50,
-      amountPerThrow: 2,
-      frequency: 100,
-    });
-  }
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this item?")) {
@@ -94,9 +58,6 @@
       <SettingsIcon />
     </a>
     <button class="throw-button" onclick={onDelete}> <DeleteIcon /> </button>
-
-    <button class="throw-button" onclick={testThrow}><BallIcon /></button>
-    <button class="throw-button" onclick={testThrowMany}><BallsIcon /></button>
   </div>
 </div>
 

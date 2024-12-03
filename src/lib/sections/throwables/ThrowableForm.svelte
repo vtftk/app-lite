@@ -6,6 +6,7 @@
   import type {
     ImpactSoundConfig,
     ItemConfig,
+    ThrowableConfig,
     ThrowableImageConfig,
   } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
