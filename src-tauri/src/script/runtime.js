@@ -45,23 +45,15 @@ function on(key, callback) {
 // Called by script runtime to invoke an event handler
 async function _triggerEvent({ type, data }) {
   if (eventHandlers[type] === undefined) {
-    api.logging.info("no event handlers to run", type, eventHandlers);
     return Promise.resolve(); // No handlers, resolve immediately
   }
-
-  api.logging.info("running event handlers");
 
   // Collect promises from all callbacks, handling both sync and async cases
   const promises = eventHandlers[type].map((callback) => {
     try {
-      api.logging.info("running event handler");
       const result = callback(data);
-      api.logging.info("running event handler", result);
       if (result instanceof Promise) {
-        return result.then((resolved) => {
-          api.logging.info("promise resolved");
-          return resolved;
-        });
+        return result;
       } else {
         return Promise.resolve(result);
       }

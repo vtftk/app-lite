@@ -4,7 +4,6 @@ use deno_core::{
     v8::{self, Global},
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
-use log::debug;
 use tokio::{
     sync::{mpsc, oneshot},
     task::LocalSet,
@@ -159,16 +158,10 @@ async fn execute_script(script: String, event: ScriptExecuteEvent) -> anyhow::Re
     // Create runtime
     let mut runtime = create_js_runtime();
 
-    debug!("executing script: {}", script);
-
     // Execute script
     let _ = runtime.execute_script("<anon>", script)?;
 
-    debug!("fully executed local");
-
     trigger_event(&mut runtime, event).await?;
-
-    debug!("fully executed script");
 
     Ok(())
 }
