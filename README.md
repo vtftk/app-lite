@@ -1,6 +1,6 @@
-<table style="width:100%">
+<table>
 <tr>
-<td><img src="./app-icon.png" width="128px" height="128px" style="width:128px;height:auto;"> 
+<td><img src="./app-icon.png" width="128px" height="auto" > 
 </td>
 <td>
 <h1>VTuber Fun ToolKit (VTFTK)</h1>
