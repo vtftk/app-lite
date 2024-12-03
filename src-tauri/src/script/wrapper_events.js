@@ -1,12 +1,8 @@
 (() => {
-  const _eventHandlers = {};
+  const eventNames = new Set();
 
-  function on(key, callback) {
-    if (!_eventHandlers[key]) {
-      _eventHandlers[key] = [];
-    }
-
-    _eventHandlers[key].push(callback);
+  function on(key, _callback) {
+    eventNames.add(key);
   }
 
   globalThis.on = on;
@@ -19,5 +15,5 @@
 
   delete globalThis.on;
 
-  return Object.keys(_eventHandlers);
+  return Array.from(eventNames);
 })()

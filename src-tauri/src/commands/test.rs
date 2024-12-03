@@ -2,7 +2,7 @@ use tokio::sync::broadcast;
 
 use crate::{
     events::EventMessage,
-    script::runtime::get_script_events,
+    script::runtime::ScriptExecutorHandle,
     state::app_data::{SoundConfig, ThrowableConfig},
 };
 
@@ -61,7 +61,10 @@ pub fn test_sound(
 
 /// Test execution of a script to obtain the script list of subscribed events
 #[tauri::command]
-pub fn test_get_script_events(script: String) -> CmdResult<Vec<String>> {
-    let events = get_script_events(script)?;
+pub async fn test_get_script_events(
+    script: String,
+    script_handle: tauri::State<'_, ScriptExecutorHandle>,
+) -> CmdResult<Vec<String>> {
+    let events = script_handle.get_events(script).await?;
     Ok(events)
 }

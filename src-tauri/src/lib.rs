@@ -53,6 +53,9 @@ pub fn run() {
             app.manage(event_tx.clone());
             app.manage(twitch_manager.clone());
 
+            // Provide access to script running and
+            app.manage(script_handle.clone());
+
             // Attempt to authenticate with twitch using the saved token
             _ = tauri::async_runtime::spawn(attempt_twitch_auth_existing_token(
                 app_data.clone(),

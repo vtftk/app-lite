@@ -39,14 +39,26 @@ deno_core::extension!(
     docs = "Extension providing APIs to the JS runtime"
 );
 
-/// Message the JS executor will receive to handle running a script
-struct ScriptExecutorMessage {
-    /// The script code to run
-    script: String,
-    /// The event to trigger within the code
-    event: ScriptExecuteEvent,
-    /// Channel to send back the result
-    tx: oneshot::Sender<anyhow::Result<()>>,
+pub enum ScriptExecutorMessage {
+    /// Tell the executor to run the event callbacks in the provided code
+    /// on the runtime
+    EventScript {
+        /// The script code to run
+        script: String,
+        /// The event to trigger within the code
+        event: ScriptExecuteEvent,
+        /// Channel to send back the result
+        tx: oneshot::Sender<anyhow::Result<()>>,
+    },
+
+    /// Tells the executor to run the provided scripts and report the
+    /// names of the events that the script subscribes to
+    EventsList {
+        /// The script code to run
+        script: String,
+        /// Channel to send back the result
+        tx: oneshot::Sender<anyhow::Result<Vec<String>>>,
+    },
 }
 
 /// Handle for accessing the script executor
@@ -63,7 +75,18 @@ impl ScriptExecutorHandle {
         let (tx, rx) = oneshot::channel();
 
         self.tx
-            .send(ScriptExecutorMessage { script, event, tx })
+            .send(ScriptExecutorMessage::EventScript { script, event, tx })
+            .await
+            .context("executor is not running")?;
+
+        rx.await.context("executor closed without response")?
+    }
+
+    pub async fn get_events(&self, script: String) -> anyhow::Result<Vec<String>> {
+        let (tx, rx) = oneshot::channel();
+
+        self.tx
+            .send(ScriptExecutorMessage::EventsList { script, tx })
             .await
             .context("executor is not running")?;
 
@@ -96,11 +119,19 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
             });
 
             while let Some(msg) = rx.recv().await {
-                debug!("started script execution");
-                let result = execute_script(&mut runtime, msg.script, msg.event).await;
-                _ = msg.tx.send(result);
+                match msg {
+                    ScriptExecutorMessage::EventScript { script, event, tx } => {
+                        debug!("started script execution");
+                        let result = execute_script(&mut runtime, script, event).await;
+                        _ = tx.send(result);
 
-                debug!("completed script execution");
+                        debug!("completed script execution");
+                    }
+                    ScriptExecutorMessage::EventsList { script, tx } => {
+                        let result = get_script_events(&mut runtime, script).await;
+                        _ = tx.send(result);
+                    }
+                }
             }
         })
     });
@@ -181,14 +212,7 @@ async fn execute_script(
 
 /// Executes a script, uses the wrapper code to determine which events the user
 /// has subscribed to
-pub fn get_script_events(script: String) -> anyhow::Result<Vec<String>> {
-    // Create runtime
-    let mut runtime = JsRuntime::new(RuntimeOptions {
-        startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
-        extensions: vec![api_extension::init_ops()],
-
-        ..Default::default()
-    });
+async fn get_script_events(runtime: &mut JsRuntime, script: String) -> anyhow::Result<Vec<String>> {
     let script = JS_EVENTS_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script
