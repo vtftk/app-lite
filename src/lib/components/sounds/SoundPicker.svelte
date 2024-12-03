@@ -108,15 +108,51 @@
   </Dialog.Portal>
 </Dialog.Root>
 
-<div>Selected Sounds</div>
+<div class="selected">
+  <p class="selected__title">Selected Sounds</p>
 
-<ul>
-  {#each selectedOptions as option}
-    <li>{option.name}</li>
-  {/each}
-</ul>
+  <div class="grid">
+    {#each selectedOptions as option}
+      <li class="grid-item">
+        <p class="grid-item__name">{option.name}</p>
+      </li>
+    {/each}
+  </div>
+</div>
 
 <style>
+  .selected {
+    display: flex;
+    gap: 1rem;
+    flex-flow: column;
+    margin-top: 1rem;
+  }
+
+  .selected__title {
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .grid-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .grid-item__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .sound-table-wrapper {
     padding: 1rem;
     max-height: 300px;
