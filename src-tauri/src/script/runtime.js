@@ -5,8 +5,6 @@
  * See api.d.ts for type definitions exposed to app
  */
 
-const eventHandlers = {};
-
 function info(...args) {
   Deno.core.ops.op_log_info(`${argsToMessage(...args)}\n`);
 }
@@ -33,23 +31,14 @@ function argToStr(value) {
   return JSON.stringify(value, Object.getOwnPropertyNames(value));
 }
 
-function on(key, callback) {
-  if (!eventHandlers[key]) {
-    eventHandlers[key] = [];
-  }
-
-  api.logging.info("subscribed to " + key);
-  eventHandlers[key].push(callback);
-}
-
 // Called by script runtime to invoke an event handler
-async function _triggerEvent({ type, data }) {
-  if (eventHandlers[type] === undefined) {
+async function _triggerEvent(handlers, { type, data }) {
+  if (handlers[type] === undefined) {
     return Promise.resolve(); // No handlers, resolve immediately
   }
 
   // Collect promises from all callbacks, handling both sync and async cases
-  const promises = eventHandlers[type].map((callback) => {
+  const promises = handlers[type].map((callback) => {
     try {
       const result = callback(data);
       if (result instanceof Promise) {
@@ -70,11 +59,6 @@ async function _triggerEvent({ type, data }) {
     console.error(`Error in callback for event "${type}":`, error);
     return Promise.resolve(); // Return a resolved promise on error
   }
-}
-
-// Called by script runtime to determine which events are used
-function _getEvents() {
-  return Object.keys(eventHandlers);
 }
 
 function createCommand(options) {
@@ -166,11 +150,8 @@ const api = {
 };
 
 globalThis.api = api;
-globalThis.on = on;
 globalThis.createCommand = createCommand;
-globalThis._getEvents = _getEvents;
 globalThis._triggerEvent = _triggerEvent;
-
 globalThis.console = {
   log: info,
   info,

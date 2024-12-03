@@ -1,13 +1,11 @@
 use anyhow::Context;
 use deno_core::{
     serde_v8::{from_v8, to_v8},
-    v8::{self, Global},
+    v8::{self, Global, Local},
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
-use tokio::{
-    sync::{mpsc, oneshot},
-    task::LocalSet,
-};
+use log::debug;
+use tokio::sync::{mpsc, oneshot};
 
 use super::{
     events::ScriptExecuteEvent,
@@ -87,14 +85,22 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
             .enable_all()
             .build()
             .unwrap();
-        let set = LocalSet::new();
 
-        set.block_on(&runtime, async {
+        runtime.block_on(async {
+            // Create runtime
+            let mut runtime = JsRuntime::new(RuntimeOptions {
+                startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
+                extensions: vec![api_extension::init_ops()],
+
+                ..Default::default()
+            });
+
             while let Some(msg) = rx.recv().await {
-                set.spawn_local(async move {
-                    let result = execute_script(msg.script, msg.event).await;
-                    _ = msg.tx.send(result);
-                });
+                debug!("started script execution");
+                let result = execute_script(&mut runtime, msg.script, msg.event).await;
+                _ = msg.tx.send(result);
+
+                debug!("completed script execution");
             }
         })
     });
@@ -102,21 +108,16 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
     ScriptExecutorHandle { tx }
 }
 
-fn create_js_runtime() -> JsRuntime {
-    // Create runtime
-    JsRuntime::new(RuntimeOptions {
-        startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
-        extensions: vec![api_extension::init_ops()],
-        ..Default::default()
-    })
-}
-
 /// Invokes the `_triggerEvent` function from the runtime.js wrapper code to trigger
 /// a specific event in any JS script code.
 ///
 /// Will await for the returned promise is complete to handle the full completion
 /// of any async outcomes
-async fn trigger_event(runtime: &mut JsRuntime, event: ScriptExecuteEvent) -> anyhow::Result<()> {
+async fn trigger_event(
+    runtime: &mut JsRuntime,
+    event_handlers: Global<v8::Value>,
+    event: ScriptExecuteEvent,
+) -> anyhow::Result<()> {
     // Trigger events and wait till they complete
     let global_promise: v8::Global<v8::Value> = {
         // Get the handle scope
@@ -136,32 +137,44 @@ async fn trigger_event(runtime: &mut JsRuntime, event: ScriptExecuteEvent) -> an
 
         let event_data_object = to_v8(scope, event).context("failed to create event object")?;
 
+        let local_event_handlers = v8::Local::new(scope, event_handlers);
+
         let result = trigger_event_function
-            .call(scope, global.into(), &[event_data_object])
+            .call(
+                scope,
+                global.into(),
+                &[local_event_handlers, event_data_object],
+            )
             .context("failed to call event trigger")?;
 
         Global::new(scope, result)
     };
 
-    // Run event loop to completion
-    runtime
-        .run_event_loop(PollEventLoopOptions::default())
-        .await?;
+    let resolve = runtime.resolve(global_promise);
 
-    let _result = runtime.resolve(global_promise).await?;
+    // Run event loop to completion
+    let _result = runtime
+        .with_event_loop_promise(resolve, PollEventLoopOptions::default())
+        .await?;
 
     Ok(())
 }
 
+static JS_CALL_WRAPPER: &str = include_str!("./wrapper_call.js");
+static JS_EVENTS_WRAPPER: &str = include_str!("./wrapper_events.js");
+
 /// Executes the provided script using the provided event
-async fn execute_script(script: String, event: ScriptExecuteEvent) -> anyhow::Result<()> {
-    // Create runtime
-    let mut runtime = create_js_runtime();
+async fn execute_script(
+    runtime: &mut JsRuntime,
+    script: String,
+    event: ScriptExecuteEvent,
+) -> anyhow::Result<()> {
+    let script = JS_CALL_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script
-    let _ = runtime.execute_script("<anon>", script)?;
+    let output = runtime.execute_script("<anon>", script)?;
 
-    trigger_event(&mut runtime, event).await?;
+    trigger_event(runtime, output, event).await?;
 
     Ok(())
 }
@@ -170,31 +183,22 @@ async fn execute_script(script: String, event: ScriptExecuteEvent) -> anyhow::Re
 /// has subscribed to
 pub fn get_script_events(script: String) -> anyhow::Result<Vec<String>> {
     // Create runtime
-    let mut runtime = create_js_runtime();
+    let mut runtime = JsRuntime::new(RuntimeOptions {
+        startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
+        extensions: vec![api_extension::init_ops()],
+
+        ..Default::default()
+    });
+    let script = JS_EVENTS_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script
-    let _ = runtime.execute_script("<anon>", script);
+    let output = runtime.execute_script("<anon>", script)?;
 
-    // Get the handle scope
-    let scope = &mut runtime.handle_scope();
+    let names: Vec<String> = {
+        let mut scope = runtime.handle_scope();
+        let local = Local::new(&mut scope, output);
+        from_v8(&mut scope, local).context("invalid events output")?
+    };
 
-    // Get the global object
-    let global = scope.get_current_context().global(scope);
-
-    let get_events_key =
-        v8::String::new(scope, "_getEvents").context("failed to get events key")?;
-    let get_events_value = global
-        .get(scope, get_events_key.into())
-        .context("failed to get events value")?;
-    let get_events_function: v8::Local<v8::Function> = get_events_value
-        .try_into()
-        .context("_getEvents was not a function")?;
-
-    let result = get_events_function
-        .call(scope, global.into(), &[])
-        .context("expected events return value")?;
-
-    let event_names: Vec<String> = from_v8(scope, result).context("failed to get events return")?;
-
-    Ok(event_names)
+    Ok(names)
 }
