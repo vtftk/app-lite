@@ -22,7 +22,7 @@ fn create_runtime_snapshot() {
         // list of all JS files in the extension
         esm_entry_point = "ext:api_extension/runtime.js",
         // the entrypoint to our extension
-        esm = [dir "src/script", "runtime.js"]
+        esm = [dir "../script", "runtime.js"]
     );
 
     let out_dir: PathBuf = env::var_os("OUT_DIR").expect("missing out dir").into();

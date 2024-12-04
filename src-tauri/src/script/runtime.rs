@@ -191,8 +191,8 @@ async fn trigger_event(
     Ok(())
 }
 
-static JS_CALL_WRAPPER: &str = include_str!("./wrapper_call.js");
-static JS_EVENTS_WRAPPER: &str = include_str!("./wrapper_events.js");
+static JS_CALL_WRAPPER: &str = include_str!("../../../script/wrapper_call.js");
+static JS_EVENTS_WRAPPER: &str = include_str!("../../../script/wrapper_events.js");
 
 /// Executes the provided script using the provided event
 async fn execute_script(
