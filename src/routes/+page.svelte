@@ -130,14 +130,21 @@
     <div class="status-item">
       <div class="status-text">
         <h2>Model Calibration</h2>
-        <p>Calibrate model</p>
-        <div class="actions">
-          <a class="btn" href="/calibration">Calibrate Model</a>
-        </div>
+        {#if $runtimeAppData.vtube_studio_connected}
+          <p>Calibrate model</p>
+          <div class="actions">
+            <a class="btn" href="/calibration">Calibrate Model</a>
+          </div>
+        {:else}
+          <p>Not connected to VTube studio</p>{/if}
       </div>
       <div
         class="status-indicator"
-        data-status={$isModelCalibrated ? "green" : "red"}
+        data-status={$isModelCalibrated
+          ? "green"
+          : $runtimeAppData.vtube_studio_connected
+            ? "red"
+            : "orange"}
       ></div>
     </div>
   </div>
@@ -184,6 +191,10 @@
 
   .status-indicator[data-status="green"] {
     background-color: green;
+  }
+
+  .status-indicator[data-status="orange"] {
+    background-color: orange;
   }
 
   .status-indicator[data-status="red"] {

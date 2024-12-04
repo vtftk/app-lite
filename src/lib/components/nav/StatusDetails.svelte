@@ -41,7 +41,11 @@
     <div>Model Calibration</div>
     <div
       class="status-indicator"
-      data-status={$isModelCalibrated ? "green" : "red"}
+      data-status={$isModelCalibrated
+        ? "green"
+        : $runtimeAppData.vtube_studio_connected
+          ? "red"
+          : "orange"}
     ></div>
   </div>
 </div>
@@ -80,6 +84,10 @@
 
   .status-indicator[data-status="green"] {
     background-color: green;
+  }
+
+  .status-indicator[data-status="orange"] {
+    background-color: orange;
   }
 
   .status-indicator[data-status="red"] {
