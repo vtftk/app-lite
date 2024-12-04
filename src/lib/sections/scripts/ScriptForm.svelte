@@ -11,6 +11,9 @@
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import exampleCode from "../../../../script/example.js?raw";
   import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
+  import { Tabs } from "bits-ui";
+  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
+  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
 
   type Props = {
     existing?: UserScriptConfig;
@@ -91,24 +94,12 @@
     <div>
       <h1 class="title">{existing ? "Edit Script" : "Create Script"}</h1>
       <p class="text">
-        {#if $isDirty}
+        {#if existing && $isDirty}
           Unsaved changes...
         {/if}
       </p>
     </div>
     <div class="actions">
-      <FormTextInput id="name" name="name" label="Name" />
-
-      <FormCheckbox
-        id="enabled"
-        name="enabled"
-        label="Enabled"
-        checked={$data.enabled}
-        onChecked={(checked) => {
-          setFields("enabled", checked, true);
-        }}
-      />
-
       <button type="submit" class="btn">
         {existing ? "Save" : "Create"}
       </button>
@@ -116,25 +107,96 @@
     </div>
   </div>
 
-  <section class="editor">
-    <CodeEditor
-      value={$data.script}
-      onChange={(value) => {
-        setFields("script", value, true);
-        setIsDirty(true);
-      }}
-      onUserSave={() => {
-        if (existing) save($data);
-      }}
-    />
-  </section>
+  <div class="content">
+    <Tabs.Root>
+      <Tabs.List>
+        <Tabs.Trigger value="settings"
+          ><SolarSettingsBoldDuotone /> Settings</Tabs.Trigger
+        >
+        <Tabs.Trigger value="code"
+          ><SolarCodeSquareBoldDuotone /> Code</Tabs.Trigger
+        >
+      </Tabs.List>
+      <Tabs.Content value="code">
+        <section class="editor">
+          <CodeEditor
+            value={$data.script}
+            onChange={(value) => {
+              setFields("script", value, true);
+              setIsDirty(true);
+            }}
+            onUserSave={() => {
+              if (existing) save($data);
+            }}
+          />
+        </section>
+      </Tabs.Content>
+      <Tabs.Content value="settings">
+        <div class="settings">
+          <section class="section">
+            <div class="section__head">
+              <h2>Details</h2>
+              <p>Basic details about the script</p>
+            </div>
+            <FormTextInput id="name" name="name" label="Name" />
+
+            <FormCheckbox
+              id="enabled"
+              name="enabled"
+              label="Enabled"
+              checked={$data.enabled}
+              onChecked={(checked) => {
+                setFields("enabled", checked, true);
+              }}
+            />
+          </section>
+        </div>
+      </Tabs.Content>
+    </Tabs.Root>
+  </div>
 </form>
 
 <style>
+  .settings {
+    display: flex;
+    flex-flow: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .section {
+    display: flex;
+    flex-flow: column;
+
+    border: 1px solid #333;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
   .editor {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .content {
     position: relative;
     flex: auto;
     overflow: hidden;
+  }
+
+  .content :global([data-tabs-root]) {
+    height: 100%;
+    display: flex;
+    flex-flow: column;
+  }
+
+  .content :global([data-tabs-content]) {
+    position: relative;
+    flex: auto;
+    overflow: auto;
+    flex-flow: column;
+    border: 1px solid #333;
   }
 
   .container {
@@ -161,12 +223,26 @@
     display: flex;
     align-items: center;
   }
-
   .actions {
     display: flex;
     flex: auto;
     justify-content: flex-end;
     gap: 1rem;
     align-items: center;
+  }
+
+  .section__head {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+  }
+
+  .section__head h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .section__head p {
+    color: #ccc;
   }
 </style>
