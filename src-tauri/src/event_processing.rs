@@ -152,6 +152,9 @@ pub async fn execute_command(
         }
     }
 
+    // Mark last execution for cooldown
+    events_state.set_last_executed(&config.id).await;
+
     Ok(())
 }
 
