@@ -8,9 +8,7 @@
     MINIMUM_REQUIRED_ROLE_VALUES,
     MinimumRequiredRole,
     type CommandConfig,
-    type UserScriptConfig,
   } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
@@ -20,6 +18,8 @@
   import { Tabs } from "bits-ui";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
+  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
 
   type Props = {
     existing?: CommandConfig;
@@ -188,8 +188,12 @@
   <div class="content">
     <Tabs.Root>
       <Tabs.List>
-        <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
-        <Tabs.Trigger value="code">Code</Tabs.Trigger>
+        <Tabs.Trigger value="settings"
+          ><SolarSettingsBoldDuotone /> Settings</Tabs.Trigger
+        >
+        <Tabs.Trigger value="code"
+          ><SolarCodeSquareBoldDuotone /> Code</Tabs.Trigger
+        >
       </Tabs.List>
       <Tabs.Content value="code">
         {#if $data.outcome.type === CommandOutcomeType.Script}

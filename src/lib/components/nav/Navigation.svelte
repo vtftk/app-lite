@@ -3,8 +3,7 @@
 
   import HomeBoldDuotone from "~icons/solar/home-bold-duotone";
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
-  import SolarCodeSquareBold from "~icons/solar/code-square-bold";
-  import SolarBallsBoldDuotone from "~icons/solar/balls-bold-duotone";
+  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarBellBoldDuotone from "~icons/solar/bell-bold-duotone";
   import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
@@ -55,7 +54,7 @@
     </li>
     <li>
       <NavButton
-        icon={SolarCodeSquareBold}
+        icon={SolarCodeSquareBoldDuotone}
         href="/scripts"
         title="Scripts"
         text="Custom code scripts to run"
