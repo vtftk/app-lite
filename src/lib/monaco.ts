@@ -11,12 +11,12 @@ import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
 
 import libraryDefinition from "../../script/api.d.ts?raw";
 
-monaco.languages.typescript.typescriptDefaults.addExtraLib(
+monaco.languages.typescript.javascriptDefaults.addExtraLib(
   libraryDefinition,
   "file:///global.d.ts"
 );
 
-monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
 });

@@ -49,6 +49,27 @@ declare global {
      * @returns Promise resolved with whether the user is a mod
      */
     isModerator: (userId: string) => Promise<boolean>;
+
+    /**
+     * Validates a Twitch username, strict checks ensuring the name
+     * meets the required length and allowed characters
+     *
+     * @param username The username to validate
+     * @returns Whether the username is valid
+     */
+    isValidUsernameStrict: (username: string) => boolean;
+
+    /**
+     * Attempts to extract a username from the provided arg
+     *
+     * @param arg The arg to get the username from
+     * @param valid When enabled the value is also checked against {@see isValidUsernameStrict}
+     * @returns The arg or null if missing/invalid
+     */
+    getUsernameArg: (
+      arg: string | undefined | null,
+      validate: boolean = false
+    ) => string | null;
   }
 
   export interface RuntimeHttpApi {
@@ -98,6 +119,12 @@ declare global {
     user: CommandUser;
 
     /**
+     * Target user, will be present if a first argument is
+     * provided
+     */
+    targetUser: string | null;
+
+    /**
      * Message split into the individual arguments split by space.
      * Excludes the command itself
      */
@@ -116,6 +143,9 @@ declare global {
 
     requireVip?: boolean;
     requireMod?: boolean;
+
+    // Enable validation for the extracted targetUser field
+    validateTargetUser?: boolean;
 
     /**
      * Handle a command using this function

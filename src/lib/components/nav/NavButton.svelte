@@ -30,14 +30,14 @@
     background-color: #222;
     border-radius: 0.5rem;
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-items: center;
   }
 
   .content {
     display: flex;
     flex-flow: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
   }
 
   .button:global(> .icon) {
@@ -60,10 +60,12 @@
 
   .title {
     color: #fff;
+    line-height: 1;
   }
 
   .text {
     color: #ccc;
     font-size: 0.8rem;
+    line-height: 1;
   }
 </style>

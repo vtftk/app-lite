@@ -8,6 +8,9 @@ fn main() {
     create_runtime_snapshot();
 }
 
+/// Embed runtime script to rebuild snapshot on change
+static _RUNTIME: &[u8] = include_bytes!("../script/runtime.js");
+
 /// Creates a snapshot of the runtime wrapper code
 ///
 /// This makes the code startup faster and prevents needing to

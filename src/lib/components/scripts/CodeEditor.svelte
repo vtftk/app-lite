@@ -22,19 +22,27 @@
     editor = monaco.editor.create(editorContainer!, {
       theme: "vs-dark",
       automaticLayout: true,
-      language: "typescript",
-      tabSize: 4,
+      language: "javascript",
+      tabSize: 2,
       detectIndentation: false,
+      fontLigatures: true,
+      fontFamily: "JetBrains Mono",
+      hover: {
+        above: false,
+      },
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       if (onUserSave) onUserSave();
+
+      // Format on save
+      if (editor) editor.getAction("editor.action.formatDocument")?.run();
     });
 
     const model = monaco.editor.createModel(
       value,
-      "typescript",
-      monaco.Uri.parse("file:///main.ts")
+      "javascript",
+      monaco.Uri.parse("file:///main.js")
     );
     editor.setModel(model);
 

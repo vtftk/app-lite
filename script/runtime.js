@@ -61,6 +61,53 @@ async function _triggerEvent(handlers, { type, data }) {
   }
 }
 
+function isValidUsernameStrict(username) {
+  if (!username) return false;
+
+  const length = username.length;
+
+  // Check length
+  if (length < 4 || length > 25) return false;
+
+  // Check for leading or trailing underscores
+  if (username[0] === "_" || username[length - 1] === "_") return false;
+
+  // Iterate through characters to validate
+  for (let i = 0; i < length; i++) {
+    const char = username[i];
+
+    // Check if character is valid (alphanumeric or underscore)
+    const isAlphaNumeric =
+      (char >= "a" && char <= "z") ||
+      (char >= "A" && char <= "Z") ||
+      (char >= "0" && char <= "9") ||
+      char === "_";
+
+    if (!isAlphaNumeric) return false;
+  }
+
+  return true;
+}
+
+function getUsernameArg(arg, validate = false) {
+  // Arg not provided
+  if (arg === undefined || arg === null || typeof arg !== "string") return null;
+
+  // Trim whitespace
+  arg = arg.trim();
+
+  // Strip @ from mention
+  if (arg.startsWith("@")) arg = arg.substring(1);
+
+  // Empty
+  if (arg.length < 1) return null;
+
+  // Apply strict validation
+  if (validate && !isValidUsernameStrict(arg)) return null;
+
+  return arg;
+}
+
 function createCommand(options) {
   on("chat", async (event) => {
     const fullMessage = event.message;
@@ -86,6 +133,12 @@ function createCommand(options) {
       display_name: event.display_name,
     };
 
+    // Get target user from first arg
+    const targetUser = api.twitch.getUsernameArg(
+      args[1],
+      options.validateTargetUser ?? false
+    );
+
     // Check VIP access
     if (options.requireVip) {
       if (!(await api.twitch.isVip(user.id))) {
@@ -108,6 +161,7 @@ function createCommand(options) {
       fullMessage,
       message: withoutPrefix,
       user,
+      targetUser,
       args: args.slice(1),
     });
 
@@ -125,6 +179,7 @@ const api = {
     sendChat: (message) => Deno.core.ops.op_twitch_send_chat(message),
     isModerator: (userId) => Deno.core.ops.op_twitch_is_mod(userId),
     isVip: (userId) => Deno.core.ops.op_twitch_is_vip(userId),
+    getUsernameArg: (arg) => getUsernameArg(arg),
   },
   kv: {
     get: (key) => Deno.core.ops.op_kv_get(key),
@@ -132,14 +187,7 @@ const api = {
     set: (key, value) => Deno.core.ops.op_kv_set(key, value),
   },
   http: {
-    get: (url) => {
-      const promise = Deno.core.ops.op_http_get(url);
-
-      return promise.then((result) => {
-        console.info("Promise http resolved", result);
-        return result;
-      });
-    },
+    get: (url) => Deno.core.ops.op_http_get(url),
   },
   logging: {
     debug,

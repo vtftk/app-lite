@@ -1,6 +1,7 @@
 <script lang="ts">
   import "$lib/styles/global.scss";
   import "$lib/api/events";
+  import "@fontsource/jetbrains-mono";
 
   import { queryClient } from "$lib/api/utils";
   import { QueryClientProvider } from "@tanstack/svelte-query";

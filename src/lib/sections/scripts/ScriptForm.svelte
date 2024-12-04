@@ -89,14 +89,14 @@
 <form use:form class="container">
   <div class="title-area">
     <div>
-      <h1 class="title">Edit Script</h1>
-      <p class="text">Editing Script</p>
+      <h1 class="title">{existing ? "Edit Script" : "Create Script"}</h1>
+      <p class="text">
+        {#if $isDirty}
+          Unsaved changes...
+        {/if}
+      </p>
     </div>
     <div class="actions">
-      {#if $isDirty}
-        Unsaved changes...
-      {/if}
-
       <FormTextInput id="name" name="name" label="Name" />
 
       <FormCheckbox
@@ -159,6 +159,7 @@
 
   .title-area {
     display: flex;
+    align-items: center;
   }
 
   .actions {
