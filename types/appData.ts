@@ -18,6 +18,7 @@ export type AppData = {
   events: EventConfig[];
   sounds: SoundConfig[];
   scripts: UserScriptConfig[];
+  commands: CommandConfig[];
 };
 
 export type ThrowablesConfig = {
@@ -245,3 +246,26 @@ export type UserScriptConfig = {
   script: string;
   events: string[];
 };
+
+export type CommandConfig = {
+  id: Uuid;
+  enabled: boolean;
+  name: string;
+  command: string;
+  aliases: string[];
+  outcome: CommandOutcome;
+  cooldown: number;
+  require_role: MinimumRequiredRole;
+};
+
+export enum CommandOutcomeType {
+  Template = "Template",
+  Script = "Script",
+}
+
+export type CommandOutcomeTemplate = { message: string };
+export type CommandOutcomeScript = { script: string };
+
+export type CommandOutcome =
+  | ({ type: CommandOutcomeType.Template } & CommandOutcomeTemplate)
+  | ({ type: CommandOutcomeType.Script } & CommandOutcomeScript);

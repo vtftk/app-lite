@@ -1,9 +1,9 @@
 use crate::events::EventMessage;
 use crate::script::events::ScriptExecuteEvent;
-use crate::script::runtime::ScriptExecutorHandle;
+use crate::script::runtime::{CommandContext, CommandContextUser, ScriptExecutorHandle};
 use crate::state::app_data::{
-    AppData, AppDataStore, BitsAmount, EventConfig, EventOutcome, EventTrigger, ItemConfig,
-    MinimumRequireRole, ThrowableConfig, ThrowableData, UserScriptConfig,
+    AppData, AppDataStore, BitsAmount, CommandConfig, CommandOutcome, EventConfig, EventOutcome,
+    EventTrigger, ItemConfig, MinimumRequireRole, ThrowableConfig, ThrowableData, UserScriptConfig,
 };
 use crate::twitch::manager::{
     TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
@@ -18,6 +18,8 @@ use std::collections::HashMap;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{broadcast, RwLock};
 use tokio::time::Instant;
+use tokio::try_join;
+use twitch_api::types::UserId;
 use uuid::Uuid;
 
 #[derive(Default)]
@@ -55,7 +57,7 @@ pub fn get_scripts_by_event(app_data: &AppData, name: &str) -> Vec<UserScriptCon
     app_data
         .scripts
         .iter()
-        .filter(|script| script.events.iter().any(|event| name.eq(event)))
+        .filter(|script| script.enabled && script.events.iter().any(|event| name.eq(event)))
         .cloned()
         .collect()
 }
@@ -83,6 +85,133 @@ pub fn execute_scripts(
     });
 }
 
+pub fn execute_commands(
+    script_handle: ScriptExecutorHandle,
+    twitch_manager: Arc<TwitchManager>,
+    events_state: EventsStateShared,
+    commands: Vec<(CommandConfig, CommandContext)>,
+) {
+    // Spawn task to poll the execute futures
+    tokio::spawn(async move {
+        // Create futures to execute for each config
+        let mut futures = commands
+            .into_iter()
+            .map(|(config, ctx)| -> BoxFuture<'_, anyhow::Result<()>> {
+                Box::pin(execute_command(
+                    &script_handle,
+                    &twitch_manager,
+                    &events_state,
+                    config,
+                    ctx,
+                ))
+            })
+            .collect::<FuturesUnordered<BoxFuture<'_, anyhow::Result<()>>>>();
+
+        while let Some(value) = futures.next().await {
+            if let Err(err) = value {
+                error!("failed to execute script: {:?}", err);
+            }
+        }
+    });
+}
+
+pub async fn execute_command(
+    script_handle: &ScriptExecutorHandle,
+    twitch_manager: &Arc<TwitchManager>,
+    events_state: &EventsStateShared,
+    config: CommandConfig,
+    ctx: CommandContext,
+) -> anyhow::Result<()> {
+    // Ensure required role is present
+    if !assert_required_role(
+        twitch_manager,
+        Some(ctx.user.id.clone()),
+        &config.require_role,
+    )
+    .await
+    {
+        debug!("skipping event: missing required role");
+        return Ok(());
+    }
+
+    // Ensure cooldown is not active
+    if !events_state
+        .is_cooldown_elapsed(&config.id, Duration::from_millis(config.cooldown as u64))
+        .await
+    {
+        debug!("skipping command: cooldown");
+        return Ok(());
+    }
+
+    match config.outcome {
+        CommandOutcome::Template { message: _message } => {
+            // TODO: Not implemented yet
+        }
+        CommandOutcome::Script { script } => {
+            script_handle.execute_command(script, ctx).await?;
+        }
+    }
+
+    Ok(())
+}
+
+pub fn get_target_commands(
+    commands: &[CommandConfig],
+    event: &TwitchEventChatMsg,
+) -> Vec<(CommandConfig, CommandContext)> {
+    commands
+        .iter()
+        .filter(|command| command.enabled)
+        .filter_map(|command| {
+            let message = event.message.text.clone();
+            let mut args: Vec<String> = message
+                .split_whitespace()
+                .map(|value| value.to_string())
+                .collect();
+
+            // Must have at least one arg to be a command
+            if args.is_empty() {
+                return None;
+            }
+
+            let first_arg = args.remove(0);
+
+            // Ensure the command matches the first arg
+            if !first_arg.eq_ignore_ascii_case(&command.command)
+                && !command
+                    .aliases
+                    .iter()
+                    .any(|alias| first_arg.eq_ignore_ascii_case(alias))
+            {
+                return None;
+            }
+
+            // Strip prefix and trim any leading space
+            let without_prefix = message
+                .strip_prefix(&first_arg)
+                .unwrap_or(&message)
+                .trim_start()
+                .to_string();
+
+            let user = CommandContextUser {
+                id: event.user_id.clone(),
+                name: event.user_name.clone(),
+                display_name: event.user_display_name.clone(),
+            };
+
+            Some((
+                command.clone(),
+                CommandContext {
+                    full_message: event.message.text.clone(),
+                    message: without_prefix,
+                    user,
+                    args,
+                },
+            ))
+        })
+        .collect()
+}
+
 pub async fn handle_twitch_events(
     app_data_store: AppDataStore,
     twitch_manager: Arc<TwitchManager>,
@@ -106,6 +235,7 @@ pub async fn handle_twitch_events(
                 TwitchEvent::GiftSub(event) => get_gift_sub_event_data(app_data, event),
                 TwitchEvent::ResubMsg(event) => get_resub_event_data(app_data, event),
                 TwitchEvent::ChatMsg(event) => {
+                    let commands = get_target_commands(&app_data.commands, &event);
                     let scripts = get_scripts_by_event(app_data, "chat");
 
                     if !scripts.is_empty() {
@@ -120,6 +250,13 @@ pub async fn handle_twitch_events(
                             },
                         );
                     }
+
+                    execute_commands(
+                        script_handle.clone(),
+                        twitch_manager.clone(),
+                        events_state.clone(),
+                        commands,
+                    );
 
                     get_chat_event_data(app_data, event)
                 }
@@ -196,7 +333,7 @@ async fn process_event_config(
     // Ensure required role is present
     if !assert_required_role(
         &twitch_manager,
-        &event_data.user,
+        event_data.user.as_ref().map(|value| value.user_id.clone()),
         &event_config.require_role,
     )
     .await
@@ -439,28 +576,30 @@ pub struct EventData {
 
 async fn assert_required_role(
     twitch_manager: &TwitchManager,
-    user: &Option<TwitchEventUser>,
+    user_id: Option<UserId>,
     required_role: &MinimumRequireRole,
 ) -> bool {
     match required_role {
         MinimumRequireRole::None => true,
         MinimumRequireRole::Vip => {
-            let user = match user {
+            let user = match user_id {
                 Some(user) => user,
                 None => return false,
             };
 
-            let vips = match twitch_manager.get_vip_list().await {
+            let (vips, mods) = match try_join!(
+                twitch_manager.get_vip_list(),
+                twitch_manager.get_moderator_list()
+            ) {
                 Ok(value) => value,
-                Err(_) => {
-                    return false;
-                }
+                Err(_) => return false,
             };
 
-            vips.iter().any(|vip| vip.user_id == user.user_id)
+            vips.iter().any(|vip| vip.user_id == user)
+                || mods.iter().any(|mods| mods.user_id == user)
         }
         MinimumRequireRole::Mod => {
-            let user = match user {
+            let user = match user_id {
                 Some(user) => user,
                 None => return false,
             };
@@ -472,7 +611,7 @@ async fn assert_required_role(
                 }
             };
 
-            mods.iter().any(|mods| mods.user_id == user.user_id)
+            mods.iter().any(|mods| mods.user_id == user)
         }
     }
 }

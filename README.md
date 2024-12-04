@@ -30,8 +30,11 @@ Custom scripting for handling events and creating custom interactive commands
 
 Built on `deno_core` providing scripting through JavaScript.
 
-
 ![Scripting](./docs/scripts.png)
+
+## Custom Commands
+
+![Commands](./docs/commands.png)
 
 ## Sounds 
 

@@ -85,6 +85,7 @@ pub struct AppData {
     pub events: Vec<EventConfig>,
     pub sounds: Vec<SoundConfig>,
     pub scripts: Vec<UserScriptConfig>,
+    pub commands: Vec<CommandConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -432,4 +433,39 @@ pub struct UserScriptConfig {
     /// Names for events the script is known to be subscribed to
     /// script will be run for these events
     pub events: Vec<String>,
+}
+
+/// Configuration for a user made script
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommandConfig {
+    /// Unique ID for the command
+    pub id: Uuid,
+
+    /// Whether the command is enabled and runnable
+    pub enabled: bool,
+
+    /// Name of the command
+    pub name: String,
+
+    /// The command to run
+    pub command: String,
+
+    /// Aliases that also trigger the command
+    pub aliases: Vec<String>,
+
+    /// The outcome of the command
+    pub outcome: CommandOutcome,
+
+    /// Cooldown between each trigger of the command
+    pub cooldown: u32,
+
+    /// Minimum required role to trigger the command
+    pub require_role: MinimumRequireRole,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum CommandOutcome {
+    Template { message: String },
+    Script { script: String },
 }

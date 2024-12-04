@@ -134,34 +134,14 @@ declare global {
   export type CommandUser = {
     id: string;
     name: string;
-    display_name: string;
+    displayName: string;
   };
 
-  interface CreateCommandOptions {
-    // Command required to trigger, including the command prefix (e.g !test)
-    command: string;
-
-    requireVip?: boolean;
-    requireMod?: boolean;
-
-    // Enable validation for the extracted targetUser field
-    validateTargetUser?: boolean;
-
-    /**
-     * Handle a command using this function
-     *
-     * If the return value is a string that will be sent
-     * as a chat message
-     *
-     * @param ctx Context around the command
-     * @returns
-     */
-    handle: (
-      ctx: CommandContext
-    ) => string | Promise<string> | any | Promise<any>;
-  }
-
-  export function createCommand(options: CreateCommandOptions);
+  /**
+   * Context for the current command execution, only available within
+   * command scripts
+   */
+  declare const ctx: CommandContext;
 
   /**
    * Subscribes to an event

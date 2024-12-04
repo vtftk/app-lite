@@ -5,7 +5,9 @@ use deno_core::{
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
 use log::debug;
+use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
+use twitch_api::types::{DisplayName, UserId, UserName};
 
 use super::{
     events::ScriptExecuteEvent,
@@ -51,6 +53,17 @@ pub enum ScriptExecutorMessage {
         tx: oneshot::Sender<anyhow::Result<()>>,
     },
 
+    /// Tell the executor to run the event callbacks in the provided code
+    /// on the runtime
+    CommandScript {
+        /// The script code to run
+        script: String,
+        /// Context for the command run
+        ctx: CommandContext,
+        /// Channel to send back the result
+        tx: oneshot::Sender<anyhow::Result<()>>,
+    },
+
     /// Tells the executor to run the provided scripts and report the
     /// names of the events that the script subscribes to
     EventsList {
@@ -76,6 +89,17 @@ impl ScriptExecutorHandle {
 
         self.tx
             .send(ScriptExecutorMessage::EventScript { script, event, tx })
+            .await
+            .context("executor is not running")?;
+
+        rx.await.context("executor closed without response")?
+    }
+
+    pub async fn execute_command(&self, script: String, ctx: CommandContext) -> anyhow::Result<()> {
+        let (tx, rx) = oneshot::channel();
+
+        self.tx
+            .send(ScriptExecutorMessage::CommandScript { script, ctx, tx })
             .await
             .context("executor is not running")?;
 
@@ -129,6 +153,10 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
                     }
                     ScriptExecutorMessage::EventsList { script, tx } => {
                         let result = get_script_events(&mut runtime, script).await;
+                        _ = tx.send(result);
+                    }
+                    ScriptExecutorMessage::CommandScript { script, ctx, tx } => {
+                        let result = execute_command(&mut runtime, script, ctx).await;
                         _ = tx.send(result);
                     }
                 }
@@ -193,6 +221,65 @@ async fn trigger_event(
 
 static JS_CALL_WRAPPER: &str = include_str!("../../../script/wrapper_call.js");
 static JS_EVENTS_WRAPPER: &str = include_str!("../../../script/wrapper_events.js");
+static JS_COMMAND_WRAPPER: &str = include_str!("../../../script/wrapper_command.js");
+
+#[derive(Debug, Serialize)]
+#[serde(rename = "camelCase")]
+pub struct CommandContext {
+    pub full_message: String,
+    pub message: String,
+    pub user: CommandContextUser,
+    pub args: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename = "camelCase")]
+pub struct CommandContextUser {
+    pub id: UserId,
+    pub name: UserName,
+    pub display_name: DisplayName,
+}
+
+/// Executes the provided command
+async fn execute_command(
+    runtime: &mut JsRuntime,
+    script: String,
+    ctx: CommandContext,
+) -> anyhow::Result<()> {
+    let script = JS_COMMAND_WRAPPER.replace("USER_CODE;", &script);
+
+    // Execute script (Wrapper returns a function)
+    let output = runtime.execute_script("<anon>", script)?;
+
+    let global_promise: v8::Global<v8::Value> = {
+        // Get the handle scope
+        let scope = &mut runtime.handle_scope();
+
+        // Get the global object
+        let global = scope.get_current_context().global(scope).cast();
+
+        let local = Local::new(scope, output);
+        let local_fn: Local<'_, v8::Function> = local
+            .try_into()
+            .context("wrapper didn't produce function")?;
+
+        let ctx_value = to_v8(scope, ctx)?;
+
+        let result = local_fn
+            .call(scope, global, &[ctx_value])
+            .context("function provided no return value")?;
+        Global::new(scope, result)
+    };
+
+    let resolve = runtime.resolve(global_promise);
+
+    // Run event loop to completion
+    let _result = runtime
+        .with_event_loop_promise(resolve, PollEventLoopOptions::default())
+        .await?;
+
+    Ok(())
+}
 
 /// Executes the provided script using the provided event
 async fn execute_script(
