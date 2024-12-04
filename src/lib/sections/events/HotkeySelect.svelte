@@ -21,6 +21,7 @@
   };
 
   const runtimeAppData = getRuntimeAppData();
+
   onMount(() => {
     updateHotkeys();
   });
@@ -55,11 +56,21 @@
   </button>
 </div>
 
+{#if !$runtimeAppData.vtube_studio_connected}
+  <p class="error">
+    Not connected to VTube studio... Connect to see available Hotkeys
+  </p>
+{/if}
+
 <style>
   .container {
     display: flex;
     gap: 0.5rem;
     align-items: flex-end;
     width: 100%;
+  }
+
+  .error {
+    color: #dba33a;
   }
 </style>
