@@ -5,14 +5,18 @@
     id: string;
     name: string;
     label: string;
+    description?: string;
   };
 
-  const { id, name, label }: Props = $props();
+  const { id, name, label, description }: Props = $props();
 </script>
 
 <div class="form-input">
   <label for={id}>{label}</label>
   <input type="text" {id} {name} aria-describedby="{name}-validation" />
+  {#if description}
+    <p class="description">{description}</p>
+  {/if}
   <FormErrorLabel {name} />
 </div>
 
@@ -36,5 +40,10 @@
     align-items: center;
     display: flex;
     gap: 0.5rem;
+  }
+
+  .description {
+    font-size: 0.8rem;
+    color: #999;
   }
 </style>

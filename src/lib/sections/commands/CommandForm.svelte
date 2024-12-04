@@ -221,8 +221,20 @@
               <p>Basic details about the command</p>
             </div>
 
-            <FormTextInput id="name" name="name" label="Name" />
-            <FormTextInput id="command" name="command" label="Command" />
+            <div class="row">
+              <FormTextInput
+                id="name"
+                name="name"
+                label="Name"
+                description="Name for the command"
+              />
+              <FormTextInput
+                id="command"
+                name="command"
+                label="Command"
+                description="Message that will trigger this command"
+              />
+            </div>
 
             <FormCheckbox
               id="enabled"
@@ -303,7 +315,7 @@
 
     border: 1px solid #333;
     padding: 1rem;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .editor {
@@ -366,7 +378,6 @@
   }
 
   .section__head {
-    margin-bottom: 0.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid #333;
   }
@@ -379,5 +390,11 @@
 
   .section__head p {
     color: #ccc;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
   }
 </style>
