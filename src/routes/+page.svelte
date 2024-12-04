@@ -53,7 +53,15 @@
     <div class="status-item">
       <div class="status-text">
         <h2>VTube Studio</h2>
-        <p>Connected to VTube studio, ready to throw items</p>
+
+        {#if $runtimeAppData.vtube_studio_connected}
+          <p>Connected to VTube studio, ready to throw items</p>
+        {:else}
+          <p>
+            Not connected to VTube studio, throwing items will not work. <br /> Ensure
+            you have the overlay setup in OBS and authorized in VTube Studio
+          </p>
+        {/if}
       </div>
 
       <div
