@@ -587,6 +587,15 @@ async fn assert_required_role(
                 None => return false,
             };
 
+            // User is the broadcaster
+            if twitch_manager
+                .get_user_token()
+                .await
+                .is_some_and(|value| value.user_id == user)
+            {
+                return true;
+            }
+
             let (vips, mods) = match try_join!(
                 twitch_manager.get_vip_list(),
                 twitch_manager.get_moderator_list()
@@ -603,6 +612,15 @@ async fn assert_required_role(
                 Some(user) => user,
                 None => return false,
             };
+
+            // User is the broadcaster
+            if twitch_manager
+                .get_user_token()
+                .await
+                .is_some_and(|value| value.user_id == user)
+            {
+                return true;
+            }
 
             let mods = match twitch_manager.get_moderator_list().await {
                 Ok(value) => value,
