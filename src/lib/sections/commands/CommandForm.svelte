@@ -13,7 +13,7 @@
   import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
-  import exampleCode from "../../../../script/example.js?raw";
+  import exampleCode from "../../../../script/example_command.js?raw";
   import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import { Tabs } from "bits-ui";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
