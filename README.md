@@ -20,19 +20,9 @@ Aiming to be a tailored and improved version of [KBonk](https://github.com/typeo
 
 ![Throwables](./docs/throwables.png)
 
-## Scripting 
-
-Custom scripting for handling events and creating custom interactive commands
-
-> **NOTE**
-> Currently only the "chat" event is exposed along with some APIs for working with persisted key value pairs and some Twitch and HTTP APIs
-
-
-Built on `deno_core` providing scripting through JavaScript.
-
-![Scripting](./docs/scripts.png)
-
 ## Custom Commands
+
+Write custom commands using JavaScript powered by `deno_core`
 
 ![Commands](./docs/commands.png)
 
