@@ -63,8 +63,8 @@
           command: existing.command,
           enabled: existing.enabled,
           outcome: existing.outcome,
-          require_role: MinimumRequiredRole.None,
-          cooldown: 1000,
+          require_role: existing.require_role,
+          cooldown: existing.cooldown,
         }
       : {
           name: "",
