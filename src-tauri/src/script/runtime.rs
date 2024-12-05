@@ -167,58 +167,6 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
     ScriptExecutorHandle { tx }
 }
 
-/// Invokes the `_triggerEvent` function from the runtime.js wrapper code to trigger
-/// a specific event in any JS script code.
-///
-/// Will await for the returned promise is complete to handle the full completion
-/// of any async outcomes
-async fn trigger_event(
-    runtime: &mut JsRuntime,
-    event_handlers: Global<v8::Value>,
-    event: ScriptExecuteEvent,
-) -> anyhow::Result<()> {
-    // Trigger events and wait till they complete
-    let global_promise: v8::Global<v8::Value> = {
-        // Get the handle scope
-        let scope = &mut runtime.handle_scope();
-
-        // Get the global object
-        let global = scope.get_current_context().global(scope);
-
-        let trigger_event_key = v8::String::new(scope, "_triggerEvent")
-            .context("failed to create trigger event key")?;
-        let trigger_event_value = global
-            .get(scope, trigger_event_key.into())
-            .context("failed to get trigger event value")?;
-        let trigger_event_function: v8::Local<v8::Function> = trigger_event_value
-            .try_into()
-            .context("_triggerEvent was not a function")?;
-
-        let event_data_object = to_v8(scope, event).context("failed to create event object")?;
-
-        let local_event_handlers = v8::Local::new(scope, event_handlers);
-
-        let result = trigger_event_function
-            .call(
-                scope,
-                global.into(),
-                &[local_event_handlers, event_data_object],
-            )
-            .context("failed to call event trigger")?;
-
-        Global::new(scope, result)
-    };
-
-    let resolve = runtime.resolve(global_promise);
-
-    // Run event loop to completion
-    let _result = runtime
-        .with_event_loop_promise(resolve, PollEventLoopOptions::default())
-        .await?;
-
-    Ok(())
-}
-
 static JS_CALL_WRAPPER: &str = include_str!("../../../script/wrapper_call.js");
 static JS_EVENTS_WRAPPER: &str = include_str!("../../../script/wrapper_events.js");
 static JS_COMMAND_WRAPPER: &str = include_str!("../../../script/wrapper_command.js");
@@ -292,7 +240,32 @@ async fn execute_script(
     // Execute script
     let output = runtime.execute_script("<anon>", script)?;
 
-    trigger_event(runtime, output, event).await?;
+    let global_promise: v8::Global<v8::Value> = {
+        // Get the handle scope
+        let scope = &mut runtime.handle_scope();
+
+        // Get the global object
+        let global = scope.get_current_context().global(scope).cast();
+
+        let local = Local::new(scope, output);
+        let local_fn: Local<'_, v8::Function> = local
+            .try_into()
+            .context("wrapper didn't produce function")?;
+
+        let event_value = to_v8(scope, event)?;
+
+        let result = local_fn
+            .call(scope, global, &[event_value])
+            .context("function provided no return value")?;
+        Global::new(scope, result)
+    };
+
+    let resolve = runtime.resolve(global_promise);
+
+    // Run event loop to completion
+    let _result = runtime
+        .with_event_loop_promise(resolve, PollEventLoopOptions::default())
+        .await?;
 
     Ok(())
 }

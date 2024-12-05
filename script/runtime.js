@@ -31,38 +31,6 @@ function argToStr(value) {
   return JSON.stringify(value, Object.getOwnPropertyNames(value));
 }
 
-// Called by script runtime to invoke an event handler
-async function _triggerEvent(handlers, { type, data }) {
-  const handler = handlers[type];
-
-  if (handler === undefined) {
-    return Promise.resolve(); // No handlers, resolve immediately
-  }
-
-  // Collect promises from all callbacks, handling both sync and async cases
-  const promises = handler.map((callback) => {
-    try {
-      const result = callback(data);
-      if (result instanceof Promise) {
-        return result;
-      } else {
-        return Promise.resolve(result);
-      }
-    } catch (error) {
-      console.error(`Error in callback for event "${type}":`, error);
-      return Promise.resolve(); // Return a resolved promise on error
-    }
-  });
-
-  try {
-    // Wait for all promises to resolve
-    await Promise.all(promises);
-  } catch (error) {
-    console.error(`Error in callback for event "${type}":`, error);
-    return Promise.resolve(); // Return a resolved promise on error
-  }
-}
-
 function isValidUsernameStrict(username) {
   if (!username) return false;
 
@@ -135,7 +103,6 @@ const api = {
 };
 
 globalThis.api = api;
-globalThis._triggerEvent = _triggerEvent;
 globalThis.console = {
   log: info,
   info,
