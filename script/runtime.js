@@ -33,12 +33,14 @@ function argToStr(value) {
 
 // Called by script runtime to invoke an event handler
 async function _triggerEvent(handlers, { type, data }) {
-  if (handlers[type] === undefined) {
+  const handler = handlers[type];
+
+  if (handler === undefined) {
     return Promise.resolve(); // No handlers, resolve immediately
   }
 
   // Collect promises from all callbacks, handling both sync and async cases
-  const promises = handlers[type].map((callback) => {
+  const promises = handler.map((callback) => {
     try {
       const result = callback(data);
       if (result instanceof Promise) {
@@ -108,71 +110,6 @@ function getUsernameArg(arg, validate = false) {
   return arg;
 }
 
-function createCommand(options) {
-  on("chat", async (event) => {
-    const fullMessage = event.message;
-    const args = fullMessage.split(" ");
-
-    if (options.command === undefined) {
-      throw new Error("Command not specified");
-    }
-
-    const firstArg = args[0];
-    const prefix = options.command;
-
-    // Ignore non matching prefix
-    if (firstArg.toLowerCase() !== prefix.toLowerCase()) {
-      return;
-    }
-
-    const withoutPrefix = fullMessage.substring(prefix.length).trim();
-
-    const user = {
-      id: event.user_id,
-      name: event.user_name,
-      display_name: event.display_name,
-    };
-
-    // Get target user from first arg
-    const targetUser = api.twitch.getUsernameArg(
-      args[1],
-      options.validateTargetUser ?? false
-    );
-
-    // Check VIP access
-    if (options.requireVip) {
-      if (!(await api.twitch.isVip(user.id))) {
-        return;
-      }
-    }
-
-    // Check moderator access
-    if (options.requireMod) {
-      if (!(await api.twitch.isModerator(user.id))) {
-        return;
-      }
-    }
-
-    if (options.handle === undefined) {
-      throw new Error("Handle is not defined for command");
-    }
-
-    const result = options.handle({
-      fullMessage,
-      message: withoutPrefix,
-      user,
-      targetUser,
-      args: args.slice(1),
-    });
-
-    const value = result instanceof Promise ? await result : result;
-
-    if (typeof value === "string") {
-      await api.twitch.sendChat(value);
-    }
-  });
-}
-
 // API functions provided to the runtime
 const api = {
   twitch: {
@@ -198,7 +135,6 @@ const api = {
 };
 
 globalThis.api = api;
-globalThis.createCommand = createCommand;
 globalThis._triggerEvent = _triggerEvent;
 globalThis.console = {
   log: info,
