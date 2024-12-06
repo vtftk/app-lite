@@ -1,50 +1,76 @@
 <script lang="ts">
-  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import {
+    createDeriveModelCalibrated,
+    createOverlayURLQuery,
+    createTwitchOAuthURLQuery,
+    getAppData,
+    getRuntimeAppData,
+  } from "$lib/api/runtimeAppData";
   import { derived } from "svelte/store";
   import { invoke } from "@tauri-apps/api/core";
 
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import { createIsAuthenticatedQuery } from "$lib/api/oauth";
+  import { toast } from "svelte-sonner";
+  import { setClipboard } from "$lib/utils/browser";
 
   const appData = getAppData();
   const runtimeAppData = getRuntimeAppData();
   const isAuthenticated = createIsAuthenticatedQuery();
 
-  // Model needs to be calibrated if not available here
-  const isModelCalibrated = derived(
-    [appData, runtimeAppData],
-    ([$appData, $runtimeAppData]) => {
-      // No model active
-      if ($runtimeAppData.model_id === null) {
-        return false;
-      }
+  // Query for the overlay URL
+  const overlayURLQuery = createOverlayURLQuery();
 
-      const modelData = $appData.models[$runtimeAppData.model_id];
-      return modelData !== undefined;
-    }
+  // Query for the twitch OAuth URL
+  const twitchOAuthURLQuery = createTwitchOAuthURLQuery();
+
+  // Model needs to be calibrated if not available here
+  const isModelCalibrated = createDeriveModelCalibrated(
+    appData,
+    runtimeAppData
   );
 
-  async function setClipboard(text: string) {
-    const type = "text/plain";
-    const blob = new Blob([text], { type });
-    const data = [new ClipboardItem({ [type]: blob })];
-    await navigator.clipboard.write(data);
+  /**
+   * Handler for clicking the "Copy Link" button to copy the overlay URL
+   */
+  function onCopyOverlay() {
+    const overlayURL: string | undefined = $overlayURLQuery.data;
+
+    if (overlayURL === undefined) return;
+
+    const copyPromise = setClipboard(overlayURL);
+    toast.promise(copyPromise, {
+      loading: "Copying overlay URL...",
+      success: "Copied overlay URL",
+      error: "Failed to copy overlay URL",
+    });
   }
 
-  async function getTwitchURL(): Promise<string> {
-    return await invoke("get_twitch_oauth_uri");
+  /**
+   * Handler for clicking the "Open In Browser" button to open the
+   * Twitch OAuth link in browser
+   */
+  function onOpenTwitchURL() {
+    const openPromise = invoke<boolean>("open_twitch_oauth_uri");
+
+    toast.promise(openPromise, {
+      loading: "Opening Twitch login...",
+      success: "Opened in default browser",
+      error: "Failed to open in default browser",
+    });
   }
 
-  async function getOverlayURL(): Promise<string> {
-    return await invoke("get_overlay_url");
-  }
+  /**
+   * Handle logging out from Twitch
+   */
+  function onLogoutTwitch() {
+    const logoutPromise = invoke<void>("logout");
 
-  async function openTwitchURL() {
-    await invoke<boolean>("open_twitch_oauth_uri");
-  }
-
-  async function logout() {
-    await invoke("logout");
+    toast.promise(logoutPromise, {
+      loading: "Logging out...",
+      success: "Logged out",
+      error: "Failed to logout",
+    });
   }
 </script>
 
@@ -74,14 +100,12 @@
         <h2>Active Overlay</h2>
         <p>Connected OBS overlays</p>
 
-        {#await getOverlayURL() then overlayURL}
+        {#if $overlayURLQuery.data}
           <div class="actions">
-            <button class="btn" onclick={() => setClipboard(overlayURL)}
-              >Copy Link</button
-            >
-            <p class="url">{overlayURL}</p>
+            <button class="btn" onclick={onCopyOverlay}>Copy Link</button>
+            <p class="url">{$overlayURLQuery.data}</p>
           </div>
-        {/await}
+        {/if}
       </div>
       <div
         class="status-indicator"
@@ -110,7 +134,7 @@
             <p>Connected to your Twitch account.</p>
 
             <div class="actions">
-              <button class="btn" onclick={logout}>Logout</button>
+              <button class="btn" onclick={onLogoutTwitch}>Logout</button>
             </div>
           {:else}
             <p>
@@ -120,12 +144,18 @@
             </p>
 
             <div class="actions">
-              <button class="btn" onclick={openTwitchURL}
-                >Open in browser</button
-              >
-              {#await getTwitchURL() then twitchURL}
-                <input class="url" type="text" readonly value={twitchURL} />
-              {/await}
+              <button class="btn" onclick={onOpenTwitchURL}>
+                Open in browser
+              </button>
+
+              {#if $twitchOAuthURLQuery.data}
+                <input
+                  class="url"
+                  type="text"
+                  readonly
+                  value={$twitchOAuthURLQuery.data}
+                />
+              {/if}
             </div>
           {/if}
         </div>

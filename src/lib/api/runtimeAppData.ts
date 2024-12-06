@@ -6,7 +6,7 @@ import {
 import type { AppData, RuntimeAppData } from "./types";
 import { invoke } from "@tauri-apps/api/core";
 import { getContext } from "svelte";
-import type { Readable } from "svelte/store";
+import { derived, type Readable } from "svelte/store";
 import { queryClient } from "./utils";
 
 export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
@@ -57,5 +57,50 @@ export function createAppDateMutation() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: APP_DATA_KEY });
     },
+  });
+}
+
+/**
+ * Create a query to load the overlay URL
+ */
+export function createOverlayURLQuery() {
+  return createQuery({
+    queryKey: ["overlay-url"],
+    queryFn: () => invoke<string>("get_overlay_url"),
+  });
+}
+
+/**
+ * Create a query to load the twitch URL
+ */
+export function createTwitchOAuthURLQuery() {
+  return createQuery({
+    queryKey: ["twitch-oauth-url"],
+    queryFn: () => invoke<string>("get_twitch_oauth_uri"),
+  });
+}
+
+/**
+ * Creates a derived store that can determine if the
+ * current model is calibrated, uses the active model
+ * ID from the runtime app data combined with the model
+ * data in app data
+ *
+ * @param appData App data for the model calibration data
+ * @param runtimeAppData Runtime app data for the current model
+ * @returns Readable for whether the current model is calibrated
+ */
+export function createDeriveModelCalibrated(
+  appData: Readable<AppData>,
+  runtimeAppData: Readable<RuntimeAppData>
+): Readable<boolean> {
+  return derived([appData, runtimeAppData], ([$appData, $runtimeAppData]) => {
+    // No model active
+    if ($runtimeAppData.model_id === null) {
+      return false;
+    }
+
+    const modelData = $appData.models[$runtimeAppData.model_id];
+    return modelData !== undefined;
   });
 }
