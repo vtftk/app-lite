@@ -5,57 +5,60 @@
   import { z } from "zod";
   import {
     EYES_MODE_VALUES,
-    EyesMode,
     THROW_DIRECTION_VALUES,
-    ThrowDirection,
     type AppData,
   } from "$lib/api/types";
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createUpdateSettingsMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import { Tabs } from "bits-ui";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import { minMax } from "$lib/utils/validation";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import FormSelect from "$lib/components/form/FormSelect.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import { toast } from "svelte-sonner";
+  import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
+  import EyesModeSelect from "./EyesModeSelect.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
-  const throwablesSchema = z.object({
-    duration: z.number(),
-    spin_speed: minMax,
-    throw_angle: minMax,
-    direction: z.enum(THROW_DIRECTION_VALUES),
-    impact_delay: z.number(),
-    item_scale: minMax,
-  });
-
-  const modelSchema = z.object({
-    model_return_time: z.number(),
-    eyes_on_hit: z.enum(EYES_MODE_VALUES),
-  });
-
-  const soundsSchema = z.object({
-    global_volume: z.number(),
-  });
-
-  const vtubeStudioSchema = z.object({
-    host: z.string(),
-    port: z.number(),
-  });
+  const updateSettings = createUpdateSettingsMutation(appData, appDataMutation);
 
   const schema = z.object({
-    throwables: throwablesSchema,
-    model: modelSchema,
-    sounds: soundsSchema,
-    vtube_studio: vtubeStudioSchema,
+    // Schema for throwables configuration
+    throwables: z.object({
+      duration: z.number(),
+      spin_speed: minMax,
+      throw_angle: minMax,
+      direction: z.enum(THROW_DIRECTION_VALUES),
+      impact_delay: z.number(),
+      item_scale: minMax,
+    }),
+    // Schema for model related configuration
+    model: z.object({
+      model_return_time: z.number(),
+      eyes_on_hit: z.enum(EYES_MODE_VALUES),
+    }),
+    // Schema for sound configuration
+    sounds: z.object({
+      global_volume: z.number(),
+    }),
+    // Schema for vtube studio configuration
+    vtube_studio: z.object({
+      host: z.string(),
+      port: z.number(),
+    }),
   });
 
   type Schema = z.infer<typeof schema>;
 
-  function createInitialValues(appData: AppData): Schema {
+  function createFromExisting(appData: AppData): Schema {
     const {
       throwables_config,
       model_config,
@@ -87,7 +90,7 @@
   }
 
   const { form, data, setFields } = createForm<z.infer<typeof schema>>({
-    initialValues: createInitialValues($appData),
+    initialValues: createFromExisting($appData),
 
     // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
@@ -107,12 +110,9 @@
 
   async function save(values: Schema) {
     const { throwables, model, sounds, vtube_studio } = values;
-    const _appData = $appData;
 
-    await $appDataMutation.mutateAsync({
-      ..._appData,
+    await $updateSettings({
       throwables_config: {
-        ..._appData.throwables_config,
         duration: throwables.duration,
         spin_speed: throwables.spin_speed,
         throw_angle: throwables.throw_angle,
@@ -121,58 +121,18 @@
         item_scale: throwables.item_scale,
       },
       model_config: {
-        ..._appData.model_config,
         model_return_time: model.model_return_time,
         eyes_on_hit: model.eyes_on_hit,
       },
       sounds_config: {
-        ..._appData.sounds_config,
         global_volume: sounds.global_volume,
       },
-
       vtube_studio_config: {
-        ..._appData.vtube_studio_config,
         host: vtube_studio.host,
         port: vtube_studio.port,
       },
     });
   }
-
-  const directionOptions = [
-    {
-      value: ThrowDirection.Random,
-      label: "Random",
-      description: "Randomly pick between the left and right side",
-    },
-    {
-      value: ThrowDirection.LeftOnly,
-      label: "Left Only",
-      description: "Only throw from the left side",
-    },
-    {
-      value: ThrowDirection.RightOnly,
-      label: "Right Only",
-      description: "Only throw from the right side",
-    },
-  ];
-
-  const eyesOptions = [
-    {
-      value: EyesMode.Unchanged,
-      label: "Unchanged",
-      description: "Don't change eyes when hit",
-    },
-    {
-      value: EyesMode.Opened,
-      label: "Open",
-      description: "Open model eyes when hit",
-    },
-    {
-      value: EyesMode.Closed,
-      label: "Close",
-      description: "Close model eyes when hit",
-    },
-  ];
 </script>
 
 <form use:form class="container">
@@ -202,13 +162,8 @@
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="throwables">
-          <div class="settings">
-            <section class="section">
-              <div class="section__head">
-                <h2>Duration and delay</h2>
-                <p></p>
-              </div>
-
+          <FormSections>
+            <FormSection title="Duration and delay">
               <FormNumberInput
                 id="throwables.duration"
                 name="throwables.duration"
@@ -222,13 +177,10 @@
                 label="Impact Delay"
                 description="Delay before the impact is registered"
               />
+            </FormSection>
 
-              <div class="section__head">
-                <h2>Spin Speed</h2>
-                <p></p>
-              </div>
-
-              <!-- Spin speed -->
+            <!-- Spin speed -->
+            <FormSection title="Spin speed">
               <div class="row">
                 <FormNumberInput
                   id="throwables.spin_speed.min"
@@ -244,26 +196,14 @@
                   description="Maximum speed an item can spin at"
                 />
               </div>
+            </FormSection>
 
-              <div class="section__head">
-                <h2>Angle and direction</h2>
-                <p></p>
-              </div>
-
-              {#snippet directionItem(item: (typeof directionOptions)[0])}
-                <div class="text-stack">
-                  <p class="text-stack--top">{item.label}</p>
-                  <p class="text-stack--bottom">{item.description}</p>
-                </div>
-              {/snippet}
-
-              <FormSelect
+            <FormSection title="Angle and direction">
+              <ThrowableDirectionSelect
                 id="throwables.direction"
                 name="throwables.direction"
                 label="Direction"
                 description="Which directions the items should come from"
-                items={directionOptions}
-                item={directionItem}
                 selected={$data.throwables.direction}
                 onChangeSelected={(selected) => {
                   setFields("throwables.direction", selected);
@@ -286,12 +226,9 @@
                   description="Maximum angle an item will be throw at"
                 />
               </div>
+            </FormSection>
 
-              <div class="section__head">
-                <h2>Scale</h2>
-                <p></p>
-              </div>
-
+            <FormSection title="Scale">
               <!-- Item scale -->
               <div class="row">
                 <FormNumberInput
@@ -308,17 +245,12 @@
                   description="Maximum scale applied to an item"
                 />
               </div>
-            </section>
-          </div>
+            </FormSection>
+          </FormSections>
         </Tabs.Content>
         <Tabs.Content value="sounds">
-          <div class="settings">
-            <section class="section">
-              <div class="section__head">
-                <h2>Volume</h2>
-                <p></p>
-              </div>
-
+          <FormSections>
+            <FormSection title="Volume">
               <FormNumberInput
                 id="sounds.global_volume"
                 name="sounds.global_volume"
@@ -327,17 +259,15 @@
               />
 
               <!-- TODO: Sound alerts volume, impact sound volume -->
-            </section>
-          </div>
+            </FormSection>
+          </FormSections>
         </Tabs.Content>
         <Tabs.Content value="vtube_studio">
-          <div class="settings">
-            <section class="section">
-              <div class="section__head">
-                <h2>API Settings</h2>
-                <p>Details for the VTube Studio API</p>
-              </div>
-
+          <FormSections>
+            <FormSection
+              title="API Settings"
+              description="Details for the VTube Studio API"
+            >
               <div class="row row-ll">
                 <FormTextInput
                   id="vtube_studio.host"
@@ -361,17 +291,12 @@
                 label="Port"
                 description="Port that the VTube Studio API is running on"
               />
-            </section>
-          </div>
+            </FormSection>
+          </FormSections>
         </Tabs.Content>
         <Tabs.Content value="model">
-          <div class="settings">
-            <section class="section">
-              <div class="section__head">
-                <h2>Model Settings</h2>
-                <p></p>
-              </div>
-
+          <FormSections>
+            <FormSection title="Model Settings">
               <FormNumberInput
                 id="model.model_return_time"
                 name="model.model_return_time"
@@ -379,27 +304,18 @@
                 description="Time it takes for the model to return to its original position after being hit"
               />
 
-              {#snippet eyeOptionItem(item: (typeof eyesOptions)[0])}
-                <div class="text-stack">
-                  <p class="text-stack--top">{item.label}</p>
-                  <p class="text-stack--bottom">{item.description}</p>
-                </div>
-              {/snippet}
-
-              <FormSelect
+              <EyesModeSelect
                 id="model.eyes_on_hit"
                 name="model.eyes_on_hit"
                 label="Eyes On Hit"
                 description="How the model eyes should react to being hit"
-                items={eyesOptions}
-                item={eyeOptionItem}
                 selected={$data.model.eyes_on_hit}
                 onChangeSelected={(selected) => {
                   setFields("model.eyes_on_hit", selected);
                 }}
               />
-            </section>
-          </div>
+            </FormSection>
+          </FormSections>
         </Tabs.Content>
       </Tabs.Root>
     </div>
@@ -407,22 +323,6 @@
 </form>
 
 <style>
-  .settings {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-    padding: 0.5rem;
-  }
-
-  .section {
-    display: flex;
-    flex-flow: column;
-
-    border: 1px solid #333;
-    padding: 1rem;
-    gap: 1rem;
-  }
-
   .row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -459,20 +359,6 @@
     overflow: auto;
     flex-flow: column;
     border: 1px solid #333;
-  }
-
-  .section__head {
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #333;
-  }
-
-  .section__head h2 {
-    color: #fff;
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .section__head p {
-    color: #ccc;
+    padding: 1rem;
   }
 </style>

@@ -3,7 +3,16 @@ import {
   createQuery,
   type CreateQueryResult,
 } from "@tanstack/svelte-query";
-import type { AppData, ItemConfig, RuntimeAppData, SoundConfig } from "./types";
+import type {
+  AppData,
+  ItemConfig,
+  ModelConfig,
+  RuntimeAppData,
+  SoundConfig,
+  SoundsConfig,
+  ThrowablesConfig,
+  VTubeStudioConfig,
+} from "./types";
 import { invoke } from "@tauri-apps/api/core";
 import { getContext } from "svelte";
 import { derived, get, type Readable } from "svelte/store";
@@ -357,6 +366,37 @@ export function createCreateSoundMutation(
 
       // Add the sound to the end of the sounds list
       sounds: [...appData.sounds, soundConfig],
+    })
+  );
+}
+
+type UpdateSettingsMutation = {
+  throwables_config: Partial<ThrowablesConfig>;
+  model_config: Partial<ModelConfig>;
+  sounds_config: Partial<SoundsConfig>;
+  vtube_studio_config: Partial<VTubeStudioConfig>;
+};
+
+export function createUpdateSettingsMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<UpdateSettingsMutation>(
+    appData,
+    appDataMutation,
+    (
+      appData,
+      { throwables_config, model_config, sounds_config, vtube_studio_config }
+    ) => ({
+      ...appData,
+
+      throwables_config: { ...appData.throwables_config, ...throwables_config },
+      model_config: { ...appData.model_config, ...model_config },
+      sounds_config: { ...appData.sounds_config, ...sounds_config },
+      vtube_studio_config: {
+        ...appData.vtube_studio_config,
+        ...vtube_studio_config,
+      },
     })
   );
 }
