@@ -16,7 +16,7 @@ pub async fn op_vtftk_play_sound(#[string] src: String, volume: f32) -> anyhow::
         sender
             .send(JsEventMessage::PlaySound {
                 config: SoundConfig {
-                    id: Uuid::nil(),
+                    id: Uuid::new_v4(),
                     name: "<internal>".to_string(),
                     src,
                     volume,
@@ -46,7 +46,7 @@ pub async fn op_vtftk_play_sound_seq(#[serde] seq: Vec<SoundSeq>) -> anyhow::Res
                 configs: seq
                     .into_iter()
                     .map(|seq| SoundConfig {
-                        id: Uuid::nil(),
+                        id: Uuid::new_v4(),
                         name: "<internal>".to_string(),
                         src: seq.src,
                         volume: seq.volume,
