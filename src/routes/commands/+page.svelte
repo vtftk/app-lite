@@ -1,15 +1,23 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createDeleteCommandsMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandItem from "$lib/sections/commands/CommandItem.svelte";
-  import type { CommandConfig, UserScriptConfig } from "$shared/appData";
+  import type { CommandConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
+  const deleteCommands = createDeleteCommandsMutation(appData, appDataMutation);
+
   let selected: string[] = $state([]);
+  const isAllSelected = $derived(selected.length === $appData.commands.length);
 
   function onToggleSelected(item: CommandConfig) {
     if (selected.includes(item.id)) {
@@ -19,8 +27,6 @@
     }
   }
 
-  const isAllSelected = $derived(selected.length === $appData.commands.length);
-
   function onToggleAllSelected() {
     if (isAllSelected) {
       selected = [];
@@ -29,14 +35,19 @@
     }
   }
 
-  async function onBulkDelete() {
+  function onBulkDelete() {
     if (!confirm("Are you sure you want to delete the selected commands?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      commands: $appData.commands.filter((item) => !selected.includes(item.id)),
+    const deletePromise = $deleteCommands({
+      commandIds: selected,
+    });
+
+    toast.promise(deletePromise, {
+      loading: "Deleting commands...",
+      success: "Deleted commands",
+      error: "Failed to delete commands",
     });
 
     selected = [];

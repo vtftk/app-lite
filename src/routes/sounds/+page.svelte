@@ -1,16 +1,24 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createDeleteSoundsMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
   import type { SoundConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
+  const deleteSounds = createDeleteSoundsMutation(appData, appDataMutation);
+
   let selected: string[] = $state([]);
+  const isAllSelected = $derived(selected.length === $appData.sounds.length);
 
   function onToggleSelected(item: SoundConfig) {
     if (selected.includes(item.id)) {
@@ -20,8 +28,6 @@
     }
   }
 
-  const isAllSelected = $derived(selected.length === $appData.sounds.length);
-
   function onToggleAllSelected() {
     if (isAllSelected) {
       selected = [];
@@ -30,14 +36,17 @@
     }
   }
 
-  async function onBulkDelete() {
+  function onBulkDelete() {
     if (!confirm("Are you sure you want to delete the selected sounds?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      sounds: $appData.sounds.filter((item) => !selected.includes(item.id)),
+    const deletePromise = $deleteSounds(selected);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting sounds...",
+      success: "Deleted sounds",
+      error: "Failed to delete sounds",
     });
 
     selected = [];

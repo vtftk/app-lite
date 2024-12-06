@@ -220,3 +220,51 @@ export function createDeleteScriptsMutation(
     })
   );
 }
+
+export function createDeleteSoundsMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<string[]>(
+    appData,
+    appDataMutation,
+    (appData, soundIds) => ({
+      ...appData,
+
+      // Remove the sound itself
+      sounds: appData.sounds.filter((sound) => !soundIds.includes(sound.id)),
+
+      // Remove the sound from any associated items
+      items: appData.items.map((item) => ({
+        ...item,
+        impact_sounds_ids: item.impact_sounds_ids.filter(
+          (soundId) => !soundIds.includes(soundId)
+        ),
+      })),
+
+      // TODO: Remove sound from events
+    })
+  );
+}
+
+type DeleteCommands = {
+  commandIds: string[];
+};
+
+export function createDeleteCommandsMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<DeleteCommands>(
+    appData,
+    appDataMutation,
+    (appData, { commandIds }) => ({
+      ...appData,
+
+      // Remove the command itself
+      commands: appData.commands.filter(
+        (command) => !commandIds.includes(command.id)
+      ),
+    })
+  );
+}
