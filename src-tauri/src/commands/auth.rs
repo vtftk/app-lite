@@ -4,9 +4,12 @@ use crate::{
     constants::{LOCAL_SERVER_PORT, TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES},
     twitch::manager::TwitchManager,
 };
+use anyhow::Context;
 use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
 
 use reqwest::Url;
+
+use super::CmdResult;
 
 /// Obtain a URL for use logging into twitch using OAuth2
 #[tauri::command]
@@ -24,11 +27,12 @@ pub fn get_twitch_oauth_uri() -> String {
 
 /// Open the users default browser to a twitch OAuth URI
 #[tauri::command]
-pub fn open_twitch_oauth_uri() {
+pub fn open_twitch_oauth_uri() -> CmdResult<()> {
     let uri = get_twitch_oauth_uri();
 
-    // TODO: Handle failure
-    _ = webbrowser::open(&uri);
+    webbrowser::open(&uri).context("failed to open browser")?;
+
+    Ok(())
 }
 
 #[tauri::command]
