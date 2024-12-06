@@ -3,6 +3,7 @@
   import "$lib/api/events";
   import "@fontsource/jetbrains-mono";
 
+  import { Toaster } from "svelte-sonner";
   import { queryClient } from "$lib/api/utils";
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
@@ -17,6 +18,15 @@
     </main>
   </AppDataProvider>
 </QueryClientProvider>
+
+<Toaster
+  theme="dark"
+  richColors
+  closeButton
+  position="bottom-center"
+  visibleToasts={3}
+  duration={1000}
+/>
 
 <style>
   .main {

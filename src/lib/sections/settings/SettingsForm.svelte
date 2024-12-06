@@ -25,6 +25,7 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     existing?: UserScriptConfig;
@@ -98,44 +99,57 @@
     };
   }
 
-  const { form, data, setFields, isDirty, setIsDirty } = createForm<
-    z.infer<typeof schema>
-  >({
+  const { form, data, setFields } = createForm<z.infer<typeof schema>>({
     initialValues: createInitialValues($appData),
 
+    // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
-    async onSubmit(values, context) {
-      const { throwables, model, sounds, vtube_studio } = values;
 
-      await $appDataMutation.mutateAsync({
-        ...$appData,
-        throwables_config: {
-          ...$appData.throwables_config,
-          duration: throwables.duration,
-          spin_speed: throwables.spin_speed,
-          throw_angle: throwables.throw_angle,
-          direction: throwables.direction,
-          impact_delay: throwables.impact_delay,
-          item_scale: throwables.item_scale,
-        },
-        model_config: {
-          ...$appData.model_config,
-          model_return_time: model.model_return_time,
-          eyes_on_hit: model.eyes_on_hit,
-        },
-        sounds_config: {
-          ...$appData.sounds_config,
-          global_volume: sounds.global_volume,
-        },
+    async onSubmit(values) {
+      const savePromise = save(values);
 
-        vtube_studio_config: {
-          ...$appData.vtube_studio_config,
-          host: vtube_studio.host,
-          port: vtube_studio.port,
-        },
+      toast.promise(savePromise, {
+        loading: "Saving settings...",
+        success: "Saved settings",
+        error: "Failed to save settings",
       });
+
+      await savePromise;
     },
   });
+
+  async function save(values: Schema) {
+    const { throwables, model, sounds, vtube_studio } = values;
+    const _appData = $appData;
+
+    await $appDataMutation.mutateAsync({
+      ..._appData,
+      throwables_config: {
+        ..._appData.throwables_config,
+        duration: throwables.duration,
+        spin_speed: throwables.spin_speed,
+        throw_angle: throwables.throw_angle,
+        direction: throwables.direction,
+        impact_delay: throwables.impact_delay,
+        item_scale: throwables.item_scale,
+      },
+      model_config: {
+        ..._appData.model_config,
+        model_return_time: model.model_return_time,
+        eyes_on_hit: model.eyes_on_hit,
+      },
+      sounds_config: {
+        ..._appData.sounds_config,
+        global_volume: sounds.global_volume,
+      },
+
+      vtube_studio_config: {
+        ..._appData.vtube_studio_config,
+        host: vtube_studio.host,
+        port: vtube_studio.port,
+      },
+    });
+  }
 
   const directionOptions = [
     {
@@ -337,7 +351,7 @@
                 <p>Details for the VTube Studio API</p>
               </div>
 
-              <div class="row-ll">
+              <div class="row row-ll">
                 <FormTextInput
                   id="vtube_studio.host"
                   name="vtube_studio.host"
@@ -422,12 +436,6 @@
     gap: 1rem;
   }
 
-  .editor {
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-  }
-
   .row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -437,11 +445,7 @@
   }
 
   .row-ll {
-    display: grid;
     grid-template-columns: 3fr 1fr;
-    gap: 1rem;
-    align-items: center;
-    justify-content: center;
   }
 
   .container {
