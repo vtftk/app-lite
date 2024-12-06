@@ -16,4 +16,5 @@
       VTube studio is not connected, please ensure you have setup the overlay in
       OBS (and have OBS running) and have approved access in VTube studio
     </p>
-  </div>{/if}
+  </div>
+{/if}

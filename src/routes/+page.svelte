@@ -83,6 +83,10 @@
           <p>
             Connected to VTube studio, model is calibrated. Ready to throw items
           </p>
+
+          <div class="actions">
+            <a class="btn" href="/calibration">Recalibrate Model</a>
+          </div>
         {:else if $runtimeAppData.vtube_studio_connected}
           <p>
             Connected to VTube studio.
