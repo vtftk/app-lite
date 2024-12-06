@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createDeleteEventsMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import EventItem from "$lib/sections/events/EventItem.svelte";
   import type { EventConfig } from "$shared/appData";
@@ -8,6 +12,9 @@
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   const appData = getAppData();
+  const appDataMutation = createAppDateMutation();
+
+  const deleteEvents = createDeleteEventsMutation(appData, appDataMutation);
 
   let selected: string[] = $state([]);
 
@@ -36,13 +43,12 @@
       return;
     }
 
-    // const deletePromise = $deleteScripts(selected);
-    const deletePromise = Promise.resolve({});
+    const deletePromise = $deleteEvents(selected);
 
     toast.promise(deletePromise, {
-      loading: "Deleting scripts...",
-      success: "Deleted scripts",
-      error: "Failed to delete scripts",
+      loading: "Deleting events...",
+      success: "Deleted events",
+      error: "Failed to delete events",
     });
 
     // Clear selection since all items are removed

@@ -536,3 +536,17 @@ export function createCreateCommandMutation(
     })
   );
 }
+
+export function createDeleteEventsMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<string[]>(
+    appData,
+    appDataMutation,
+    (appData, eventIds) => ({
+      ...appData,
+      events: appData.events.filter((event) => !eventIds.includes(event.id)),
+    })
+  );
+}
