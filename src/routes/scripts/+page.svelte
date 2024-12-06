@@ -4,6 +4,7 @@
   import ScriptItem from "$lib/sections/scripts/ScriptItem.svelte";
   import type { UserScriptConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   const appData = getAppData();
@@ -29,17 +30,34 @@
     }
   }
 
-  async function onBulkDelete() {
+  function onBulkDelete() {
     if (!confirm("Are you sure you want to delete the selected scripts?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      scripts: $appData.scripts.filter((item) => !selected.includes(item.id)),
+    const deletePromise = deleteScripts(selected);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting scripts...",
+      success: "Deleted scripts",
+      error: "Failed to delete scripts",
     });
 
+    // Clear selection since all items are removed
     selected = [];
+  }
+
+  /**
+   * Deletes any scripts with ID's in the provided list of IDs
+   *
+   * @param ids Script ID's to delete
+   * @returns Promise that completes when the deletion is complete
+   */
+  function deleteScripts(ids: string[]): Promise<any> {
+    return $appDataMutation.mutateAsync({
+      ...$appData,
+      scripts: $appData.scripts.filter((item) => !ids.includes(item.id)),
+    });
   }
 </script>
 
