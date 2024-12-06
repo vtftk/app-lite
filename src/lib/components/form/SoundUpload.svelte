@@ -11,10 +11,12 @@
     // Existing source URL
     existing?: string;
 
+    volume?: number;
+
     onChangeSound: (sound: File | null) => void;
   };
 
-  const { id, name, label, existing, onChangeSound }: Props = $props();
+  const { id, name, label, existing, volume, onChangeSound }: Props = $props();
 
   let inputElm: HTMLInputElement | undefined = $state();
   let currentSound = $state(existing);
@@ -46,7 +48,7 @@
 
   <div class="sound-preview-wrapper">
     {#if currentSound !== undefined}
-      <SoundPreview src={getBackendURL(currentSound)} />
+      <SoundPreview src={getBackendURL(currentSound)} {volume} />
     {/if}
   </div>
 

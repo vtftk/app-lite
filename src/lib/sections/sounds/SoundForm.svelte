@@ -7,10 +7,12 @@
   import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
-  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
 
   type Props = {
     existing?: SoundConfig;
@@ -34,110 +36,116 @@
     volume: z.number(),
   });
 
-  const { form, data, setFields } = createForm<z.infer<typeof schema>>({
-    initialValues: existing
-      ? {
-          name: existing.name,
-          sound: undefined,
-          volume: existing.volume,
+  const { form, data, isValid, setFields } = createForm<z.infer<typeof schema>>(
+    {
+      initialValues: existing
+        ? {
+            name: existing.name,
+            sound: undefined,
+            volume: existing.volume,
+          }
+        : {
+            name: "",
+            sound: undefined,
+            volume: 1,
+          },
+      extend: [validator({ schema }), reporterDom()],
+      async onSubmit(values, context) {
+        let soundURL: string;
+
+        if (values.sound) {
+          soundURL = await invoke<string>("upload_file", {
+            fileType: "Sound",
+            fileName: values.sound.name,
+            fileData: await values.sound.arrayBuffer(),
+          });
+        } else if (existing) {
+          soundURL = existing.src;
+        } else {
+          throw new Error("sound was missing in create mode");
         }
-      : {
-          name: "",
-          sound: undefined,
-          volume: 1,
-        },
-    extend: [validator({ schema }), reporterDom()],
-    async onSubmit(values, context) {
-      let soundURL: string;
 
-      if (values.sound) {
-        soundURL = await invoke<string>("upload_file", {
-          fileType: "Sound",
-          fileName: values.sound.name,
-          fileData: await values.sound.arrayBuffer(),
-        });
-      } else if (existing) {
-        soundURL = existing.src;
-      } else {
-        throw new Error("sound was missing in create mode");
-      }
+        const soundConfig: SoundConfig = {
+          id: existing ? existing.id : self.crypto.randomUUID(),
+          src: soundURL,
+          volume: values.volume,
+          name: values.name,
+        };
 
-      const soundConfig: SoundConfig = {
-        id: existing ? existing.id : self.crypto.randomUUID(),
-        src: soundURL,
-        volume: values.volume,
-        name: values.name,
-      };
+        if (existing !== undefined) {
+          // Update existing
+          await $appDataMutation.mutateAsync({
+            ...$appData,
+            sounds: $appData.sounds.map((item) => {
+              if (item.id !== existing.id) return item;
+              return soundConfig;
+            }),
+          });
+        } else {
+          // Add new
+          await $appDataMutation.mutateAsync({
+            ...$appData,
+            sounds: [...$appData.sounds, soundConfig],
+          });
+        }
 
-      if (existing !== undefined) {
-        // Update existing
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          sounds: $appData.sounds.map((item) => {
-            if (item.id !== existing.id) return item;
-            return soundConfig;
-          }),
-        });
-      } else {
-        // Add new
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          sounds: [...$appData.sounds, soundConfig],
-        });
-      }
-
-      goto("/sounds");
-    },
-  });
+        goto("/sounds");
+      },
+    }
+  );
 </script>
 
 <form use:form>
-  <section class="section">
-    <FormTextInput id="name" name="name" label="Name" />
-  </section>
+  {#snippet actions()}
+    <button type="submit" class="btn" disabled={!$isValid}>
+      {existing ? "Save" : "Create"}
+    </button>
 
-  <section class="section">
-    <SoundUpload
-      id="sound"
-      name="sound"
-      label="Sound"
-      existing={existing?.src}
-      onChangeSound={(file) => {
-        // Use the file name if the name hasn't been touched yet
-        if ($data.name.length < 1 && file) {
-          setFields("name", file.name);
-        }
-      }}
-    />
+    <a class="btn" href="/sounds">Back</a>
+  {/snippet}
 
-    <FormNumberInput
-      id="volume"
-      name="volume"
-      label="Volume"
-      min={0}
-      max={1}
-      step={0.1}
-    />
-  </section>
+  <PageLayoutList
+    title={existing ? "Edit Sound" : "Create Sound"}
+    description={existing
+      ? "Editing a sound"
+      : "Create a sound that can be triggered"}
+    {actions}
+  >
+    <FormSections>
+      <FormSection>
+        <FormTextInput id="name" name="name" label="Name" />
+      </FormSection>
 
-  <button type="submit" class="btn">
-    {existing ? "Save" : "Create"}
-  </button>
+      <FormSection>
+        <SoundUpload
+          id="sound"
+          name="sound"
+          label="Sound"
+          existing={existing?.src}
+          onChangeSound={(file) => {
+            // Use the file name if the name hasn't been touched yet
+            if ($data.name.length < 1 && file) {
+              setFields("name", file.name);
+            }
+          }}
+          volume={$data.volume}
+        />
+
+        <FormNumberInput
+          id="volume"
+          name="volume"
+          label="Volume"
+          min={0}
+          max={1}
+          step={0.1}
+        />
+      </FormSection>
+    </FormSections>
+  </PageLayoutList>
 </form>
 
 <style>
   form {
-    display: flex;
-    flex-flow: column;
-    gap: 1rem;
-  }
-
-  .section {
-    display: flex;
-    flex-flow: column;
-
-    border: 1px solid #333;
-    padding: 1rem;
-    gap: 1.5rem;
+    height: 100%;
   }
 </style>

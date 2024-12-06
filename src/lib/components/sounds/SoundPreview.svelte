@@ -5,9 +5,10 @@
 
   type Props = {
     src: string;
+    volume?: number;
   };
 
-  let { src }: Props = $props();
+  let { src, volume }: Props = $props();
 
   let audio: HTMLAudioElement | undefined = $state(undefined);
   let isPlaying = $state(false);
@@ -21,6 +22,7 @@
       audio.pause();
       audio.currentTime = 0;
     } else {
+      audio.volume = volume ?? 1;
       audio.play();
     }
     isPlaying = !isPlaying;
@@ -47,6 +49,10 @@
       audio.duration;
     audio.currentTime = newTime;
   }
+
+  $effect(() => {
+    if (audio) audio.volume = volume ?? 1;
+  });
 </script>
 
 <div class="sound-preview">

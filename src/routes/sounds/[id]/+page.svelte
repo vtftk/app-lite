@@ -19,13 +19,7 @@
 </script>
 
 {#if $item !== undefined}
-  {#snippet actions()}
-    <a type="button" href="/sounds">Back</a>
-  {/snippet}
-
-  <PageLayoutList title="Edit Sound" description="Editing a sound" {actions}>
-    <SoundForm existing={$item} />
-  </PageLayoutList>
+  <SoundForm existing={$item} />
 {:else}
   {#snippet actions()}
     <a type="button" href="/sounds">Back</a>
@@ -35,5 +29,5 @@
     title="Sound Not Found"
     description="Unknown sound"
     {actions}
-  ></PageLayoutList>
+  />
 {/if}
