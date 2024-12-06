@@ -55,7 +55,6 @@
 
   .title-area {
     display: flex;
-    margin-bottom: 0.5rem;
   }
 
   .actions {

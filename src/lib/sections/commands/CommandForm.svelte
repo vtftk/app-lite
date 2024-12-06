@@ -9,7 +9,12 @@
     MinimumRequiredRole,
     type CommandConfig,
   } from "$lib/api/types";
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createCreateCommandMutation,
+    createUpdateCommandMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
@@ -20,6 +25,13 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
+  import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     existing?: CommandConfig;
@@ -29,6 +41,9 @@
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
+
+  const updateCommand = createUpdateCommandMutation(appData, appDataMutation);
+  const createCommand = createCreateCommandMutation(appData, appDataMutation);
 
   const outcomeSchema = z.discriminatedUnion("type", [
     z.object({
@@ -54,37 +69,67 @@
 
   type Schema = z.infer<typeof schema>;
 
+  const createDefaults: Schema = {
+    name: "",
+    command: "!test",
+    enabled: true,
+    outcome: getOutcomeDefaults(CommandOutcomeType.Script),
+    require_role: MinimumRequiredRole.None,
+    cooldown: 1000,
+  };
+
+  function createFromExisting(config: CommandConfig): Partial<Schema> {
+    return {
+      name: config.name,
+      command: config.command,
+      enabled: config.enabled,
+      outcome: config.outcome,
+      require_role: config.require_role,
+      cooldown: config.cooldown,
+    };
+  }
+
   const { form, data, setFields, isDirty, setIsDirty } = createForm<
     z.infer<typeof schema>
   >({
-    initialValues: existing
-      ? {
-          name: existing.name,
-          command: existing.command,
-          enabled: existing.enabled,
-          outcome: existing.outcome,
-          require_role: existing.require_role,
-          cooldown: existing.cooldown,
-        }
-      : {
-          name: "",
-          command: "!test",
-          enabled: true,
-          outcome: getOutcomeDefaults(CommandOutcomeType.Script),
-          require_role: MinimumRequiredRole.None,
-          cooldown: 1000,
-        },
+    // Derive initial values
+    initialValues: existing ? createFromExisting(existing) : createDefaults,
 
+    // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
-    async onSubmit(values, context) {
-      await save(values);
-      goto("/commands");
+
+    onSubmit(values) {
+      saveWithToast(values);
+
+      if (!existing) {
+        goto("/commands");
+      }
     },
   });
 
+  function saveWithToast(values: Schema) {
+    const savePromise = save(values);
+
+    toast.promise(
+      savePromise,
+      existing
+        ? {
+            loading: "Saving command...",
+            success: "Saved command",
+            error: "Failed to save command",
+          }
+        : {
+            loading: "Creating command...",
+            success: "Created command",
+            error: "Failed to create command",
+          }
+    );
+
+    return savePromise;
+  }
+
   async function save(values: Schema) {
-    const scriptConfig: CommandConfig = {
-      id: existing ? existing.id : self.crypto.randomUUID(),
+    const partialCommandConfig: Omit<CommandConfig, "id"> = {
       enabled: values.enabled,
       name: values.name,
       command: values.command,
@@ -95,55 +140,23 @@
     };
 
     if (existing !== undefined) {
-      // Update existing
-      await $appDataMutation.mutateAsync({
-        ...$appData,
-        commands: $appData.commands.map((item) => {
-          if (item.id !== existing.id) return item;
-          return scriptConfig;
-        }),
+      await $updateCommand({
+        commandId: existing.id,
+        commandConfig: partialCommandConfig,
       });
     } else {
-      // Add new
-      await $appDataMutation.mutateAsync({
-        ...$appData,
-        commands: [...$appData.commands, scriptConfig],
+      const commandConfig: CommandConfig = {
+        ...partialCommandConfig,
+        id: self.crypto.randomUUID(),
+      };
+
+      await $createCommand({
+        commandConfig,
       });
     }
 
     setIsDirty(false);
   }
-
-  const requiredRoles = [
-    {
-      value: MinimumRequiredRole.None,
-      label: "None",
-      description: "No minimum requirement",
-    },
-    {
-      value: MinimumRequiredRole.Vip,
-      label: "VIP",
-      description: "Require VIP or greater to redeem",
-    },
-    {
-      value: MinimumRequiredRole.Mod,
-      label: "Moderator",
-      description: "Require Moderator or greater to redeem",
-    },
-  ];
-
-  const outcomeTypeOptions = [
-    {
-      value: CommandOutcomeType.Template,
-      label: "Template",
-      description: "Message with support for basic templating",
-    },
-    {
-      value: CommandOutcomeType.Script,
-      label: "Script",
-      description: "Custom JavaScript script command",
-    },
-  ];
 
   function getOutcomeDefaults(type: CommandOutcomeType): OutcomeSchema {
     switch (type) {
@@ -167,161 +180,114 @@
   }
 </script>
 
-<form use:form class="container">
-  <div class="title-area">
-    <div>
-      <h1 class="title">{existing ? "Edit Command" : "Create Command"}</h1>
-      <p class="text">
-        {#if existing && $isDirty}
-          Unsaved changes...
-        {/if}
-      </p>
-    </div>
-    <div class="actions">
-      <button type="submit" class="btn">
-        {existing ? "Save" : "Create"}
-      </button>
-      <a class="btn" href="/commands">Back</a>
-    </div>
-  </div>
+<form use:form>
+  {#snippet actions()}
+    <button type="submit" class="btn">
+      {existing ? "Save" : "Create"}
+    </button>
+    <a class="btn" href="/commands">Back</a>
+  {/snippet}
 
-  <div class="content">
-    <Tabs.Root>
-      <Tabs.List>
-        <Tabs.Trigger value="settings"
-          ><SolarSettingsBoldDuotone /> Settings</Tabs.Trigger
-        >
-        <Tabs.Trigger value="code"
-          ><SolarCodeSquareBoldDuotone /> Code</Tabs.Trigger
-        >
-      </Tabs.List>
-      <Tabs.Content value="code">
-        {#if $data.outcome.type === CommandOutcomeType.Script}
-          <section class="editor">
-            <CodeEditor
-              value={$data.outcome.script}
-              onChange={(value) => {
-                setFields("outcome.script", value, true);
-                setIsDirty(true);
-              }}
-              onUserSave={() => {
-                if (existing) save($data);
-              }}
-            />
-          </section>
-        {:else if $data.outcome.type === CommandOutcomeType.Template}
-          <textarea
-            id="outcome.script"
-            name="outcome.script"
-            style="width: 100%;height:100%"
-          ></textarea>
-        {/if}
-      </Tabs.Content>
-      <Tabs.Content value="settings">
-        <div class="settings">
-          <section class="section">
-            <div class="section__head">
-              <h2>Details</h2>
-              <p>Basic details about the command</p>
-            </div>
-
-            <div class="row">
-              <FormTextInput
-                id="name"
-                name="name"
-                label="Name"
-                description="Name for the command"
+  <PageLayoutList
+    title={existing ? "Edit Command" : "Create Command"}
+    description={existing && $isDirty ? "Unsaved changes..." : "..."}
+    {actions}
+  >
+    <div class="content">
+      <Tabs.Root>
+        <Tabs.List>
+          <Tabs.Trigger value="settings">
+            <SolarSettingsBoldDuotone /> Settings
+          </Tabs.Trigger>
+          <Tabs.Trigger value="code">
+            <SolarCodeSquareBoldDuotone /> Code
+          </Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="code">
+          {#if $data.outcome.type === CommandOutcomeType.Script}
+            <section class="editor">
+              <CodeEditor
+                value={$data.outcome.script}
+                onChange={(value) => {
+                  setFields("outcome.script", value, true);
+                  setIsDirty(true);
+                }}
+                onUserSave={() => {
+                  if (existing) saveWithToast($data);
+                }}
               />
-              <FormTextInput
-                id="command"
-                name="command"
-                label="Command"
-                description="Message that will trigger this command"
+            </section>
+          {:else if $data.outcome.type === CommandOutcomeType.Template}
+            <textarea
+              id="outcome.script"
+              name="outcome.script"
+              style="width: 100%;height:100%"
+            ></textarea>
+          {/if}
+        </Tabs.Content>
+        <Tabs.Content value="settings">
+          <FormSections>
+            <FormSection
+              title="Details"
+              description="Basic details about the command"
+            >
+              <div class="row">
+                <FormTextInput
+                  id="name"
+                  name="name"
+                  label="Name"
+                  description="Name for the command"
+                />
+                <FormTextInput
+                  id="command"
+                  name="command"
+                  label="Command"
+                  description="Message that will trigger this command"
+                />
+              </div>
+
+              <FormBoundCheckbox
+                id="enabled"
+                name="enabled"
+                label="Enabled"
+                description="Whether this command can be used"
               />
-            </div>
 
-            <FormCheckbox
-              id="enabled"
-              name="enabled"
-              label="Enabled"
-              checked={$data.enabled}
-              onChecked={(checked) => {
-                setFields("enabled", checked, true);
-              }}
-            />
+              <CommandOutcomeSelect
+                id="outcome.type"
+                name="outcome.type"
+                label="Command Type"
+                selected={$data.outcome.type}
+                onChangeSelected={(selected) => {
+                  onChangeOutcomeType(selected);
+                }}
+              />
+            </FormSection>
 
-            {#snippet outcomeTypeItem(item: (typeof outcomeTypeOptions)[0])}
-              <div class="text-stack">
-                <p class="text-stack--top">{item.label}</p>
-                <p class="text-stack--bottom">{item.description}</p>
-              </div>
-            {/snippet}
+            <!-- Cooldown and role requirements -->
+            <FormSection
+              title="Cooldown, and requirements"
+              description="Configure any cooldown, or requirements on this command trigger"
+            >
+              <RequiredRoleSelect
+                id="require_role"
+                name="require_role"
+                label="Minimum Required Role"
+                selected={$data.require_role}
+                onChangeSelected={(selected) =>
+                  setFields("require_role", selected, true)}
+              />
 
-            <FormSelect
-              id="outcome.type"
-              name="outcome.type"
-              label="Command Type"
-              items={outcomeTypeOptions}
-              item={outcomeTypeItem}
-              selected={$data.outcome.type}
-              onChangeSelected={(selected) => {
-                onChangeOutcomeType(selected);
-              }}
-            />
-          </section>
-
-          <!-- Cooldown and role requirements -->
-          <section class="section">
-            <div class="section__head">
-              <h2>Cooldown, and requirements</h2>
-              <p>
-                Configure any cooldown, or requirements on this command trigger
-              </p>
-            </div>
-
-            {#snippet requiredRoleItem(item: (typeof requiredRoles)[0])}
-              <div class="text-stack">
-                <p class="text-stack--top">{item.label}</p>
-                <p class="text-stack--bottom">{item.description}</p>
-              </div>
-            {/snippet}
-
-            <FormSelect
-              id="require_role"
-              name="require_role"
-              label="Minimum Required Role"
-              items={requiredRoles}
-              item={requiredRoleItem}
-              selected={$data.require_role}
-              onChangeSelected={(selected) =>
-                setFields("require_role", selected, true)}
-            />
-
-            <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
-          </section>
-        </div>
-      </Tabs.Content>
-    </Tabs.Root>
-  </div>
+              <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
+            </FormSection>
+          </FormSections>
+        </Tabs.Content>
+      </Tabs.Root>
+    </div>
+  </PageLayoutList>
 </form>
 
 <style>
-  .settings {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-    padding: 0.5rem;
-  }
-
-  .section {
-    display: flex;
-    flex-flow: column;
-
-    border: 1px solid #333;
-    padding: 1rem;
-    gap: 1rem;
-  }
-
   .editor {
     position: relative;
     overflow: hidden;
@@ -332,6 +298,7 @@
     position: relative;
     flex: auto;
     overflow: hidden;
+    height: 100%;
   }
 
   .content :global([data-tabs-root]) {
@@ -347,53 +314,14 @@
     flex-flow: column;
     border: 1px solid #333;
   }
+  .content :global([data-tabs-content]:nth-child(3)) {
+    padding: 1rem;
+  }
 
-  .container {
+  form {
+    height: 100%;
     display: flex;
     flex-flow: column;
-    gap: 0.5rem;
-
-    padding: 1rem;
-    height: 100%;
-  }
-
-  .title {
-    color: #fff;
-    margin-bottom: 0.25rem;
-    line-height: 1;
-    font-size: 1.75rem;
-  }
-
-  .text {
-    color: #ccc;
-  }
-
-  .title-area {
-    display: flex;
-    align-items: center;
-  }
-
-  .actions {
-    display: flex;
-    flex: auto;
-    justify-content: flex-end;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .section__head {
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #333;
-  }
-
-  .section__head h2 {
-    color: #fff;
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .section__head p {
-    color: #ccc;
   }
 
   .row {

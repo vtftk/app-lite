@@ -5,12 +5,15 @@ import {
 } from "@tanstack/svelte-query";
 import type {
   AppData,
+  CommandConfig,
+  EventConfig,
   ItemConfig,
   ModelConfig,
   RuntimeAppData,
   SoundConfig,
   SoundsConfig,
   ThrowablesConfig,
+  UserScriptConfig,
   VTubeStudioConfig,
 } from "./types";
 import { invoke } from "@tauri-apps/api/core";
@@ -304,7 +307,6 @@ export function createUpdateItemMutation(
 }
 
 type CreateItem = {
-  /// Updated item config, uses the ID on the config for the update
   itemConfig: ItemConfig;
 };
 
@@ -350,7 +352,6 @@ export function createUpdateSoundMutation(
 }
 
 type CreateSound = {
-  /// Updated sound config, uses the ID on the config for the update
   soundConfig: SoundConfig;
 };
 
@@ -397,6 +398,141 @@ export function createUpdateSettingsMutation(
         ...appData.vtube_studio_config,
         ...vtube_studio_config,
       },
+    })
+  );
+}
+
+type UpdateScript = {
+  /// ID of the script to update
+  scriptId: string;
+  /// The new script configuration
+  scriptConfig: Omit<UserScriptConfig, "id">;
+};
+
+export function createUpdateScriptMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<UpdateScript>(
+    appData,
+    appDataMutation,
+    (appData, { scriptId, scriptConfig }) => ({
+      ...appData,
+
+      // Replace the existing script
+      scripts: appData.scripts.map((script) =>
+        script.id === scriptId ? { ...scriptConfig, id: scriptId } : script
+      ),
+    })
+  );
+}
+
+type CreateScript = {
+  scriptConfig: UserScriptConfig;
+};
+
+export function createCreateScriptMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<CreateScript>(
+    appData,
+    appDataMutation,
+    (appData, { scriptConfig }) => ({
+      ...appData,
+
+      // Add the script to the end of the scripts list
+      scripts: [...appData.scripts, scriptConfig],
+    })
+  );
+}
+
+type UpdateEvent = {
+  /// ID of the event to update
+  eventId: string;
+  /// The new event configuration
+  eventConfig: Omit<EventConfig, "id">;
+};
+
+export function createUpdateEventMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<UpdateEvent>(
+    appData,
+    appDataMutation,
+    (appData, { eventId, eventConfig }) => ({
+      ...appData,
+
+      // Replace the existing script
+      events: appData.events.map((event) =>
+        event.id === eventId ? { ...eventConfig, id: eventId } : event
+      ),
+    })
+  );
+}
+
+type CreateEvent = {
+  eventConfig: EventConfig;
+};
+
+export function createCreateEventMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<CreateEvent>(
+    appData,
+    appDataMutation,
+    (appData, { eventConfig }) => ({
+      ...appData,
+
+      // Add the script to the end of the scripts list
+      events: [...appData.events, eventConfig],
+    })
+  );
+}
+
+type UpdateCommand = {
+  /// ID of the command to update
+  commandId: string;
+  /// The new command configuration
+  commandConfig: Omit<CommandConfig, "id">;
+};
+
+export function createUpdateCommandMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<UpdateCommand>(
+    appData,
+    appDataMutation,
+    (appData, { commandId, commandConfig }) => ({
+      ...appData,
+
+      // Replace the existing command
+      commands: appData.commands.map((event) =>
+        event.id === commandId ? { ...commandConfig, id: commandId } : event
+      ),
+    })
+  );
+}
+
+type CreateCommand = {
+  commandConfig: CommandConfig;
+};
+
+export function createCreateCommandMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<CreateCommand>(
+    appData,
+    appDataMutation,
+    (appData, { commandConfig }) => ({
+      ...appData,
+
+      // Add the script to the end of the commands list
+      commands: [...appData.commands, commandConfig],
     })
   );
 }

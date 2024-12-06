@@ -5,15 +5,25 @@
   import { z } from "zod";
   import type { UserScriptConfig } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createCreateScriptMutation,
+    createUpdateScriptMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
-  import exampleCode from "../../../../script/example.js?raw";
-  import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import { Tabs } from "bits-ui";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import { toast } from "svelte-sonner";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+
+  // Example code for the editor
+  import exampleCode from "../../../../script/example.js?raw";
 
   type Props = {
     existing?: UserScriptConfig;
@@ -24,6 +34,9 @@
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
+  const updateScript = createUpdateScriptMutation(appData, appDataMutation);
+  const createScript = createCreateScriptMutation(appData, appDataMutation);
+
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
     enabled: z.boolean(),
@@ -32,25 +45,51 @@
 
   type Schema = z.infer<typeof schema>;
 
+  // Defaults when creating a new throwable
+  const createDefaults: Partial<Schema> = {
+    name: "",
+    enabled: true,
+    script: exampleCode,
+  };
+
+  function createFromExisting(config: UserScriptConfig): Schema {
+    return {
+      name: config.name,
+      enabled: config.enabled,
+      script: config.script,
+    };
+  }
+
   const { form, data, setFields, isDirty, setIsDirty } = createForm<
     z.infer<typeof schema>
   >({
-    initialValues: existing
-      ? {
-          name: existing.name,
-          enabled: existing.enabled,
-          script: existing.script,
-        }
-      : {
-          name: "",
-          enabled: true,
-          script: exampleCode,
-        },
+    // Derive initial values
+    initialValues: existing ? createFromExisting(existing) : createDefaults,
 
+    // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
-    async onSubmit(values, context) {
-      await save(values);
-      goto("/scripts");
+
+    async onSubmit(values) {
+      const savePromise = save(values);
+
+      toast.promise(
+        savePromise,
+        existing
+          ? {
+              loading: "Saving script...",
+              success: "Saved script",
+              error: "Failed to save script",
+            }
+          : {
+              loading: "Creating script...",
+              success: "Created script",
+              error: "Failed to create script",
+            }
+      );
+
+      if (!existing) {
+        goto("/scripts");
+      }
     },
   });
 
@@ -60,8 +99,7 @@
       script: values.script,
     });
 
-    const scriptConfig: UserScriptConfig = {
-      id: existing ? existing.id : self.crypto.randomUUID(),
+    const partialScriptConfig: Omit<UserScriptConfig, "id"> = {
       enabled: values.enabled,
       name: values.name,
       script: values.script,
@@ -69,22 +107,20 @@
     };
 
     if (existing !== undefined) {
-      // Update existing
-      await $appDataMutation.mutateAsync({
-        ...$appData,
-        scripts: $appData.scripts.map((item) => {
-          if (item.id !== existing.id) return item;
-          return scriptConfig;
-        }),
+      await $updateScript({
+        scriptId: existing.id,
+        scriptConfig: partialScriptConfig,
       });
     } else {
-      // Add new
-      await $appDataMutation.mutateAsync({
-        ...$appData,
-        scripts: [...$appData.scripts, scriptConfig],
-      });
+      const scriptConfig: UserScriptConfig = {
+        ...partialScriptConfig,
+        id: self.crypto.randomUUID(),
+      };
+
+      await $createScript({ scriptConfig });
     }
 
+    // Reset dirty state after saving
     setIsDirty(false);
   }
 </script>
@@ -110,12 +146,12 @@
   <div class="content">
     <Tabs.Root>
       <Tabs.List>
-        <Tabs.Trigger value="settings"
-          ><SolarSettingsBoldDuotone /> Settings</Tabs.Trigger
-        >
-        <Tabs.Trigger value="code"
-          ><SolarCodeSquareBoldDuotone /> Code</Tabs.Trigger
-        >
+        <Tabs.Trigger value="settings">
+          <SolarSettingsBoldDuotone /> Settings
+        </Tabs.Trigger>
+        <Tabs.Trigger value="code">
+          <SolarCodeSquareBoldDuotone /> Code
+        </Tabs.Trigger>
       </Tabs.List>
       <Tabs.Content value="code">
         <section class="editor">
@@ -132,47 +168,22 @@
         </section>
       </Tabs.Content>
       <Tabs.Content value="settings">
-        <div class="settings">
-          <section class="section">
-            <div class="section__head">
-              <h2>Details</h2>
-              <p>Basic details about the script</p>
-            </div>
+        <FormSections>
+          <FormSection
+            title="Details"
+            description="Basic details about the script"
+          >
             <FormTextInput id="name" name="name" label="Name" />
 
-            <FormCheckbox
-              id="enabled"
-              name="enabled"
-              label="Enabled"
-              checked={$data.enabled}
-              onChecked={(checked) => {
-                setFields("enabled", checked, true);
-              }}
-            />
-          </section>
-        </div>
+            <FormBoundCheckbox id="enabled" name="enabled" label="Enabled" />
+          </FormSection>
+        </FormSections>
       </Tabs.Content>
     </Tabs.Root>
   </div>
 </form>
 
 <style>
-  .settings {
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-    padding: 0.5rem;
-  }
-
-  .section {
-    display: flex;
-    flex-flow: column;
-
-    border: 1px solid #333;
-    padding: 1rem;
-    gap: 1rem;
-  }
-
   .editor {
     position: relative;
     overflow: hidden;
@@ -199,6 +210,11 @@
     border: 1px solid #333;
   }
 
+  /* Padded outline for the settings tab */
+  .content :global([data-tabs-content]:nth-child(3)) {
+    padding: 1rem;
+  }
+
   .container {
     display: flex;
     flex-flow: column;
@@ -223,26 +239,12 @@
     display: flex;
     align-items: center;
   }
+
   .actions {
     display: flex;
     flex: auto;
     justify-content: flex-end;
     gap: 1rem;
     align-items: center;
-  }
-
-  .section__head {
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #333;
-  }
-
-  .section__head h2 {
-    color: #fff;
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .section__head p {
-    color: #ccc;
   }
 </style>

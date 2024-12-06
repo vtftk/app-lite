@@ -19,17 +19,7 @@
 </script>
 
 {#if $item !== undefined}
-  {#snippet actions()}
-    <a type="button" class="btn" href="/events">Back</a>
-  {/snippet}
-
-  <PageLayoutList
-    title="Create Event"
-    description="Create an event that will trigger some outcome"
-    {actions}
-  >
-    <EventForm existing={$item} />
-  </PageLayoutList>
+  <EventForm existing={$item} />
 {:else}
   {#snippet actions()}
     <a type="button" class="btn" href="/events">Back</a>

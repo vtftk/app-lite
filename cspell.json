@@ -3,6 +3,7 @@
     "cdylib",
     "cooldown",
     "eventsub",
+    "felte",
     "jacobtread",
     "Keepalive",
     "oneshot",

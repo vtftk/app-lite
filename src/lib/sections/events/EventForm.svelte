@@ -4,7 +4,12 @@
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
 
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createCreateEventMutation,
+    createUpdateEventMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import {
     BitsAmountType,
     EventOutcomeType,
@@ -13,16 +18,23 @@
     MinimumRequiredRole,
     ThrowableDataType,
     type EventConfig,
-    type EventTrigger,
   } from "$shared/appData";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
   import { goto } from "$app/navigation";
   import ThrowablePicker from "$lib/components/throwable/ThrowablePicker.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import EventTriggerTypeSelect from "./EventTriggerTypeSelect.svelte";
+  import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
+  import OutcomeTypeSelect from "./OutcomeTypeSelect.svelte";
+  import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     existing?: EventConfig;
@@ -32,6 +44,9 @@
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
+
+  const updateEvent = createUpdateEventMutation(appData, appDataMutation);
+  const createEvent = createCreateEventMutation(appData, appDataMutation);
 
   const triggerSchema = z.discriminatedUnion("type", [
     z.object({
@@ -127,7 +142,7 @@
 
   type Schema = z.infer<typeof schema>;
 
-  const defaultData: Schema = {
+  const createDefaults: Schema = {
     name: "",
     enabled: true,
     trigger: {
@@ -147,139 +162,68 @@
     outcome_delay: 0,
   };
 
+  function createFromExisting(config: EventConfig): Partial<Schema> {
+    return {
+      ...config,
+    };
+  }
+
   const { form, data, setFields } = createForm<Schema>({
-    initialValues: existing ? { ...existing } : defaultData,
+    // Derive initial values
+    initialValues: existing ? createFromExisting(existing) : createDefaults,
+
+    // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
-    async onSubmit(values, context) {
-      const eventConfig: EventConfig = {
-        id: existing ? existing.id : self.crypto.randomUUID(),
-        name: values.name,
-        enabled: values.enabled,
-        trigger: values.trigger,
-        outcome: values.outcome,
-        cooldown: values.cooldown,
-        require_role: values.require_role,
-        outcome_delay: values.outcome_delay,
-      };
 
-      if (existing) {
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          events: $appData.events.map((event) => {
-            if (event.id === existing.id) {
-              return eventConfig;
+    onSubmit(values) {
+      const savePromise = save(values);
+
+      toast.promise(
+        savePromise,
+        existing
+          ? {
+              loading: "Saving event...",
+              success: "Saved event",
+              error: "Failed to save event",
             }
+          : {
+              loading: "Creating event...",
+              success: "Created event",
+              error: "Failed to create event",
+            }
+      );
 
-            return event;
-          }),
-        });
-      } else {
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          events: [...$appData.events, eventConfig],
-        });
+      if (!existing) {
+        goto("/events");
       }
-
-      goto("/events");
     },
   });
 
-  const requiredRoles = [
-    {
-      value: MinimumRequiredRole.None,
-      label: "None",
-      description: "No minimum requirement",
-    },
-    {
-      value: MinimumRequiredRole.Vip,
-      label: "VIP",
-      description: "Require VIP or greater to redeem",
-    },
-    {
-      value: MinimumRequiredRole.Mod,
-      label: "Moderator",
-      description: "Require Moderator or greater to redeem",
-    },
-  ];
+  async function save(values: Schema) {
+    const partialEventConfig: Omit<EventConfig, "id"> = {
+      name: values.name,
+      enabled: values.enabled,
+      trigger: values.trigger,
+      outcome: values.outcome,
+      cooldown: values.cooldown,
+      require_role: values.require_role,
+      outcome_delay: values.outcome_delay,
+    };
 
-  const triggerOptions = [
-    {
-      value: EventTriggerType.Redeem,
-      label: "Redeem",
-      description: "Trigger when a twitch reward is redeemed",
-    },
-    {
-      value: EventTriggerType.Command,
-      label: "Command",
-      description: "Trigger when a specific command message is sent",
-    },
-    {
-      value: EventTriggerType.Follow,
-      label: "Follow",
-      description: "Trigger when a user follows the channel",
-    },
-    {
-      value: EventTriggerType.Subscription,
-      label: "Subscription",
-      description: "Trigger when someone subscribes",
-    },
-    {
-      value: EventTriggerType.GiftedSubscription,
-      label: "Gifted Subscription",
-      description: "Trigger when someone gifts a subscription",
-    },
-    {
-      value: EventTriggerType.Bits,
-      label: "Bits",
-      description: "Trigger when someone cheers bits",
-    },
-    {
-      value: EventTriggerType.Raid,
-      label: "Raid",
-      description: "Trigger when a raid occurs",
-    },
-  ];
+    if (existing) {
+      await $updateEvent({
+        eventId: existing.id,
+        eventConfig: partialEventConfig,
+      });
+    } else {
+      const eventConfig: EventConfig = {
+        ...partialEventConfig,
+        id: self.crypto.randomUUID(),
+      };
 
-  const outcomeOptions = $derived([
-    // Only include throw bits option when input type is bits
-    ...($data.trigger.type === EventTriggerType.Bits
-      ? [
-          {
-            value: EventOutcomeType.ThrowBits,
-            label: "Throw Bits",
-            description: "Throw bits",
-          },
-        ]
-      : []),
-    {
-      value: EventOutcomeType.Throwable,
-      label: "Throw Item",
-      description: "Throw an item",
-    },
-    {
-      value: EventOutcomeType.TriggerHotkey,
-      label: "Trigger Hotkey",
-      description: "Trigger a VTube studio hotkey",
-    },
-    {
-      value: EventOutcomeType.PlaySound,
-      label: "Play Sound",
-      description: "Play a sound",
-    },
-  ]);
-
-  const throwableDataOptions = [
-    {
-      value: ThrowableDataType.Throw,
-      label: "Throw",
-      description: "Throw selected number of items all at once",
-    },
-    {
-      value: ThrowableDataType.Barrage,
-      label: "Barrage",
-      description: "Throw items as a barrage of multiple thrown items",
-    },
-  ];
+      await $createEvent({ eventConfig });
+    }
+  }
 
   const soundOptions = $derived(
     $appData.sounds.map((sound) => ({
@@ -391,277 +335,211 @@
 </script>
 
 <form use:form>
-  <!-- Base options -->
-  <section class="section">
-    <div class="section__head">
-      <h2>Details</h2>
-      <p>Basic details about the event</p>
-    </div>
+  {#snippet actions()}
+    <button type="submit" class="btn">{existing ? "Save" : "Create"}</button>
+    <a type="button" class="btn" href="/events">Back</a>
+  {/snippet}
 
-    <FormTextInput id="name" name="name" label="Name" />
-    <FormCheckbox
-      id="enabled"
-      name="enabled"
-      label="Enabled"
-      description="Whether this event can be triggered"
-      checked={$data.enabled}
-      onChecked={(checked) => {
-        setFields("enabled", checked, true);
-      }}
-    />
-  </section>
+  <PageLayoutList
+    title={existing ? "Edit Event" : "Create Event"}
+    description={existing
+      ? "Editing Event"
+      : "Create an event that will trigger some outcome"}
+    {actions}
+  >
+    <FormSections>
+      <!-- Base options -->
 
-  <!-- Trigger options -->
-  <section class="section">
-    <div class="section__head">
-      <h2>Trigger</h2>
-      <p>What should trigger this event</p>
-    </div>
+      <FormSection title="Details" description="Basic details about the event">
+        <FormTextInput id="name" name="name" label="Name" />
+        <FormBoundCheckbox
+          id="enabled"
+          name="enabled"
+          label="Enabled"
+          description="Whether this event can be triggered"
+        />
+      </FormSection>
 
-    {#snippet eventTriggerTypeItem(item: (typeof triggerOptions)[0])}
-      <div class="text-stack">
-        <p class="text-stack--top">{item.label}</p>
-        <p class="text-stack--bottom">{item.description}</p>
-      </div>
-    {/snippet}
+      <!-- Trigger options -->
+      <FormSection title="Trigger" description="What should trigger this event">
+        <EventTriggerTypeSelect
+          id="trigger.type"
+          name="trigger.type"
+          label="Event Trigger"
+          selected={$data.trigger.type}
+          onChangeSelected={(selected) => {
+            onChangeTriggerType(selected);
+          }}
+        />
 
-    <FormSelect
-      id="trigger.type"
-      name="trigger.type"
-      label="Event Trigger"
-      items={triggerOptions}
-      item={eventTriggerTypeItem}
-      selected={$data.trigger.type}
-      onChangeSelected={(selected) => {
-        onChangeTriggerType(selected);
-      }}
-    />
-
-    {#if $data.trigger.type === EventTriggerType.Redeem}
-      <TwitchRedeemSelect
-        id="trigger.reward_id"
-        name="trigger.reward_id"
-        label="Reward"
-        selected={$data.trigger.reward_id}
-        onChangeSelected={(selected) =>
-          setFields("trigger.reward_id", selected, true)}
-      />
-    {:else if $data.trigger.type === EventTriggerType.Command}
-      <FormTextInput
-        id="trigger.message"
-        name="trigger.message"
-        label="Command Message"
-      />
-    {:else if $data.trigger.type === EventTriggerType.Bits}
-      <FormNumberInput
-        id="trigger.min_bits"
-        name="trigger.min_bits"
-        label="Minimum Bits"
-      />
-    {:else if $data.trigger.type === EventTriggerType.Raid}
-      <FormNumberInput
-        id="trigger.min_raiders"
-        name="trigger.min_raiders"
-        label="Minimum Raiders"
-      />
-    {/if}
-  </section>
-
-  <!-- Outcome options -->
-  <section class="section">
-    <div class="section__head">
-      <h2>Outcome</h2>
-      <p>What should happen when this event is triggered</p>
-    </div>
-
-    {#snippet eventOutcomeTypeItem(item: (typeof outcomeOptions)[0])}
-      <div class="text-stack">
-        <p class="text-stack--top">{item.label}</p>
-        <p class="text-stack--bottom">{item.description}</p>
-      </div>
-    {/snippet}
-
-    <FormSelect
-      id="outcome.type"
-      name="outcome.type"
-      label="Event Outcome"
-      items={outcomeOptions}
-      item={eventOutcomeTypeItem}
-      selected={$data.outcome.type}
-      onChangeSelected={(selected) => {
-        onChangeOutcomeType(selected);
-      }}
-    />
-
-    {#if $data.outcome.type === EventOutcomeType.ThrowBits}
-      <div></div>
-    {:else if $data.outcome.type === EventOutcomeType.Throwable}
-      {#snippet throwableDataTypeItem(item: (typeof throwableDataOptions)[0])}
-        <div class="text-stack">
-          <p class="text-stack--top">{item.label}</p>
-          <p class="text-stack--bottom">{item.description}</p>
-        </div>
-      {/snippet}
-
-      <FormSelect
-        id="outcome.data.type"
-        name="outcome.data.type"
-        label="Throwable Type"
-        items={throwableDataOptions}
-        item={throwableDataTypeItem}
-        selected={$data.outcome.data.type}
-        onChangeSelected={(selected) => {
-          onChangeThrowableDataType(selected);
-        }}
-      />
-
-      {#if $data.outcome.data.type === ThrowableDataType.Throw}
-        <div>
-          <ThrowablePicker
-            items={$appData.items}
-            selected={$data.outcome.data.throwable_ids}
-            onChangeSelect={(selected) => {
-              setFields("outcome.data.throwable_ids", selected, true);
-            }}
+        {#if $data.trigger.type === EventTriggerType.Redeem}
+          <TwitchRedeemSelect
+            id="trigger.reward_id"
+            name="trigger.reward_id"
+            label="Reward"
+            selected={$data.trigger.reward_id}
+            onChangeSelected={(selected) =>
+              setFields("trigger.reward_id", selected, true)}
           />
+        {:else if $data.trigger.type === EventTriggerType.Command}
+          <FormTextInput
+            id="trigger.message"
+            name="trigger.message"
+            label="Command Message"
+          />
+        {:else if $data.trigger.type === EventTriggerType.Bits}
           <FormNumberInput
-            id="outcome.data.amount"
-            name="outcome.data.amount"
-            label="Total number of items to throw"
+            id="trigger.min_bits"
+            name="trigger.min_bits"
+            label="Minimum Bits"
           />
-        </div>
-      {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
-        <div>
-          <ThrowablePicker
-            items={$appData.items}
-            selected={$data.outcome.data.throwable_ids}
-            onChangeSelect={(selected) => {
-              setFields("outcome.data.throwable_ids", selected, true);
+        {:else if $data.trigger.type === EventTriggerType.Raid}
+          <FormNumberInput
+            id="trigger.min_raiders"
+            name="trigger.min_raiders"
+            label="Minimum Raiders"
+          />
+        {/if}
+      </FormSection>
+
+      <!-- Outcome options -->
+
+      <FormSection
+        title="Outcome"
+        description="What should happen when this event is triggered"
+      >
+        <OutcomeTypeSelect
+          id="outcome.type"
+          name="outcome.type"
+          label="Event Outcome"
+          triggerType={$data.trigger.type}
+          selected={$data.outcome.type}
+          onChangeSelected={(selected) => {
+            onChangeOutcomeType(selected);
+          }}
+        />
+
+        {#if $data.outcome.type === EventOutcomeType.ThrowBits}
+          <div></div>
+        {:else if $data.outcome.type === EventOutcomeType.Throwable}
+          <ThrowableDataTypeSelect
+            id="outcome.data.type"
+            name="outcome.data.type"
+            label="Throwable Type"
+            selected={$data.outcome.data.type}
+            onChangeSelected={(selected) => {
+              onChangeThrowableDataType(selected);
             }}
           />
 
-          <div class="throwable-config-grid">
-            <FormNumberInput
-              id="outcome.data.amount_per_throw"
-              name="outcome.data.amount_per_throw"
-              label="Amount of items per throw"
-            />
+          {#if $data.outcome.data.type === ThrowableDataType.Throw}
+            <div>
+              <ThrowablePicker
+                items={$appData.items}
+                selected={$data.outcome.data.throwable_ids}
+                onChangeSelect={(selected) => {
+                  setFields("outcome.data.throwable_ids", selected, true);
+                }}
+              />
+              <FormNumberInput
+                id="outcome.data.amount"
+                name="outcome.data.amount"
+                label="Total number of items to throw"
+              />
+            </div>
+          {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
+            <div>
+              <ThrowablePicker
+                items={$appData.items}
+                selected={$data.outcome.data.throwable_ids}
+                onChangeSelect={(selected) => {
+                  setFields("outcome.data.throwable_ids", selected, true);
+                }}
+              />
 
-            <FormNumberInput
-              id="outcome.data.frequency"
-              name="outcome.data.frequency"
-              label="Frequency"
-            />
+              <div class="throwable-config-grid">
+                <FormNumberInput
+                  id="outcome.data.amount_per_throw"
+                  name="outcome.data.amount_per_throw"
+                  label="Amount of items per throw"
+                />
 
-            <FormNumberInput
-              id="outcome.data.amount"
-              name="outcome.data.amount"
-              label="Total number of throws"
-            />
-          </div>
-        </div>
-      {/if}
-    {:else if $data.outcome.type === EventOutcomeType.TriggerHotkey}
-      <HotkeySelect
-        id="outcome.hotkey_id"
-        name="outcome.hotkey_id"
-        label="Hotkey"
-        selected={$data.outcome.hotkey_id}
-        onChangeSelected={(selected) =>
-          setFields("outcome.hotkey_id", selected, true)}
-      />
-    {:else if $data.outcome.type === EventOutcomeType.PlaySound}
-      {#snippet soundItem(item: (typeof soundOptions)[0])}
-        <div class="text-stack">
-          <p class="text-stack--top">{item.label}</p>
-        </div>
-      {/snippet}
+                <FormNumberInput
+                  id="outcome.data.frequency"
+                  name="outcome.data.frequency"
+                  label="Frequency"
+                />
 
-      <FormSelect
-        id="outcome.sound_id"
-        name="outcome.sound_id"
-        label="Sound"
-        items={soundOptions}
-        item={soundItem}
-        selected={$data.outcome.sound_id}
-        onChangeSelected={(selected) =>
-          setFields("outcome.sound_id", selected, true)}
-      />
-    {/if}
-  </section>
+                <FormNumberInput
+                  id="outcome.data.amount"
+                  name="outcome.data.amount"
+                  label="Total number of throws"
+                />
+              </div>
+            </div>
+          {/if}
+        {:else if $data.outcome.type === EventOutcomeType.TriggerHotkey}
+          <HotkeySelect
+            id="outcome.hotkey_id"
+            name="outcome.hotkey_id"
+            label="Hotkey"
+            selected={$data.outcome.hotkey_id}
+            onChangeSelected={(selected) =>
+              setFields("outcome.hotkey_id", selected, true)}
+          />
+        {:else if $data.outcome.type === EventOutcomeType.PlaySound}
+          {#snippet soundItem(item: (typeof soundOptions)[0])}
+            <div class="text-stack">
+              <p class="text-stack--top">{item.label}</p>
+            </div>
+          {/snippet}
 
-  <!-- Cooldown and role requirements -->
-  <section class="section">
-    <div class="section__head">
-      <h2>Delays, cooldown, and requirements</h2>
-      <p>
-        Configure any delays, cooldown, or requirements on this events trigger
-      </p>
-    </div>
+          <FormSelect
+            id="outcome.sound_id"
+            name="outcome.sound_id"
+            label="Sound"
+            items={soundOptions}
+            item={soundItem}
+            selected={$data.outcome.sound_id}
+            onChangeSelected={(selected) =>
+              setFields("outcome.sound_id", selected, true)}
+          />
+        {/if}
+      </FormSection>
 
-    {#snippet requiredRoleItem(item: (typeof requiredRoles)[0])}
-      <div class="text-stack">
-        <p class="text-stack--top">{item.label}</p>
-        <p class="text-stack--bottom">{item.description}</p>
-      </div>
-    {/snippet}
+      <!-- Cooldown and role requirements -->
+      <FormSection
+        title="Delays, cooldown, and requirements"
+        description="Configure any delays, cooldown, or requirements on this events trigger"
+      >
+        <RequiredRoleSelect
+          id="require_role"
+          name="require_role"
+          label="Minimum Required Role"
+          selected={$data.require_role}
+          onChangeSelected={(selected) =>
+            setFields("require_role", selected, true)}
+        />
 
-    <FormSelect
-      id="require_role"
-      name="require_role"
-      label="Minimum Required Role"
-      items={requiredRoles}
-      item={requiredRoleItem}
-      selected={$data.require_role}
-      onChangeSelected={(selected) => setFields("require_role", selected, true)}
-    />
-
-    <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
-    <FormNumberInput
-      id="outcome_delay"
-      name="outcome_delay"
-      label="Outcome Delay"
-    />
-  </section>
-
-  <button type="submit" class="btn">{existing ? "Save" : "Create"}</button>
+        <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
+        <FormNumberInput
+          id="outcome_delay"
+          name="outcome_delay"
+          label="Outcome Delay"
+        />
+      </FormSection>
+    </FormSections>
+  </PageLayoutList>
 </form>
 
 <style>
   form {
-    display: flex;
-    flex-flow: column;
-    gap: 1rem;
-  }
-
-  .section {
-    display: flex;
-    flex-flow: column;
-
-    border: 1px solid #333;
-    padding: 1rem;
-    gap: 1rem;
+    height: 100%;
   }
 
   .throwable-config-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
-  }
-
-  .section__head {
-    margin-bottom: 0.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #333;
-  }
-
-  .section__head h2 {
-    color: #fff;
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .section__head p {
-    color: #ccc;
   }
 </style>
