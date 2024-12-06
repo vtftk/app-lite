@@ -3,7 +3,7 @@ import {
   createQuery,
   type CreateQueryResult,
 } from "@tanstack/svelte-query";
-import type { AppData, ItemConfig, RuntimeAppData } from "./types";
+import type { AppData, ItemConfig, RuntimeAppData, SoundConfig } from "./types";
 import { invoke } from "@tauri-apps/api/core";
 import { getContext } from "svelte";
 import { derived, get, type Readable } from "svelte/store";
@@ -311,6 +311,52 @@ export function createCreateItemMutation(
 
       // Add the item to the end of the items list
       items: [...appData.items, itemConfig],
+    })
+  );
+}
+
+type UpdateSound = {
+  /// ID of the sound to update
+  soundId: string;
+  /// The new sound configuration
+  soundConfig: Omit<SoundConfig, "id">;
+};
+
+export function createUpdateSoundMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<UpdateSound>(
+    appData,
+    appDataMutation,
+    (appData, { soundId, soundConfig }) => ({
+      ...appData,
+
+      // Replace the existing sound
+      sounds: appData.sounds.map((sound) =>
+        sound.id === soundId ? { ...soundConfig, id: soundId } : sound
+      ),
+    })
+  );
+}
+
+type CreateSound = {
+  /// Updated sound config, uses the ID on the config for the update
+  soundConfig: SoundConfig;
+};
+
+export function createCreateSoundMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<CreateSound>(
+    appData,
+    appDataMutation,
+    (appData, { soundConfig }) => ({
+      ...appData,
+
+      // Add the sound to the end of the sounds list
+      sounds: [...appData.sounds, soundConfig],
     })
   );
 }

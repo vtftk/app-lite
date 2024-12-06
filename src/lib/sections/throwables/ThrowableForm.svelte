@@ -156,20 +156,18 @@
       weight: values.weight,
     };
 
-    if (existing) {
-      const itemConfig: Omit<ItemConfig, "id"> = {
-        image: imageConfig,
-        impact_sounds_ids: values.impactSoundIds,
-        name: values.name,
-      };
+    const partialItemConfig: Omit<ItemConfig, "id"> = {
+      image: imageConfig,
+      impact_sounds_ids: values.impactSoundIds,
+      name: values.name,
+    };
 
-      await $updateItem({ itemId: existing.id, itemConfig });
+    if (existing) {
+      await $updateItem({ itemId: existing.id, itemConfig: partialItemConfig });
     } else {
       const itemConfig: ItemConfig = {
+        ...partialItemConfig,
         id: self.crypto.randomUUID(),
-        image: imageConfig,
-        impact_sounds_ids: values.impactSoundIds,
-        name: values.name,
       };
 
       await $createItem({ itemConfig });

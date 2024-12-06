@@ -3,9 +3,14 @@
   import { validator } from "@felte/validator-zod";
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import type { SoundConfig } from "$lib/api/types";
+  import { FileType, type SoundConfig } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createCreateSoundMutation,
+    createUpdateSoundMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
@@ -13,6 +18,9 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
+  import { uploadFile } from "$lib/api/data";
+  import { toast } from "svelte-sonner";
+  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
 
   type Props = {
     existing?: SoundConfig;
@@ -23,76 +31,107 @@
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
+  const updateSound = createUpdateSoundMutation(appData, appDataMutation);
+  const createSound = createCreateSoundMutation(appData, appDataMutation);
+
+  // When working with existing configs we allow the file to be a
+  // string to account for already uploaded file URLs
+  const soundSchema = z
+    .instanceof(File, {
+      message: "Sound file is required",
+      fatal: true,
+    })
+    .or(z.string());
+
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
-    sound:
-      // Allow not specifying file when updating existing
-      existing !== undefined
-        ? z.union([z.instanceof(File), z.undefined()])
-        : z.instanceof(File, {
-            message: "Sound file is required",
-            fatal: true,
-          }),
+    sound: soundSchema,
     volume: z.number(),
   });
 
+  type Schema = z.infer<typeof schema>;
+
+  // Defaults when creating a new sound
+  const createDefaults: Partial<Schema> = {
+    name: "",
+    sound: undefined,
+    volume: 1,
+  };
+
+  function createFromExisting(config: SoundConfig): Partial<Schema> {
+    return {
+      name: config.name,
+      sound: config.src,
+      volume: config.volume,
+    };
+  }
+
   const { form, data, isValid, setFields } = createForm<z.infer<typeof schema>>(
     {
-      initialValues: existing
-        ? {
-            name: existing.name,
-            sound: undefined,
-            volume: existing.volume,
-          }
-        : {
-            name: "",
-            sound: undefined,
-            volume: 1,
-          },
+      // Derive initial values
+      initialValues: existing ? createFromExisting(existing) : createDefaults,
+
+      // Validation and error reporting
       extend: [validator({ schema }), reporterDom()],
-      async onSubmit(values, context) {
-        let soundURL: string;
 
-        if (values.sound) {
-          soundURL = await invoke<string>("upload_file", {
-            fileType: "Sound",
-            fileName: values.sound.name,
-            fileData: await values.sound.arrayBuffer(),
-          });
-        } else if (existing) {
-          soundURL = existing.src;
-        } else {
-          throw new Error("sound was missing in create mode");
+      async onSubmit(values) {
+        const savePromise = save(values);
+
+        toast.promise(
+          savePromise,
+          existing
+            ? {
+                loading: "Saving sound...",
+                success: "Saved sound",
+                error: "Failed to save sound",
+              }
+            : {
+                loading: "Creating sound...",
+                success: "Created sound",
+                error: "Failed to create sound",
+              }
+        );
+
+        // Go back to the list when creating rather than editing
+        if (!existing) {
+          goto("/sounds");
         }
-
-        const soundConfig: SoundConfig = {
-          id: existing ? existing.id : self.crypto.randomUUID(),
-          src: soundURL,
-          volume: values.volume,
-          name: values.name,
-        };
-
-        if (existing !== undefined) {
-          // Update existing
-          await $appDataMutation.mutateAsync({
-            ...$appData,
-            sounds: $appData.sounds.map((item) => {
-              if (item.id !== existing.id) return item;
-              return soundConfig;
-            }),
-          });
-        } else {
-          // Add new
-          await $appDataMutation.mutateAsync({
-            ...$appData,
-            sounds: [...$appData.sounds, soundConfig],
-          });
-        }
-
-        goto("/sounds");
       },
     }
   );
+
+  function saveSound(sound: string | File) {
+    if (sound instanceof File) {
+      // Upload new sound
+      return uploadFile(FileType.Sound, sound);
+    }
+
+    // Using existing uploaded sound
+    return Promise.resolve(sound);
+  }
+
+  async function save(values: Schema) {
+    const soundURL: string = await saveSound(values.sound);
+    const partialSoundConfig: Omit<SoundConfig, "id"> = {
+      src: soundURL,
+      volume: values.volume,
+      name: values.name,
+    };
+
+    if (existing !== undefined) {
+      await $updateSound({
+        soundId: existing.id,
+        soundConfig: partialSoundConfig,
+      });
+    } else {
+      const soundConfig: SoundConfig = {
+        ...partialSoundConfig,
+        id: self.crypto.randomUUID(),
+      };
+
+      await $createSound({ soundConfig });
+    }
+  }
 </script>
 
 <form use:form>
@@ -130,6 +169,7 @@
           }}
           volume={$data.volume}
         />
+        <FormErrorLabel name="sound" />
 
         <FormNumberInput
           id="volume"
