@@ -204,3 +204,19 @@ export function createAddImpactSounds(
     }
   );
 }
+
+export function createDeleteScriptsMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<string[]>(
+    appData,
+    appDataMutation,
+    (appData, scriptIds) => ({
+      ...appData,
+      scripts: appData.scripts.filter(
+        (script) => !scriptIds.includes(script.id)
+      ),
+    })
+  );
+}

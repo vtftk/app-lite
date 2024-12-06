@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createDeleteScriptsMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import ScriptItem from "$lib/sections/scripts/ScriptItem.svelte";
   import type { UserScriptConfig } from "$shared/appData";
@@ -10,7 +14,11 @@
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
+  const deleteScripts = createDeleteScriptsMutation(appData, appDataMutation);
+
   let selected: string[] = $state([]);
+
+  const isAllSelected = $derived(selected.length === $appData.scripts.length);
 
   function onToggleSelected(item: UserScriptConfig) {
     if (selected.includes(item.id)) {
@@ -19,8 +27,6 @@
       selected = [...selected, item.id];
     }
   }
-
-  const isAllSelected = $derived(selected.length === $appData.scripts.length);
 
   function onToggleAllSelected() {
     if (isAllSelected) {
@@ -35,7 +41,7 @@
       return;
     }
 
-    const deletePromise = deleteScripts(selected);
+    const deletePromise = $deleteScripts(selected);
 
     toast.promise(deletePromise, {
       loading: "Deleting scripts...",
@@ -45,19 +51,6 @@
 
     // Clear selection since all items are removed
     selected = [];
-  }
-
-  /**
-   * Deletes any scripts with ID's in the provided list of IDs
-   *
-   * @param ids Script ID's to delete
-   * @returns Promise that completes when the deletion is complete
-   */
-  function deleteScripts(ids: string[]): Promise<any> {
-    return $appDataMutation.mutateAsync({
-      ...$appData,
-      scripts: $appData.scripts.filter((item) => !ids.includes(item.id)),
-    });
   }
 </script>
 

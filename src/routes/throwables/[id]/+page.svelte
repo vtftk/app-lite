@@ -1,10 +1,11 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { getAppData } from "$lib/api/runtimeAppData";
-  import type { ItemConfig, ThrowableConfig } from "$lib/api/types";
+  import { testThrow, testThrowBarrage } from "$lib/api/throwables";
+  import type { ItemConfig } from "$lib/api/types";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import ThrowableForm from "$lib/sections/throwables/ThrowableForm.svelte";
-  import { invoke } from "@tauri-apps/api/core";
+  import { toast } from "svelte-sonner";
   import { derived, type Readable } from "svelte/store";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
@@ -20,47 +21,33 @@
     }
   );
 
-  async function testThrow(config: ItemConfig) {
-    const impact_sounds = $appData.sounds.filter((sound) =>
-      config.impact_sounds_ids.includes(sound.id)
-    );
+  function onTestThrow(config: ItemConfig) {
+    const throwPromise = testThrow($appData, [config.id], 1);
 
-    const throwable: ThrowableConfig = {
-      items: [config],
-      impact_sounds,
-    };
-
-    await invoke("test_throw", {
-      config: throwable,
-      amount: 1,
+    toast.promise(throwPromise, {
+      loading: "Sending throw...",
+      success: "Threw item",
+      error: "Failed to throw item",
     });
   }
 
-  async function testThrowMany(config: ItemConfig) {
-    const impact_sounds = $appData.sounds.filter((sound) =>
-      config.impact_sounds_ids.includes(sound.id)
-    );
+  function onTestBarrage(config: ItemConfig) {
+    const throwPromise = testThrowBarrage($appData, [config.id], 50, 2, 100);
 
-    const throwable: ThrowableConfig = {
-      items: [config],
-      impact_sounds,
-    };
-
-    await invoke("test_throw_barrage", {
-      config: throwable,
-      amount: 50,
-      amountPerThrow: 2,
-      frequency: 100,
+    toast.promise(throwPromise, {
+      loading: "Sending barrage...",
+      success: "Threw barrage",
+      error: "Failed to throw barrage",
     });
   }
 </script>
 
 {#if $item !== undefined}
   {#snippet actions()}
-    <button type="button" class="btn" onclick={() => testThrow($item)}>
+    <button type="button" class="btn" onclick={() => onTestThrow($item)}>
       <BallIcon /> Test
     </button>
-    <button type="button" class="btn" onclick={() => testThrowMany($item)}>
+    <button type="button" class="btn" onclick={() => onTestBarrage($item)}>
       <BallsIcon /> Test Barrage
     </button>
     <a class="btn" href="/throwables">Back</a>
