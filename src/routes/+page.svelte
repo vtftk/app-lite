@@ -79,8 +79,25 @@
       <div class="status-text">
         <h2>VTube Studio</h2>
 
-        {#if $runtimeAppData.vtube_studio_connected}
-          <p>Connected to VTube studio, ready to throw items</p>
+        {#if $runtimeAppData.vtube_studio_connected && $isModelCalibrated}
+          <p>
+            Connected to VTube studio, model is calibrated. Ready to throw items
+          </p>
+        {:else if $runtimeAppData.vtube_studio_connected}
+          <p>
+            Connected to VTube studio.
+
+            <br />
+
+            <span class="warning">
+              Current model is not calibrated, you must calibrate your model in
+              order to throw items.
+            </span>
+          </p>
+
+          <div class="actions">
+            <a class="btn" href="/calibration">Calibrate Model</a>
+          </div>
         {:else}
           <p>
             Not connected to VTube studio, throwing items will not work. <br /> Ensure
@@ -91,7 +108,11 @@
 
       <div
         class="status-indicator"
-        data-status={$runtimeAppData.vtube_studio_connected ? "green" : "red"}
+        data-status={$runtimeAppData.vtube_studio_connected
+          ? $isModelCalibrated
+            ? "green"
+            : "orange"
+          : "red"}
       ></div>
     </div>
     <div class="status-item">
@@ -164,26 +185,6 @@
         ></div>
       </div>
     {/if}
-    <div class="status-item">
-      <div class="status-text">
-        <h2>Model Calibration</h2>
-        {#if $runtimeAppData.vtube_studio_connected}
-          <p>Calibrate model</p>
-          <div class="actions">
-            <a class="btn" href="/calibration">Calibrate Model</a>
-          </div>
-        {:else}
-          <p>Not connected to VTube studio</p>{/if}
-      </div>
-      <div
-        class="status-indicator"
-        data-status={$isModelCalibrated
-          ? "green"
-          : $runtimeAppData.vtube_studio_connected
-            ? "red"
-            : "orange"}
-      ></div>
-    </div>
   </div>
 </PageLayoutList>
 
@@ -232,6 +233,10 @@
 
   .status-indicator[data-status="orange"] {
     background-color: orange;
+  }
+
+  .warning {
+    color: orange;
   }
 
   .status-indicator[data-status="red"] {
