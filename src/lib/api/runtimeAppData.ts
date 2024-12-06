@@ -3,10 +3,10 @@ import {
   createQuery,
   type CreateQueryResult,
 } from "@tanstack/svelte-query";
-import type { AppData, RuntimeAppData } from "./types";
+import type { AppData, ItemConfig, RuntimeAppData } from "./types";
 import { invoke } from "@tauri-apps/api/core";
 import { getContext } from "svelte";
-import { derived, type Readable } from "svelte/store";
+import { derived, get, type Readable } from "svelte/store";
 import { queryClient } from "./utils";
 
 export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
@@ -103,4 +103,104 @@ export function createDeriveModelCalibrated(
     const modelData = $appData.models[$runtimeAppData.model_id];
     return modelData !== undefined;
   });
+}
+
+function mutateAppData(action: (state: AppData) => AppData) {
+  queryClient.cancelQueries({ queryKey: APP_DATA_KEY });
+
+  queryClient.setQueryData<AppData>(APP_DATA_KEY, (appData) => {
+    if (appData === undefined) return undefined;
+    return action(appData);
+  });
+}
+
+type AppDataMutation = ReturnType<typeof createAppDateMutation>;
+
+/**
+ * Creates a mutation that is derived from mutating the app data
+ *
+ * @param appData App data store for the current app data value
+ * @param appDataMutation Underlying app data mutation to use
+ * @param action Action to perform the mutation
+ * @returns The derived mutations
+ */
+export function createDerivedAppDataMutation<V>(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation,
+  action: (appData: AppData, value: V) => AppData
+) {
+  return derived([appData, appDataMutation], ([$appData, $appDataMutation]) =>
+    createMutation<boolean, Error, V>({
+      mutationFn: (input) => {
+        const applied = action($appData, input);
+        return $appDataMutation.mutateAsync(applied);
+      },
+    })
+  );
+}
+
+type AppDataMutator<V> = (input: V) => Promise<boolean>;
+
+export function createAppDataMutator<V>(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation,
+  action: (appData: AppData, value: V) => AppData
+): Readable<AppDataMutator<V>> {
+  return derived(
+    appDataMutation,
+    ($appDataMutation) => (input: V) =>
+      $appDataMutation.mutateAsync(action(get(appData), input))
+  );
+}
+
+export function createDeleteItemsMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<string[]>(
+    appData,
+    appDataMutation,
+    (appData, itemIds) => ({
+      ...appData,
+      items: appData.items.filter((item) => !itemIds.includes(item.id)),
+    })
+  );
+}
+
+type AddImpactSounds = {
+  // The ID's of the items to add sounds to
+  itemIds: string[];
+  // The ID's of the sounds to add
+  impactSoundIds: string[];
+};
+
+export function createAddImpactSounds(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<AddImpactSounds>(
+    appData,
+    appDataMutation,
+    (appData, { itemIds, impactSoundIds }) => {
+      const appendSoundsUnique = (sounds: string[]) => [
+        ...sounds,
+        // Add new sounds filtering out ones that are already present
+        ...impactSoundIds.filter((id) => !sounds.includes(id)),
+      ];
+
+      return {
+        ...appData,
+        items: appData.items.map((item) => {
+          if (itemIds.includes(item.id)) {
+            return {
+              ...item,
+              impact_sounds_ids: appendSoundsUnique(item.impact_sounds_ids),
+            };
+          }
+
+          return item;
+        }),
+      };
+    }
+  );
 }

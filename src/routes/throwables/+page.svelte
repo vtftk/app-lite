@@ -1,24 +1,30 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAddImpactSounds,
+    createAppDateMutation,
+    createDeleteItemsMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
-  import type {
-    ItemConfig,
-    SoundConfig,
-    ThrowableConfig,
-  } from "$shared/appData";
+  import type { ItemConfig, SoundConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
-  import { invoke } from "@tauri-apps/api/core";
+  import { testThrow, testThrowBarrage } from "$lib/api/throwables";
+  import { toast } from "svelte-sonner";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
+  const deleteItems = createDeleteItemsMutation(appData, appDataMutation);
+  const addImpactSounds = createAddImpactSounds(appData, appDataMutation);
+
   let selected: string[] = $state([]);
+  const isAllSelected = $derived(selected.length === $appData.items.length);
 
   function onToggleSelected(item: ItemConfig) {
     if (selected.includes(item.id)) {
@@ -28,8 +34,6 @@
     }
   }
 
-  const isAllSelected = $derived(selected.length === $appData.items.length);
-
   function onToggleAllSelected() {
     if (isAllSelected) {
       selected = [];
@@ -38,20 +42,23 @@
     }
   }
 
-  async function onBulkDelete() {
+  function onBulkDelete() {
     if (!confirm("Are you sure you want to delete the selected throwables?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      items: $appData.items.filter((item) => !selected.includes(item.id)),
+    const deletePromise = $deleteItems(selected);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting items...",
+      success: "Deleted items",
+      error: "Failed to delete items",
     });
 
     selected = [];
   }
 
-  async function onBulkAddSounds(sounds: SoundConfig[]) {
+  function onBulkAddSounds(sounds: SoundConfig[]) {
     if (
       !confirm(
         "Are you sure you want to add the selected impact sounds to the selected throwables?"
@@ -62,60 +69,35 @@
 
     const impactSoundIds = sounds.map((sound) => sound.id);
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      items: $appData.items.map((item) => {
-        if (selected.includes(item.id)) {
-          return {
-            ...item,
-            impact_sounds_ids: [
-              ...item.impact_sounds_ids,
-              // Add new sounds filtering out ones that are already present
-              ...impactSoundIds.filter(
-                (id) => !item.impact_sounds_ids.includes(id)
-              ),
-            ],
-          };
-        }
+    const addPromise = $addImpactSounds({
+      itemIds: selected,
+      impactSoundIds,
+    });
 
-        return item;
-      }),
+    toast.promise(addPromise, {
+      loading: "Adding impact sounds...",
+      success: "Added impact sounds",
+      error: "Failed to add impact sounds",
     });
   }
 
-  async function testThrowSelected() {
-    const items = $appData.items.filter((item) => selected.includes(item.id));
-    const impact_sounds = $appData.sounds.filter((sound) =>
-      items.some((item) => item.impact_sounds_ids.includes(sound.id))
-    );
+  function onTestThrow() {
+    const throwPromise = testThrow($appData, selected, 1);
 
-    const throwable: ThrowableConfig = {
-      items,
-      impact_sounds,
-    };
-
-    await invoke("test_throw", {
-      config: throwable,
-      amount: 1,
+    toast.promise(throwPromise, {
+      loading: "Sending throw...",
+      success: "Threw item",
+      error: "Failed to throw item",
     });
   }
 
-  async function testThrowBarrageSelected() {
-    const items = $appData.items.filter((item) => selected.includes(item.id));
-    const impact_sounds = $appData.sounds.filter((sound) =>
-      items.some((item) => item.impact_sounds_ids.includes(sound.id))
-    );
+  function onTestBarrage() {
+    const throwPromise = testThrowBarrage($appData, selected, 50, 2, 100);
 
-    const throwable: ThrowableConfig = {
-      items: items,
-      impact_sounds,
-    };
-
-    await invoke("test_throw_barrage", {
-      config: throwable,
-      amount: 50,
-      amountPerThrow: 2,
-      frequency: 100,
+    toast.promise(throwPromise, {
+      loading: "Sending barrage...",
+      success: "Threw barrage",
+      error: "Failed to throw barrage",
     });
   }
 </script>
@@ -144,10 +126,10 @@
       </div>
 
       <div class="selection__actions">
-        <button type="button" class="btn" onclick={testThrowSelected}>
+        <button type="button" class="btn" onclick={onTestThrow}>
           <BallIcon /> Test
         </button>
-        <button type="button" class="btn" onclick={testThrowBarrageSelected}>
+        <button type="button" class="btn" onclick={onTestBarrage}>
           <BallsIcon /> Test Barrage
         </button>
 
