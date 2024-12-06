@@ -30,6 +30,14 @@ body {
   border-color: #777;
 }
 
+.btn:disabled,
+.btn:disabled:hover {
+  background-color: #222;
+  border: 1px solid #333;
+  cursor: not-allowed;
+  color: #777;
+}
+
 .text-stack {
   display: flex;
   flex-flow: column;

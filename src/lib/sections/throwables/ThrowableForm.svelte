@@ -13,6 +13,7 @@
     createCreateItemMutation,
     createUpdateItemMutation,
     getAppData,
+    getRuntimeAppData,
   } from "$lib/api/runtimeAppData";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { goto } from "$app/navigation";
@@ -29,6 +30,7 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import { derived } from "svelte/store";
 
   type Props = {
     existing?: ItemConfig;
@@ -36,11 +38,21 @@
 
   const { existing }: Props = $props();
 
+  const runtimeAppData = getRuntimeAppData();
+
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
 
   const updateItem = createUpdateItemMutation(appData, appDataMutation);
   const createItem = createCreateItemMutation(appData, appDataMutation);
+
+  // Testing is only available when an overlay and vtube studio is connected
+  const testingEnabled = derived(
+    runtimeAppData,
+    ($runtimeAppData) =>
+      $runtimeAppData.active_overlay_count > 0 &&
+      $runtimeAppData.vtube_studio_connected
+  );
 
   // When working with existing configs we allow the file to be a
   // string to account for already uploaded file URLs
@@ -191,10 +203,20 @@
 
 {#snippet actions()}
   {#if existing}
-    <button type="button" class="btn" onclick={onTestThrow}>
+    <button
+      type="button"
+      class="btn"
+      onclick={onTestThrow}
+      disabled={!$testingEnabled}
+    >
       <BallIcon /> Test
     </button>
-    <button type="button" class="btn" onclick={onTestBarrage}>
+    <button
+      type="button"
+      class="btn"
+      onclick={onTestBarrage}
+      disabled={!$testingEnabled}
+    >
       <BallsIcon /> Test Barrage
     </button>
   {/if}

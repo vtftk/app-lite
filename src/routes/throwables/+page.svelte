@@ -4,6 +4,7 @@
     createAppDateMutation,
     createDeleteItemsMutation,
     getAppData,
+    getRuntimeAppData,
   } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -16,6 +17,9 @@
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import { toast } from "svelte-sonner";
+  import { derived as derivedStore } from "svelte/store";
+
+  const runtimeAppData = getRuntimeAppData();
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -23,7 +27,16 @@
   const deleteItems = createDeleteItemsMutation(appData, appDataMutation);
   const addImpactSounds = createAddImpactSounds(appData, appDataMutation);
 
+  // Testing is only available when an overlay and vtube studio is connected
+  const testingEnabled = derivedStore(
+    runtimeAppData,
+    ($runtimeAppData) =>
+      $runtimeAppData.active_overlay_count > 0 &&
+      $runtimeAppData.vtube_studio_connected
+  );
+
   let selected: string[] = $state([]);
+
   const isAllSelected = $derived(
     selected.length > 0 && selected.length === $appData.items.length
   );
@@ -128,10 +141,20 @@
       </div>
 
       <div class="selection__actions">
-        <button type="button" class="btn" onclick={onTestThrow}>
+        <button
+          type="button"
+          class="btn"
+          onclick={onTestThrow}
+          disabled={!$testingEnabled}
+        >
           <BallIcon /> Test
         </button>
-        <button type="button" class="btn" onclick={onTestBarrage}>
+        <button
+          type="button"
+          class="btn"
+          onclick={onTestBarrage}
+          disabled={!$testingEnabled}
+        >
           <BallsIcon /> Test Barrage
         </button>
 
