@@ -37,7 +37,7 @@
     <div>
       <img
         alt="OBS Interact"
-        src="/help/guide-marker-head.png"
+        src="/help/guide-marker-head.jpg"
         height="128px"
         width="auto"
       />
@@ -49,7 +49,7 @@
     </p>
 
     <div>
-      <img alt="OBS Interact" src="/help/obs-interact.png" />
+      <img alt="OBS Interact" src="/help/obs-interact.jpg" />
     </div>
 
     <button
@@ -71,7 +71,7 @@
     <div>
       <img
         alt="OBS Interact"
-        src="/help/guide-marker-head.png"
+        src="/help/guide-marker-head.jpg"
         height="128px"
         width="auto"
       />
@@ -83,7 +83,7 @@
     </p>
 
     <div>
-      <img alt="OBS Interact" src="/help/obs-interact.png" />
+      <img alt="OBS Interact" src="/help/obs-interact.jpg" />
     </div>
 
     <button
