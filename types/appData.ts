@@ -12,6 +12,7 @@ export type AppData = {
   sounds_config: SoundsConfig;
   model_config: ModelConfig;
   vtube_studio_config: VTubeStudioConfig;
+  externals_config: ExternalsConfig;
   models: Record<ModelId, ModelData>;
 
   items: ItemConfig[];
@@ -19,6 +20,10 @@ export type AppData = {
   sounds: SoundConfig[];
   scripts: UserScriptConfig[];
   commands: CommandConfig[];
+};
+
+export type ExternalsConfig = {
+  tts_monster_api_key: string | null;
 };
 
 export type ThrowablesConfig = {

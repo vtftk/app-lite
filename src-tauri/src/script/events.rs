@@ -2,13 +2,21 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use serde::Serialize;
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
 use twitch_api::{
     helix::chat::{SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse},
     types::{DisplayName, UserId, UserName},
 };
 
-use crate::{state::app_data::AppDataStore, twitch::manager::TwitchManager};
+use crate::{
+    events::EventMessage,
+    state::app_data::{AppDataStore, SoundConfig},
+    tts::{
+        tts_monster_generate, tts_monster_generate_parsed, tts_monster_get_voices, GenerateRequest,
+        GenerateResponse, Voice,
+    },
+    twitch::manager::TwitchManager,
+};
 
 use super::kv::KVStore;
 
@@ -57,6 +65,28 @@ pub enum JsEventMessage {
         key: String,
         return_tx: oneshot::Sender<anyhow::Result<()>>,
     },
+
+    PlaySound {
+        config: SoundConfig,
+    },
+
+    PlaySoundSeq {
+        configs: Vec<SoundConfig>,
+    },
+
+    TtsGetVoices {
+        return_tx: oneshot::Sender<anyhow::Result<Vec<Voice>>>,
+    },
+
+    TtsGenerate {
+        request: GenerateRequest,
+        return_tx: oneshot::Sender<anyhow::Result<GenerateResponse>>,
+    },
+
+    TtsGenerateParsed {
+        message: String,
+        return_tx: oneshot::Sender<anyhow::Result<Vec<String>>>,
+    },
 }
 
 /// Event coming from outside the JS runtime to trigger executing
@@ -79,6 +109,7 @@ pub static SCRIPT_EVENT_PRODUCER: Mutex<Option<mpsc::Sender<JsEventMessage>>> =
 /// Initializes global script handling using the provided dependencies
 pub fn init_script_event_handling(
     app_data_store: AppDataStore,
+    event_sender: broadcast::Sender<EventMessage>,
     kv_store: KVStore,
     twitch_manager: Arc<TwitchManager>,
 ) {
@@ -90,6 +121,7 @@ pub fn init_script_event_handling(
     // Spawn background task to process events
     tauri::async_runtime::spawn(handle_script_events(
         app_data_store,
+        event_sender,
         twitch_manager,
         kv_store,
         rx,
@@ -99,7 +131,8 @@ pub fn init_script_event_handling(
 /// Asynchronous task handling for receiving events then dispatching tasks
 /// to executed the event action
 pub async fn handle_script_events(
-    _app_data_store: AppDataStore,
+    app_data_store: AppDataStore,
+    event_sender: broadcast::Sender<EventMessage>,
     twitch_manager: Arc<TwitchManager>,
     kv: KVStore,
     mut rx: mpsc::Receiver<JsEventMessage>,
@@ -153,6 +186,33 @@ pub async fn handle_script_events(
                     let result = handle_kv_remove_event(kv, key).await;
                     _ = return_tx.send(result);
                 });
+            }
+            JsEventMessage::PlaySound { config } => {
+                _ = event_sender.send(EventMessage::PlaySound { config });
+            }
+            JsEventMessage::TtsGetVoices { return_tx } => {
+                let app_data_store = app_data_store.clone();
+                tokio::spawn(async move {
+                    let result = tts_monster_get_voices(app_data_store).await;
+                    _ = return_tx.send(result);
+                });
+            }
+            JsEventMessage::TtsGenerate { request, return_tx } => {
+                let app_data_store = app_data_store.clone();
+                tokio::spawn(async move {
+                    let result = tts_monster_generate(app_data_store, request).await;
+                    _ = return_tx.send(result);
+                });
+            }
+            JsEventMessage::TtsGenerateParsed { message, return_tx } => {
+                let app_data_store = app_data_store.clone();
+                tokio::spawn(async move {
+                    let result = tts_monster_generate_parsed(app_data_store, message).await;
+                    _ = return_tx.send(result);
+                });
+            }
+            JsEventMessage::PlaySoundSeq { configs } => {
+                _ = event_sender.send(EventMessage::PlaySoundSeq { configs });
             }
         }
     }

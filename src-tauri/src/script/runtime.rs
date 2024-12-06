@@ -16,6 +16,10 @@ use super::{
         kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
         twitch::{op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat},
+        vtftk::{
+            op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
+            op_vtftk_tts_generate_parsed, op_vtftk_tts_get_voices,
+        },
     },
 };
 
@@ -36,7 +40,12 @@ deno_core::extension!(
         op_twitch_is_vip,
         op_kv_get,
         op_kv_set,
-        op_kv_remove
+        op_kv_remove,
+        op_vtftk_play_sound,
+        op_vtftk_tts_generate,
+        op_vtftk_tts_get_voices,
+        op_vtftk_tts_generate_parsed,
+        op_vtftk_play_sound_seq
     ],
     docs = "Extension providing APIs to the JS runtime"
 );

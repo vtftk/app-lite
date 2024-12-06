@@ -20,6 +20,8 @@ declare global {
     logging: LoggingApi;
     /// Key value store
     kv: KvStoreApi;
+    /// Interact with VTFTK itself
+    vtftk: VTFTKApi;
   }
 
   // Global API access
@@ -86,6 +88,44 @@ declare global {
     get: (key: string) => Promise<string | null>;
     remove: (key: string) => Promise<void>;
     set: (key: string, value: string) => Promise<void>;
+  }
+
+  interface TtsGenerateRequest {
+    voice_id: string;
+    message: string;
+  }
+
+  interface TtsGenerateResponse {
+    status: number;
+    url: string;
+  }
+
+  interface TtsVoice {
+    voice_id: string;
+    name: string;
+    sample: string;
+  }
+
+  interface SoundSeq {
+    src: string;
+    volume: number;
+  }
+
+  export interface VTFTKApi {
+    ttsVoices: () => Promise<TtsVoice[]>;
+
+    ttsGenerate: (request: TtsGenerateRequest) => Promise<TtsGenerateResponse>;
+    ttsGenerateParsed: (message: string) => Promise<string[]>;
+
+    /**
+     * Play a sound through the overlay
+     *
+     * @param src URL of the sound to play
+     * @param volume Volume to play the sound at 0-1
+     * @returns
+     */
+    playSound: (src: string, volume: number = 1) => Promise<void>;
+    playSoundSeq: (sounds: SoundSeq) => Promise<void>;
   }
 
   export interface HttpResponse {

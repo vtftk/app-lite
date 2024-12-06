@@ -54,6 +54,11 @@
       host: z.string(),
       port: z.number(),
     }),
+
+    // Schema for external configuration
+    external: z.object({
+      tts_monster_api_key: z.string(),
+    }),
   });
 
   type Schema = z.infer<typeof schema>;
@@ -64,6 +69,7 @@
       model_config,
       sounds_config,
       vtube_studio_config,
+      externals_config,
     } = appData;
 
     return {
@@ -85,6 +91,9 @@
       vtube_studio: {
         host: vtube_studio_config.host,
         port: vtube_studio_config.port,
+      },
+      external: {
+        tts_monster_api_key: externals_config.tts_monster_api_key ?? "",
       },
     };
   }
@@ -109,7 +118,7 @@
   });
 
   async function save(values: Schema) {
-    const { throwables, model, sounds, vtube_studio } = values;
+    const { throwables, model, sounds, vtube_studio, external } = values;
 
     await $updateSettings({
       throwables_config: {
@@ -130,6 +139,12 @@
       vtube_studio_config: {
         host: vtube_studio.host,
         port: vtube_studio.port,
+      },
+      externals_config: {
+        tts_monster_api_key:
+          external.tts_monster_api_key.trim().length < 1
+            ? null
+            : external.tts_monster_api_key,
       },
     });
   }
@@ -159,6 +174,9 @@
           </Tabs.Trigger>
           <Tabs.Trigger value="model">
             <SolarSettingsBoldDuotone /> VTuber Model
+          </Tabs.Trigger>
+          <Tabs.Trigger value="external">
+            <SolarSettingsBoldDuotone /> External APIs
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="throwables">
@@ -313,6 +331,19 @@
                 onChangeSelected={(selected) => {
                   setFields("model.eyes_on_hit", selected);
                 }}
+              />
+            </FormSection>
+          </FormSections>
+        </Tabs.Content>
+        <Tabs.Content value="external">
+          <FormSections>
+            <FormSection title="TTS Monster API Key">
+              <FormTextInput
+                id="external.tts_monster_api_key"
+                name="external.tts_monster_api_key"
+                label="TTS Monster API Key"
+                description="API Key to use TTS monster TTS voice generation"
+                type="password"
               />
             </FormSection>
           </FormSections>

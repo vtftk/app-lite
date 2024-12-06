@@ -6,14 +6,16 @@
     name: string;
     label: string;
     description?: string;
+
+    type?: "text" | "password";
   };
 
-  const { id, name, label, description }: Props = $props();
+  const { id, name, label, description, type = "text" }: Props = $props();
 </script>
 
 <div class="form-input">
   <label for={id}>{label}</label>
-  <input type="text" {id} {name} aria-describedby="{name}-validation" />
+  <input {type} {id} {name} aria-describedby="{name}-validation" />
   {#if description}
     <p class="description">{description}</p>
   {/if}

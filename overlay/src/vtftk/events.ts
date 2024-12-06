@@ -102,6 +102,14 @@ async function onMessage(data: EventSourceData, event: any) {
 
       break;
     }
+
+    case "PlaySoundSeq": {
+      if (data.vtSocket) {
+        onPlaySoundSeqEvent(event.configs);
+      }
+
+      break;
+    }
   }
 }
 
@@ -122,6 +130,37 @@ async function onPlaySoundEvent(config: SoundConfig) {
   const audio = await loadAudio(config.src);
   audio.volume = config.volume;
   audio.play();
+}
+
+async function onPlaySoundSeqEvent(configs: SoundConfig[]) {
+  const sounds = await loadSounds(configs);
+
+  for (const config of configs) {
+    console.debug("Playing sound config", config);
+
+    const soundData = sounds.get(config.id);
+
+    if (soundData === undefined) {
+      console.warn("Skipping sound config that failed to load", config);
+      continue;
+    }
+
+    // Play the sound
+    const audio = soundData.sound;
+    audio.volume = config.volume;
+
+    const completePromise = new Promise<void>((resolve, reject) => {
+      audio.onended = () => resolve();
+      audio.onerror = () => reject();
+    });
+
+    audio.play();
+
+    // Wait for the sound to complete fully
+    await completePromise;
+
+    console.debug("Completed sound config", config);
+  }
 }
 
 async function onTriggerHotkeyEvent(

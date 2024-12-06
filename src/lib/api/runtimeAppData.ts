@@ -7,6 +7,7 @@ import type {
   AppData,
   CommandConfig,
   EventConfig,
+  ExternalsConfig,
   ItemConfig,
   ModelConfig,
   RuntimeAppData,
@@ -376,6 +377,7 @@ type UpdateSettingsMutation = {
   model_config: Partial<ModelConfig>;
   sounds_config: Partial<SoundsConfig>;
   vtube_studio_config: Partial<VTubeStudioConfig>;
+  externals_config: Partial<ExternalsConfig>;
 };
 
 export function createUpdateSettingsMutation(
@@ -387,7 +389,13 @@ export function createUpdateSettingsMutation(
     appDataMutation,
     (
       appData,
-      { throwables_config, model_config, sounds_config, vtube_studio_config }
+      {
+        throwables_config,
+        model_config,
+        sounds_config,
+        vtube_studio_config,
+        externals_config,
+      }
     ) => ({
       ...appData,
 
@@ -397,6 +405,10 @@ export function createUpdateSettingsMutation(
       vtube_studio_config: {
         ...appData.vtube_studio_config,
         ...vtube_studio_config,
+      },
+      externals_config: {
+        ...appData.externals_config,
+        ...externals_config,
       },
     })
   );

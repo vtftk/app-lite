@@ -80,12 +80,19 @@ pub struct AppData {
     pub model_config: ModelConfig,
     pub sounds_config: SoundsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
+    pub externals_config: ExternalsConfig,
     pub models: HashMap<ModelId, ModelData>,
     pub items: Vec<ItemConfig>,
     pub events: Vec<EventConfig>,
     pub sounds: Vec<SoundConfig>,
     pub scripts: Vec<UserScriptConfig>,
     pub commands: Vec<CommandConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct ExternalsConfig {
+    pub tts_monster_api_key: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

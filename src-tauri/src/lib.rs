@@ -20,6 +20,7 @@ mod events;
 mod http;
 mod script;
 mod state;
+mod tts;
 mod twitch;
 
 /// Prevent slow changes from macro by using a separate entrypoint
@@ -65,6 +66,7 @@ pub fn run() {
             // Handle scripting events
             script::events::init_script_event_handling(
                 app_data.clone(),
+                event_tx.clone(),
                 kv_store,
                 twitch_manager.clone(),
             );

@@ -40,6 +40,11 @@ pub enum EventMessage {
     PlaySound {
         config: SoundConfig,
     },
+
+    // Play a sequence of sounds one after the other
+    PlaySoundSeq {
+        configs: Vec<SoundConfig>,
+    },
 }
 
 pub struct EventRecvHandle(pub broadcast::Receiver<EventMessage>);

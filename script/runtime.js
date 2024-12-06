@@ -100,6 +100,14 @@ const api = {
     warn,
     error,
   },
+  vtftk: {
+    ttsVoices: () => Deno.core.ops.op_vtftk_tts_get_voices(),
+    ttsGenerate: (req) => Deno.core.ops.op_vtftk_tts_generate(req),
+    ttsGenerateParsed: (req) => Deno.core.ops.op_vtftk_tts_generate_parsed(req),
+    playSound: (src, volume = 1) =>
+      Deno.core.ops.op_vtftk_play_sound(src, volume),
+    playSoundSeq: (sounds) => Deno.core.ops.op_vtftk_play_sound_seq(sounds),
+  },
 };
 
 globalThis.api = api;
