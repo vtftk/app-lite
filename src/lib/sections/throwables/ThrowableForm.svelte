@@ -8,7 +8,6 @@
     type ItemConfig,
     type ThrowableImageConfig,
   } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
   import {
     createAppDateMutation,
     createCreateItemMutation,
@@ -20,9 +19,16 @@
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import ImageUpload from "$lib/components/form/ImageUpload.svelte";
   import { uploadFile } from "$lib/api/data";
+  import { testThrow, testThrowBarrage } from "$lib/api/throwables";
+  import { toast } from "svelte-sonner";
+  import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
 
   type Props = {
     existing?: ItemConfig;
@@ -36,14 +42,18 @@
   const updateItem = createUpdateItemMutation(appData, appDataMutation);
   const createItem = createCreateItemMutation(appData, appDataMutation);
 
+  // When working with existing configs we allow the file to be a
+  // string to account for already uploaded file URLs
+  const imageSchema = z
+    .instanceof(File, {
+      message: "Image file is required",
+      fatal: true,
+    })
+    .or(z.string());
+
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
-    image: existing
-      ? z.union([z.instanceof(File), z.undefined()])
-      : z.instanceof(File, {
-          message: "Image file is required",
-          fatal: true,
-        }),
+    image: imageSchema,
     scale: z.number(),
     weight: z.number(),
     pixelate: z.boolean(),
@@ -52,66 +62,60 @@
 
   type Schema = z.infer<typeof schema>;
 
-  const { form, data, touched, setFields } = createForm<Schema>({
-    initialValues: (existing
-      ? {
-          name: existing.name,
-          image: undefined,
-          scale: existing.image.scale,
-          weight: existing.image.weight,
-          pixelate: existing.image.pixelate,
-          impactSoundIds: existing.impact_sounds_ids,
-        }
-      : {
-          name: "",
-          image: undefined,
-          scale: 1,
-          weight: 1,
-          pixelate: false,
-          impactSoundIds: [],
-        }) satisfies Schema,
+  // Defaults when creating a new throwable
+  const createDefaults: Partial<Schema> = {
+    name: "",
+    image: undefined,
+    scale: 1,
+    weight: 1,
+    pixelate: false,
+    impactSoundIds: [],
+  };
+
+  function createFromExisting(config: ItemConfig): Partial<Schema> {
+    return {
+      name: config.name,
+      image: config.image.src,
+      scale: config.image.scale,
+      weight: config.image.weight,
+      pixelate: config.image.pixelate,
+      impactSoundIds: config.impact_sounds_ids,
+    };
+  }
+
+  const { form, data, touched } = createForm<Schema>({
+    // Derive initial values
+    initialValues: existing ? createFromExisting(existing) : createDefaults,
+
+    // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
-    async onSubmit(values, context) {
-      let imageURL: string;
 
-      if (values.image) {
-        imageURL = await uploadFile(FileType.ThrowableImage, values.image);
-      } else if (existing) {
-        imageURL = existing.image.src;
-      } else {
-        throw new Error("image was missing in create mode");
+    async onSubmit(values) {
+      const savePromise = save(values);
+
+      toast.promise(
+        savePromise,
+        existing
+          ? {
+              loading: "Saving item...",
+              success: "Saved item",
+              error: "Failed to save item",
+            }
+          : {
+              loading: "Creating item...",
+              success: "Created item",
+              error: "Failed to create item",
+            }
+      );
+
+      // Go back to the list when creating rather than editing
+      if (!existing) {
+        goto("/throwables");
       }
-
-      const imageConfig: ThrowableImageConfig = {
-        src: imageURL,
-        pixelate: values.pixelate,
-        scale: values.scale,
-        weight: values.weight,
-      };
-
-      if (existing) {
-        const itemConfig: Omit<ItemConfig, "id"> = {
-          image: imageConfig,
-          impact_sounds_ids: values.impactSoundIds,
-          name: values.name,
-        };
-
-        $updateItem({ itemId: existing.id, itemConfig });
-      } else {
-        const itemConfig: ItemConfig = {
-          id: self.crypto.randomUUID(),
-          image: imageConfig,
-          impact_sounds_ids: values.impactSoundIds,
-          name: values.name,
-        };
-
-        $createItem({ itemConfig });
-      }
-
-      goto("/throwables");
     },
   });
 
+  // Store initial impact sounds list for checking touched state
   const initialImpactSoundIds = $data.impactSoundIds;
 
   // Touched state for impact sound IDs must be manually updated
@@ -120,87 +124,148 @@
       $touched.impactSoundIds = true;
     }
   });
+
+  function saveImage(image: string | File) {
+    if (image instanceof File) {
+      // Upload new image
+      return uploadFile(FileType.ThrowableImage, image);
+    }
+
+    // Using existing uploaded image
+    return Promise.resolve(image);
+  }
+
+  async function save(values: Schema) {
+    const imageURL: string = await saveImage(values.image);
+    const imageConfig: ThrowableImageConfig = {
+      src: imageURL,
+      pixelate: values.pixelate,
+      scale: values.scale,
+      weight: values.weight,
+    };
+
+    if (existing) {
+      const itemConfig: Omit<ItemConfig, "id"> = {
+        image: imageConfig,
+        impact_sounds_ids: values.impactSoundIds,
+        name: values.name,
+      };
+
+      await $updateItem({ itemId: existing.id, itemConfig });
+    } else {
+      const itemConfig: ItemConfig = {
+        id: self.crypto.randomUUID(),
+        image: imageConfig,
+        impact_sounds_ids: values.impactSoundIds,
+        name: values.name,
+      };
+
+      await $createItem({ itemConfig });
+    }
+  }
+
+  function onTestThrow() {
+    if (existing === undefined) return;
+
+    const throwPromise = testThrow($appData, [existing.id], 1);
+
+    toast.promise(throwPromise, {
+      loading: "Sending throw...",
+      success: "Threw item",
+      error: "Failed to throw item",
+    });
+  }
+
+  function onTestBarrage() {
+    if (existing === undefined) return;
+
+    const throwPromise = testThrowBarrage($appData, [existing.id], 50, 2, 100);
+
+    toast.promise(throwPromise, {
+      loading: "Sending barrage...",
+      success: "Threw barrage",
+      error: "Failed to throw barrage",
+    });
+  }
 </script>
 
-<form use:form>
-  <section class="section">
-    <FormTextInput id="name" name="name" label="Name" />
-  </section>
-
-  <section class="section">
-    <h2>Image</h2>
-    <p>Image that gets thrown at the model</p>
-
-    <ImageUpload
-      id="image"
-      name="image"
-      label="Image"
-      existing={existing?.image?.src}
-      scale={$data.scale}
-    />
-
-    <div class="row-group">
-      <FormNumberInput
-        id="scale"
-        name="scale"
-        label="Scale"
-        min={0.1}
-        max={10}
-        step={0.1}
-      />
-
-      <FormNumberInput
-        id="weight"
-        name="weight"
-        label="Weight"
-        min={0}
-        max={10}
-        step={0.1}
-      />
-
-      <FormCheckbox
-        id="pixelate"
-        name="pixelate"
-        label="Pixelate"
-        checked={$data.pixelate}
-        onChecked={(checked) => {
-          setFields("pixelate", checked, true);
-        }}
-      />
-    </div>
-  </section>
-
-  <section class="section">
-    <h2>Impact Sounds</h2>
-    <p>
-      Sound played when the throwable impacts
-      <span>Optional</span>
-    </p>
-
-    <SoundPicker
-      sounds={$appData.sounds}
-      bind:selected={$data.impactSoundIds}
-    />
-    <FormErrorLabel name="impactSoundIds" />
-  </section>
-
+{#snippet actions()}
+  {#if existing}
+    <button type="button" class="btn" onclick={onTestThrow}>
+      <BallIcon /> Test
+    </button>
+    <button type="button" class="btn" onclick={onTestBarrage}>
+      <BallsIcon /> Test Barrage
+    </button>
+  {/if}
   <button type="submit" class="btn"> {existing ? "Save" : "Create"}</button>
+  <a class="btn" href="/throwables">Back</a>
+{/snippet}
+
+<form use:form>
+  <PageLayoutList
+    title={existing ? "Edit Throwable" : "Create Throwable"}
+    description={existing
+      ? "Editing a throwable"
+      : "Create a new item that can be thrown"}
+    {actions}
+  >
+    <FormSections>
+      <FormSection>
+        <FormTextInput id="name" name="name" label="Name" />
+      </FormSection>
+
+      <FormSection title="Image" description="Image that gets thrown">
+        <div class="row-group">
+          <ImageUpload
+            id="image"
+            name="image"
+            label="Image"
+            existing={existing?.image?.src}
+            scale={$data.scale}
+          />
+
+          <div class="row-group">
+            <FormNumberInput
+              id="scale"
+              name="scale"
+              label="Scale"
+              min={0.1}
+              max={10}
+              step={0.1}
+            />
+
+            <FormNumberInput
+              id="weight"
+              name="weight"
+              label="Weight"
+              min={0}
+              max={10}
+              step={0.1}
+            />
+
+            <FormBoundCheckbox id="pixelate" name="pixelate" label="Pixelate" />
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Impact Sounds"
+        description="Choose selection of sounds that can play when the item impacts"
+      >
+        <SoundPicker
+          sounds={$appData.sounds}
+          bind:selected={$data.impactSoundIds}
+        />
+        <FormErrorLabel name="impactSoundIds" />
+      </FormSection>
+    </FormSections>
+  </PageLayoutList>
 </form>
 
 <style>
   form {
-    display: flex;
-    flex-flow: column;
-    gap: 1rem;
-  }
-
-  .section {
-    display: flex;
-    flex-flow: column;
-
-    border: 1px solid #333;
-    padding: 1rem;
-    gap: 1rem;
+    height: 100%;
   }
 
   .row-group {
