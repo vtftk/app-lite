@@ -108,6 +108,7 @@
       const { throwables, model, sounds, vtube_studio } = values;
 
       await $appDataMutation.mutateAsync({
+        ...$appData,
         throwables_config: {
           ...$appData.throwables_config,
           duration: throwables.duration,
@@ -132,8 +133,6 @@
           host: vtube_studio.host,
           port: vtube_studio.port,
         },
-
-        ...$appData,
       });
     },
   });
