@@ -51,14 +51,20 @@ function onMouseMove(event: MouseEvent) {
 }
 
 function subscribeCalibrate() {
-  if (calibrationEl) calibrationEl.style.visibility = "visible";
+  if (calibrationEl) {
+    calibrationEl.style.visibility = "visible";
+    calibrationEl.hidden = false;
+  }
   window.addEventListener("mousedown", onMouseDown);
   window.addEventListener("mouseup", onMouseUp);
   window.addEventListener("mousemove", onMouseMove);
 }
 
 function unsubscribeCalibrate() {
-  if (calibrationEl) calibrationEl.style.visibility = "hidden";
+  if (calibrationEl) {
+    calibrationEl.style.visibility = "hidden";
+    calibrationEl.hidden = true;
+  }
   window.removeEventListener("mousedown", onMouseDown);
   window.removeEventListener("mouseup", onMouseUp);
   window.removeEventListener("mousemove", onMouseMove);
