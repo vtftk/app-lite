@@ -10,6 +10,7 @@
     "rlib",
     "rustls",
     "serde",
+    "sonner",
     "staticlib",
     "tauri",
     "tungstenite",

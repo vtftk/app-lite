@@ -6,7 +6,6 @@
     getAppData,
     getRuntimeAppData,
   } from "$lib/api/runtimeAppData";
-  import { derived } from "svelte/store";
   import { invoke } from "@tauri-apps/api/core";
 
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
