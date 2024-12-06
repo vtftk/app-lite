@@ -18,7 +18,9 @@
   const deleteSounds = createDeleteSoundsMutation(appData, appDataMutation);
 
   let selected: string[] = $state([]);
-  const isAllSelected = $derived(selected.length === $appData.sounds.length);
+  const isAllSelected = $derived(
+    selected.length > 0 && selected.length === $appData.sounds.length
+  );
 
   function onToggleSelected(item: SoundConfig) {
     if (selected.includes(item.id)) {

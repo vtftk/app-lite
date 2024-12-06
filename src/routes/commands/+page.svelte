@@ -17,7 +17,9 @@
   const deleteCommands = createDeleteCommandsMutation(appData, appDataMutation);
 
   let selected: string[] = $state([]);
-  const isAllSelected = $derived(selected.length === $appData.commands.length);
+  const isAllSelected = $derived(
+    selected.length > 0 && selected.length === $appData.commands.length
+  );
 
   function onToggleSelected(item: CommandConfig) {
     if (selected.includes(item.id)) {

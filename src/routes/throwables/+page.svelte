@@ -24,7 +24,9 @@
   const addImpactSounds = createAddImpactSounds(appData, appDataMutation);
 
   let selected: string[] = $state([]);
-  const isAllSelected = $derived(selected.length === $appData.items.length);
+  const isAllSelected = $derived(
+    selected.length > 0 && selected.length === $appData.items.length
+  );
 
   function onToggleSelected(item: ItemConfig) {
     if (selected.includes(item.id)) {

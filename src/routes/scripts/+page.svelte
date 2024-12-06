@@ -18,7 +18,9 @@
 
   let selected: string[] = $state([]);
 
-  const isAllSelected = $derived(selected.length === $appData.scripts.length);
+  const isAllSelected = $derived(
+    selected.length > 0 && selected.length === $appData.scripts.length
+  );
 
   function onToggleSelected(item: UserScriptConfig) {
     if (selected.includes(item.id)) {
