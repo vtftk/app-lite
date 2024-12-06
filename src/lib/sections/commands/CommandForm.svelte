@@ -19,9 +19,7 @@
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import exampleCode from "../../../../script/example_command.js?raw";
-  import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import { Tabs } from "bits-ui";
-  import FormSelect from "$lib/components/form/FormSelect.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";

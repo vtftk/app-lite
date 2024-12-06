@@ -1,15 +1,19 @@
 <script lang="ts">
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import type { EventConfig } from "$lib/api/types";
+  import { Checkbox } from "bits-ui";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   type Props = {
     config: EventConfig;
+
+    selected: boolean;
+    onToggleSelected: VoidFunction;
   };
 
-  const { config }: Props = $props();
+  const { config, selected, onToggleSelected }: Props = $props();
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -27,9 +31,15 @@
 </script>
 
 <div class="event">
-  <div class="event__content">
-    <p class="event__name">{config.name}</p>
-  </div>
+  <Checkbox.Root checked={selected} onCheckedChange={onToggleSelected}>
+    <Checkbox.Indicator let:isChecked>
+      {#if isChecked}
+        <span>&#10003;</span>
+      {/if}
+    </Checkbox.Indicator>
+  </Checkbox.Root>
+
+  <p class="event__name">{config.name}</p>
 
   <div class="event__actions">
     <a class="throw-button" href="/events/{config.id}">
@@ -51,12 +61,6 @@
     padding: 0.5rem;
   }
 
-  .event__content {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-  }
-
   .event__actions {
     display: flex;
     gap: 0.5rem;
@@ -66,6 +70,9 @@
   .event__name {
     color: #fff;
     font-weight: bold;
+    display: flex;
+    flex: auto;
+    align-items: center;
   }
 
   .throw-button {
