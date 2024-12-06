@@ -9,6 +9,7 @@
     id: string;
     name: string;
     label: string;
+    description?: string;
 
     items: T[];
     item: Snippet<[T]>;
@@ -23,6 +24,7 @@
     id,
     name,
     label,
+    description,
     items,
     item,
     multiple,
@@ -91,6 +93,11 @@
 
     <Select.Input {name} {id} />
   </Select.Root>
+
+  {#if description}
+    <p class="description">{description}</p>
+  {/if}
+
   <FormErrorLabel {name} />
 </div>
 
@@ -114,5 +121,11 @@
     align-items: center;
     display: flex;
     gap: 0.5rem;
+  }
+
+  .description {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.5rem;
   }
 </style>

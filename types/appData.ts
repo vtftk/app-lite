@@ -36,6 +36,12 @@ export enum ThrowDirection {
   RightOnly = "RightOnly",
 }
 
+export const THROW_DIRECTION_VALUES = [
+  ThrowDirection.Random,
+  ThrowDirection.LeftOnly,
+  ThrowDirection.RightOnly,
+] as const;
+
 export type ModelId = string;
 
 export type ModelData = {
@@ -57,6 +63,12 @@ export enum EyesMode {
   Opened = "Opened",
   Closed = "Closed",
 }
+
+export const EYES_MODE_VALUES = [
+  EyesMode.Unchanged,
+  EyesMode.Opened,
+  EyesMode.Closed,
+] as const;
 
 export type VTubeStudioConfig = {
   host: string;

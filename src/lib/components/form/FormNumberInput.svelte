@@ -5,13 +5,14 @@
     id: string;
     name: string;
     label: string;
+    description?: string;
 
     min?: number;
     max?: number;
     step?: number;
   };
 
-  const { id, name, label, min, max, step }: Props = $props();
+  const { id, name, label, description, min, max, step }: Props = $props();
 </script>
 
 <div class="form-input">
@@ -25,6 +26,9 @@
     {step}
     aria-describedby="{name}-validation"
   />
+  {#if description}
+    <p class="description">{description}</p>
+  {/if}
   <FormErrorLabel {name} />
 </div>
 
@@ -48,5 +52,10 @@
     align-items: center;
     display: flex;
     gap: 0.5rem;
+  }
+
+  .description {
+    font-size: 0.8rem;
+    color: #999;
   }
 </style>

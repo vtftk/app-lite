@@ -1,8 +1,5 @@
 <script lang="ts">
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import SettingsForm from "$lib/sections/settings/SettingsForm.svelte";
 </script>
 
-<PageLayoutList
-  title="Settings"
-  description="Configuration for the entire app"
-></PageLayoutList>
+<SettingsForm />
