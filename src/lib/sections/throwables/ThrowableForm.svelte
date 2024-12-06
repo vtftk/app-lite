@@ -3,14 +3,18 @@
   import { validator } from "@felte/validator-zod";
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import type {
-    ImpactSoundConfig,
-    ItemConfig,
-    ThrowableConfig,
-    ThrowableImageConfig,
+  import {
+    FileType,
+    type ItemConfig,
+    type ThrowableImageConfig,
   } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
+  import {
+    createAppDateMutation,
+    createCreateItemMutation,
+    createUpdateItemMutation,
+    getAppData,
+  } from "$lib/api/runtimeAppData";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { goto } from "$app/navigation";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
@@ -18,6 +22,7 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import ImageUpload from "$lib/components/form/ImageUpload.svelte";
+  import { uploadFile } from "$lib/api/data";
 
   type Props = {
     existing?: ItemConfig;
@@ -26,8 +31,10 @@
   const { existing }: Props = $props();
 
   const appData = getAppData();
-
   const appDataMutation = createAppDateMutation();
+
+  const updateItem = createUpdateItemMutation(appData, appDataMutation);
+  const createItem = createCreateItemMutation(appData, appDataMutation);
 
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
@@ -68,11 +75,7 @@
       let imageURL: string;
 
       if (values.image) {
-        imageURL = await invoke<string>("upload_file", {
-          fileType: "ThrowableImage",
-          fileName: values.image.name,
-          fileData: await values.image.arrayBuffer(),
-        });
+        imageURL = await uploadFile(FileType.ThrowableImage, values.image);
       } else if (existing) {
         imageURL = existing.image.src;
       } else {
@@ -86,26 +89,23 @@
         weight: values.weight,
       };
 
-      const throwableConfig: ItemConfig = {
-        id: existing ? existing.id : self.crypto.randomUUID(),
-        image: imageConfig,
-        impact_sounds_ids: values.impactSoundIds,
-        name: values.name,
-      };
-
       if (existing) {
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          items: $appData.items.map((item) => {
-            if (item.id !== existing.id) return item;
-            return throwableConfig;
-          }),
-        });
+        const itemConfig: Omit<ItemConfig, "id"> = {
+          image: imageConfig,
+          impact_sounds_ids: values.impactSoundIds,
+          name: values.name,
+        };
+
+        $updateItem({ itemId: existing.id, itemConfig });
       } else {
-        await $appDataMutation.mutateAsync({
-          ...$appData,
-          items: [...$appData.items, throwableConfig],
-        });
+        const itemConfig: ItemConfig = {
+          id: self.crypto.randomUUID(),
+          image: imageConfig,
+          impact_sounds_ids: values.impactSoundIds,
+          name: values.name,
+        };
+
+        $createItem({ itemConfig });
       }
 
       goto("/throwables");

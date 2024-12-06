@@ -268,3 +268,49 @@ export function createDeleteCommandsMutation(
     })
   );
 }
+
+type UpdateItem = {
+  /// ID of the item to update
+  itemId: string;
+  /// The new item configuration
+  itemConfig: Omit<ItemConfig, "id">;
+};
+
+export function createUpdateItemMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<UpdateItem>(
+    appData,
+    appDataMutation,
+    (appData, { itemId, itemConfig }) => ({
+      ...appData,
+
+      // Replace the existing item
+      items: appData.items.map((item) =>
+        item.id === itemId ? { ...itemConfig, id: itemId } : item
+      ),
+    })
+  );
+}
+
+type CreateItem = {
+  /// Updated item config, uses the ID on the config for the update
+  itemConfig: ItemConfig;
+};
+
+export function createCreateItemMutation(
+  appData: Readable<AppData>,
+  appDataMutation: AppDataMutation
+) {
+  return createAppDataMutator<CreateItem>(
+    appData,
+    appDataMutation,
+    (appData, { itemConfig }) => ({
+      ...appData,
+
+      // Add the item to the end of the items list
+      items: [...appData.items, itemConfig],
+    })
+  );
+}
