@@ -1,6 +1,11 @@
 <script lang="ts">
+  // Apply global styling
   import "$lib/styles/global.scss";
+
+  // Listen to events over IPC
   import "$lib/api/events";
+
+  // Font family for code editor
   import "@fontsource/jetbrains-mono";
 
   import { Toaster } from "svelte-sonner";
@@ -10,7 +15,9 @@
   import Sidebar from "$lib/components/nav/Sidebar.svelte";
 </script>
 
+<!-- Global query client context -->
 <QueryClientProvider client={queryClient}>
+  <!-- App data loader and context provider -->
   <AppDataProvider>
     <main class="main">
       <Sidebar />
@@ -19,6 +26,7 @@
   </AppDataProvider>
 </QueryClientProvider>
 
+<!-- Toast popup provider -->
 <Toaster
   theme="dark"
   richColors
