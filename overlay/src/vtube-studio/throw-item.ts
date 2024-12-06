@@ -70,7 +70,7 @@ export async function throwItem(
   // Model is not available
   if (!modelPosition) return;
 
-  const { throwables_config: throwables, items_config: items } = appData;
+  const { throwables_config: throwables } = appData;
 
   // Determine scale of the model relative to the calibrated minimum and maximum sizes
   const modelScale =
@@ -88,8 +88,8 @@ export async function throwItem(
 
   const itemScale = percentRange(
     modelScale,
-    items.item_scale.min,
-    items.item_scale.max
+    throwables.item_scale.min,
+    throwables.item_scale.max
   );
 
   const scaledImageWidth = image.width * config.image.scale * itemScale;
@@ -194,7 +194,7 @@ function handleThrowableImpact(
   if (impactAudio !== null) {
     try {
       impactAudio.sound.volume =
-        appData.items_config.global_volume * impactAudio.config.volume;
+        appData.sounds_config.global_volume * impactAudio.config.volume;
 
       impactAudio.sound.play();
     } catch (err) {

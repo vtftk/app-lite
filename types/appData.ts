@@ -9,7 +9,7 @@ export type MinMax = {
 
 export type AppData = {
   throwables_config: ThrowablesConfig;
-  items_config: ItemsConfig;
+  sounds_config: SoundsConfig;
   model_config: ModelConfig;
   vtube_studio_config: VTubeStudioConfig;
   models: Record<ModelId, ModelData>;
@@ -27,6 +27,7 @@ export type ThrowablesConfig = {
   throw_angle: MinMax;
   direction: ThrowDirection;
   impact_delay: number;
+  item_scale: MinMax;
 };
 
 export enum ThrowDirection {
@@ -42,9 +43,8 @@ export type ModelData = {
   y: MinMax;
 };
 
-export type ItemsConfig = {
+export type SoundsConfig = {
   global_volume: number;
-  item_scale: MinMax;
 };
 
 export type ModelConfig = {

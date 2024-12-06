@@ -78,7 +78,7 @@ pub struct AppData {
     pub twitch_config: TwitchConfig,
     pub throwables_config: ThrowablesConfig,
     pub model_config: ModelConfig,
-    pub items_config: ItemsConfig,
+    pub sounds_config: SoundsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
     pub models: HashMap<ModelId, ModelData>,
     pub items: Vec<ItemConfig>,
@@ -134,6 +134,8 @@ pub struct ThrowablesConfig {
     pub direction: ThrowDirection,
     /// Delay in milliseconds before impacts show up
     pub impact_delay: f32,
+    /// Item scale, range relative to the scale of the model
+    pub item_scale: MinMax<f32>,
 }
 
 impl Default for ThrowablesConfig {
@@ -150,25 +152,21 @@ impl Default for ThrowablesConfig {
             },
             direction: ThrowDirection::default(),
             impact_delay: 100.,
+            item_scale: MinMax { min: 0.25, max: 3. },
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct ItemsConfig {
+pub struct SoundsConfig {
     /// Global volume for all sounds
     pub global_volume: f32,
-    /// Item scale, range relative to the scale of the model
-    pub item_scale: MinMax<f32>,
 }
 
-impl Default for ItemsConfig {
+impl Default for SoundsConfig {
     fn default() -> Self {
-        Self {
-            global_volume: 0.5,
-            item_scale: MinMax { min: 0.25, max: 3. },
-        }
+        Self { global_volume: 0.5 }
     }
 }
 
