@@ -9,29 +9,16 @@
     THROW_DIRECTION_VALUES,
     ThrowDirection,
     type AppData,
-    type UserScriptConfig,
   } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
   import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
-  import exampleCode from "../../../../script/example.js?raw";
-  import FormCheckbox from "$lib/components/form/FormCheckbox.svelte";
   import { Tabs } from "bits-ui";
-  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import { minMax } from "$lib/utils/validation";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import { toast } from "svelte-sonner";
-
-  type Props = {
-    existing?: UserScriptConfig;
-  };
-
-  const { existing }: Props = $props();
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
