@@ -1,6 +1,7 @@
 use crate::events::EventMessage;
-use crate::script::events::ScriptExecuteEvent;
-use crate::script::runtime::{CommandContext, CommandContextUser, ScriptExecutorHandle};
+use crate::script::runtime::{
+    CommandContext, CommandContextUser, ScriptExecuteEvent, ScriptExecutorHandle,
+};
 use crate::state::app_data::{
     AppData, AppDataStore, BitsAmount, CommandConfig, CommandOutcome, EventConfig, EventOutcome,
     EventTrigger, ItemConfig, MinimumRequireRole, ThrowableConfig, ThrowableData, UserScriptConfig,

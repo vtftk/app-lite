@@ -2,7 +2,7 @@ use anyhow::Context;
 use event_processing::handle_twitch_events;
 use events::{EventMessage, EventRecvHandle};
 use log::{debug, error};
-use script::{kv::KVStore, runtime::create_script_executor};
+use script::{events::ScriptEventActor, kv::KVStore, runtime::create_script_executor};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use std::sync::Arc;
 use tauri::{App, Manager};
@@ -64,13 +64,15 @@ pub fn run() {
                 twitch_manager.clone(),
             ));
 
-            // Handle scripting events
-            script::events::init_script_event_handling(
+            // Initialize script actor
+            let actor = ScriptEventActor::new(
                 app_data.clone(),
                 event_tx.clone(),
                 kv_store,
                 twitch_manager.clone(),
             );
+
+            script::events::init_global_script_event_actor(actor);
 
             // Handle events triggered by twitch
             _ = tauri::async_runtime::spawn(handle_twitch_events(

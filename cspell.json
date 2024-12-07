@@ -9,6 +9,7 @@
     "oneshot",
     "reqwest",
     "rlib",
+    "rtype",
     "rustls",
     "serde",
     "sonner",

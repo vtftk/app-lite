@@ -74,6 +74,7 @@ env_logger = "0.11"
 
 # JavaScript runtime
 deno_core = "0.323.0"
+interlink = "0.1.6"
 
 # Temporary dependency overrides until new eventsub payloads land
 # (https://github.com/twitch-rs/twitch_api/pull/457)

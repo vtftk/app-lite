@@ -9,17 +9,14 @@ use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
 use twitch_api::types::{DisplayName, UserId, UserName};
 
-use super::{
-    events::ScriptExecuteEvent,
-    ops::{
-        http::op_http_get,
-        kv::{op_kv_get, op_kv_remove, op_kv_set},
-        logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
-        twitch::{op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat},
-        vtftk::{
-            op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
-            op_vtftk_tts_generate_parsed, op_vtftk_tts_get_voices,
-        },
+use super::ops::{
+    http::op_http_get,
+    kv::{op_kv_get, op_kv_remove, op_kv_set},
+    logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
+    twitch::{op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat},
+    vtftk::{
+        op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
+        op_vtftk_tts_generate_parsed, op_vtftk_tts_get_voices,
     },
 };
 
@@ -236,6 +233,19 @@ async fn execute_command(
         .await?;
 
     Ok(())
+}
+
+/// Event coming from outside the JS runtime to trigger executing
+/// code within the runtime event listeners
+#[derive(Clone, Debug, Serialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+pub enum ScriptExecuteEvent {
+    Chat {
+        user_id: UserId,
+        user_name: UserName,
+        user_display_name: DisplayName,
+        message: String,
+    },
 }
 
 /// Executes the provided script using the provided event

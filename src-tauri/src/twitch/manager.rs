@@ -17,7 +17,12 @@ use twitch_api::{
             subscription::message::SubscriptionMessage,
         },
     },
-    helix::{channels::Vip, moderation::Moderator, points::CustomReward},
+    helix::{
+        channels::Vip,
+        chat::{SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse},
+        moderation::Moderator,
+        points::CustomReward,
+    },
     twitch_oauth2::UserToken,
     types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
     HelixClient,
@@ -77,6 +82,30 @@ impl TwitchManager {
     pub async fn is_authenticated(&self) -> bool {
         let lock = &*self.state.read().await;
         matches!(lock, TwitchManagerState::Authenticated { .. })
+    }
+
+    pub async fn send_chat_message(
+        &self,
+        message: String,
+    ) -> anyhow::Result<SendChatMessageResponse> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let user_id = token.user_id.clone();
+
+        // Create chat message request
+        let request = SendChatMessageRequest::new();
+        let body = SendChatMessageBody::new(user_id.clone(), user_id, message);
+
+        // Send request and get response
+        let response: SendChatMessageResponse = self
+            .helix_client
+            .req_post(request, body, &token)
+            .await?
+            .data;
+
+        Ok(response)
     }
 
     pub async fn get_user_token(&self) -> Option<UserToken> {
