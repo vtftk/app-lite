@@ -20,11 +20,11 @@ use super::kv::KVStore;
 pub static GLOBAL_SCRIPT_EVENT_ACTOR: RwLock<Option<Link<ScriptEventActor>>> =
     RwLock::const_new(None);
 
-pub fn init_global_script_event_actor(actor: ScriptEventActor) {
+pub async fn init_global_script_event_actor(actor: ScriptEventActor) {
     let link = actor.start();
 
     // Can block here, initialization will never have any other writers so won't be blocked
-    *GLOBAL_SCRIPT_EVENT_ACTOR.blocking_write() = Some(link);
+    *GLOBAL_SCRIPT_EVENT_ACTOR.write().await = Some(link);
 }
 
 pub async fn global_script_event<M>(msg: M) -> anyhow::Result<M::Response>
