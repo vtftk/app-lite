@@ -1,13 +1,13 @@
-use std::sync::Arc;
-
 use crate::{
     constants::{LOCAL_SERVER_PORT, TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES},
     twitch::manager::TwitchManager,
 };
 use anyhow::Context;
-use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
-
 use reqwest::Url;
+use std::sync::Arc;
+use tauri::AppHandle;
+use tauri_plugin_shell::ShellExt;
+use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
 
 use super::CmdResult;
 
@@ -27,10 +27,13 @@ pub fn get_twitch_oauth_uri() -> String {
 
 /// Open the users default browser to a twitch OAuth URI
 #[tauri::command]
-pub fn open_twitch_oauth_uri() -> CmdResult<()> {
+pub fn open_twitch_oauth_uri(app_handle: AppHandle) -> CmdResult<()> {
     let uri = get_twitch_oauth_uri();
 
-    webbrowser::open(&uri).context("failed to open browser")?;
+    app_handle
+        .shell()
+        .open(uri, None)
+        .context("failed to open window")?;
 
     Ok(())
 }

@@ -26,6 +26,7 @@ pub fn run() {
     env_logger::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .setup(move |app| {
             let handle = app.handle().clone();
 
@@ -73,7 +74,7 @@ pub fn run() {
                 twitch_manager.clone(),
             );
 
-            script::events::init_global_script_event_actor(actor);
+            tauri::async_runtime::block_on(script::events::init_global_script_event_actor(actor));
 
             // Handle events triggered by twitch
             _ = tauri::async_runtime::spawn(handle_twitch_events(
@@ -123,8 +124,10 @@ pub fn run() {
         .expect("error while building tauri application")
         // Prevent default exit handling, app exiting is done
         .run(|_app, event| {
-            if let tauri::RunEvent::ExitRequested { api, .. } = event {
-                api.prevent_exit();
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                if code.is_none() {
+                    api.prevent_exit();
+                }
             }
         });
 }
