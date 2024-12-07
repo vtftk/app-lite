@@ -23,7 +23,7 @@ use twitch_api::{
         moderation::Moderator,
         points::CustomReward,
     },
-    twitch_oauth2::UserToken,
+    twitch_oauth2::{AccessToken, UserToken},
     types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
     HelixClient,
 };
@@ -63,20 +63,29 @@ enum TwitchManagerState {
 }
 
 impl TwitchManager {
-    pub fn new(
-        helix_client: HelixClient<'static, reqwest::Client>,
-        app_handle: AppHandle,
-    ) -> (Arc<Self>, broadcast::Receiver<TwitchEvent>) {
+    pub fn new(app_handle: AppHandle) -> (Arc<Self>, broadcast::Receiver<TwitchEvent>) {
         let (tx, rx) = broadcast::channel(10);
         (
             Arc::new(Self {
-                helix_client,
+                helix_client: HelixClient::default(),
                 state: Default::default(),
                 tx,
                 app_handle,
             }),
             rx,
         )
+    }
+
+    pub async fn attempt_auth_existing_token(self: Arc<Self>, token: String) -> anyhow::Result<()> {
+        let access_token = AccessToken::from(token);
+
+        // Create user token (Validates it with the twitch backend)
+        let user_token =
+            UserToken::from_existing(&self.helix_client, access_token, None, None).await?;
+
+        self.set_authenticated(user_token).await;
+
+        Ok(())
     }
 
     pub async fn is_authenticated(&self) -> bool {

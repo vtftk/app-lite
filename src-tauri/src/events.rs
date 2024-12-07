@@ -54,3 +54,12 @@ impl Clone for EventRecvHandle {
         Self(self.0.resubscribe())
     }
 }
+
+pub type EventSendHandle = broadcast::Sender<EventMessage>;
+
+pub fn create_event_channel() -> (EventSendHandle, EventRecvHandle) {
+    let (event_tx, rx) = broadcast::channel(10);
+    let event_rx = EventRecvHandle(rx);
+
+    (event_tx, event_rx)
+}

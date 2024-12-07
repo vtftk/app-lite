@@ -1,17 +1,12 @@
 use anyhow::Context;
 use event_processing::handle_twitch_events;
-use events::{EventMessage, EventRecvHandle};
-use log::{debug, error};
+use events::create_event_channel;
+use log::error;
 use script::{events::ScriptEventActor, kv::KVStore, runtime::create_script_executor};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use std::sync::Arc;
-use tauri::{App, Manager};
-use tokio::sync::broadcast;
+use tauri::Manager;
 use twitch::manager::TwitchManager;
-use twitch_api::{
-    twitch_oauth2::{AccessToken, UserToken},
-    HelixClient,
-};
 
 mod commands;
 mod constants;
@@ -34,14 +29,20 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
-            let (twitch_manager, twitch_event_rx) =
-                TwitchManager::new(HelixClient::default(), handle.clone());
+            let app_data_path = app
+                .path()
+                .app_data_dir()
+                .context("failed to get app data dir")?;
+            let app_data_file = app_data_path.join("data.json");
+            let kv_file = app_data_path.join("kv_data.json");
+
+            let (twitch_manager, twitch_event_rx) = TwitchManager::new(handle.clone());
             let (event_tx, event_rx) = create_event_channel();
 
-            let app_data = tauri::async_runtime::block_on(load_app_data(app))
+            let app_data = tauri::async_runtime::block_on(AppDataStore::load(app_data_file))
                 .expect("failed to load app data");
-            let kv_store =
-                tauri::async_runtime::block_on(load_kv(app)).expect("failed to load app data");
+            let kv_store = tauri::async_runtime::block_on(KVStore::load(kv_file))
+                .expect("failed to load kv data");
 
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
@@ -84,16 +85,13 @@ pub fn run() {
             ));
 
             // Run HTTP server
-            _ = tauri::async_runtime::spawn(async move {
-                _ = http::server::start(
-                    event_rx,
-                    handle,
-                    twitch_manager,
-                    app_data,
-                    runtime_app_data,
-                )
-                .await;
-            });
+            _ = tauri::async_runtime::spawn(http::server::start(
+                event_rx,
+                handle,
+                twitch_manager,
+                app_data,
+                runtime_app_data,
+            ));
 
             tray::create_tray_menu(app)?;
 
@@ -131,85 +129,31 @@ pub fn run() {
         });
 }
 
-fn create_event_channel() -> (broadcast::Sender<EventMessage>, EventRecvHandle) {
-    let (event_tx, rx) = broadcast::channel(10);
-    let event_rx = EventRecvHandle(rx);
-
-    (event_tx, event_rx)
-}
-
-async fn load_app_data(app: &App) -> anyhow::Result<AppDataStore> {
-    let app_data_path = app
-        .path()
-        .app_data_dir()
-        .context("failed to get app data dir")?;
-    let app_data_file = app_data_path.join("data.json");
-
-    debug!("app data path: {:?}", app_data_path);
-
-    let app_data = AppDataStore::load(app_data_file)
-        .await
-        .context("failed to load app data")?;
-
-    Ok(app_data)
-}
-
-async fn load_kv(app: &App) -> anyhow::Result<KVStore> {
-    let app_data_path = app
-        .path()
-        .app_data_dir()
-        .context("failed to get app data dir")?;
-    let kv_file = app_data_path.join("kv_data.json");
-
-    debug!("app data path: {:?}", app_data_path);
-
-    let app_data = KVStore::load(kv_file)
-        .await
-        .context("failed to load kv data")?;
-
-    Ok(app_data)
-}
-
 /// Attempts to authenticate with twitch using an existing access token
 async fn attempt_twitch_auth_existing_token(
     app_data_store: AppDataStore,
     twitch_manager: Arc<TwitchManager>,
 ) {
-    let app_data = app_data_store.read().await;
-
-    let access_token = match app_data.twitch_config.access_token.as_ref() {
-        Some(value) => value,
-        None => return,
-    };
-
-    let access_token = AccessToken::from(access_token.as_str());
-
-    // Create user token (Validates it with the twitch backend)
-    let user_token = match UserToken::from_existing(
-        &twitch_manager.helix_client,
-        access_token,
-        None,
-        None,
-    )
-    .await
-    {
-        Ok(value) => value,
-        Err(err) => {
-            error!("stored access token is invalid: {}", err);
-
-            // Drop read access to app data
-            drop(app_data);
-
-            // Clear twitch token
-            _ = app_data_store
-                .write(|app_data| {
-                    app_data.twitch_config.access_token = None;
-                })
-                .await;
-
-            return;
+    // Read existing access token
+    let access_token = {
+        let app_data = app_data_store.read().await;
+        match app_data.twitch_config.access_token.clone() {
+            Some(value) => value,
+            None => return,
         }
     };
 
-    twitch_manager.set_authenticated(user_token).await;
+    if let Err(err) = twitch_manager
+        .attempt_auth_existing_token(access_token)
+        .await
+    {
+        error!("stored access token is invalid: {}", err);
+
+        // Clear outdated / invalid access token
+        _ = app_data_store
+            .write(|app_data| {
+                app_data.twitch_config.access_token = None;
+            })
+            .await;
+    }
 }
