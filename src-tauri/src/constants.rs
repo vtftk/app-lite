@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use twitch_api::helix::Scope;
 
 /// If you are forking this app program for your own use, please create your own
@@ -18,7 +16,7 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::BitsRead,
     // Read the list of followers in channels where you are a moderator.
     // (Followers list & Follower event sub)
-    Scope::Other(Cow::Borrowed("moderator:read:followers")),
+    Scope::ModeratorReadFollowers,
     // View a channel’s moderation data including Moderators, Bans, Timeouts, and Automod settings.
     // (Moderators list & Moderator event sub)
     Scope::ModerationRead,
