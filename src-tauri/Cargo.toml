@@ -21,7 +21,7 @@ deno_core = "0.323.0"
 
 [dependencies]
 # Tauri for frontend UI
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-shell = "2"
 
 # Twitch API for working with twitch

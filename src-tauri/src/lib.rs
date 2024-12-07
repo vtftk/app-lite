@@ -20,6 +20,7 @@ mod events;
 mod http;
 mod script;
 mod state;
+mod tray;
 mod tts;
 mod twitch;
 
@@ -92,6 +93,8 @@ pub fn run() {
                 .await;
             });
 
+            tray::create_tray_menu(app)?;
+
             // TODO: Start server and block until a channel reports back that the server started?
             // store server task in a state variable to allow attempting restart within app
             Ok(())
@@ -116,8 +119,14 @@ pub fn run() {
             commands::twitch::get_redeems_list,
             commands::twitch::refresh_redeems_list,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        // Prevent default exit handling, app exiting is done
+        .run(|_app, event| {
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                api.prevent_exit();
+            }
+        });
 }
 
 fn create_event_channel() -> (broadcast::Sender<EventMessage>, EventRecvHandle) {
