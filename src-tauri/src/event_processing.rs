@@ -293,6 +293,15 @@ pub async fn handle_twitch_events(
 
                     continue;
                 }
+                TwitchEvent::Reset => {
+                    let twitch_manager = twitch_manager.clone();
+                    tokio::spawn(async move {
+                        debug!("resetting twitch manager");
+                        twitch_manager.reset().await;
+                    });
+
+                    continue;
+                }
             }
         };
 

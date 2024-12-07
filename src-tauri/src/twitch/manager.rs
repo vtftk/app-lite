@@ -76,7 +76,7 @@ impl TwitchManager {
         )
     }
 
-    pub async fn attempt_auth_existing_token(self: Arc<Self>, token: String) -> anyhow::Result<()> {
+    pub async fn attempt_auth_existing_token(&self, token: String) -> anyhow::Result<()> {
         let access_token = AccessToken::from(token);
 
         // Create user token (Validates it with the twitch backend)
@@ -125,12 +125,15 @@ impl TwitchManager {
         }
     }
 
-    pub async fn set_authenticated(self: &Arc<Self>, token: UserToken) {
+    pub async fn set_authenticated(&self, token: UserToken) {
         {
             let lock = &mut *self.state.write().await;
 
-            let websocket =
-                WebsocketManagedTask::create(self.clone(), self.tx.clone(), token.clone());
+            let websocket = WebsocketManagedTask::create(
+                self.helix_client.clone(),
+                self.tx.clone(),
+                token.clone(),
+            );
 
             *lock = TwitchManagerState::Authenticated(TwitchManagerStateAuthenticated {
                 token,
@@ -431,6 +434,8 @@ pub enum TwitchEvent {
     ModeratorsChanged,
     VipsChanged,
     RewardsChanged,
+
+    Reset,
 }
 
 struct WebsocketManagedTask(AbortHandle);
@@ -443,15 +448,17 @@ impl Drop for WebsocketManagedTask {
 
 impl WebsocketManagedTask {
     pub fn create(
-        twitch_manager: Arc<TwitchManager>,
+        client: HelixClient<'static, reqwest::Client>,
         tx: broadcast::Sender<TwitchEvent>,
         token: UserToken,
     ) -> WebsocketManagedTask {
         let abort_handle = tokio::spawn(async move {
-            let ws = WebsocketClient::new(twitch_manager.helix_client.clone(), tx, token);
+            let tx_2 = tx.clone();
+            let ws = WebsocketClient::new(client, tx, token);
             if let Err(err) = ws.run().await {
                 error!("websocket error: {:?}", err);
-                twitch_manager.reset().await;
+
+                _ = tx_2.send(TwitchEvent::Reset);
             }
         })
         .abort_handle();
