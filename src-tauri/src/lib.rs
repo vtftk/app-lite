@@ -10,6 +10,7 @@ use twitch::manager::TwitchManager;
 
 mod commands;
 mod constants;
+mod database;
 mod event_processing;
 mod events;
 mod http;

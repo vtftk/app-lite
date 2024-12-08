@@ -81,6 +81,8 @@ pub struct AppData {
     pub sounds_config: SoundsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
     pub externals_config: ExternalsConfig,
+
+    //
     pub models: HashMap<ModelId, ModelData>,
     pub items: Vec<ItemConfig>,
     pub events: Vec<EventConfig>,

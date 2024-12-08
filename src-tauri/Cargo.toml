@@ -74,6 +74,16 @@ env_logger = "0.11"
 deno_core = "0.323.0"
 interlink = "0.1.6"
 
+# App database
+[dependencies.sea-orm]
+version = "1.1.0"
+features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"]
+
+# Database migration runner
+[dependencies.sea-orm-migration]
+version = "1.1.0"
+features = ["sqlx-sqlite", "runtime-tokio-rustls"]
+
 # Temporary dependency overrides until new eventsub payloads land
 # (https://github.com/twitch-rs/twitch_api/pull/457)
 [patch.crates-io.twitch_api]
