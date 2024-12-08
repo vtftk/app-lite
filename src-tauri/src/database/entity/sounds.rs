@@ -1,3 +1,4 @@
+use anyhow::Context;
 use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel};
 use serde::{Deserialize, Serialize};
 
@@ -54,19 +55,25 @@ pub struct UpdateSound {
 
 impl Model {
     /// Create a new sound
-    pub async fn create<C>(db: &C, create: CreateSound) -> DbResult<Model>
+    pub async fn create<C>(db: &C, create: CreateSound) -> anyhow::Result<Model>
     where
         C: ConnectionTrait + Send + 'static,
     {
+        let id = Uuid::new_v4();
         let active_model = ActiveModel {
-            id: Set(Uuid::new_v4()),
+            id: Set(id),
             name: Set(create.name),
             src: Set(create.src),
             volume: Set(create.volume),
         };
 
-        let model = active_model.insert(db).await?;
+        Entity::insert(active_model)
+            .exec_without_returning(db)
+            .await?;
 
+        let model = Self::get_by_id(db, id)
+            .await?
+            .context("model was not inserted")?;
         Ok(model)
     }
 

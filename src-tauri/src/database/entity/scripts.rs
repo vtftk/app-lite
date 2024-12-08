@@ -1,3 +1,4 @@
+use anyhow::Context;
 use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel};
 use serde::{Deserialize, Serialize};
 
@@ -53,19 +54,26 @@ pub struct UpdateScript {
 
 impl Model {
     /// Create a new script
-    pub async fn create<C>(db: &C, create: CreateScript) -> DbResult<Model>
+    pub async fn create<C>(db: &C, create: CreateScript) -> anyhow::Result<Model>
     where
         C: ConnectionTrait + Send + 'static,
     {
+        let id = Uuid::new_v4();
         let active_model = ActiveModel {
-            id: Set(Uuid::new_v4()),
+            id: Set(id),
             enabled: Set(create.enabled),
             name: Set(create.name),
             script: Set(create.script),
             events: Set(create.events),
         };
 
-        let model = active_model.insert(db).await?;
+        Entity::insert(active_model)
+            .exec_without_returning(db)
+            .await?;
+
+        let model = Self::get_by_id(db, id)
+            .await?
+            .context("model was not inserted")?;
 
         Ok(model)
     }
