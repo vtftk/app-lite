@@ -7,14 +7,8 @@
     CommandOutcomeType,
     MINIMUM_REQUIRED_ROLE_VALUES,
     MinimumRequiredRole,
-    type CommandConfig,
+    type Command,
   } from "$lib/api/types";
-  import {
-    createAppDateMutation,
-    createCreateCommandMutation,
-    createUpdateCommandMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
   import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
@@ -30,18 +24,19 @@
   import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
   import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
   import { toast } from "svelte-sonner";
+  import {
+    createCommandMutation,
+    updateCommandMutation,
+  } from "$lib/api/commands";
 
   type Props = {
-    existing?: CommandConfig;
+    existing?: Command;
   };
 
   const { existing }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
-
-  const updateCommand = createUpdateCommandMutation(appData, appDataMutation);
-  const createCommand = createCreateCommandMutation(appData, appDataMutation);
+  const updateCommand = updateCommandMutation();
+  const createCommand = createCommandMutation();
 
   const outcomeSchema = z.discriminatedUnion("type", [
     z.object({
@@ -76,7 +71,7 @@
     cooldown: 1000,
   };
 
-  function createFromExisting(config: CommandConfig): Partial<Schema> {
+  function createFromExisting(config: Command): Partial<Schema> {
     return {
       name: config.name,
       command: config.command,
@@ -127,29 +122,28 @@
   }
 
   async function save(values: Schema) {
-    const partialCommandConfig: Omit<CommandConfig, "id"> = {
-      enabled: values.enabled,
-      name: values.name,
-      command: values.command,
-      aliases: [],
-      outcome: values.outcome,
-      cooldown: values.cooldown,
-      require_role: values.require_role,
-    };
-
     if (existing !== undefined) {
-      await $updateCommand({
+      await $updateCommand.mutateAsync({
         commandId: existing.id,
-        commandConfig: partialCommandConfig,
+        update: {
+          enabled: values.enabled,
+          name: values.name,
+          command: values.command,
+          aliases: [],
+          outcome: values.outcome,
+          cooldown: values.cooldown,
+          require_role: values.require_role,
+        },
       });
     } else {
-      const commandConfig: CommandConfig = {
-        ...partialCommandConfig,
-        id: self.crypto.randomUUID(),
-      };
-
-      await $createCommand({
-        commandConfig,
+      await $createCommand.mutateAsync({
+        enabled: values.enabled,
+        name: values.name,
+        command: values.command,
+        aliases: [],
+        outcome: values.outcome,
+        cooldown: values.cooldown,
+        require_role: values.require_role,
       });
     }
 

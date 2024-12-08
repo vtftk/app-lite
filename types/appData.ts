@@ -1,5 +1,3 @@
-import type { Item, Sound } from "./dataV2";
-
 type Option<T> = T | null;
 
 export type Uuid = string;
@@ -16,10 +14,6 @@ export type AppData = {
   vtube_studio_config: VTubeStudioConfig;
   externals_config: ExternalsConfig;
   models: Record<ModelId, ModelData>;
-
-  events: EventConfig[];
-  scripts: UserScriptConfig[];
-  commands: CommandConfig[];
 };
 
 export type ExternalsConfig = {
@@ -85,17 +79,6 @@ export type ThrowableImageConfig = {
   weight: number;
   scale: number;
   pixelate: boolean;
-};
-
-export type EventConfig = {
-  id: Uuid;
-  name: string;
-  enabled: boolean;
-  trigger: EventTrigger;
-  outcome: EventOutcome;
-  cooldown: number;
-  require_role: MinimumRequiredRole;
-  outcome_delay: number;
 };
 
 export enum MinimumRequiredRole {
@@ -231,25 +214,6 @@ export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
 >;
 
 export type CustomReward = any;
-
-export type UserScriptConfig = {
-  id: Uuid;
-  enabled: boolean;
-  name: string;
-  script: string;
-  events: string[];
-};
-
-export type CommandConfig = {
-  id: Uuid;
-  enabled: boolean;
-  name: string;
-  command: string;
-  aliases: string[];
-  outcome: CommandOutcome;
-  cooldown: number;
-  require_role: MinimumRequiredRole;
-};
 
 export enum CommandOutcomeType {
   Template = "Template",

@@ -1,40 +1,37 @@
 <script lang="ts">
-  import {
-    createAppDateMutation,
-    createDeleteEventsMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
+  import { bulkDeleteEventMutation, createEventsQuery } from "$lib/api/vevents";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import EventItem from "$lib/sections/events/EventItem.svelte";
-  import type { EventConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { derived as derivedStore } from "svelte/store";
+  import type { EventId } from "$shared/dataV2";
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const eventsQuery = createEventsQuery();
+  const bulkDeleteEvent = bulkDeleteEventMutation();
 
-  const deleteEvents = createDeleteEventsMutation(appData, appDataMutation);
+  // Readable access to the items from the underlying items query
+  const events = derivedStore(
+    eventsQuery,
+    ($eventsQuery) => $eventsQuery.data ?? []
+  );
 
   let selected: string[] = $state([]);
 
-  const isAllSelected = $derived(
-    selected.length > 0 && selected.length === $appData.events.length
-  );
-
-  function onToggleSelected(item: EventConfig) {
-    if (selected.includes(item.id)) {
-      selected = selected.filter((id) => id !== item.id);
+  function onToggleSelected(item: EventId) {
+    if (selected.includes(item)) {
+      selected = selected.filter((id) => id !== item);
     } else {
-      selected = [...selected, item.id];
+      selected = [...selected, item];
     }
   }
 
   function onToggleAllSelected() {
-    if (isAllSelected) {
+    if ($events.length > 0 && selected.length === $events.length) {
       selected = [];
     } else {
-      selected = $appData.events.map((item) => item.id);
+      selected = $events.map((item) => item.id);
     }
   }
 
@@ -43,7 +40,7 @@
       return;
     }
 
-    const deletePromise = $deleteEvents(selected);
+    const deletePromise = $bulkDeleteEvent.mutateAsync({ eventIds: selected });
 
     toast.promise(deletePromise, {
       loading: "Deleting events...",
@@ -63,7 +60,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={isAllSelected}
+      checked={$events.length > 0 && selected.length === $events.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -93,11 +90,11 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $appData.events as event}
+    {#each $events as event}
       <EventItem
         config={event}
         selected={selected.includes(event.id)}
-        onToggleSelected={() => onToggleSelected(event)}
+        onToggleSelected={() => onToggleSelected(event.id)}
       />
     {/each}
   </div>

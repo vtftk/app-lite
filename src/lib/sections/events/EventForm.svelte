@@ -5,19 +5,12 @@
   import { z } from "zod";
 
   import {
-    createAppDateMutation,
-    createCreateEventMutation,
-    createUpdateEventMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
-  import {
     BitsAmountType,
     EventOutcomeType,
     EventTriggerType,
     MINIMUM_REQUIRED_ROLE_VALUES,
     MinimumRequiredRole,
     ThrowableDataType,
-    type EventConfig,
   } from "$shared/appData";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
@@ -35,18 +28,17 @@
   import FormSections from "$lib/components/form/FormSections.svelte";
   import { toast } from "svelte-sonner";
   import SoundSelect from "./SoundSelect.svelte";
+  import { createEventMutation, updateEventMutation } from "$lib/api/vevents";
+  import type { VEvent } from "$shared/dataV2";
 
   type Props = {
-    existing?: EventConfig;
+    existing?: VEvent;
   };
 
   const { existing }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
-
-  const updateEvent = createUpdateEventMutation(appData, appDataMutation);
-  const createEvent = createCreateEventMutation(appData, appDataMutation);
+  const updateEvent = updateEventMutation();
+  const createEvent = createEventMutation();
 
   const triggerSchema = z.discriminatedUnion("type", [
     z.object({
@@ -162,7 +154,7 @@
     outcome_delay: 0,
   };
 
-  function createFromExisting(config: EventConfig): Partial<Schema> {
+  function createFromExisting(config: VEvent): Partial<Schema> {
     return {
       ...config,
     };
@@ -200,28 +192,29 @@
   });
 
   async function save(values: Schema) {
-    const partialEventConfig: Omit<EventConfig, "id"> = {
-      name: values.name,
-      enabled: values.enabled,
-      trigger: values.trigger,
-      outcome: values.outcome,
-      cooldown: values.cooldown,
-      require_role: values.require_role,
-      outcome_delay: values.outcome_delay,
-    };
-
     if (existing) {
-      await $updateEvent({
+      await $updateEvent.mutateAsync({
         eventId: existing.id,
-        eventConfig: partialEventConfig,
+        update: {
+          name: values.name,
+          enabled: values.enabled,
+          trigger: values.trigger,
+          outcome: values.outcome,
+          cooldown: values.cooldown,
+          require_role: values.require_role,
+          outcome_delay: values.outcome_delay,
+        },
       });
     } else {
-      const eventConfig: EventConfig = {
-        ...partialEventConfig,
-        id: self.crypto.randomUUID(),
-      };
-
-      await $createEvent({ eventConfig });
+      await $createEvent.mutateAsync({
+        name: values.name,
+        enabled: values.enabled,
+        trigger: values.trigger,
+        outcome: values.outcome,
+        cooldown: values.cooldown,
+        require_role: values.require_role,
+        outcome_delay: values.outcome_delay,
+      });
     }
   }
 

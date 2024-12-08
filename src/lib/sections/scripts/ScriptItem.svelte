@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type { UserScriptConfig } from "$lib/api/types";
+  import type { Script } from "$lib/api/types";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import { Checkbox } from "bits-ui";
+  import { deleteScriptMutation } from "$lib/api/scripts";
+  import { toast } from "svelte-sonner";
 
   type Props = {
-    config: UserScriptConfig;
+    config: Script;
 
     selected: boolean;
     onToggleSelected: VoidFunction;
@@ -15,17 +16,19 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const deleteScript = deleteScriptMutation();
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this script?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      scripts: $appData.scripts.filter((script) => script.id !== config.id),
+    const deletePromise = $deleteScript.mutateAsync(config.id);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting script...",
+      success: "Deleted script",
+      error: "Failed to delete script",
     });
   }
 </script>

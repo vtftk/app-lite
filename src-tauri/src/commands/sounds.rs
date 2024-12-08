@@ -21,8 +21,7 @@ pub async fn get_sounds(db: State<'_, DatabaseConnection>) -> CmdResult<Vec<Soun
     Ok(sounds)
 }
 
-/// Get a specific item by ID, provides both the item itself
-/// and any associated impact sounds
+/// Get a specific sound by ID
 #[tauri::command]
 pub async fn get_sound_by_id(
     sound_id: Uuid,

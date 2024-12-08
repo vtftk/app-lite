@@ -3,14 +3,9 @@
   import { validator } from "@felte/validator-zod";
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import type { UserScriptConfig } from "$lib/api/types";
+  import type { Script } from "$lib/api/types";
   import { invoke } from "@tauri-apps/api/core";
-  import {
-    createAppDateMutation,
-    createCreateScriptMutation,
-    createUpdateScriptMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
+
   import { goto } from "$app/navigation";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
@@ -24,18 +19,16 @@
 
   // Example code for the editor
   import exampleCode from "../../../../script/example.js?raw";
+  import { createScriptMutation, updateScriptMutation } from "$lib/api/scripts";
 
   type Props = {
-    existing?: UserScriptConfig;
+    existing?: Script;
   };
 
   const { existing }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
-
-  const updateScript = createUpdateScriptMutation(appData, appDataMutation);
-  const createScript = createCreateScriptMutation(appData, appDataMutation);
+  const updateScript = updateScriptMutation();
+  const createScript = createScriptMutation();
 
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
@@ -52,7 +45,7 @@
     script: exampleCode,
   };
 
-  function createFromExisting(config: UserScriptConfig): Schema {
+  function createFromExisting(config: Script): Schema {
     return {
       name: config.name,
       enabled: config.enabled,
@@ -99,25 +92,23 @@
       script: values.script,
     });
 
-    const partialScriptConfig: Omit<UserScriptConfig, "id"> = {
-      enabled: values.enabled,
-      name: values.name,
-      script: values.script,
-      events,
-    };
-
     if (existing !== undefined) {
-      await $updateScript({
+      await $updateScript.mutateAsync({
         scriptId: existing.id,
-        scriptConfig: partialScriptConfig,
+        update: {
+          enabled: values.enabled,
+          name: values.name,
+          script: values.script,
+          events,
+        },
       });
     } else {
-      const scriptConfig: UserScriptConfig = {
-        ...partialScriptConfig,
-        id: self.crypto.randomUUID(),
-      };
-
-      await $createScript({ scriptConfig });
+      await $createScript.mutateAsync({
+        enabled: values.enabled,
+        name: values.name,
+        script: values.script,
+        events,
+      });
     }
 
     // Reset dirty state after saving

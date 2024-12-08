@@ -1,25 +1,18 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { getAppData } from "$lib/api/runtimeAppData";
-  import type { UserScriptConfig } from "$lib/api/types";
+  import { createScriptQuery } from "$lib/api/scripts";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import ScriptForm from "$lib/sections/scripts/ScriptForm.svelte";
-  import { derived, type Readable } from "svelte/store";
+  import { derived } from "svelte/store";
 
-  const appData = getAppData();
-
-  const item: Readable<UserScriptConfig | undefined> = derived(
-    [appData, page],
-    ([$appData, $page]) => {
-      const id = $page.params.id;
-      const item = $appData.scripts.find((item) => item.id === id);
-      return item;
-    }
-  );
+  const id = derived(page, ($page) => $page.params.id);
+  const scriptQuery = createScriptQuery(id);
 </script>
 
-{#if $item !== undefined}
-  <ScriptForm existing={$item} />
+{#if $scriptQuery.isLoading}
+  Loading...
+{:else if $scriptQuery.data}
+  <ScriptForm existing={$scriptQuery.data} />
 {:else}
   {#snippet actions()}
     <a type="button" href="/scripts">Back</a>

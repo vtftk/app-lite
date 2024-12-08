@@ -1,14 +1,4 @@
-import type {
-  CreateItem,
-  CreateSound,
-  Item,
-  ItemId,
-  ItemWithImpactSounds,
-  Sound,
-  SoundId,
-  UpdateItem,
-  UpdateSound,
-} from "$shared/dataV2";
+import type { CreateSound, Sound, SoundId, UpdateSound } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
 import { queryClient } from "./utils";
@@ -132,7 +122,7 @@ export function deleteSoundMutation() {
 }
 
 type BulkDeleteSounds = {
-  soundIds: ItemId[];
+  soundIds: SoundId[];
 };
 
 export function bulkDeleteSoundsMutation() {

@@ -1,31 +1,23 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { getAppData } from "$lib/api/runtimeAppData";
-  import type { EventConfig } from "$lib/api/types";
+  import { createEventQuery } from "$lib/api/vevents";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import EventForm from "$lib/sections/events/EventForm.svelte";
-  import { derived, type Readable } from "svelte/store";
+  import { derived } from "svelte/store";
 
-  const appData = getAppData();
-
-  const item: Readable<EventConfig | undefined> = derived(
-    [appData, page],
-    ([$appData, $page]) => {
-      const id = $page.params.id;
-      const item = $appData.events.find((item) => item.id === id);
-      return item;
-    }
-  );
+  const id = derived(page, ($page) => $page.params.id);
+  const eventQuery = createEventQuery(id);
 </script>
 
-{#if $item !== undefined}
-  <EventForm existing={$item} />
+{#if $eventQuery.isLoading}
+  Loading...
+{:else if $eventQuery.data}
+  <EventForm existing={$eventQuery.data} />
 {:else}
   {#snippet actions()}
     <a type="button" class="btn" href="/events">Back</a>
   {/snippet}
 
-  <PageLayoutList title="Event Not Found" description="Unknown event" {actions}>
-    <EventForm existing={$item} />
-  </PageLayoutList>
+  <PageLayoutList title="Event Not Found" description="Unknown event" {actions}
+  ></PageLayoutList>
 {/if}

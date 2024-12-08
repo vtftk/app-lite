@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type { CommandConfig } from "$lib/api/types";
+  import type { Command } from "$lib/api/types";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import { Checkbox } from "bits-ui";
+  import { deleteCommandMutation } from "$lib/api/commands";
+  import { toast } from "svelte-sonner";
 
   type Props = {
-    config: CommandConfig;
+    config: Command;
 
     selected: boolean;
     onToggleSelected: VoidFunction;
@@ -15,17 +16,19 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const deleteCommand = deleteCommandMutation();
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this command?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      commands: $appData.commands.filter((command) => command.id !== config.id),
+    const deletePromise = $deleteCommand.mutateAsync(config.id);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting command...",
+      success: "Deleted command",
+      error: "Failed to delete command",
     });
   }
 </script>

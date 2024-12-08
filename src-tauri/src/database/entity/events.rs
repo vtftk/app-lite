@@ -1,7 +1,7 @@
-use sea_orm::{entity::prelude::*, FromJsonQueryResult};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel};
 use serde::{Deserialize, Serialize};
 
-use super::shared::MinimumRequireRole;
+use super::shared::{DbResult, MinimumRequireRole};
 
 // Type alias helpers for the database entity types
 pub type EventModel = Model;
@@ -15,10 +15,10 @@ pub struct Model {
     /// Unique ID for the sound
     #[sea_orm(primary_key)]
     pub id: Uuid,
-    /// Name of the event handler
-    pub name: String,
     /// Whether the event is enabled
     pub enabled: bool,
+    /// Name of the event handler
+    pub name: String,
     /// Input that should trigger the event
     pub trigger: EventTrigger,
     /// Outcome the event should trigger
@@ -149,4 +149,82 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-impl Model {}
+#[derive(Debug, Deserialize)]
+pub struct CreateEvent {
+    pub enabled: bool,
+    pub name: String,
+    pub trigger: EventTrigger,
+    pub outcome: EventOutcome,
+    pub cooldown: u32,
+    pub require_role: MinimumRequireRole,
+    pub outcome_delay: u32,
+}
+
+#[derive(Default, Deserialize)]
+pub struct UpdateEvent {
+    pub enabled: Option<bool>,
+    pub name: Option<String>,
+    pub trigger: Option<EventTrigger>,
+    pub outcome: Option<EventOutcome>,
+    pub cooldown: Option<u32>,
+    pub require_role: Option<MinimumRequireRole>,
+    pub outcome_delay: Option<u32>,
+}
+
+impl Model {
+    /// Create a new event
+    pub async fn create<C>(db: &C, create: CreateEvent) -> DbResult<Model>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let active_model = ActiveModel {
+            id: Set(Uuid::new_v4()),
+            enabled: Set(create.enabled),
+            name: Set(create.name),
+            trigger: Set(create.trigger),
+            outcome: Set(create.outcome),
+            cooldown: Set(create.cooldown),
+            require_role: Set(create.require_role),
+            outcome_delay: Set(create.outcome_delay),
+        };
+
+        let model = active_model.insert(db).await?;
+
+        Ok(model)
+    }
+
+    /// Find a specific event by ID
+    pub async fn get_by_id<C>(db: &C, id: Uuid) -> DbResult<Option<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find_by_id(id).one(db).await
+    }
+
+    /// Find all events
+    pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find().all(db).await
+    }
+
+    /// Update the current event
+    pub async fn update<C>(self, db: &C, data: UpdateEvent) -> DbResult<Self>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut this = self.into_active_model();
+
+        this.enabled = data.enabled.map(Set).unwrap_or(this.enabled);
+        this.name = data.name.map(Set).unwrap_or(this.name);
+        this.trigger = data.trigger.map(Set).unwrap_or(this.trigger);
+        this.outcome = data.outcome.map(Set).unwrap_or(this.outcome);
+        this.cooldown = data.cooldown.map(Set).unwrap_or(this.cooldown);
+        this.require_role = data.require_role.map(Set).unwrap_or(this.require_role);
+        this.outcome_delay = data.outcome_delay.map(Set).unwrap_or(this.outcome_delay);
+
+        let this = this.update(db).await?;
+        Ok(this)
+    }
+}

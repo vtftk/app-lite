@@ -1,40 +1,40 @@
 <script lang="ts">
   import {
-    createAppDateMutation,
-    createDeleteScriptsMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
+    bulkDeleteScriptMutation,
+    createScriptsQuery,
+  } from "$lib/api/scripts";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import ScriptItem from "$lib/sections/scripts/ScriptItem.svelte";
-  import type { UserScriptConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { derived as derivedStore } from "svelte/store";
+  import type { ScriptId } from "$shared/dataV2";
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const scriptsQuery = createScriptsQuery();
+  const bulkDeleteScripts = bulkDeleteScriptMutation();
 
-  const deleteScripts = createDeleteScriptsMutation(appData, appDataMutation);
-
-  let selected: string[] = $state([]);
-
-  const isAllSelected = $derived(
-    selected.length > 0 && selected.length === $appData.scripts.length
+  // Readable access to the items from the underlying items query
+  const scripts = derivedStore(
+    scriptsQuery,
+    ($scriptsQuery) => $scriptsQuery.data ?? []
   );
 
-  function onToggleSelected(item: UserScriptConfig) {
-    if (selected.includes(item.id)) {
-      selected = selected.filter((id) => id !== item.id);
+  let selected: ScriptId[] = $state([]);
+
+  function onToggleSelected(item: ScriptId) {
+    if (selected.includes(item)) {
+      selected = selected.filter((id) => id !== item);
     } else {
-      selected = [...selected, item.id];
+      selected = [...selected, item];
     }
   }
 
   function onToggleAllSelected() {
-    if (isAllSelected) {
+    if ($scripts.length > 0 && selected.length === $scripts.length) {
       selected = [];
     } else {
-      selected = $appData.scripts.map((item) => item.id);
+      selected = $scripts.map((item) => item.id);
     }
   }
 
@@ -43,7 +43,9 @@
       return;
     }
 
-    const deletePromise = $deleteScripts(selected);
+    const deletePromise = $bulkDeleteScripts.mutateAsync({
+      scriptIds: selected,
+    });
 
     toast.promise(deletePromise, {
       loading: "Deleting scripts...",
@@ -63,7 +65,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={isAllSelected}
+      checked={$scripts.length > 0 && selected.length === $scripts.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -93,11 +95,11 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $appData.scripts as item}
+    {#each $scripts as item}
       <ScriptItem
         config={item}
         selected={selected.includes(item.id)}
-        onToggleSelected={() => onToggleSelected(item)}
+        onToggleSelected={() => onToggleSelected(item.id)}
       />
     {/each}
   </div>

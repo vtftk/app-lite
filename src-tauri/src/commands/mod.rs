@@ -2,9 +2,12 @@ use serde::Serialize;
 
 pub mod auth;
 pub mod calibration;
+pub mod commands;
 pub mod data;
 pub mod edit;
+pub mod events;
 pub mod items;
+pub mod scripts;
 pub mod sounds;
 pub mod test;
 pub mod twitch;

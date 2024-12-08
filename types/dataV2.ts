@@ -1,4 +1,11 @@
-import type { ThrowableImageConfig, Uuid } from "./appData";
+import type {
+  CommandOutcome,
+  EventOutcome,
+  EventTrigger,
+  MinimumRequiredRole,
+  ThrowableImageConfig,
+  Uuid,
+} from "./appData";
 
 export type ItemId = Uuid;
 
@@ -51,5 +58,104 @@ export type UpdateSound = {
     name: string;
     src: string;
     volume: number;
+  }>;
+};
+
+export type ScriptId = Uuid;
+
+export type Script = {
+  id: ScriptId;
+  enabled: boolean;
+  name: string;
+  script: string;
+  events: string[];
+};
+
+export type CreateScript = {
+  enabled: boolean;
+  name: string;
+  script: string;
+  events: string[];
+};
+
+export type UpdateScript = {
+  scriptId: ScriptId;
+  update: Partial<{
+    enabled: boolean;
+    name: string;
+    script: string;
+    events: string[];
+  }>;
+};
+
+export type CommandId = Uuid;
+
+export type Command = {
+  id: Uuid;
+  enabled: boolean;
+  name: string;
+  command: string;
+  aliases: string[];
+  outcome: CommandOutcome;
+  cooldown: number;
+  require_role: MinimumRequiredRole;
+};
+
+export type CreateCommand = {
+  enabled: boolean;
+  name: string;
+  command: string;
+  aliases: string[];
+  outcome: CommandOutcome;
+  cooldown: number;
+  require_role: MinimumRequiredRole;
+};
+
+export type UpdateCommand = {
+  commandId: CommandId;
+  update: Partial<{
+    enabled: boolean;
+    name: string;
+    command: string;
+    aliases: string[];
+    outcome: CommandOutcome;
+    cooldown: number;
+    require_role: MinimumRequiredRole;
+  }>;
+};
+
+export type EventId = Uuid;
+
+export type VEvent = {
+  id: EventId;
+  name: string;
+  enabled: boolean;
+  trigger: EventTrigger;
+  outcome: EventOutcome;
+  cooldown: number;
+  require_role: MinimumRequiredRole;
+  outcome_delay: number;
+};
+
+export type CreateEvent = {
+  name: string;
+  enabled: boolean;
+  trigger: EventTrigger;
+  outcome: EventOutcome;
+  cooldown: number;
+  require_role: MinimumRequiredRole;
+  outcome_delay: number;
+};
+
+export type UpdateEvent = {
+  eventId: EventId;
+  update: Partial<{
+    name: string;
+    enabled: boolean;
+    trigger: EventTrigger;
+    outcome: EventOutcome;
+    cooldown: number;
+    require_role: MinimumRequiredRole;
+    outcome_delay: number;
   }>;
 };

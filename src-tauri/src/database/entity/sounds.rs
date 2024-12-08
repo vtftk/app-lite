@@ -1,4 +1,4 @@
-use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel};
 use serde::{Deserialize, Serialize};
 
 use super::shared::DbResult;

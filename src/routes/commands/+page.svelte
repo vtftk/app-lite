@@ -1,39 +1,40 @@
 <script lang="ts">
   import {
-    createAppDateMutation,
-    createDeleteCommandsMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
+    bulkDeleteCommandMutation,
+    createCommandsQuery,
+  } from "$lib/api/commands";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandItem from "$lib/sections/commands/CommandItem.svelte";
-  import type { CommandConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { derived as derivedStore } from "svelte/store";
+  import type { CommandId } from "$shared/dataV2";
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const commandsQuery = createCommandsQuery();
+  const bulkDeleteCommand = bulkDeleteCommandMutation();
 
-  const deleteCommands = createDeleteCommandsMutation(appData, appDataMutation);
-
-  let selected: string[] = $state([]);
-  const isAllSelected = $derived(
-    selected.length > 0 && selected.length === $appData.commands.length
+  // Readable access to the items from the underlying items query
+  const commands = derivedStore(
+    commandsQuery,
+    ($scriptsQuery) => $scriptsQuery.data ?? []
   );
 
-  function onToggleSelected(item: CommandConfig) {
-    if (selected.includes(item.id)) {
-      selected = selected.filter((id) => id !== item.id);
+  let selected: string[] = $state([]);
+
+  function onToggleSelected(item: CommandId) {
+    if (selected.includes(item)) {
+      selected = selected.filter((id) => id !== item);
     } else {
-      selected = [...selected, item.id];
+      selected = [...selected, item];
     }
   }
 
   function onToggleAllSelected() {
-    if (isAllSelected) {
+    if ($commands.length > 0 && selected.length === $commands.length) {
       selected = [];
     } else {
-      selected = $appData.commands.map((item) => item.id);
+      selected = $commands.map((item) => item.id);
     }
   }
 
@@ -42,7 +43,7 @@
       return;
     }
 
-    const deletePromise = $deleteCommands({
+    const deletePromise = $bulkDeleteCommand.mutateAsync({
       commandIds: selected,
     });
 
@@ -63,7 +64,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={isAllSelected}
+      checked={$commands.length > 0 && selected.length === $commands.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -93,11 +94,11 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $appData.commands as item}
+    {#each $commands as item}
       <CommandItem
         config={item}
         selected={selected.includes(item.id)}
-        onToggleSelected={() => onToggleSelected(item)}
+        onToggleSelected={() => onToggleSelected(item.id)}
       />
     {/each}
   </div>

@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type { EventConfig } from "$lib/api/types";
+  import type { VEvent } from "$lib/api/types";
+  import { deleteEventMutation } from "$lib/api/vevents";
   import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   type Props = {
-    config: EventConfig;
+    config: VEvent;
 
     selected: boolean;
     onToggleSelected: VoidFunction;
@@ -15,17 +16,19 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const deleteEvent = deleteEventMutation();
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this event item?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      events: $appData.events.filter((event) => event.id !== config.id),
+    const deletePromise = $deleteEvent.mutateAsync(config.id);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting event...",
+      success: "Deleted event",
+      error: "Failed to delete event",
     });
   }
 </script>
