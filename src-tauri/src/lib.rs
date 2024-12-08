@@ -38,6 +38,11 @@ pub fn run() {
             let app_data_file = app_data_path.join("data.json");
             let kv_file = app_data_path.join("kv_data.json");
 
+            let db_file = app_data_path.join("app.db");
+
+            let db = tauri::async_runtime::block_on(database::connect_database(&db_file))
+                .expect("failed to load database");
+
             let (twitch_manager, twitch_event_rx) = TwitchManager::new(handle.clone());
             let (event_tx, event_rx) = create_event_channel();
 
@@ -61,6 +66,9 @@ pub fn run() {
             // Provide access to script running and
             app.manage(script_handle.clone());
 
+            // Provide database access
+            app.manage(db.clone());
+
             // Attempt to authenticate with twitch using the saved token
             _ = tauri::async_runtime::spawn(attempt_twitch_auth_existing_token(
                 app_data.clone(),
@@ -79,7 +87,7 @@ pub fn run() {
 
             // Handle events triggered by twitch
             _ = tauri::async_runtime::spawn(handle_twitch_events(
-                app_data.clone(),
+                db.clone(),
                 twitch_manager.clone(),
                 twitch_event_rx,
                 event_tx.clone(),

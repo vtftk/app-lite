@@ -1,4 +1,4 @@
-import { ItemConfig, SoundConfig } from "$shared/appData";
+import { Item, Sound } from "$shared/dataV2";
 import getBackendURL from "./url";
 
 export async function sleep(duration: number): Promise<void> {
@@ -56,11 +56,11 @@ export async function loadAudio(src: string): Promise<HTMLAudioElement> {
 export type LoadedItemMap = Map<string, HTMLImageElement>;
 export type LoadedSoundMap = Map<string, LoadedSoundData>;
 export type LoadedSoundData = {
-  config: SoundConfig;
+  config: Sound;
   sound: HTMLAudioElement;
 };
 
-export async function loadItems(items: ItemConfig[]): Promise<LoadedItemMap> {
+export async function loadItems(items: Item[]): Promise<LoadedItemMap> {
   const results = await Promise.allSettled(
     items.map(async (item) => ({
       id: item.id,
@@ -81,9 +81,7 @@ export async function loadItems(items: ItemConfig[]): Promise<LoadedItemMap> {
   return output;
 }
 
-export async function loadSounds(
-  sounds: SoundConfig[]
-): Promise<LoadedSoundMap> {
+export async function loadSounds(sounds: Sound[]): Promise<LoadedSoundMap> {
   const results = await Promise.allSettled(
     sounds.map(async (config) => ({
       sound: await loadAudio(config.src),

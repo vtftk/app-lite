@@ -7,8 +7,8 @@ import {
   MinMax,
   ModelData,
   ThrowDirection,
-  ImpactSoundConfig,
-  ItemConfig,
+  ItemWithImpactSoundIds,
+  Sound,
 } from "../vtftk/types";
 import { flinch } from "./flinch";
 import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
@@ -24,7 +24,7 @@ import { VTubeStudioWebSocket } from "./socket";
  */
 export async function loadThrowableResources(
   imageConfig: ThrowableImageConfig,
-  soundConfig: ImpactSoundConfig | null
+  soundConfig: Sound | null
 ): Promise<{ image: HTMLImageElement | null; audio: HTMLAudioElement | null }> {
   // Load the image and audio if present
   const [imageResult, audioResult] = await Promise.allSettled([
@@ -56,7 +56,7 @@ export async function throwItem(
   socket: VTubeStudioWebSocket,
   appData: AppData,
   modelParameters: ModelParameters,
-  config: ItemConfig,
+  config: ItemWithImpactSoundIds,
   image: HTMLImageElement,
   impactAudio: LoadedSoundData | null
 ) {
@@ -185,7 +185,7 @@ function handleThrowableImpact(
   socket: VTubeStudioWebSocket,
   appData: AppData,
   modelParameters: ModelParameters,
-  config: ItemConfig,
+  config: ItemWithImpactSoundIds,
   impactAudio: LoadedSoundData | null,
   angle: number,
   leftSide: boolean

@@ -5,8 +5,9 @@ use tokio::sync::{broadcast, RwLock};
 use twitch_api::types::UserId;
 
 use crate::{
+    database::entity::SoundModel,
     events::EventMessage,
-    state::app_data::{AppDataStore, SoundConfig},
+    state::app_data::AppDataStore,
     tts::{
         tts_monster_generate, tts_monster_generate_parsed, tts_monster_get_voices, GenerateRequest,
         GenerateResponse, Voice,
@@ -197,7 +198,7 @@ impl Handler<KvGet> for ScriptEventActor {
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]
 pub struct PlaySound {
-    pub config: SoundConfig,
+    pub config: SoundModel,
 }
 
 impl Handler<PlaySound> for ScriptEventActor {
@@ -217,7 +218,7 @@ impl Handler<PlaySound> for ScriptEventActor {
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]
 pub struct PlaySoundSeq {
-    pub configs: Vec<SoundConfig>,
+    pub configs: Vec<SoundModel>,
 }
 
 impl Handler<PlaySoundSeq> for ScriptEventActor {

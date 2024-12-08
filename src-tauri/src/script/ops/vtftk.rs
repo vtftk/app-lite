@@ -1,8 +1,8 @@
 use crate::{
+    database::entity::SoundModel,
     script::events::{
         global_script_event, PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices,
     },
-    state::app_data::SoundConfig,
     tts::{GenerateRequest, GenerateResponse, Voice},
 };
 use anyhow::Context;
@@ -13,7 +13,7 @@ use uuid::Uuid;
 #[op2(async)]
 #[string]
 pub async fn op_vtftk_play_sound(#[string] src: String, volume: f32) -> anyhow::Result<()> {
-    let config = SoundConfig {
+    let config = SoundModel {
         id: Uuid::new_v4(),
         name: "<internal>".to_string(),
         src,
@@ -36,7 +36,7 @@ pub struct SoundSeq {
 pub async fn op_vtftk_play_sound_seq(#[serde] seq: Vec<SoundSeq>) -> anyhow::Result<()> {
     let configs = seq
         .into_iter()
-        .map(|seq| SoundConfig {
+        .map(|seq| SoundModel {
             id: Uuid::new_v4(),
             name: "<internal>".to_string(),
             src: seq.src,

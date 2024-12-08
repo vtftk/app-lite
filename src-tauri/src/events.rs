@@ -2,8 +2,8 @@ use serde::Serialize;
 use tokio::sync::broadcast;
 
 use crate::{
-    http::models::calibration::CalibrationStep,
-    state::app_data::{SoundConfig, ThrowableConfig},
+    database::entity::SoundModel, http::models::calibration::CalibrationStep,
+    state::app_data::ThrowableConfig,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -38,12 +38,12 @@ pub enum EventMessage {
 
     // Play a sound
     PlaySound {
-        config: SoundConfig,
+        config: SoundModel,
     },
 
     // Play a sequence of sounds one after the other
     PlaySoundSeq {
-        configs: Vec<SoundConfig>,
+        configs: Vec<SoundModel>,
     },
 }
 

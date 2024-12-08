@@ -1,9 +1,8 @@
 use tokio::sync::broadcast;
 
 use crate::{
-    events::EventMessage,
-    script::runtime::ScriptExecutorHandle,
-    state::app_data::{SoundConfig, ThrowableConfig},
+    database::entity::SoundModel, events::EventMessage, script::runtime::ScriptExecutorHandle,
+    state::app_data::ThrowableConfig,
 };
 
 use super::CmdResult;
@@ -49,7 +48,7 @@ pub fn test_throw_barrage(
 /// Plays a test sound event
 #[tauri::command]
 pub fn test_sound(
-    config: SoundConfig,
+    config: SoundModel,
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
 ) -> Result<bool, ()> {
     event_sender

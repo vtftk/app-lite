@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard};
 use uuid::Uuid;
 
+use crate::database::entity::{ItemModel, SoundModel};
+
 #[derive(Clone)]
 pub struct AppDataStore {
     inner: Arc<AppDataStoreInner>,
@@ -84,11 +86,6 @@ pub struct AppData {
 
     //
     pub models: HashMap<ModelId, ModelData>,
-    pub items: Vec<ItemConfig>,
-    pub events: Vec<EventConfig>,
-    pub sounds: Vec<SoundConfig>,
-    pub scripts: Vec<UserScriptConfig>,
-    pub commands: Vec<CommandConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -234,245 +231,14 @@ pub enum EyesMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThrowableConfig {
     /// All the referenced items
-    pub items: Vec<ItemConfig>,
+    pub items: Vec<ItemWithImpactSoundIds>,
     /// All the referenced sounds
-    pub impact_sounds: Vec<SoundConfig>,
-}
-
-/// Configuration for an individual throwable item
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ItemConfig {
-    pub id: Uuid,
-    /// Name of the throwable item
-    pub name: String,
-    /// Image to use for the throwable item
-    pub image: ThrowableImageConfig,
-    /// Selection of sounds for impact
-    pub impact_sounds_ids: Vec<Uuid>,
-}
-
-/// Configuration for a throwable image
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ThrowableImageConfig {
-    /// Src URL for the image
-    pub src: String,
-    /// Weight of impact the image has
-    pub weight: u32,
-    /// Scale of the image 0-1
-    pub scale: f32,
-    /// Whether to allow pixelation when rendering at a
-    /// different scale
-    pub pixelate: bool,
-}
-
-/// Configuration for a sound
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SoundConfig {
-    /// The ID of the sound
-    pub id: Uuid,
-
-    /// Name of the sound
-    pub name: String,
-    /// Src URL for the image
-    pub src: String,
-    /// Volume of the sound 0-1
-    pub volume: f32,
+    pub impact_sounds: Vec<SoundModel>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EventConfig {
-    /// Unique ID of the event
-    pub id: Uuid,
-
-    /// Name of the event handler
-    pub name: String,
-
-    /// Whether the event is enabled
-    pub enabled: bool,
-
-    /// Input that should trigger the event
-    pub trigger: EventTrigger,
-
-    /// Outcome the event should trigger
-    pub outcome: EventOutcome,
-
-    /// Cooldown between each trigger of the even
-    pub cooldown: u32,
-
-    /// Minimum required role to trigger the event
-    pub require_role: MinimumRequireRole,
-
-    /// Delay before executing the outcome
-    pub outcome_delay: u32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum MinimumRequireRole {
-    None,
-    Mod,
-    Vip,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum EventTrigger {
-    /// Redeem was triggered
-    Redeem {
-        /// ID of the reward required
-        reward_id: String,
-    },
-    /// Command was sent
-    Command {
-        /// Command message required
-        message: String,
-    },
-    /// User followed
-    Follow,
-    /// User subscribed
-    Subscription,
-    /// User gifted subscription
-    GiftedSubscription,
-    /// User gifts bits
-    Bits {
-        /// Minimum bits to trigger the event
-        min_bits: u32,
-    },
-    /// Channel has been raided
-    Raid {
-        /// Minimum raiders required to trigger
-        min_raiders: u32,
-    },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum ThrowableData {
-    /// Throw items (All at once)
-    Throw {
-        /// IDs of the items that can be thrown
-        throwable_ids: Vec<Uuid>,
-        /// Amount to throw
-        amount: u32,
-    },
-
-    /// Throw a throwable barrage
-    Barrage {
-        /// IDs of the items that can be thrown
-        throwable_ids: Vec<Uuid>,
-        /// Amount to throw for each throw
-        amount_per_throw: u32,
-        /// Time between each thrown item (Milliseconds)
-        frequency: u32,
-        /// Total amount of items to throw
-        amount: u32,
-    },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EventOutcomeBits {
-    /// Throwable to throw for 1 bit (Override, defaults to builtin)
-    pub _1: Option<Uuid>,
-    /// Throwable to throw for 100 bits (Override, defaults to builtin)
-    pub _100: Option<Uuid>,
-    /// Throwable to throw for 1000 bits (Override, defaults to builtin)
-    pub _1000: Option<Uuid>,
-    /// Throwable to throw for 5000 bits (Override, defaults to builtin)
-    pub _5000: Option<Uuid>,
-    /// Throwable to throw for 10000 bits (Override, defaults to builtin)
-    pub _10000: Option<Uuid>,
-    /// How many bits to throw
-    pub amount: BitsAmount,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum BitsAmount {
-    /// Throw fixed amount of bits
-    Fixed { amount: u32 },
-
-    /// Throw the number of bits the user provided
-    Dynamic {
-        /// Maximum number to throw
-        max_amount: u32,
-    },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EventOutcomeThrowable {
-    /// Throwable data
-    pub data: ThrowableData,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EventOutcomeTriggerHotkey {
-    pub hotkey_id: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EventOutcomePlaySound {
-    pub sound_id: Uuid,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum EventOutcome {
-    /// Throw bits (Only compatible with bits trigger)
-    ThrowBits(EventOutcomeBits),
-    /// Throw something
-    Throwable(EventOutcomeThrowable),
-    /// Trigger a VTube studio hotkey
-    TriggerHotkey(EventOutcomeTriggerHotkey),
-    /// Trigger a sound
-    PlaySound(EventOutcomePlaySound),
-}
-
-/// Configuration for a user made script
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UserScriptConfig {
-    /// Unique ID for the script
-    pub id: Uuid,
-    /// Whether the script is enabled and runnable
-    pub enabled: bool,
-    /// Name of the script
-    pub name: String,
-    /// The actual script contents
-    pub script: String,
-    /// Names for events the script is known to be subscribed to
-    /// script will be run for these events
-    pub events: Vec<String>,
-}
-
-/// Configuration for a user made script
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CommandConfig {
-    /// Unique ID for the command
-    pub id: Uuid,
-
-    /// Whether the command is enabled and runnable
-    pub enabled: bool,
-
-    /// Name of the command
-    pub name: String,
-
-    /// The command to run
-    pub command: String,
-
-    /// Aliases that also trigger the command
-    pub aliases: Vec<String>,
-
-    /// The outcome of the command
-    pub outcome: CommandOutcome,
-
-    /// Cooldown between each trigger of the command
-    pub cooldown: u32,
-
-    /// Minimum required role to trigger the command
-    pub require_role: MinimumRequireRole,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum CommandOutcome {
-    Template { message: String },
-    Script { script: String },
+pub struct ItemWithImpactSoundIds {
+    #[serde(flatten)]
+    pub item: ItemModel,
+    pub impact_sound_ids: Vec<Uuid>,
 }

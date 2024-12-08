@@ -15,7 +15,12 @@ import { throwItem } from "../vtube-studio/throw-item";
 import { updateRuntimeData } from "./api";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
-import { AppData, ItemConfig, SoundConfig, ThrowableConfig } from "./types";
+import {
+  AppData,
+  ItemWithImpactSoundIds,
+  Sound,
+  ThrowableConfig,
+} from "./types";
 
 export type EventSourceData = {
   appData: AppData;
@@ -126,13 +131,13 @@ async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
   return hotkeys;
 }
 
-async function onPlaySoundEvent(config: SoundConfig) {
+async function onPlaySoundEvent(config: Sound) {
   const audio = await loadAudio(config.src);
   audio.volume = config.volume;
   audio.play();
 }
 
-async function onPlaySoundSeqEvent(configs: SoundConfig[]) {
+async function onPlaySoundSeqEvent(configs: Sound[]) {
   const sounds = await loadSounds(configs);
 
   for (const config of configs) {
@@ -203,12 +208,12 @@ async function onThrowItemEvent(
 }
 
 function pickRandomSound(
-  item: ItemConfig,
+  item: ItemWithImpactSoundIds,
   sounds: LoadedSoundMap,
   clone: boolean = false
 ) {
-  if (item.impact_sounds_ids.length > 0) {
-    const randomSoundId = arrayRandom(item.impact_sounds_ids);
+  if (item.impact_sound_ids.length > 0) {
+    const randomSoundId = arrayRandom(item.impact_sound_ids);
     const audio = sounds.get(randomSoundId);
     if (audio) {
       return {
@@ -223,7 +228,10 @@ function pickRandomSound(
   return null;
 }
 
-function pickRandomItem(items: ItemConfig[], images: LoadedItemMap) {
+function pickRandomItem(
+  items: ItemWithImpactSoundIds[],
+  images: LoadedItemMap
+) {
   if (items.length === 1) {
     const item = items[0];
     const image = images.get(item.id);
@@ -250,7 +258,7 @@ function throwRandomItem(
   appData: AppData,
   modelParameters: ModelParameters,
 
-  items: ItemConfig[],
+  items: ItemWithImpactSoundIds[],
   loadedItems: LoadedItemMap,
   loadedSounds: LoadedSoundMap
 ): Promise<void> {
@@ -276,7 +284,7 @@ async function throwItemMany(
   appData: AppData,
   modelParameters: ModelParameters,
 
-  items: ItemConfig[],
+  items: ItemWithImpactSoundIds[],
   loadedItems: LoadedItemMap,
   loadedSounds: LoadedSoundMap,
   amount: number

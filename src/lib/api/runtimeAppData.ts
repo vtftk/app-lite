@@ -113,40 +113,7 @@ export function createDeriveModelCalibrated(
   });
 }
 
-function mutateAppData(action: (state: AppData) => AppData) {
-  queryClient.cancelQueries({ queryKey: APP_DATA_KEY });
-
-  queryClient.setQueryData<AppData>(APP_DATA_KEY, (appData) => {
-    if (appData === undefined) return undefined;
-    return action(appData);
-  });
-}
-
 type AppDataMutation = ReturnType<typeof createAppDateMutation>;
-
-/**
- * Creates a mutation that is derived from mutating the app data
- *
- * @param appData App data store for the current app data value
- * @param appDataMutation Underlying app data mutation to use
- * @param action Action to perform the mutation
- * @returns The derived mutations
- */
-export function createDerivedAppDataMutation<V>(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation,
-  action: (appData: AppData, value: V) => AppData
-) {
-  return derived([appData, appDataMutation], ([$appData, $appDataMutation]) =>
-    createMutation<boolean, Error, V>({
-      mutationFn: (input) => {
-        const applied = action($appData, input);
-        return $appDataMutation.mutateAsync(applied);
-      },
-    })
-  );
-}
-
 type AppDataMutator<V> = (input: V) => Promise<boolean>;
 
 export function createAppDataMutator<V>(

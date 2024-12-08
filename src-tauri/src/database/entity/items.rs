@@ -104,6 +104,17 @@ impl Model {
         Entity::find_by_id(id).one(db).await
     }
 
+    /// Find items with IDs present in the provided list
+    pub async fn get_by_ids<C>(db: &C, id: &[Uuid]) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find()
+            .filter(Column::Id.is_in(id.iter().copied()))
+            .all(db)
+            .await
+    }
+
     /// Find all items
     pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
     where

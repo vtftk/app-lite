@@ -15,6 +15,10 @@ export type Item = {
   image: ThrowableImageConfig;
 };
 
+export type ItemWithImpactSoundIds = Item & {
+  impact_sound_ids: SoundId[];
+};
+
 export type ItemWithImpactSounds = Item & { impact_sounds: Sound[] };
 
 export type CreateItem = {
@@ -33,7 +37,7 @@ export type UpdateItem = {
 };
 
 export type ThrowableConfig = {
-  items: Item[];
+  items: ItemWithImpactSoundIds[];
   impact_sounds: Sound[];
 };
 
