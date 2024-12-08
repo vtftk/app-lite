@@ -10,8 +10,6 @@ import {
   requestInputParameterList,
 } from "./vtube-studio/model";
 import { createEventSource, EventSourceData } from "./vtftk/events";
-import { beginCalibrationStep } from "./vtftk/calibration";
-import { CalibrationStep } from "./vtftk/calibration-types";
 import { updateRuntimeData } from "./vtftk/api";
 import { RuntimeAppData } from "./vtftk/types";
 
@@ -62,8 +60,6 @@ async function load() {
       vtube_studio_connected: true,
     });
 
-    const modelData = appData.models[modelID];
-
     // Only needs to be done on initial load, can be stored until next refresh
     const inputParameters = await requestInputParameterList(vtSocket);
     const modelParameters = createModelParameters(
@@ -71,12 +67,6 @@ async function load() {
     );
 
     eventSourceData.modelParameters = modelParameters;
-
-    // Model is not yet calibrated
-    if (modelData === undefined) {
-      beginCalibrationStep(vtSocket, CalibrationStep.NotStarted);
-      return;
-    }
   };
 
   vtSocket.onDisconnect = () => {
