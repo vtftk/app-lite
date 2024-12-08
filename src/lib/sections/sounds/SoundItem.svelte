@@ -1,17 +1,15 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type { SoundConfig } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
-
+  import type { Sound } from "$lib/api/types";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import PlayIcon from "~icons/solar/play-bold";
   import { Checkbox } from "bits-ui";
   import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
   import getBackendURL from "$lib/utils/url";
+  import { deleteSoundMutation } from "$lib/api/sounds";
+  import { toast } from "svelte-sonner";
 
   type Props = {
-    config: SoundConfig;
+    config: Sound;
 
     selected: boolean;
     onToggleSelected: VoidFunction;
@@ -19,17 +17,19 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const deleteSound = deleteSoundMutation();
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this sound item?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      sounds: $appData.sounds.filter((sound) => sound.id !== config.id),
+    const deletePromise = $deleteSound.mutateAsync(config.id);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting sound...",
+      success: "Deleted sound",
+      error: "Failed to delete sound",
     });
   }
 </script>

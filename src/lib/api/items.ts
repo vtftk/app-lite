@@ -3,13 +3,13 @@ import type {
   Item,
   ItemId,
   ItemWithImpactSounds,
+  Sound,
   SoundId,
   UpdateItem,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
 import { queryClient } from "./utils";
-import type { SoundConfig } from "$shared/appData";
 import { derived, type Readable } from "svelte/store";
 
 const ITEMS_KEY = ["items"];
@@ -81,7 +81,7 @@ export function bulkCreateItemMutation() {
 }
 
 export function getItemSounds(itemId: ItemId) {
-  return invoke<SoundConfig[]>("get_item_sounds", { itemId });
+  return invoke<Sound[]>("get_item_sounds", { itemId });
 }
 
 export function getItemById(itemId: ItemId) {

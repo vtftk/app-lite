@@ -18,7 +18,6 @@ export type AppData = {
   models: Record<ModelId, ModelData>;
 
   events: EventConfig[];
-  sounds: SoundConfig[];
   scripts: UserScriptConfig[];
   commands: CommandConfig[];
 };
@@ -86,13 +85,6 @@ export type ThrowableImageConfig = {
   weight: number;
   scale: number;
   pixelate: boolean;
-};
-
-export type SoundConfig = {
-  id: Uuid;
-  name: string;
-  src: string;
-  volume: number;
 };
 
 export type EventConfig = {

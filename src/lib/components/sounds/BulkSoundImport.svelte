@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type { SoundConfig } from "$shared/appData";
-  import { invoke } from "@tauri-apps/api/core";
+  import { uploadFile } from "$lib/api/data";
+  import { bulkCreateSoundMutation } from "$lib/api/sounds";
+  import { FileType } from "$lib/api/types";
+  import type { CreateSound } from "$shared/dataV2";
+  import { toast } from "svelte-sonner";
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const bulkCreateSound = bulkCreateSoundMutation();
 
   let inputElm: HTMLInputElement | undefined = $state();
 
@@ -16,28 +17,25 @@
 
     const sounds = Array.from(files);
 
-    const soundConfigs = await Promise.all(
+    const createSounds = await Promise.all(
       sounds.map(async (sound) => {
-        const soundURL = await invoke<string>("upload_file", {
-          fileType: "Sound",
-          fileName: sound.name,
-          fileData: await sound.arrayBuffer(),
-        });
-
-        const soundConfig: SoundConfig = {
-          id: self.crypto.randomUUID(),
+        const soundURL = await uploadFile(FileType.Sound, sound);
+        const createSound: CreateSound = {
           src: soundURL,
           volume: 1,
           name: sound.name,
         };
 
-        return soundConfig;
+        return createSound;
       })
     );
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      sounds: [...$appData.sounds, ...soundConfigs],
+    const createPromise = $bulkCreateSound.mutateAsync(createSounds);
+
+    toast.promise(createPromise, {
+      loading: "Creating sounds...",
+      success: "Created sounds",
+      error: "Failed to create sounds",
     });
   }
 </script>

@@ -120,7 +120,7 @@ pub fn run() {
             commands::data::get_overlay_url,
             commands::twitch::get_redeems_list,
             commands::twitch::refresh_redeems_list,
-            // Item manipulation comments
+            // Item manipulation commands
             commands::items::get_item_by_id,
             commands::items::get_items,
             commands::items::get_item_sounds,
@@ -128,6 +128,12 @@ pub fn run() {
             commands::items::update_item,
             commands::items::delete_item,
             commands::items::append_item_impact_sounds,
+            // Sound commands
+            commands::sounds::get_sounds,
+            commands::sounds::get_sound_by_id,
+            commands::sounds::create_sound,
+            commands::sounds::update_sound,
+            commands::sounds::delete_sound,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

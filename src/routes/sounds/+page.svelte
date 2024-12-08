@@ -1,28 +1,27 @@
 <script lang="ts">
-  import {
-    createAppDateMutation,
-    createDeleteSoundsMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
+  import { bulkDeleteSoundsMutation, createSoundsQuery } from "$lib/api/sounds";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
-  import type { SoundConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { derived as derivedStore } from "svelte/store";
+  import type { Sound } from "$shared/dataV2";
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const soundsQuery = createSoundsQuery();
 
-  const deleteSounds = createDeleteSoundsMutation(appData, appDataMutation);
+  const bulkDeleteSounds = bulkDeleteSoundsMutation();
 
-  let selected: string[] = $state([]);
-  const isAllSelected = $derived(
-    selected.length > 0 && selected.length === $appData.sounds.length
+  // Readable access to the items from the underlying items query
+  const sounds = derivedStore(
+    soundsQuery,
+    ($itemsQuery) => $itemsQuery.data ?? []
   );
 
-  function onToggleSelected(item: SoundConfig) {
+  let selected: string[] = $state([]);
+
+  function onToggleSelected(item: Sound) {
     if (selected.includes(item.id)) {
       selected = selected.filter((id) => id !== item.id);
     } else {
@@ -31,10 +30,10 @@
   }
 
   function onToggleAllSelected() {
-    if (isAllSelected) {
+    if (selected.length > 0 && selected.length === $sounds.length) {
       selected = [];
     } else {
-      selected = $appData.sounds.map((item) => item.id);
+      selected = $sounds.map((item) => item.id);
     }
   }
 
@@ -43,7 +42,9 @@
       return;
     }
 
-    const deletePromise = $deleteSounds(selected);
+    const deletePromise = $bulkDeleteSounds.mutateAsync({
+      soundIds: selected,
+    });
 
     toast.promise(deletePromise, {
       loading: "Deleting sounds...",
@@ -63,7 +64,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={isAllSelected}
+      checked={selected.length > 0 && selected.length === $sounds.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -93,7 +94,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $appData.sounds as sound}
+    {#each $sounds as sound}
       <SoundItem
         config={sound}
         selected={selected.includes(sound.id)}

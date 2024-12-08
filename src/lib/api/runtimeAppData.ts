@@ -10,7 +10,6 @@ import type {
   ExternalsConfig,
   ModelConfig,
   RuntimeAppData,
-  SoundConfig,
   SoundsConfig,
   ThrowablesConfig,
   UserScriptConfig,
@@ -181,24 +180,6 @@ export function createDeleteScriptsMutation(
   );
 }
 
-export function createDeleteSoundsMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<string[]>(
-    appData,
-    appDataMutation,
-    (appData, soundIds) => ({
-      ...appData,
-
-      // Remove the sound itself
-      sounds: appData.sounds.filter((sound) => !soundIds.includes(sound.id)),
-
-      // TODO: Remove sound from events
-    })
-  );
-}
-
 type DeleteCommands = {
   commandIds: string[];
 };
@@ -217,51 +198,6 @@ export function createDeleteCommandsMutation(
       commands: appData.commands.filter(
         (command) => !commandIds.includes(command.id)
       ),
-    })
-  );
-}
-
-type UpdateSound = {
-  /// ID of the sound to update
-  soundId: string;
-  /// The new sound configuration
-  soundConfig: Omit<SoundConfig, "id">;
-};
-
-export function createUpdateSoundMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<UpdateSound>(
-    appData,
-    appDataMutation,
-    (appData, { soundId, soundConfig }) => ({
-      ...appData,
-
-      // Replace the existing sound
-      sounds: appData.sounds.map((sound) =>
-        sound.id === soundId ? { ...soundConfig, id: soundId } : sound
-      ),
-    })
-  );
-}
-
-type CreateSound = {
-  soundConfig: SoundConfig;
-};
-
-export function createCreateSoundMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<CreateSound>(
-    appData,
-    appDataMutation,
-    (appData, { soundConfig }) => ({
-      ...appData,
-
-      // Add the sound to the end of the sounds list
-      sounds: [...appData.sounds, soundConfig],
     })
   );
 }

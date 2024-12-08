@@ -1,25 +1,18 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { getAppData } from "$lib/api/runtimeAppData";
-  import type { SoundConfig } from "$lib/api/types";
+  import { createSoundQuery } from "$lib/api/sounds";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundForm from "$lib/sections/sounds/SoundForm.svelte";
-  import { derived, type Readable } from "svelte/store";
+  import { derived } from "svelte/store";
 
-  const appData = getAppData();
-
-  const item: Readable<SoundConfig | undefined> = derived(
-    [appData, page],
-    ([$appData, $page]) => {
-      const id = $page.params.id;
-      const item = $appData.sounds.find((item) => item.id === id);
-      return item;
-    }
-  );
+  const id = derived(page, ($page) => $page.params.id);
+  const soundQuery = createSoundQuery(id);
 </script>
 
-{#if $item !== undefined}
-  <SoundForm existing={$item} />
+{#if $soundQuery.isLoading}
+  Loading...
+{:else if $soundQuery.data}
+  <SoundForm existing={$soundQuery.data} />
 {:else}
   {#snippet actions()}
     <a type="button" href="/sounds">Back</a>

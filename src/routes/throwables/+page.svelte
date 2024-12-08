@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
-  import type { SoundConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
@@ -17,11 +16,9 @@
     bulkDeleteItemsMutation,
     createItemsQuery,
   } from "$lib/api/items";
-  import type { Item } from "$shared/dataV2";
+  import type { Item, Sound } from "$shared/dataV2";
 
   const runtimeAppData = getRuntimeAppData();
-
-  const appData = getAppData();
 
   const itemsQuery = createItemsQuery();
 
@@ -78,7 +75,7 @@
     selected = [];
   }
 
-  function onBulkAddSounds(sounds: SoundConfig[]) {
+  function onBulkAddSounds(sounds: Sound[]) {
     if (
       !confirm(
         "Are you sure you want to add the selected impact sounds to the selected throwables?"
@@ -163,10 +160,7 @@
           <BallsIcon /> Test Barrage
         </button>
 
-        <BulkAddThrowableSounds
-          sounds={$appData.sounds}
-          onSubmit={onBulkAddSounds}
-        />
+        <BulkAddThrowableSounds onSubmit={onBulkAddSounds} />
 
         <button class="btn" onclick={onBulkDelete}>
           <DeleteIcon /> Delete

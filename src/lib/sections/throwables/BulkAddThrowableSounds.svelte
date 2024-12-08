@@ -1,23 +1,30 @@
 <script lang="ts">
+  import { createSoundsQuery } from "$lib/api/sounds";
   import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
   import getBackendURL from "$lib/utils/url";
-  import type { SoundConfig } from "$shared/appData";
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
   import SettingsIcon from "~icons/solar/settings-bold";
+  import { derived as derivedStore } from "svelte/store";
+  import type { Sound } from "$shared/dataV2";
 
   type Props = {
-    sounds: Readonly<SoundConfig[]>;
-    onSubmit: (sounds: SoundConfig[]) => void;
+    onSubmit: (sounds: Sound[]) => void;
   };
 
-  const { sounds, onSubmit }: Props = $props();
+  const { onSubmit }: Props = $props();
+
+  const soundsQuery = createSoundsQuery();
+
+  // Readable access to the items from the underlying items query
+  const sounds = derivedStore(
+    soundsQuery,
+    ($soundsQuery) => $soundsQuery.data ?? []
+  );
 
   let selected: string[] = $state([]);
 
-  const isAllSelected = $derived(selected.length === sounds.length);
-
-  const onSelectSound = (sound: SoundConfig) => {
+  const onSelectSound = (sound: Sound) => {
     if (selected.includes(sound.id)) {
       selected = selected.filter((id) => id !== sound.id);
     } else {
@@ -26,15 +33,15 @@
   };
 
   const onToggleAll = () => {
-    if (isAllSelected) {
+    if ($sounds.length > 0 && selected.length === $sounds.length) {
       selected = [];
     } else {
-      selected = sounds.map((sound) => sound.id);
+      selected = $sounds.map((sound) => sound.id);
     }
   };
 
   const onSave = () => {
-    onSubmit(sounds.filter((sound) => selected.includes(sound.id)));
+    onSubmit($sounds.filter((sound) => selected.includes(sound.id)));
   };
 </script>
 
@@ -62,7 +69,8 @@
                 <Checkbox.Root
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={isAllSelected}
+                  checked={$sounds.length > 0 &&
+                    selected.length === $sounds.length}
                   onCheckedChange={onToggleAll}
                 >
                   <Checkbox.Indicator let:isChecked>
@@ -77,7 +85,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each sounds as sound (sound.id)}
+            {#each $sounds as sound (sound.id)}
               <tr class="sound-row">
                 <td class="sound-column sound-column--checkbox">
                   <Checkbox.Root

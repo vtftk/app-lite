@@ -1,23 +1,32 @@
 <script lang="ts">
-  import type { SoundConfig } from "$shared/appData";
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
   import SoundPreview from "./SoundPreview.svelte";
   import getBackendURL from "$lib/utils/url";
+  import type { Sound } from "$shared/dataV2";
+  import { derived as derivedStore } from "svelte/store";
+  import { createSoundsQuery } from "$lib/api/sounds";
 
   type Props = {
-    sounds: Readonly<SoundConfig[]>;
     selected: string[];
   };
 
-  let { sounds, selected = $bindable() }: Props = $props();
+  let { selected = $bindable() }: Props = $props();
 
-  const isAllSelected = $derived(selected.length === sounds.length);
-  const selectedOptions = $derived(
-    sounds.filter((sound) => selected.includes(sound.id))
+  const soundsQuery = createSoundsQuery();
+
+  const sounds = derivedStore(
+    soundsQuery,
+    ($soundsQuery) => $soundsQuery.data ?? []
   );
 
-  const onSelectSound = (sound: SoundConfig) => {
+  const selectedOptions = $derived(
+    derivedStore(sounds, ($sounds) =>
+      $sounds.filter((sound) => selected.includes(sound.id))
+    )
+  );
+
+  const onSelectSound = (sound: Sound) => {
     if (selected.includes(sound.id)) {
       selected = selected.filter((id) => id !== sound.id);
     } else {
@@ -26,10 +35,10 @@
   };
 
   const onToggleAll = () => {
-    if (isAllSelected) {
+    if ($sounds.length > 0 && selected.length === $sounds.length) {
       selected = [];
     } else {
-      selected = sounds.map((sound) => sound.id);
+      selected = $sounds.map((sound) => sound.id);
     }
   };
 </script>
@@ -56,7 +65,8 @@
                 <Checkbox.Root
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={isAllSelected}
+                  checked={$sounds.length > 0 &&
+                    selected.length === $sounds.length}
                   onCheckedChange={onToggleAll}
                 >
                   <Checkbox.Indicator let:isChecked>
@@ -71,7 +81,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each sounds as sound (sound.id)}
+            {#each $sounds as sound (sound.id)}
               <tr class="sound-row">
                 <td class="sound-column sound-column--checkbox">
                   <Checkbox.Root
@@ -112,7 +122,7 @@
   <p class="selected__title">Selected Sounds</p>
 
   <div class="grid">
-    {#each selectedOptions as option}
+    {#each $selectedOptions as option}
       <li class="grid-item">
         <p class="grid-item__name">{option.name}</p>
       </li>

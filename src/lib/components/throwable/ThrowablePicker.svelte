@@ -22,15 +22,15 @@
 
   const selectedOptions = $derived(
     derivedStore(items, ($items) =>
-      $items.filter((sound) => selected.includes(sound.id))
+      $items.filter((item) => selected.includes(item.id))
     )
   );
 
-  const onSelectItem = (sound: Item) => {
-    if (selected.includes(sound.id)) {
-      onChangeSelect(selected.filter((id) => id !== sound.id));
+  const onSelectItem = (item: Item) => {
+    if (selected.includes(item.id)) {
+      onChangeSelect(selected.filter((id) => id !== item.id));
     } else {
-      onChangeSelect([...selected, sound.id]);
+      onChangeSelect([...selected, item.id]);
     }
   };
 
@@ -38,7 +38,7 @@
     if ($items.length > 0 && selected.length === $items.length) {
       onChangeSelect([]);
     } else {
-      onChangeSelect($items.map((sound) => sound.id));
+      onChangeSelect($items.map((item) => item.id));
     }
   };
 </script>

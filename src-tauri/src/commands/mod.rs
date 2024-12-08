@@ -5,6 +5,7 @@ pub mod calibration;
 pub mod data;
 pub mod edit;
 pub mod items;
+pub mod sounds;
 pub mod test;
 pub mod twitch;
 

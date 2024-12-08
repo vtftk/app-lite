@@ -21,7 +21,6 @@
   } from "$shared/appData";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import FormSelect from "$lib/components/form/FormSelect.svelte";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
   import { goto } from "$app/navigation";
@@ -35,6 +34,7 @@
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import { toast } from "svelte-sonner";
+  import SoundSelect from "./SoundSelect.svelte";
 
   type Props = {
     existing?: EventConfig;
@@ -224,13 +224,6 @@
       await $createEvent({ eventConfig });
     }
   }
-
-  const soundOptions = $derived(
-    $appData.sounds.map((sound) => ({
-      value: sound.id,
-      label: sound.name,
-    }))
-  );
 
   function getTriggerDefaults(type: EventTriggerType): TriggerSchema {
     switch (type) {
@@ -486,18 +479,10 @@
               setFields("outcome.hotkey_id", selected, true)}
           />
         {:else if $data.outcome.type === EventOutcomeType.PlaySound}
-          {#snippet soundItem(item: (typeof soundOptions)[0])}
-            <div class="text-stack">
-              <p class="text-stack--top">{item.label}</p>
-            </div>
-          {/snippet}
-
-          <FormSelect
+          <SoundSelect
             id="outcome.sound_id"
             name="outcome.sound_id"
             label="Sound"
-            items={soundOptions}
-            item={soundItem}
             selected={$data.outcome.sound_id}
             onChangeSelected={(selected) =>
               setFields("outcome.sound_id", selected, true)}

@@ -3,14 +3,7 @@
   import { validator } from "@felte/validator-zod";
   import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import { FileType, type SoundConfig } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
-  import {
-    createAppDateMutation,
-    createCreateSoundMutation,
-    createUpdateSoundMutation,
-    getAppData,
-  } from "$lib/api/runtimeAppData";
+  import { FileType, type Sound } from "$lib/api/types";
   import { goto } from "$app/navigation";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
@@ -21,18 +14,16 @@
   import { uploadFile } from "$lib/api/data";
   import { toast } from "svelte-sonner";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
+  import { createSoundMutation, updateSoundMutation } from "$lib/api/sounds";
 
   type Props = {
-    existing?: SoundConfig;
+    existing?: Sound;
   };
 
   const { existing }: Props = $props();
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
-
-  const updateSound = createUpdateSoundMutation(appData, appDataMutation);
-  const createSound = createCreateSoundMutation(appData, appDataMutation);
+  const updateSound = updateSoundMutation();
+  const createSound = createSoundMutation();
 
   // When working with existing configs we allow the file to be a
   // string to account for already uploaded file URLs
@@ -58,7 +49,7 @@
     volume: 1,
   };
 
-  function createFromExisting(config: SoundConfig): Partial<Schema> {
+  function createFromExisting(config: Sound): Partial<Schema> {
     return {
       name: config.name,
       sound: config.src,
@@ -112,24 +103,22 @@
 
   async function save(values: Schema) {
     const soundURL: string = await saveSound(values.sound);
-    const partialSoundConfig: Omit<SoundConfig, "id"> = {
-      src: soundURL,
-      volume: values.volume,
-      name: values.name,
-    };
 
     if (existing !== undefined) {
-      await $updateSound({
+      await $updateSound.mutateAsync({
         soundId: existing.id,
-        soundConfig: partialSoundConfig,
+        update: {
+          src: soundURL,
+          volume: values.volume,
+          name: values.name,
+        },
       });
     } else {
-      const soundConfig: SoundConfig = {
-        ...partialSoundConfig,
-        id: self.crypto.randomUUID(),
-      };
-
-      await $createSound({ soundConfig });
+      await $createSound.mutateAsync({
+        src: soundURL,
+        volume: values.volume,
+        name: values.name,
+      });
     }
   }
 </script>

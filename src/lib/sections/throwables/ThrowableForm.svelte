@@ -8,7 +8,7 @@
     type ItemWithImpactSounds,
     type ThrowableImageConfig,
   } from "$lib/api/types";
-  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { goto } from "$app/navigation";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
@@ -34,8 +34,6 @@
   const { existing }: Props = $props();
 
   const runtimeAppData = getRuntimeAppData();
-
-  const appData = getAppData();
 
   const updateItem = updateItemMutation();
   const createItem = createItemMutation();
@@ -156,12 +154,14 @@
         update: {
           name: values.name,
           image: imageConfig,
+          impact_sounds: values.impactSoundIds,
         },
       });
     } else {
       await $createItem.mutateAsync({
         name: values.name,
         image: imageConfig,
+        impact_sounds: values.impactSoundIds,
       });
     }
   }
@@ -265,10 +265,7 @@
         title="Impact Sounds"
         description="Choose selection of sounds that can play when the item impacts"
       >
-        <SoundPicker
-          sounds={$appData.sounds}
-          bind:selected={$data.impactSoundIds}
-        />
+        <SoundPicker bind:selected={$data.impactSoundIds} />
         <FormErrorLabel name="impactSoundIds" />
       </FormSection>
     </FormSections>

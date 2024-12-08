@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { uploadFile } from "$lib/api/data";
   import { bulkCreateItemMutation } from "$lib/api/items";
+  import { FileType } from "$lib/api/types";
   import type { ThrowableImageConfig } from "$shared/appData";
   import type { CreateItem } from "$shared/dataV2";
   import { invoke } from "@tauri-apps/api/core";
@@ -19,12 +21,7 @@
 
     const createItems = await Promise.all(
       images.map(async (image) => {
-        const imageURL = await invoke<string>("upload_file", {
-          fileType: "ThrowableImage",
-          fileName: image.name,
-          fileData: await image.arrayBuffer(),
-        });
-
+        const imageURL = await uploadFile(FileType.ThrowableImage, image);
         const imageConfig: ThrowableImageConfig = {
           src: imageURL,
           pixelate: false,
