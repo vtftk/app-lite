@@ -435,7 +435,6 @@
           {#if $data.outcome.data.type === ThrowableDataType.Throw}
             <div>
               <ThrowablePicker
-                items={$appData.items}
                 selected={$data.outcome.data.throwable_ids}
                 onChangeSelect={(selected) => {
                   setFields("outcome.data.throwable_ids", selected, true);
@@ -450,7 +449,6 @@
           {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
             <div>
               <ThrowablePicker
-                items={$appData.items}
                 selected={$data.outcome.data.throwable_ids}
                 onChangeSelect={(selected) => {
                   setFields("outcome.data.throwable_ids", selected, true);

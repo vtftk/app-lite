@@ -1,24 +1,32 @@
 <script lang="ts">
+  import { createItemsQuery } from "$lib/api/items";
   import getBackendURL from "$lib/utils/url";
-  import type { ItemConfig } from "$shared/appData";
+  import type { Item } from "$shared/dataV2";
   import { Checkbox, Dialog, Separator } from "bits-ui";
+  import { derived as derivedStore } from "svelte/store";
   import { fade, scale } from "svelte/transition";
 
   type Props = {
-    items: Readonly<ItemConfig[]>;
     selected: string[];
-
     onChangeSelect: (selected: string[]) => void;
   };
 
-  let { items, selected, onChangeSelect }: Props = $props();
+  const { selected, onChangeSelect }: Props = $props();
 
-  const isAllSelected = $derived(selected.length === items.length);
-  const selectedOptions = $derived(
-    items.filter((sound) => selected.includes(sound.id))
+  const itemsQuery = createItemsQuery();
+
+  const items = derivedStore(
+    itemsQuery,
+    ($itemsQuery) => $itemsQuery.data ?? []
   );
 
-  const onSelectItem = (sound: ItemConfig) => {
+  const selectedOptions = $derived(
+    derivedStore(items, ($items) =>
+      $items.filter((sound) => selected.includes(sound.id))
+    )
+  );
+
+  const onSelectItem = (sound: Item) => {
     if (selected.includes(sound.id)) {
       onChangeSelect(selected.filter((id) => id !== sound.id));
     } else {
@@ -27,18 +35,22 @@
   };
 
   const onToggleAll = () => {
-    if (isAllSelected) {
+    if ($items.length > 0 && selected.length === $items.length) {
       onChangeSelect([]);
     } else {
-      onChangeSelect(items.map((sound) => sound.id));
+      onChangeSelect($items.map((sound) => sound.id));
     }
   };
 </script>
 
+{#if $itemsQuery.isLoading}
+  Loading items...
+{/if}
+
 <Dialog.Root>
   <Dialog.Trigger
-    >{selectedOptions.length > 0
-      ? `${selectedOptions.length} Items selected`
+    >{$selectedOptions.length > 0
+      ? `${$selectedOptions.length} Items selected`
       : "Select Items"}</Dialog.Trigger
   >
   <Dialog.Portal>
@@ -60,7 +72,8 @@
                 <Checkbox.Root
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={isAllSelected}
+                  checked={$items.length > 0 &&
+                    selected.length === $items.length}
                   onCheckedChange={onToggleAll}
                 >
                   <Checkbox.Indicator let:isChecked>
@@ -75,7 +88,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each items as item (item.id)}
+            {#each $items as item (item.id)}
               <tr class="item-row">
                 <td class="item-column item-column--checkbox">
                   <Checkbox.Root
@@ -122,7 +135,7 @@
   <p class="selected__title">Selected Items</p>
 
   <div class="grid">
-    {#each selectedOptions as option}
+    {#each $selectedOptions as option}
       <li class="grid-item">
         <div class="grid-item__image throwable__image-wrapper">
           <img

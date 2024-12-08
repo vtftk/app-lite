@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
-  import type {
-    ItemConfig,
-    SoundConfig,
-    ThrowableImageConfig,
-  } from "$shared/appData";
+  import { bulkCreateItemMutation } from "$lib/api/items";
+  import type { ThrowableImageConfig } from "$shared/appData";
+  import type { CreateItem } from "$shared/dataV2";
   import { invoke } from "@tauri-apps/api/core";
+  import { toast } from "svelte-sonner";
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
+  const bulkCreateItem = bulkCreateItemMutation();
 
   let inputElm: HTMLInputElement | undefined = $state();
 
@@ -20,7 +17,7 @@
 
     const images = Array.from(files);
 
-    const itemConfigs = await Promise.all(
+    const createItems = await Promise.all(
       images.map(async (image) => {
         const imageURL = await invoke<string>("upload_file", {
           fileType: "ThrowableImage",
@@ -35,20 +32,22 @@
           weight: 1,
         };
 
-        const itemConfig: ItemConfig = {
-          id: self.crypto.randomUUID(),
+        const createItem: CreateItem = {
           image: imageConfig,
-          impact_sounds_ids: [],
           name: image.name,
+          impact_sounds: [],
         };
 
-        return itemConfig;
+        return createItem;
       })
     );
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      items: [...$appData.items, ...itemConfigs],
+    const createPromise = $bulkCreateItem.mutateAsync(createItems);
+
+    toast.promise(createPromise, {
+      loading: "Creating items...",
+      success: "Created items",
+      error: "Failed to create items",
     });
   }
 </script>

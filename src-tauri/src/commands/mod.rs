@@ -4,6 +4,7 @@ pub mod auth;
 pub mod calibration;
 pub mod data;
 pub mod edit;
+pub mod items;
 pub mod test;
 pub mod twitch;
 
@@ -20,8 +21,11 @@ impl Serialize for CmdError {
     }
 }
 
-impl From<anyhow::Error> for CmdError {
-    fn from(value: anyhow::Error) -> Self {
-        CmdError(value)
+impl<E> From<E> for CmdError
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(value: E) -> Self {
+        CmdError(value.into())
     }
 }

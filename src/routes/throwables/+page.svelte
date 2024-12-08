@@ -1,16 +1,10 @@
 <script lang="ts">
-  import {
-    createAddImpactSounds,
-    createAppDateMutation,
-    createDeleteItemsMutation,
-    getAppData,
-    getRuntimeAppData,
-  } from "$lib/api/runtimeAppData";
+  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
-  import type { ItemConfig, SoundConfig } from "$shared/appData";
+  import type { SoundConfig } from "$shared/appData";
   import { Checkbox } from "bits-ui";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
@@ -18,14 +12,27 @@
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import { toast } from "svelte-sonner";
   import { derived as derivedStore } from "svelte/store";
+  import {
+    bulkAppendItemSoundsMutation,
+    bulkDeleteItemsMutation,
+    createItemsQuery,
+  } from "$lib/api/items";
+  import type { Item } from "$shared/dataV2";
 
   const runtimeAppData = getRuntimeAppData();
 
   const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
 
-  const deleteItems = createDeleteItemsMutation(appData, appDataMutation);
-  const addImpactSounds = createAddImpactSounds(appData, appDataMutation);
+  const itemsQuery = createItemsQuery();
+
+  const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
+  const bulkDeleteItems = bulkDeleteItemsMutation();
+
+  // Readable access to the items from the underlying items query
+  const items = derivedStore(
+    itemsQuery,
+    ($itemsQuery) => $itemsQuery.data ?? []
+  );
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = derivedStore(
@@ -37,11 +44,7 @@
 
   let selected: string[] = $state([]);
 
-  const isAllSelected = $derived(
-    selected.length > 0 && selected.length === $appData.items.length
-  );
-
-  function onToggleSelected(item: ItemConfig) {
+  function onToggleSelected(item: Item) {
     if (selected.includes(item.id)) {
       selected = selected.filter((id) => id !== item.id);
     } else {
@@ -50,10 +53,10 @@
   }
 
   function onToggleAllSelected() {
-    if (isAllSelected) {
+    if (selected.length > 0 && selected.length === $items.length) {
       selected = [];
     } else {
-      selected = $appData.items.map((item) => item.id);
+      selected = $items.map((item) => item.id);
     }
   }
 
@@ -62,7 +65,9 @@
       return;
     }
 
-    const deletePromise = $deleteItems(selected);
+    const deletePromise = $bulkDeleteItems.mutateAsync({
+      itemIds: selected,
+    });
 
     toast.promise(deletePromise, {
       loading: "Deleting items...",
@@ -84,9 +89,9 @@
 
     const impactSoundIds = sounds.map((sound) => sound.id);
 
-    const addPromise = $addImpactSounds({
+    const addPromise = $bulkAppendItemSounds.mutateAsync({
       itemIds: selected,
-      impactSoundIds,
+      soundIds: impactSoundIds,
     });
 
     toast.promise(addPromise, {
@@ -97,7 +102,7 @@
   }
 
   function onTestThrow() {
-    const throwPromise = testThrow($appData, selected, 1);
+    const throwPromise = testThrow(selected, 1);
 
     toast.promise(throwPromise, {
       loading: "Sending throw...",
@@ -107,7 +112,7 @@
   }
 
   function onTestBarrage() {
-    const throwPromise = testThrowBarrage($appData, selected, 50, 2, 100);
+    const throwPromise = testThrowBarrage(selected, 50, 2, 100);
 
     toast.promise(throwPromise, {
       loading: "Sending barrage...",
@@ -125,7 +130,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={isAllSelected}
+      checked={selected.length > 0 && selected.length === $items.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -178,7 +183,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $appData.items as item}
+    {#each $items as item}
       <ThrowableItem
         config={item}
         selected={selected.includes(item.id)}

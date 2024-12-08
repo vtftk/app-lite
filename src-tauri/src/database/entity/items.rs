@@ -2,8 +2,8 @@ use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoAct
 use serde::{Deserialize, Serialize};
 
 use super::{
-    links::ItemImpactSounds, ItemImpactSoundsActiveModel, ItemImpactSoundsColumn,
-    ItemImpactSoundsEntity,
+    links::ItemImpactSounds, shared::DbResult, ItemImpactSoundsActiveModel, ItemImpactSoundsColumn,
+    ItemImpactSoundsEntity, SoundModel,
 };
 
 // Type alias helpers for the database entity types
@@ -54,33 +54,66 @@ impl Related<super::items_impact_sounds::Entity> for Entity {
 impl ActiveModelBehavior for ActiveModel {}
 
 /// Data for updating an item
-#[derive(Default)]
+#[derive(Default, Deserialize)]
 pub struct UpdateItem {
     pub name: Option<String>,
     pub image: Option<ThrowableImageConfig>,
     pub impact_sounds: Option<Vec<Uuid>>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct CreateItem {
+    pub name: String,
+    pub image: ThrowableImageConfig,
+    pub impact_sounds: Vec<Uuid>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct ItemWithImpactSounds {
+    #[serde(flatten)]
+    pub item: ItemModel,
+    pub impact_sounds: Vec<SoundModel>,
+}
+
 impl Model {
-    pub async fn create<C>(
-        db: &C,
-        name: String,
-        image: ThrowableImageConfig,
-    ) -> anyhow::Result<Model>
+    /// Create a new item
+    pub async fn create<C>(db: &C, create: CreateItem) -> DbResult<Model>
     where
         C: ConnectionTrait + Send + 'static,
     {
         let active_model = ActiveModel {
             id: Set(Uuid::new_v4()),
-            name: Set(name),
-            image: Set(image),
+            name: Set(create.name),
+            image: Set(create.image),
         };
 
         let model = active_model.insert(db).await?;
+
+        model
+            .append_impact_sounds(db, &create.impact_sounds)
+            .await?;
+
         Ok(model)
     }
 
-    pub async fn update<C>(self, db: &C, data: UpdateItem) -> anyhow::Result<Self>
+    /// Find a specific item by ID
+    pub async fn get_by_id<C>(db: &C, id: Uuid) -> DbResult<Option<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find_by_id(id).one(db).await
+    }
+
+    /// Find all items
+    pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find().all(db).await
+    }
+
+    /// Update the current item
+    pub async fn update<C>(self, db: &C, data: UpdateItem) -> DbResult<Self>
     where
         C: ConnectionTrait + Send + 'static,
     {
@@ -97,55 +130,54 @@ impl Model {
         let this = this.update(db).await?;
 
         if let Some(impact_sounds) = data.impact_sounds {
-            this.set_impact_sounds(db, impact_sounds).await?;
+            this.set_impact_sounds(db, &impact_sounds).await?;
         }
 
         Ok(this)
     }
 
     /// Sets the impact sounds for this item
-    pub async fn set_impact_sounds<C>(
-        &self,
-        db: &C,
-        impact_sound_ids: Vec<Uuid>,
-    ) -> anyhow::Result<()>
+    pub async fn set_impact_sounds<C>(&self, db: &C, impact_sound_ids: &[Uuid]) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {
-        // Create new models to insert
-        let models: Vec<ItemImpactSoundsActiveModel> = impact_sound_ids
-            .iter()
-            .map(|sound_id| ItemImpactSoundsActiveModel {
-                item_id: Set(self.id),
-                sound_id: Set(*sound_id),
-            })
-            .collect();
-
         // Delete any impact sounds not in the provided list
         ItemImpactSoundsEntity::delete_many()
             .filter(
-                ItemImpactSoundsColumn::ItemId
-                    .eq(self.id)
-                    .and(ItemImpactSoundsColumn::SoundId.is_not_in(impact_sound_ids)),
+                ItemImpactSoundsColumn::ItemId.eq(self.id).and(
+                    ItemImpactSoundsColumn::SoundId.is_not_in(impact_sound_ids.iter().copied()),
+                ),
             )
             .exec(db)
             .await?;
 
+        self.append_impact_sounds(db, impact_sound_ids).await?;
+
+        Ok(())
+    }
+
+    /// Append impact sounds to the item
+    pub async fn append_impact_sounds<C>(&self, db: &C, impact_sound_ids: &[Uuid]) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
         // Insert the new connections
-        ItemImpactSoundsEntity::insert_many(models)
-            // Ignore already existing connections
-            .on_conflict_do_nothing()
-            .exec(db)
-            .await?;
+        ItemImpactSoundsEntity::insert_many(impact_sound_ids.iter().map(|sound_id| {
+            ItemImpactSoundsActiveModel {
+                item_id: Set(self.id),
+                sound_id: Set(*sound_id),
+            }
+        }))
+        // Ignore already existing connections
+        .on_conflict_do_nothing()
+        .exec(db)
+        .await?;
 
         Ok(())
     }
 
     /// Finds all sounds connected to this item
-    pub async fn get_impact_sounds<C>(
-        &self,
-        db: &C,
-    ) -> anyhow::Result<Vec<super::sounds::SoundModel>>
+    pub async fn get_impact_sounds<C>(&self, db: &C) -> DbResult<Vec<super::sounds::SoundModel>>
     where
         C: ConnectionTrait + Send + 'static,
     {

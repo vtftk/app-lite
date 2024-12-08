@@ -1,18 +1,37 @@
-import type { AppData, ItemConfig, ThrowableConfig } from "$shared/appData";
 import { invoke } from "@tauri-apps/api/core";
+import { getItemById } from "./items";
+import type { Item, Sound, ThrowableConfig } from "$shared/dataV2";
 
-/**
- * Collect all of the impact sounds for the provided
- * list of item configs
- *
- * @param appData The app data to pick sounds from
- * @param items The items to pick sounds for
- * @returns The collection of sounds
- */
-export function getItemsImpactSounds(appData: AppData, items: ItemConfig[]) {
-  return appData.sounds.filter((sound) =>
-    items.some((item) => item.impact_sounds_ids.includes(sound.id))
+async function getItemsWithSounds(
+  itemIds: string[]
+): Promise<{ items: Item[]; impact_sounds: Sound[] }> {
+  const rawItems = await Promise.all(
+    itemIds.map((itemId) => getItemById(itemId))
   );
+
+  const impact_sounds: Sound[] = [];
+  const items: Item[] = [];
+
+  for (const rawItem of rawItems) {
+    if (rawItem === null) continue;
+
+    const { impact_sounds: item_impact_sounds, ...item } = rawItem;
+    items.push(item);
+
+    // Add non duplicate sounds
+    for (const impact_sound of item_impact_sounds) {
+      const existing = impact_sounds.find(
+        (sound) => sound.id === impact_sound.id
+      );
+      if (existing !== undefined) continue;
+      impact_sounds.push(impact_sound);
+    }
+  }
+
+  return {
+    items,
+    impact_sounds,
+  };
 }
 
 /**
@@ -24,14 +43,8 @@ export function getItemsImpactSounds(appData: AppData, items: ItemConfig[]) {
  * @param amount The amount of items to throw
  * @returns Promise that completes when the throw has been sent
  */
-export function testThrow(
-  appData: AppData,
-  itemIds: string[],
-  amount: number = 1
-) {
-  const items = appData.items.filter((item) => itemIds.includes(item.id));
-  const impact_sounds = getItemsImpactSounds(appData, items);
-
+export async function testThrow(itemIds: string[], amount: number = 1) {
+  const { items, impact_sounds } = await getItemsWithSounds(itemIds);
   const throwable: ThrowableConfig = {
     items,
     impact_sounds,
@@ -54,16 +67,13 @@ export function testThrow(
  * @param frequency Time between each barrage
  * @returns Promise that completes when the throw has been sent
  */
-export function testThrowBarrage(
-  appData: AppData,
+export async function testThrowBarrage(
   itemIds: string[],
   amount: number = 50,
   amountPerThrow: number = 2,
   frequency: number = 100
 ) {
-  const items = appData.items.filter((item) => itemIds.includes(item.id));
-  const impact_sounds = getItemsImpactSounds(appData, items);
-
+  const { items, impact_sounds } = await getItemsWithSounds(itemIds);
   const throwable: ThrowableConfig = {
     items,
     impact_sounds,

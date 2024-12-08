@@ -8,7 +8,6 @@ import type {
   CommandConfig,
   EventConfig,
   ExternalsConfig,
-  ItemConfig,
   ModelConfig,
   RuntimeAppData,
   SoundConfig,
@@ -166,58 +165,6 @@ export function createAppDataMutator<V>(
   );
 }
 
-export function createDeleteItemsMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<string[]>(
-    appData,
-    appDataMutation,
-    (appData, itemIds) => ({
-      ...appData,
-      items: appData.items.filter((item) => !itemIds.includes(item.id)),
-    })
-  );
-}
-
-type AddImpactSounds = {
-  // The ID's of the items to add sounds to
-  itemIds: string[];
-  // The ID's of the sounds to add
-  impactSoundIds: string[];
-};
-
-export function createAddImpactSounds(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<AddImpactSounds>(
-    appData,
-    appDataMutation,
-    (appData, { itemIds, impactSoundIds }) => {
-      const appendSoundsUnique = (sounds: string[]) => [
-        ...sounds,
-        // Add new sounds filtering out ones that are already present
-        ...impactSoundIds.filter((id) => !sounds.includes(id)),
-      ];
-
-      return {
-        ...appData,
-        items: appData.items.map((item) => {
-          if (itemIds.includes(item.id)) {
-            return {
-              ...item,
-              impact_sounds_ids: appendSoundsUnique(item.impact_sounds_ids),
-            };
-          }
-
-          return item;
-        }),
-      };
-    }
-  );
-}
-
 export function createDeleteScriptsMutation(
   appData: Readable<AppData>,
   appDataMutation: AppDataMutation
@@ -247,14 +194,6 @@ export function createDeleteSoundsMutation(
       // Remove the sound itself
       sounds: appData.sounds.filter((sound) => !soundIds.includes(sound.id)),
 
-      // Remove the sound from any associated items
-      items: appData.items.map((item) => ({
-        ...item,
-        impact_sounds_ids: item.impact_sounds_ids.filter(
-          (soundId) => !soundIds.includes(soundId)
-        ),
-      })),
-
       // TODO: Remove sound from events
     })
   );
@@ -278,51 +217,6 @@ export function createDeleteCommandsMutation(
       commands: appData.commands.filter(
         (command) => !commandIds.includes(command.id)
       ),
-    })
-  );
-}
-
-type UpdateItem = {
-  /// ID of the item to update
-  itemId: string;
-  /// The new item configuration
-  itemConfig: Omit<ItemConfig, "id">;
-};
-
-export function createUpdateItemMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<UpdateItem>(
-    appData,
-    appDataMutation,
-    (appData, { itemId, itemConfig }) => ({
-      ...appData,
-
-      // Replace the existing item
-      items: appData.items.map((item) =>
-        item.id === itemId ? { ...itemConfig, id: itemId } : item
-      ),
-    })
-  );
-}
-
-type CreateItem = {
-  itemConfig: ItemConfig;
-};
-
-export function createCreateItemMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
-) {
-  return createAppDataMutator<CreateItem>(
-    appData,
-    appDataMutation,
-    (appData, { itemConfig }) => ({
-      ...appData,
-
-      // Add the item to the end of the items list
-      items: [...appData.items, itemConfig],
     })
   );
 }

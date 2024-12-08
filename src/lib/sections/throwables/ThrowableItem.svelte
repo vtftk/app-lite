@@ -1,34 +1,36 @@
 <script lang="ts">
-  import type { ItemConfig, ThrowableConfig } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
+  import type { Item } from "$lib/api/types";
 
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
-  import { createAppDateMutation, getAppData } from "$lib/api/runtimeAppData";
   import { Checkbox } from "bits-ui";
   import getBackendURL from "$lib/utils/url";
+  import { deleteItemMutation } from "$lib/api/items";
+  import { toast } from "svelte-sonner";
 
   type Props = {
-    config: ItemConfig;
+    config: Item;
 
     selected: boolean;
     onToggleSelected: VoidFunction;
   };
 
-  const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
-
   const { config, selected, onToggleSelected }: Props = $props();
+
+  const deleteItem = deleteItemMutation();
 
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this item?")) {
       return;
     }
 
-    await $appDataMutation.mutateAsync({
-      ...$appData,
-      items: $appData.items.filter((item) => item.id !== config.id),
+    const deletePromise = $deleteItem.mutateAsync(config.id);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting item...",
+      success: "Deleted item",
+      error: "Failed to delete item",
     });
   }
 </script>
@@ -57,7 +59,13 @@
     <a class="throw-button" href="/throwables/{config.id}">
       <SettingsIcon />
     </a>
-    <button class="throw-button" onclick={onDelete}> <DeleteIcon /> </button>
+    <button
+      class="throw-button"
+      onclick={onDelete}
+      disabled={$deleteItem.isPending}
+    >
+      <DeleteIcon />
+    </button>
   </div>
 </div>
 

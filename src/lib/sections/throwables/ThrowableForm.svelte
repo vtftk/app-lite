@@ -5,16 +5,10 @@
   import { z } from "zod";
   import {
     FileType,
-    type ItemConfig,
+    type ItemWithImpactSounds,
     type ThrowableImageConfig,
   } from "$lib/api/types";
-  import {
-    createAppDateMutation,
-    createCreateItemMutation,
-    createUpdateItemMutation,
-    getAppData,
-    getRuntimeAppData,
-  } from "$lib/api/runtimeAppData";
+  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { goto } from "$app/navigation";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
@@ -31,9 +25,10 @@
   import FormSections from "$lib/components/form/FormSections.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import { derived } from "svelte/store";
+  import { createItemMutation, updateItemMutation } from "$lib/api/items";
 
   type Props = {
-    existing?: ItemConfig;
+    existing?: ItemWithImpactSounds;
   };
 
   const { existing }: Props = $props();
@@ -41,10 +36,9 @@
   const runtimeAppData = getRuntimeAppData();
 
   const appData = getAppData();
-  const appDataMutation = createAppDateMutation();
 
-  const updateItem = createUpdateItemMutation(appData, appDataMutation);
-  const createItem = createCreateItemMutation(appData, appDataMutation);
+  const updateItem = updateItemMutation();
+  const createItem = createItemMutation();
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = derived(
@@ -84,14 +78,14 @@
     impactSoundIds: [],
   };
 
-  function createFromExisting(config: ItemConfig): Partial<Schema> {
+  function createFromExisting(config: ItemWithImpactSounds): Partial<Schema> {
     return {
       name: config.name,
       image: config.image.src,
       scale: config.image.scale,
       weight: config.image.weight,
       pixelate: config.image.pixelate,
-      impactSoundIds: config.impact_sounds_ids,
+      impactSoundIds: config.impact_sounds.map((sound) => sound.id),
     };
   }
 
@@ -156,28 +150,26 @@
       weight: values.weight,
     };
 
-    const partialItemConfig: Omit<ItemConfig, "id"> = {
-      image: imageConfig,
-      impact_sounds_ids: values.impactSoundIds,
-      name: values.name,
-    };
-
     if (existing) {
-      await $updateItem({ itemId: existing.id, itemConfig: partialItemConfig });
+      await $updateItem.mutateAsync({
+        itemId: existing.id,
+        update: {
+          name: values.name,
+          image: imageConfig,
+        },
+      });
     } else {
-      const itemConfig: ItemConfig = {
-        ...partialItemConfig,
-        id: self.crypto.randomUUID(),
-      };
-
-      await $createItem({ itemConfig });
+      await $createItem.mutateAsync({
+        name: values.name,
+        image: imageConfig,
+      });
     }
   }
 
   function onTestThrow() {
     if (existing === undefined) return;
 
-    const throwPromise = testThrow($appData, [existing.id], 1);
+    const throwPromise = testThrow([existing.id], 1);
 
     toast.promise(throwPromise, {
       loading: "Sending throw...",
@@ -189,7 +181,7 @@
   function onTestBarrage() {
     if (existing === undefined) return;
 
-    const throwPromise = testThrowBarrage($appData, [existing.id], 50, 2, 100);
+    const throwPromise = testThrowBarrage([existing.id], 50, 2, 100);
 
     toast.promise(throwPromise, {
       loading: "Sending barrage...",

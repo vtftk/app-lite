@@ -1,6 +1,8 @@
+import type { Item, Sound } from "./dataV2";
+
 type Option<T> = T | null;
 
-type Uuid = string;
+export type Uuid = string;
 
 export type MinMax = {
   min: number;
@@ -15,7 +17,6 @@ export type AppData = {
   externals_config: ExternalsConfig;
   models: Record<ModelId, ModelData>;
 
-  items: ItemConfig[];
   events: EventConfig[];
   sounds: SoundConfig[];
   scripts: UserScriptConfig[];
@@ -80,28 +81,11 @@ export type VTubeStudioConfig = {
   port: number;
 };
 
-export type ThrowableConfig = {
-  items: ItemConfig[];
-  impact_sounds: SoundConfig[];
-};
-
-export type ItemConfig = {
-  id: Uuid;
-  name: string;
-  image: ThrowableImageConfig;
-  impact_sounds_ids: Uuid[];
-};
-
 export type ThrowableImageConfig = {
   src: string;
   weight: number;
   scale: number;
   pixelate: boolean;
-};
-
-export type ImpactSoundConfig = {
-  src: string;
-  volume: number;
 };
 
 export type SoundConfig = {
