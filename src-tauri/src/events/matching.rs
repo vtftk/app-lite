@@ -52,6 +52,7 @@ pub struct ScriptWithContext {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ScriptEvent {
     Redeem,
     CheerBits,
@@ -84,6 +85,8 @@ pub enum EventInputData {
     Redeem {
         /// ID of the redeemed award
         reward_id: String,
+        /// Name of the reward
+        reward_name: String,
         /// Cost of the reward
         cost: i64,
         /// User provided message (For redeems that let you provide a message)
@@ -172,6 +175,7 @@ pub async fn match_redeem_event(
     let event_data = EventData {
         input_data: EventInputData::Redeem {
             reward_id: event_reward_id,
+            reward_name: event.reward.title.clone(),
             cost: event.reward.cost,
             user_input: event.user_input,
         },
@@ -180,7 +184,6 @@ pub async fn match_redeem_event(
             name: event.user_name,
             display_name: event.user_display_name,
         }),
-        ..Default::default()
     };
 
     Ok(EventMatchingData {
@@ -276,7 +279,6 @@ pub async fn match_subscription_event(
             name: event.user_name,
             display_name: event.user_display_name,
         }),
-        ..Default::default()
     };
 
     Ok(EventMatchingData {
@@ -312,7 +314,6 @@ pub async fn match_gifted_subscription_event(
             total: event.total,
         },
         user,
-        ..Default::default()
     };
 
     Ok(EventMatchingData {
@@ -343,7 +344,6 @@ pub async fn match_re_subscription_event(
             name: event.user_name,
             display_name: event.user_display_name,
         }),
-        ..Default::default()
     };
 
     Ok(EventMatchingData {
@@ -419,14 +419,7 @@ pub async fn match_chat_event(
         // Filter events for matching command messages
         let events = events
             .into_iter()
-            .filter(|event| match &event.trigger {
-                EventTrigger::Command { message }
-                    if message.trim().to_lowercase().eq(&command_arg) =>
-                {
-                    true
-                }
-                _ => false,
-            })
+            .filter(|event| matches!(&event.trigger, EventTrigger::Command { message } if message.trim().to_lowercase().eq(&command_arg)))
             .collect();
 
         // Provide additional context to commands
@@ -464,7 +457,6 @@ pub async fn match_chat_event(
             name: event.user_name,
             display_name: event.user_display_name,
         }),
-        ..Default::default()
     };
 
     Ok(EventMatchingData {

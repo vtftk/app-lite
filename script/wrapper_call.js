@@ -17,7 +17,7 @@
     }
   })();
 
-  return async ({ type, data }) => {
+  return async (type, data) => {
     const handler = __eventHandlers[type];
 
     if (handler === undefined) {

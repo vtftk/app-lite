@@ -70,7 +70,7 @@ declare global {
      */
     getUsernameArg: (
       arg: string | undefined | null,
-      validate: boolean = false
+      validate?: boolean
     ) => string | null;
   }
 
@@ -124,7 +124,7 @@ declare global {
      * @param volume Volume to play the sound at 0-1
      * @returns
      */
-    playSound: (src: string, volume: number = 1) => Promise<void>;
+    playSound: (src: string, volume?: number) => Promise<void>;
     playSoundSeq: (sounds: SoundSeq) => Promise<void>;
   }
 
@@ -137,16 +137,53 @@ declare global {
     response: string;
   }
 
-  export type EventMap = {
-    chat: ChatEvent;
+  export interface TwitchEventUser {
+    id: string;
+    name: string;
+    display_name: string;
+  }
+
+  type SubscriptionTier = "1000" | "2000" | "3000" | "Prime" | string;
+
+  export type EventData = {
+    user: TwitchEventUser;
   };
 
-  export interface ChatEvent {
-    user_id: string;
-    user_name: string;
-    user_display_name: string;
-    message: string;
-  }
+  export type EventInputData = {
+    redeem: {
+      reward_name: string;
+      reward_id: string;
+      cost: number;
+      user_input: string;
+    };
+    cheerBits: {
+      bits: number;
+      anonymous: boolean;
+      message: string;
+    };
+    follow: {};
+    subscription: {
+      tier: SubscriptionTier;
+      is_gift: boolean;
+    };
+    giftSubscription: {
+      tier: SubscriptionTier;
+      cumulative_total: number | null;
+      anonymous: boolean;
+    };
+    reSubscription: {
+      cumulative_months: number;
+      duration_months: number;
+      message: string;
+      streak_months: number | null;
+      tier: SubscriptionTier;
+    };
+    chat: {
+      message: string;
+      fragments: any[];
+      cheer: number | null;
+    };
+  };
 
   export interface CommandContext {
     // Full original message
@@ -181,7 +218,7 @@ declare global {
    * Context for the current command execution, only available within
    * command scripts
    */
-  declare const ctx: CommandContext;
+  const ctx: CommandContext;
 
   /**
    * Subscribes to an event
@@ -189,8 +226,8 @@ declare global {
    * @param key Name of the event to subscript to
    * @param callback Callback to run when the event is triggered
    */
-  export function on<K extends keyof EventMap>(
+  export function on<K extends keyof EventInputData>(
     key: K,
-    callback: (event: EventMap[K]) => void
+    callback: (event: EventData & EventInputData[K]) => void
   ): void;
 }

@@ -255,19 +255,6 @@ async fn execute_command(
     Ok(())
 }
 
-/// Event coming from outside the JS runtime to trigger executing
-/// code within the runtime event listeners
-#[derive(Clone, Debug, Serialize)]
-#[serde(tag = "type", content = "data", rename_all = "snake_case")]
-pub enum ScriptExecuteEvent {
-    Chat {
-        user_id: UserId,
-        user_name: UserName,
-        user_display_name: DisplayName,
-        message: String,
-    },
-}
-
 /// Executes the provided script using the provided event
 async fn execute_script(
     runtime: &mut JsRuntime,
