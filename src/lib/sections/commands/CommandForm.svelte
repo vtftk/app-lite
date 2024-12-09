@@ -122,13 +122,15 @@
   }
 
   async function save(values: Schema) {
+    const command = values.command.toLowerCase().trim();
+
     if (existing !== undefined) {
       await $updateCommand.mutateAsync({
         commandId: existing.id,
         update: {
           enabled: values.enabled,
           name: values.name,
-          command: values.command,
+          command,
           aliases: [],
           outcome: values.outcome,
           cooldown: values.cooldown,
@@ -139,7 +141,7 @@
       await $createCommand.mutateAsync({
         enabled: values.enabled,
         name: values.name,
-        command: values.command,
+        command,
         aliases: [],
         outcome: values.outcome,
         cooldown: values.cooldown,

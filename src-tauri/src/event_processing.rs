@@ -167,38 +167,42 @@ pub async fn execute_command(
     Ok(())
 }
 
-pub fn get_target_commands(
-    commands: &[CommandModel],
+pub async fn get_target_commands_v2(
+    db: &DatabaseConnection,
     event: &TwitchEventChatMsg,
 ) -> Vec<(CommandModel, CommandContext)> {
+    let message = event.message.text.clone();
+    let mut args: Vec<String> = message
+        .split_whitespace()
+        .map(|value| value.to_string())
+        .collect();
+
+    // Must have at least one arg to be a command
+    if args.is_empty() {
+        return Default::default();
+    }
+
+    // Take first argument trimming any whitespace
+    let first_arg = args.remove(0);
+    let command = first_arg.trim().to_lowercase();
+
+    // Ignore empty command
+    if command.is_empty() {
+        return Default::default();
+    }
+
+    // Load matching commands
+    let commands = match CommandModel::get_by_command(db, &command).await {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load comments: {:?}", err);
+            return Default::default();
+        }
+    };
+
     commands
-        .iter()
-        .filter(|command| command.enabled)
-        .filter_map(|command| {
-            let message = event.message.text.clone();
-            let mut args: Vec<String> = message
-                .split_whitespace()
-                .map(|value| value.to_string())
-                .collect();
-
-            // Must have at least one arg to be a command
-            if args.is_empty() {
-                return None;
-            }
-
-            let first_arg = args.remove(0);
-
-            // Ensure the command matches the first arg
-            if !first_arg.eq_ignore_ascii_case(&command.command)
-                && !command
-                    .aliases
-                    .0
-                    .iter()
-                    .any(|alias| first_arg.eq_ignore_ascii_case(alias))
-            {
-                return None;
-            }
-
+        .into_iter()
+        .map(|command| {
             // Strip prefix and trim any leading space
             let without_prefix = message
                 .strip_prefix(&first_arg)
@@ -212,15 +216,15 @@ pub fn get_target_commands(
                 display_name: event.user_display_name.clone(),
             };
 
-            Some((
+            (
                 command.clone(),
                 CommandContext {
                     full_message: event.message.text.clone(),
                     message: without_prefix,
                     user,
-                    args,
+                    args: args.clone(),
                 },
-            ))
+            )
         })
         .collect()
 }
@@ -254,21 +258,15 @@ pub async fn handle_twitch_events(
             TwitchEvent::GiftSub(event) => get_gift_sub_event_data(events, event),
             TwitchEvent::ResubMsg(event) => get_resub_event_data(events, event),
             TwitchEvent::ChatMsg(event) => {
-                // Execute commands
-                // TODO: Query commands from the database using the parsed command message
-                match CommandModel::all(&db).await {
-                    Ok(commands) => {
-                        let commands = get_target_commands(&commands, &event);
-                        execute_commands(
-                            script_handle.clone(),
-                            twitch_manager.clone(),
-                            events_state.clone(),
-                            commands,
-                        );
-                    }
-                    Err(err) => {
-                        error!("failed to load commands: {:?}", err);
-                    }
+                // Execute chat commands
+                {
+                    let commands = get_target_commands_v2(&db, &event).await;
+                    execute_commands(
+                        script_handle.clone(),
+                        twitch_manager.clone(),
+                        events_state.clone(),
+                        commands,
+                    );
                 }
 
                 let scripts = get_scripts_by_event(&db, "chat").await;
