@@ -1,6 +1,5 @@
 use anyhow::Context;
-use event_processing::handle_twitch_events;
-use events::create_event_channel;
+use events::{create_event_channel, processing::process_twitch_events};
 use log::error;
 use script::{events::ScriptEventActor, kv::KVStore, runtime::create_script_executor};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
@@ -11,7 +10,6 @@ use twitch::manager::TwitchManager;
 mod commands;
 mod constants;
 mod database;
-mod event_processing;
 mod events;
 mod http;
 mod script;
@@ -86,12 +84,12 @@ pub fn run() {
             tauri::async_runtime::block_on(script::events::init_global_script_event_actor(actor));
 
             // Handle events triggered by twitch
-            _ = tauri::async_runtime::spawn(handle_twitch_events(
+            _ = tauri::async_runtime::spawn(process_twitch_events(
                 db.clone(),
                 twitch_manager.clone(),
-                twitch_event_rx,
-                event_tx.clone(),
                 script_handle,
+                event_tx.clone(),
+                twitch_event_rx,
             ));
 
             // Run HTTP server

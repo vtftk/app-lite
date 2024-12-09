@@ -100,13 +100,14 @@ impl Model {
     }
 
     /// Find commands by the actual command trigger word
+    /// and only commands that are enabled
     pub async fn get_by_command<C>(db: &C, command: &str) -> DbResult<Vec<Model>>
     where
         C: ConnectionTrait + Send + 'static,
     {
         // TODO: Join against future aliases table
         Entity::find()
-            .filter(Column::Command.eq(command))
+            .filter(Column::Command.eq(command).and(Column::Enabled.eq(true)))
             .all(db)
             .await
     }

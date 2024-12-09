@@ -9,6 +9,8 @@ use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
 use twitch_api::types::{DisplayName, UserId, UserName};
 
+use crate::events::matching::{EventData, EventInputData, ScriptEvent};
+
 use super::ops::{
     http::op_http_get,
     kv::{op_kv_get, op_kv_remove, op_kv_set},
@@ -54,7 +56,9 @@ pub enum ScriptExecutorMessage {
         /// The script code to run
         script: String,
         /// The event to trigger within the code
-        event: ScriptExecuteEvent,
+        event: ScriptEvent,
+        /// Data for the event
+        data: EventData,
         /// Channel to send back the result
         tx: oneshot::Sender<anyhow::Result<()>>,
     },
@@ -90,11 +94,21 @@ pub struct ScriptExecutorHandle {
 impl ScriptExecutorHandle {
     /// Execute the provided `script` using `event` on the runtime this handle
     /// is linked to, returning the result
-    pub async fn execute(&self, script: String, event: ScriptExecuteEvent) -> anyhow::Result<()> {
+    pub async fn execute(
+        &self,
+        script: String,
+        event: ScriptEvent,
+        data: EventData,
+    ) -> anyhow::Result<()> {
         let (tx, rx) = oneshot::channel();
 
         self.tx
-            .send(ScriptExecutorMessage::EventScript { script, event, tx })
+            .send(ScriptExecutorMessage::EventScript {
+                script,
+                event,
+                data,
+                tx,
+            })
             .await
             .context("executor is not running")?;
 
@@ -150,9 +164,14 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
 
             while let Some(msg) = rx.recv().await {
                 match msg {
-                    ScriptExecutorMessage::EventScript { script, event, tx } => {
+                    ScriptExecutorMessage::EventScript {
+                        script,
+                        event,
+                        data,
+                        tx,
+                    } => {
                         debug!("started script execution");
-                        let result = execute_script(&mut runtime, script, event).await;
+                        let result = execute_script(&mut runtime, script, event, data).await;
                         _ = tx.send(result);
 
                         debug!("completed script execution");
@@ -184,6 +203,7 @@ pub struct CommandContext {
     pub message: String,
     pub user: CommandContextUser,
     pub args: Vec<String>,
+    pub input_data: EventInputData,
 }
 
 #[derive(Debug, Serialize)]
@@ -252,7 +272,8 @@ pub enum ScriptExecuteEvent {
 async fn execute_script(
     runtime: &mut JsRuntime,
     script: String,
-    event: ScriptExecuteEvent,
+    event: ScriptEvent,
+    data: EventData,
 ) -> anyhow::Result<()> {
     let script = JS_CALL_WRAPPER.replace("USER_CODE;", &script);
 
@@ -272,9 +293,10 @@ async fn execute_script(
             .context("wrapper didn't produce function")?;
 
         let event_value = to_v8(scope, event)?;
+        let data_value = to_v8(scope, data)?;
 
         let result = local_fn
-            .call(scope, global, &[event_value])
+            .call(scope, global, &[event_value, data_value])
             .context("function provided no return value")?;
         Global::new(scope, result)
     };

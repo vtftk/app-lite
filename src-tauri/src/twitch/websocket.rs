@@ -185,6 +185,7 @@ impl WebsocketClient {
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
+                    user_input: msg.user_input,
                 }));
             }
 
@@ -197,6 +198,7 @@ impl WebsocketClient {
                     user_id: msg.user_id,
                     user_name: msg.user_login,
                     user_display_name: msg.user_name,
+                    message: msg.message,
                 }));
             }
 

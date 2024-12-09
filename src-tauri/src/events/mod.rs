@@ -1,3 +1,8 @@
+pub mod event_processing;
+pub mod matching;
+pub mod outcome;
+pub mod processing;
+
 use serde::Serialize;
 use tokio::sync::broadcast;
 

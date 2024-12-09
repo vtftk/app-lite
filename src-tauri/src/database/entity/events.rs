@@ -250,6 +250,8 @@ impl Model {
     }
 
     /// Find a specific event by a specific trigger type
+    ///
+    /// Filters to only events marked as enabled
     pub async fn get_by_trigger_type<C>(
         db: &C,
         trigger_type: EventTriggerType,
@@ -258,7 +260,11 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find()
-            .filter(Column::TriggerType.eq(trigger_type))
+            .filter(
+                Column::TriggerType
+                    .eq(trigger_type)
+                    .and(Column::Enabled.eq(true)),
+            )
             .all(db)
             .await
     }

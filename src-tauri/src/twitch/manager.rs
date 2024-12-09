@@ -3,6 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
 use log::error;
+use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tokio::{
     join,
@@ -330,12 +331,12 @@ impl TwitchManager {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 #[allow(unused)]
 pub struct TwitchEventUser {
-    pub user_id: UserId,
-    pub user_name: UserName,
-    pub user_display_name: DisplayName,
+    pub id: UserId,
+    pub name: UserName,
+    pub display_name: DisplayName,
 }
 
 #[derive(Debug, Clone)]
@@ -346,6 +347,7 @@ pub struct TwitchEventRedeem {
     pub user_id: UserId,
     pub user_name: UserName,
     pub user_display_name: DisplayName,
+    pub user_input: String,
 }
 
 #[derive(Debug, Clone)]
@@ -359,6 +361,9 @@ pub struct TwitchEventCheerBits {
     pub user_id: Option<UserId>,
     pub user_name: Option<UserName>,
     pub user_display_name: Option<DisplayName>,
+
+    // Message attached with the bits
+    pub message: String,
 }
 
 #[derive(Debug, Clone)]

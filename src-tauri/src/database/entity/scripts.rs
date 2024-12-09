@@ -86,6 +86,20 @@ impl Model {
         Entity::find_by_id(id).one(db).await
     }
 
+    /// Find a script by the event its subscribed to filters to only enabled
+    pub async fn get_by_event<C>(db: &C, name: &str) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        // TODO: DATABASE LEVEL FILTERING, USE SEPARATE COLUMN TO STORE SUBSCRIBED EVENTS
+        let scripts = Self::all(db).await?;
+
+        Ok(scripts
+            .into_iter()
+            .filter(|script| script.enabled && script.events.0.iter().any(|event| name.eq(event)))
+            .collect())
+    }
+
     /// Find all script
     pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
     where
