@@ -26,6 +26,7 @@
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import { derived } from "svelte/store";
   import { createItemMutation, updateItemMutation } from "$lib/api/items";
+  import { getErrorMessage, toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: ItemWithImpactSounds;
@@ -174,19 +175,19 @@
     toast.promise(throwPromise, {
       loading: "Sending throw...",
       success: "Threw item",
-      error: "Failed to throw item",
+      error: toastErrorMessage("Failed to throw item"),
     });
   }
 
   function onTestBarrage() {
     if (existing === undefined) return;
 
-    const throwPromise = testThrowBarrage([existing.id], 50, 2, 100);
+    const throwPromise = testThrowBarrage([existing.id], 20, 2, 100);
 
     toast.promise(throwPromise, {
       loading: "Sending barrage...",
       success: "Threw barrage",
-      error: "Failed to throw barrage",
+      error: toastErrorMessage("Failed to throw barrage"),
     });
   }
 </script>

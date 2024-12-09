@@ -1,22 +1,29 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getItemById } from "./items";
-import type { Item, Sound, ThrowableConfig } from "$shared/dataV2";
+import type {
+  ItemWithImpactSoundIds,
+  Sound,
+  ThrowableConfig,
+} from "$shared/dataV2";
 
 async function getItemsWithSounds(
   itemIds: string[]
-): Promise<{ items: Item[]; impact_sounds: Sound[] }> {
+): Promise<{ items: ItemWithImpactSoundIds[]; impact_sounds: Sound[] }> {
   const rawItems = await Promise.all(
     itemIds.map((itemId) => getItemById(itemId))
   );
 
   const impact_sounds: Sound[] = [];
-  const items: Item[] = [];
+  const items: ItemWithImpactSoundIds[] = [];
 
   for (const rawItem of rawItems) {
     if (rawItem === null) continue;
 
     const { impact_sounds: item_impact_sounds, ...item } = rawItem;
-    items.push(item);
+    items.push({
+      ...item,
+      impact_sound_ids: impact_sounds.map((sound) => sound.id),
+    });
 
     // Add non duplicate sounds
     for (const impact_sound of item_impact_sounds) {

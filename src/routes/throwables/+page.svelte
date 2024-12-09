@@ -17,6 +17,7 @@
     createItemsQuery,
   } from "$lib/api/items";
   import type { Item, Sound } from "$shared/dataV2";
+  import { getErrorMessage, toastErrorMessage } from "$lib/utils/error";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -104,17 +105,17 @@
     toast.promise(throwPromise, {
       loading: "Sending throw...",
       success: "Threw item",
-      error: "Failed to throw item",
+      error: toastErrorMessage("Failed to throw item"),
     });
   }
 
   function onTestBarrage() {
-    const throwPromise = testThrowBarrage(selected, 50, 2, 100);
+    const throwPromise = testThrowBarrage(selected, 20, 2, 100);
 
     toast.promise(throwPromise, {
       loading: "Sending barrage...",
       success: "Threw barrage",
-      error: "Failed to throw barrage",
+      error: toastErrorMessage("Failed to throw barrage"),
     });
   }
 </script>
