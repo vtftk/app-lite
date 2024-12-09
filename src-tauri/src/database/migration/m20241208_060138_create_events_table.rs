@@ -14,6 +14,7 @@ impl MigrationTrait for Migration {
                     .col(pk_uuid(Events::Id))
                     .col(boolean(Events::Enabled))
                     .col(string(Events::Name))
+                    .col(string(Events::TriggerType))
                     .col(json(Events::Trigger))
                     .col(json(Events::Outcome))
                     .col(integer(Events::Cooldown))
@@ -37,6 +38,7 @@ enum Events {
     Id,
     Enabled,
     Name,
+    TriggerType,
     Trigger,
     Outcome,
     Cooldown,

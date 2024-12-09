@@ -10,7 +10,7 @@ pub type EventEntity = Entity;
 pub type EventActiveModel = ActiveModel;
 pub type EventColumn = Column;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize)]
 #[sea_orm(table_name = "events")]
 pub struct Model {
     /// Unique ID for the sound
@@ -20,6 +20,10 @@ pub struct Model {
     pub enabled: bool,
     /// Name of the event handler
     pub name: String,
+    /// Duplicate of the "trigger" column but just the string key to allow querying
+    /// derived from "trigger"
+    #[serde(skip)]
+    pub trigger_type: EventTriggerType,
     /// Input that should trigger the event
     pub trigger: EventTrigger,
     /// Outcome the event should trigger
@@ -30,6 +34,41 @@ pub struct Model {
     pub require_role: MinimumRequireRole,
     /// Delay before executing the outcome
     pub outcome_delay: u32,
+}
+
+/// Copy of the [EventTrigger] enum but string variants to
+/// support storing in the database as strings for querying
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum EventTriggerType {
+    #[sea_orm(string_value = "Redeem")]
+    Redeem,
+    #[sea_orm(string_value = "Command")]
+    Command,
+    #[sea_orm(string_value = "Follow")]
+    Follow,
+    #[sea_orm(string_value = "Subscription")]
+    Subscription,
+    #[sea_orm(string_value = "GiftedSubscription")]
+    GiftedSubscription,
+    #[sea_orm(string_value = "Bits")]
+    Bits,
+    #[sea_orm(string_value = "Raid")]
+    Raid,
+}
+
+impl EventTriggerType {
+    pub fn from_event_trigger(trigger: &EventTrigger) -> Self {
+        match trigger {
+            EventTrigger::Redeem { .. } => EventTriggerType::Redeem,
+            EventTrigger::Command { .. } => EventTriggerType::Command,
+            EventTrigger::Follow => EventTriggerType::Follow,
+            EventTrigger::Subscription => EventTriggerType::Subscription,
+            EventTrigger::GiftedSubscription => EventTriggerType::GiftedSubscription,
+            EventTrigger::Bits { .. } => EventTriggerType::Bits,
+            EventTrigger::Raid { .. } => EventTriggerType::Raid,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -183,6 +222,7 @@ impl Model {
             id: Set(id),
             enabled: Set(create.enabled),
             name: Set(create.name),
+            trigger_type: Set(EventTriggerType::from_event_trigger(&create.trigger)),
             trigger: Set(create.trigger),
             outcome: Set(create.outcome),
             cooldown: Set(create.cooldown),
@@ -209,6 +249,20 @@ impl Model {
         Entity::find_by_id(id).one(db).await
     }
 
+    /// Find a specific event by a specific trigger type
+    pub async fn get_by_trigger_type<C>(
+        db: &C,
+        trigger_type: EventTriggerType,
+    ) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find()
+            .filter(Column::TriggerType.eq(trigger_type))
+            .all(db)
+            .await
+    }
+
     /// Find all events
     pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
     where
@@ -226,6 +280,12 @@ impl Model {
 
         this.enabled = data.enabled.map(Set).unwrap_or(this.enabled);
         this.name = data.name.map(Set).unwrap_or(this.name);
+        this.trigger_type = data
+            .trigger
+            .as_ref()
+            .map(EventTriggerType::from_event_trigger)
+            .map(Set)
+            .unwrap_or(this.trigger_type);
         this.trigger = data.trigger.map(Set).unwrap_or(this.trigger);
         this.outcome = data.outcome.map(Set).unwrap_or(this.outcome);
         this.cooldown = data.cooldown.map(Set).unwrap_or(this.cooldown);
