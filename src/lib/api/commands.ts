@@ -43,8 +43,8 @@ export function createCommandQuery(id: CommandId | Readable<CommandId>) {
   );
 }
 
-export function getCommandById(soundId: CommandId) {
-  return invoke<Command | null>("get_command_by_id", { soundId });
+export function getCommandById(commandId: CommandId) {
+  return invoke<Command | null>("get_command_by_id", { commandId });
 }
 
 function createCommand(create: CreateCommand) {
@@ -56,12 +56,12 @@ export function createCommandMutation() {
     mutationFn: (createItem) => createCommand(createItem),
 
     onSuccess: (data) => {
-      // Invalidate the specific sound query
-      const soundKey = createCommandKey(data.id);
-      queryClient.setQueryData(soundKey, data);
+      // Invalidate the specific command query
+      const commandKey = createCommandKey(data.id);
+      queryClient.setQueryData(commandKey, data);
     },
     onSettled: (_data, _err, _createItem) => {
-      // Invalid the list of sounds
+      // Invalid the list of commands
       queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
     },
   });
@@ -70,15 +70,15 @@ export function createCommandMutation() {
 export function bulkCreateCommandMutation() {
   return createMutation<Command[], Error, CreateCommand[]>({
     mutationFn: (createItems) => Promise.all(createItems.map(createCommand)),
-    onSuccess: (sounds) => {
-      for (const sound of sounds) {
-        // Invalidate the specific sound query
-        const soundKey = createCommandKey(sound.id);
-        queryClient.setQueryData(soundKey, sound);
+    onSuccess: (commands) => {
+      for (const command of commands) {
+        // Invalidate the specific command query
+        const commandKey = createCommandKey(command.id);
+        queryClient.setQueryData(commandKey, command);
       }
     },
     onSettled: (_data, _err, _createSound) => {
-      // Invalid the list of sounds
+      // Invalid the list of commands
       queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
     },
   });
@@ -111,18 +111,18 @@ export function deleteCommandMutation() {
   return createMutation<void, Error, CommandId>({
     mutationFn: (commandId) => deleteCommand(commandId),
     onMutate: (commandId) => {
-      const soundKey = createCommandKey(commandId);
+      const commandKey = createCommandKey(commandId);
 
       // Cancel any queries for the item and clear the current item data
-      queryClient.cancelQueries({ queryKey: soundKey });
-      queryClient.setQueryData(soundKey, undefined);
+      queryClient.cancelQueries({ queryKey: commandKey });
+      queryClient.setQueryData(commandKey, undefined);
 
       return undefined;
     },
     onSettled: (_data, _err, itemId) => {
       // Invalidate the specific item query
-      const soundKey = createCommandKey(itemId);
-      queryClient.invalidateQueries({ queryKey: soundKey });
+      const commandKey = createCommandKey(itemId);
+      queryClient.invalidateQueries({ queryKey: commandKey });
 
       // Invalid the list of items
       queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
@@ -140,11 +140,11 @@ export function bulkDeleteCommandMutation() {
       Promise.all(deleteSounds.commandIds.map(deleteCommand)),
     onMutate: (deleteSounds) => {
       for (const commandId of deleteSounds.commandIds) {
-        const soundKey = createCommandKey(commandId);
+        const commandKey = createCommandKey(commandId);
 
         // Cancel any queries for the item and clear the current item data
-        queryClient.cancelQueries({ queryKey: soundKey });
-        queryClient.setQueryData(soundKey, undefined);
+        queryClient.cancelQueries({ queryKey: commandKey });
+        queryClient.setQueryData(commandKey, undefined);
       }
 
       return undefined;
@@ -152,8 +152,8 @@ export function bulkDeleteCommandMutation() {
     onSettled: (_data, _err, deleteItems) => {
       for (const commandId of deleteItems.commandIds) {
         // Invalidate the specific item query
-        const soundKey = createCommandKey(commandId);
-        queryClient.invalidateQueries({ queryKey: soundKey });
+        const commandKey = createCommandKey(commandId);
+        queryClient.invalidateQueries({ queryKey: commandKey });
 
         // Invalid the list of items
         queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });

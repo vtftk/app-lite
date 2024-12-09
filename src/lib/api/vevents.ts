@@ -43,8 +43,8 @@ export function createEventQuery(id: EventId | Readable<EventId>) {
   );
 }
 
-export function getEventById(soundId: EventId) {
-  return invoke<Event | null>("get_event_by_id", { soundId });
+export function getEventById(eventId: EventId) {
+  return invoke<Event | null>("get_event_by_id", { eventId });
 }
 
 function createEvent(create: CreateEvent) {
@@ -56,12 +56,12 @@ export function createEventMutation() {
     mutationFn: (createItem) => createEvent(createItem),
 
     onSuccess: (data) => {
-      // Invalidate the specific sound query
-      const soundKey = createEventKey(data.id);
-      queryClient.setQueryData(soundKey, data);
+      // Invalidate the specific event query
+      const eventKey = createEventKey(data.id);
+      queryClient.setQueryData(eventKey, data);
     },
     onSettled: (_data, _err, _createItem) => {
-      // Invalid the list of sounds
+      // Invalid the list of events
       queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
     },
   });
@@ -70,15 +70,15 @@ export function createEventMutation() {
 export function bulkCreateEventMutation() {
   return createMutation<Event[], Error, CreateEvent[]>({
     mutationFn: (createItems) => Promise.all(createItems.map(createEvent)),
-    onSuccess: (sounds) => {
-      for (const sound of sounds) {
-        // Invalidate the specific sound query
-        const soundKey = createEventKey(sound.id);
-        queryClient.setQueryData(soundKey, sound);
+    onSuccess: (events) => {
+      for (const event of events) {
+        // Invalidate the specific event query
+        const eventKey = createEventKey(event.id);
+        queryClient.setQueryData(eventKey, event);
       }
     },
     onSettled: (_data, _err, _createSound) => {
-      // Invalid the list of sounds
+      // Invalid the list of events
       queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
     },
   });
@@ -111,18 +111,18 @@ export function deleteEventMutation() {
   return createMutation<void, Error, EventId>({
     mutationFn: (eventId) => deleteEvent(eventId),
     onMutate: (eventId) => {
-      const soundKey = createEventKey(eventId);
+      const eventKey = createEventKey(eventId);
 
       // Cancel any queries for the item and clear the current item data
-      queryClient.cancelQueries({ queryKey: soundKey });
-      queryClient.setQueryData(soundKey, undefined);
+      queryClient.cancelQueries({ queryKey: eventKey });
+      queryClient.setQueryData(eventKey, undefined);
 
       return undefined;
     },
     onSettled: (_data, _err, itemId) => {
       // Invalidate the specific item query
-      const soundKey = createEventKey(itemId);
-      queryClient.invalidateQueries({ queryKey: soundKey });
+      const eventKey = createEventKey(itemId);
+      queryClient.invalidateQueries({ queryKey: eventKey });
 
       // Invalid the list of items
       queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
@@ -140,11 +140,11 @@ export function bulkDeleteEventMutation() {
       Promise.all(deleteSounds.eventIds.map(deleteEvent)),
     onMutate: (deleteSounds) => {
       for (const eventId of deleteSounds.eventIds) {
-        const soundKey = createEventKey(eventId);
+        const eventKey = createEventKey(eventId);
 
         // Cancel any queries for the item and clear the current item data
-        queryClient.cancelQueries({ queryKey: soundKey });
-        queryClient.setQueryData(soundKey, undefined);
+        queryClient.cancelQueries({ queryKey: eventKey });
+        queryClient.setQueryData(eventKey, undefined);
       }
 
       return undefined;
@@ -152,8 +152,8 @@ export function bulkDeleteEventMutation() {
     onSettled: (_data, _err, deleteItems) => {
       for (const eventId of deleteItems.eventIds) {
         // Invalidate the specific item query
-        const soundKey = createEventKey(eventId);
-        queryClient.invalidateQueries({ queryKey: soundKey });
+        const eventKey = createEventKey(eventId);
+        queryClient.invalidateQueries({ queryKey: eventKey });
 
         // Invalid the list of items
         queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
