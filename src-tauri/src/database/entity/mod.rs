@@ -1,3 +1,4 @@
+pub mod command_executions;
 pub mod commands;
 pub mod event_executions;
 pub mod events;
@@ -37,4 +38,14 @@ pub use scripts::{ScriptActiveModel, ScriptColumn, ScriptEntity, ScriptModel};
 #[allow(unused)]
 pub use script_events::{
     ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity, ScriptEventsModel,
+};
+
+#[allow(unused)]
+pub use command_executions::{
+    CommandExecutionActiveModel, CommandExecutionColumn, CommandExecutionEntity,
+    CommandExecutionModel,
+};
+#[allow(unused)]
+pub use event_executions::{
+    EventExecutionActiveModel, EventExecutionColumn, EventExecutionEntity, EventExecutionModel,
 };

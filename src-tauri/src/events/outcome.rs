@@ -1,17 +1,22 @@
 use anyhow::{anyhow, Context};
+use futures::{future::BoxFuture, stream::FuturesUnordered};
+use log::error;
 use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
-use crate::database::entity::{
-    events::{
-        BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound, EventOutcomeThrowable,
-        EventOutcomeTriggerHotkey, ThrowableData,
+use crate::{
+    database::entity::{
+        events::{
+            BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound,
+            EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
+        },
+        shared::DbResult,
+        ItemModel, SoundModel,
     },
-    ItemModel, SoundModel,
+    state::app_data::{ItemWithImpactSoundIds, ThrowableConfig},
 };
 
 use super::{
-    event_processing::create_throwable_config,
     matching::{EventData, EventInputData},
     EventMessage,
 };
@@ -142,4 +147,52 @@ async fn play_sound_outcome(
         .context("sound config not found")?;
 
     Ok(EventMessage::PlaySound { config })
+}
+
+pub async fn create_throwable_config(
+    db: &DatabaseConnection,
+    items: Vec<ItemModel>,
+) -> anyhow::Result<ThrowableConfig> {
+    // Find all the referenced sounds
+    let mut futures = items
+        .into_iter()
+        .map(
+            |item| -> BoxFuture<'_, DbResult<(ItemWithImpactSoundIds, Vec<SoundModel>)>> {
+                Box::pin(async move {
+                    let sounds = item.get_impact_sounds(db).await?;
+
+                    let impact_sound_ids = sounds.iter().map(|sound| sound.id).collect();
+                    Ok((
+                        ItemWithImpactSoundIds {
+                            item,
+                            impact_sound_ids,
+                        },
+                        sounds,
+                    ))
+                })
+            },
+        )
+        .collect::<FuturesUnordered<_>>();
+
+    let mut items = Vec::new();
+    let mut impact_sounds = Vec::new();
+
+    use futures::StreamExt;
+
+    while let Some(result) = futures.next().await {
+        match result {
+            Ok((item, mut sounds)) => {
+                items.push(item);
+                impact_sounds.append(&mut sounds);
+            }
+            Err(err) => {
+                error!("error loading impact sounds: {:?}", err);
+            }
+        }
+    }
+
+    Ok(ThrowableConfig {
+        items,
+        impact_sounds,
+    })
 }

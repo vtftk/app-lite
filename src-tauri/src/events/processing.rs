@@ -4,13 +4,16 @@ use anyhow::{anyhow, Context};
 use chrono::TimeDelta;
 use futures::{future::BoxFuture, stream::FuturesUnordered};
 use log::{debug, error};
-use sea_orm::{prelude::DateTimeUtc, sqlx::types::chrono::Utc, DatabaseConnection};
-use tokio::sync::broadcast;
+use sea_orm::{sqlx::types::chrono::Utc, DatabaseConnection};
+use tokio::{sync::broadcast, try_join};
+use twitch_api::types::UserId;
 
 use crate::{
     database::entity::{
+        command_executions::{CommandExecutionModel, CreateCommandExecution},
         commands::CommandOutcome,
         event_executions::{CreateEventExecution, EventExecutionModel},
+        shared::MinimumRequireRole,
         EventModel,
     },
     script::runtime::{CommandContext, CommandContextUser, ScriptExecutorHandle},
@@ -18,7 +21,6 @@ use crate::{
 };
 
 use super::{
-    event_processing::{assert_required_role, EventsStateShared},
     matching::{
         match_chat_event, match_cheer_bits_event, match_follow_event,
         match_gifted_subscription_event, match_re_subscription_event, match_redeem_event,
@@ -37,8 +39,6 @@ pub async fn process_twitch_events(
 
     mut twitch_event_rx: broadcast::Receiver<TwitchEvent>,
 ) {
-    let events_state = EventsStateShared::default();
-
     while let Ok(event) = twitch_event_rx.recv().await {
         debug!("twitch event received: {:?}", event);
 
@@ -47,18 +47,11 @@ pub async fn process_twitch_events(
             let twitch_manager = twitch_manager.clone();
             let script_handle = script_handle.clone();
             let event_sender = event_sender.clone();
-            let events_state = events_state.clone();
 
             async move {
-                let result = process_twitch_event(
-                    db,
-                    twitch_manager,
-                    script_handle,
-                    event_sender,
-                    events_state,
-                    event,
-                )
-                .await;
+                let result =
+                    process_twitch_event(db, twitch_manager, script_handle, event_sender, event)
+                        .await;
 
                 if let Err(err) = result {
                     debug!("failed to process twitch event: {err:?}",);
@@ -73,7 +66,6 @@ async fn process_twitch_event(
     twitch_manager: Arc<TwitchManager>,
     script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
-    events_state: EventsStateShared,
     event: TwitchEvent,
 ) -> anyhow::Result<()> {
     let match_data: EventMatchingData = match event {
@@ -115,9 +107,9 @@ async fn process_twitch_event(
             .into_iter()
             .map(|command| -> BoxFuture<'_, anyhow::Result<()>> {
                 Box::pin(execute_command(
+                    &db,
                     &script_handle,
                     &twitch_manager,
-                    &events_state,
                     command,
                     match_data.event_data.clone(),
                 ))
@@ -166,9 +158,9 @@ async fn process_twitch_event(
 }
 
 pub async fn execute_command(
+    db: &DatabaseConnection,
     script_handle: &ScriptExecutorHandle,
     twitch_manager: &Arc<TwitchManager>,
-    events_state: &EventsStateShared,
     command: CommandWithContext,
     event_data: EventData,
 ) -> anyhow::Result<()> {
@@ -176,15 +168,10 @@ pub async fn execute_command(
         return Err(anyhow!("Non chat input data provided for chat execute"));
     };
 
-    let user = match event_data.user {
-        Some(value) => value,
-        None => return Err(anyhow!("failed to get twitch user")),
-    };
-
     // Ensure required role is present
     if !assert_required_role(
         twitch_manager,
-        Some(user.id.clone()),
+        event_data.user.as_ref().map(|user| user.id.clone()),
         &command.command.require_role,
     )
     .await
@@ -193,23 +180,41 @@ pub async fn execute_command(
         return Ok(());
     }
 
-    // Ensure cooldown is not active
-    if !events_state
-        .is_cooldown_elapsed(
-            &command.command.id,
-            Duration::from_millis(command.command.cooldown as u64),
-        )
+    let current_time = Utc::now();
+
+    let last_execution = command
+        .command
+        .last_execution(db)
         .await
-    {
-        debug!("skipping command: cooldown");
-        return Ok(());
+        .context("failed to request last execution for command")?;
+
+    // Ensure cooldown is not active
+    if let Some(last_execution) = last_execution {
+        let cooldown_end_time = last_execution
+            .created_at
+            .checked_add_signed(TimeDelta::milliseconds(command.command.cooldown as i64))
+            .context("cooldown finishes too far in the future to compute")?;
+
+        if current_time < cooldown_end_time {
+            debug!("skipping command: cooldown");
+            return Ok(());
+        }
     }
+
+    // Create metadata for storage
+    let metadata =
+        serde_json::to_value(&event_data).context("failed to serialize event metadata")?;
 
     match command.command.outcome {
         CommandOutcome::Template { message: _message } => {
             // TODO: Not implemented yet
         }
         CommandOutcome::Script { script } => {
+            let user = match event_data.user {
+                Some(value) => value,
+                None => return Err(anyhow!("failed to get twitch user")),
+            };
+
             let user = CommandContextUser {
                 id: user.id,
                 name: user.name,
@@ -228,8 +233,17 @@ pub async fn execute_command(
         }
     }
 
-    // Mark last execution for cooldown
-    events_state.set_last_executed(&command.command.id).await;
+    // Store command execution
+    CommandExecutionModel::create(
+        db,
+        CreateCommandExecution {
+            command_id: command.command.id,
+            created_at: current_time,
+            metadata,
+        },
+    )
+    .await
+    .context("failed to store last command execution")?;
 
     Ok(())
 }
@@ -308,4 +322,64 @@ pub async fn execute_event(
     .context("failed to store last event execution")?;
 
     Ok(())
+}
+
+pub async fn assert_required_role(
+    twitch_manager: &TwitchManager,
+    user_id: Option<UserId>,
+    required_role: &MinimumRequireRole,
+) -> bool {
+    match required_role {
+        MinimumRequireRole::None => true,
+        MinimumRequireRole::Vip => {
+            let user = match user_id {
+                Some(user) => user,
+                None => return false,
+            };
+
+            // User is the broadcaster
+            if twitch_manager
+                .get_user_token()
+                .await
+                .is_some_and(|value| value.user_id == user)
+            {
+                return true;
+            }
+
+            let (vips, mods) = match try_join!(
+                twitch_manager.get_vip_list(),
+                twitch_manager.get_moderator_list()
+            ) {
+                Ok(value) => value,
+                Err(_) => return false,
+            };
+
+            vips.iter().any(|vip| vip.user_id == user)
+                || mods.iter().any(|mods| mods.user_id == user)
+        }
+        MinimumRequireRole::Mod => {
+            let user = match user_id {
+                Some(user) => user,
+                None => return false,
+            };
+
+            // User is the broadcaster
+            if twitch_manager
+                .get_user_token()
+                .await
+                .is_some_and(|value| value.user_id == user)
+            {
+                return true;
+            }
+
+            let mods = match twitch_manager.get_moderator_list().await {
+                Ok(value) => value,
+                Err(_) => {
+                    return false;
+                }
+            };
+
+            mods.iter().any(|mods| mods.user_id == user)
+        }
+    }
 }

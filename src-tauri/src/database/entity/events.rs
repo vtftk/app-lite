@@ -5,7 +5,7 @@ use sea_orm::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    event_executions::{EventExecutionColumn, EventExecutionEntity, EventExecutionModel},
+    event_executions::{EventExecutionColumn, EventExecutionModel},
     shared::{DbResult, MinimumRequireRole},
 };
 
