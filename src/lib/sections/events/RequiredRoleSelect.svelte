@@ -37,7 +37,7 @@
     },
     {
       value: MinimumRequiredRole.Broadcaster,
-      label: "Moderator",
+      label: "Broadcaster",
       description: "Must be the streamer to redeem",
     },
   ];
