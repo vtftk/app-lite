@@ -1,4 +1,8 @@
-use std::{future::poll_fn, task::Poll};
+use std::{
+    future::{poll_fn, Future},
+    pin::Pin,
+    task::Poll,
+};
 
 use anyhow::Context;
 use deno_core::{
@@ -189,45 +193,56 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
             ..Default::default()
         });
 
-        let local_set = LocalSet::new();
+        let mut local_set = LocalSet::new();
 
-        local_set.block_on(
-            &runtime,
-            poll_fn(|cx| {
-                // Poll incoming script execute messages
-                while let Poll::Ready(msg) = rx.poll_recv(cx) {
-                    let msg = match msg {
-                        Some(msg) => msg,
-                        None => return Poll::Ready(()),
-                    };
+        runtime.block_on(poll_fn(|cx| {
+            // Initial pass when not messages are available
+            {
+                // Poll the promises local set
+                _ = Pin::new(&mut local_set).poll(cx);
 
-                    match msg {
-                        ScriptExecutorMessage::EventScript {
-                            script,
-                            event,
-                            data,
-                            tx,
-                        } => {
-                            let result = execute_script(&mut js_runtime, script, event, data);
-                            spawn_script_promise(&mut js_runtime, result, tx)
-                        }
-                        ScriptExecutorMessage::CommandScript { script, ctx, tx } => {
-                            let result = execute_command(&mut js_runtime, script, ctx);
-                            spawn_script_promise(&mut js_runtime, result, tx)
-                        }
-                        ScriptExecutorMessage::EventsList { script, tx } => {
-                            let result = get_script_events(&mut js_runtime, script);
-                            _ = tx.send(result);
-                        }
+                // Poll event loop for any promises
+                let _ = js_runtime.poll_event_loop(cx, PollEventLoopOptions::default());
+            }
+
+            // Poll incoming script execute messages
+            while let Poll::Ready(msg) = rx.poll_recv(cx) {
+                let msg = match msg {
+                    Some(msg) => msg,
+                    None => return Poll::Ready(()),
+                };
+
+                let _task_guard = local_set.enter();
+
+                match msg {
+                    ScriptExecutorMessage::EventScript {
+                        script,
+                        event,
+                        data,
+                        tx,
+                    } => {
+                        let result = execute_script(&mut js_runtime, script, event, data);
+                        spawn_script_promise(&mut js_runtime, result, tx)
                     }
-
-                    // Poll the event loop
-                    let _ = js_runtime.poll_event_loop(cx, PollEventLoopOptions::default());
+                    ScriptExecutorMessage::CommandScript { script, ctx, tx } => {
+                        let result = execute_command(&mut js_runtime, script, ctx);
+                        spawn_script_promise(&mut js_runtime, result, tx)
+                    }
+                    ScriptExecutorMessage::EventsList { script, tx } => {
+                        let result = get_script_events(&mut js_runtime, script);
+                        _ = tx.send(result);
+                    }
                 }
 
-                Poll::Pending
-            }),
-        );
+                // Poll the promises local set
+                _ = Pin::new(&mut local_set).poll(cx);
+
+                // Poll the event loop
+                let _ = js_runtime.poll_event_loop(cx, PollEventLoopOptions::default());
+            }
+
+            Poll::Pending
+        }));
     });
 
     ScriptExecutorHandle { tx }
