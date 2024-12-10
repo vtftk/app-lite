@@ -1,14 +1,10 @@
 use std::path::Path;
 
 use anyhow::Context;
-use log::{debug, warn};
+use log::warn;
 use migration::Migrator;
-use sea_orm::sqlx::ConnectOptions;
+use sea_orm::Database;
 use sea_orm::DatabaseConnection;
-use sea_orm::{
-    sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode},
-    Database,
-};
 use sea_orm_migration::MigratorTrait;
 use tokio::fs::{create_dir_all, File};
 

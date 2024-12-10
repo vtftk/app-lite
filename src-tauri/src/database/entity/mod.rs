@@ -32,3 +32,8 @@ pub use model_data::{ModelDataActiveModel, ModelDataColumn, ModelDataEntity, Mod
 
 #[allow(unused)]
 pub use scripts::{ScriptActiveModel, ScriptColumn, ScriptEntity, ScriptModel};
+
+#[allow(unused)]
+pub use script_events::{
+    ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity, ScriptEventsModel,
+};
