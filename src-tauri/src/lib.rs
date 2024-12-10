@@ -94,6 +94,7 @@ pub fn run() {
 
             // Run HTTP server
             _ = tauri::async_runtime::spawn(http::server::start(
+                db,
                 event_rx,
                 handle,
                 twitch_manager,
@@ -114,6 +115,7 @@ pub fn run() {
             commands::auth::open_twitch_oauth_uri,
             commands::auth::logout,
             commands::calibration::set_calibration_step,
+            commands::calibration::get_calibration_data,
             commands::test::test_throw,
             commands::test::test_throw_barrage,
             commands::test::test_sound,

@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .primary_key(),
                     )
+                    .col(string(ModelData::Name))
                     .col(json(ModelData::Calibration))
                     .to_owned(),
             )
@@ -34,5 +35,6 @@ impl MigrationTrait for Migration {
 enum ModelData {
     Table,
     Id,
+    Name,
     Calibration,
 }

@@ -1,5 +1,9 @@
+import type { ModelData } from "$shared/appData";
+import { createQuery } from "@tanstack/svelte-query";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
+import { queryClient } from "./utils";
 
 export enum CalibrationStep {
   NotStarted = "NotStarted",
@@ -25,3 +29,27 @@ listen<{ step: CalibrationStep }>(
     calibrationState.set(step);
   }
 );
+
+const CALIBRATION_DATA_KEY = ["calibration-data"];
+
+export function createModelDataQuery() {
+  return createQuery({
+    queryKey: CALIBRATION_DATA_KEY,
+    queryFn: () => invoke<ModelData[]>("get_calibration_data"),
+  });
+}
+
+// Handle calibration data change
+listen<ModelData>("model_data_updated", ({ payload: modelData }) => {
+  queryClient.setQueryData<ModelData[]>(
+    CALIBRATION_DATA_KEY,
+    (existingModelData) => {
+      if (existingModelData === undefined) return undefined;
+
+      return [
+        ...existingModelData.filter((data) => data.id !== modelData.id),
+        modelData,
+      ];
+    }
+  );
+});

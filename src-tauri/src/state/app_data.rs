@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     fmt::Debug,
     path::{Path, PathBuf},
     sync::Arc,
@@ -83,9 +82,6 @@ pub struct AppData {
     pub sounds_config: SoundsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
     pub externals_config: ExternalsConfig,
-
-    //
-    pub models: HashMap<ModelId, ModelData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -114,16 +110,6 @@ impl Default for VTubeStudioConfig {
 #[serde(default)]
 pub struct TwitchConfig {
     pub access_token: Option<String>,
-}
-
-pub type ModelId = String;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ModelData {
-    /// Min and max X positions of the model
-    pub x: MinMax<f64>,
-    /// Min and max Y positions of the model
-    pub y: MinMax<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

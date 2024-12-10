@@ -1,13 +1,20 @@
 import { BACKEND_HTTP } from "../constants";
 import { CalibrationStepData } from "./calibration-types";
-import { RuntimeAppData } from "./types";
+import { ModelData, RuntimeAppData } from "./types";
 
 export async function notifyProgressCalibration(body: CalibrationStepData) {
-  await fetch(new URL("/calibration", BACKEND_HTTP), {
+  const response = await fetch(new URL("/calibration", BACKEND_HTTP), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
+
+  return response.json();
+}
+
+export async function getCalibrationData(): Promise<ModelData[]> {
+  const response = await fetch(new URL("/calibration-data", BACKEND_HTTP));
+  return response.json();
 }
 
 export async function updateRuntimeData(body: Partial<RuntimeAppData>) {

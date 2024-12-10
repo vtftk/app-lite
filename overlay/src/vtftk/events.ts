@@ -18,6 +18,8 @@ import { CalibrationStep } from "./calibration-types";
 import {
   AppData,
   ItemWithImpactSoundIds,
+  ModelCalibration,
+  ModelId,
   Sound,
   ThrowableConfig,
 } from "./types";
@@ -25,6 +27,7 @@ import {
 export type EventSourceData = {
   appData: AppData;
   vtSocket: VTubeStudioWebSocket | undefined;
+  modelCalibration: Map<ModelId, ModelCalibration>;
   modelParameters: ModelParameters | undefined;
 };
 
@@ -51,7 +54,7 @@ async function onMessage(data: EventSourceData, event: any) {
   switch (event.type) {
     case "SetCalibrationStep": {
       if (data.vtSocket) {
-        onSetCalibrationStepEvent(data.vtSocket, event.step);
+        onSetCalibrationStepEvent(data, data.vtSocket, event.step);
       }
       break;
     }
@@ -60,6 +63,7 @@ async function onMessage(data: EventSourceData, event: any) {
         onThrowItemEvent(
           data.appData,
           data.vtSocket,
+          data.modelCalibration,
           data.modelParameters,
           event.config,
           event.amount
@@ -74,6 +78,7 @@ async function onMessage(data: EventSourceData, event: any) {
         onThrowItemBarrageEvent(
           data.appData,
           data.vtSocket,
+          data.modelCalibration,
           data.modelParameters,
           event.config,
           event.amount_per_throw,
@@ -178,15 +183,20 @@ async function onTriggerHotkeyEvent(
 }
 
 async function onSetCalibrationStepEvent(
+  data: EventSourceData,
   vtSocket: VTubeStudioWebSocket,
   step: CalibrationStep
 ) {
-  beginCalibrationStep(vtSocket, step);
+  beginCalibrationStep(vtSocket, step, (model_data) => {
+    // Update the model data map to include the new model data
+    data.modelCalibration.set(model_data.id, model_data.calibration);
+  });
 }
 
 async function onThrowItemEvent(
   appData: AppData,
   vtSocket: VTubeStudioWebSocket,
+  modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
   config: ThrowableConfig,
   amount: number
@@ -199,6 +209,7 @@ async function onThrowItemEvent(
   await throwItemMany(
     vtSocket,
     appData,
+    modelCalibration,
     modelParameters,
     config.items,
     loadedItems,
@@ -256,6 +267,7 @@ function pickRandomItem(
 function throwRandomItem(
   socket: VTubeStudioWebSocket,
   appData: AppData,
+  modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
 
   items: ItemWithImpactSoundIds[],
@@ -272,6 +284,8 @@ function throwRandomItem(
   return throwItem(
     socket,
     appData,
+    modelCalibration,
+
     modelParameters,
     item.config,
     item.image,
@@ -282,6 +296,7 @@ function throwRandomItem(
 async function throwItemMany(
   socket: VTubeStudioWebSocket,
   appData: AppData,
+  modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
 
   items: ItemWithImpactSoundIds[],
@@ -293,6 +308,7 @@ async function throwItemMany(
     return throwRandomItem(
       socket,
       appData,
+      modelCalibration,
       modelParameters,
       items,
       loadedItems,
@@ -305,6 +321,7 @@ async function throwItemMany(
       throwRandomItem(
         socket,
         appData,
+        modelCalibration,
         modelParameters,
         items,
         loadedItems,
@@ -317,6 +334,7 @@ async function throwItemMany(
 async function onThrowItemBarrageEvent(
   appData: AppData,
   vtSocket: VTubeStudioWebSocket,
+  modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
   config: ThrowableConfig,
   amountPerThrow: number,
@@ -333,6 +351,7 @@ async function onThrowItemBarrageEvent(
       return throwItemMany(
         vtSocket,
         appData,
+        modelCalibration,
         modelParameters,
         config.items,
         loadedItems,

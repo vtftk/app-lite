@@ -12,11 +12,13 @@ use crate::state::app_data::AppDataStore;
 use crate::state::runtime_app_data::RuntimeAppDataStore;
 use crate::twitch::manager::TwitchManager;
 use axum::Extension;
+use sea_orm::DatabaseConnection;
 use tauri::AppHandle;
 use tower_http::cors::CorsLayer;
 
 pub async fn start(
-    event_handles: EventRecvHandle,
+    db: DatabaseConnection,
+    event_handle: EventRecvHandle,
     app_handle: AppHandle,
     twitch_manager: Arc<TwitchManager>,
     app_data: AppDataStore,
@@ -24,7 +26,8 @@ pub async fn start(
 ) {
     // build our application with a single route
     let app = routes::router()
-        .layer(Extension(event_handles))
+        .layer(Extension(db))
+        .layer(Extension(event_handle))
         .layer(Extension(app_handle))
         .layer(Extension(twitch_manager))
         .layer(Extension(app_data))

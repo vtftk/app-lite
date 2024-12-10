@@ -10,7 +10,7 @@ import {
   requestInputParameterList,
 } from "./vtube-studio/model";
 import { createEventSource, EventSourceData } from "./vtftk/events";
-import { updateRuntimeData } from "./vtftk/api";
+import { getCalibrationData, updateRuntimeData } from "./vtftk/api";
 import { RuntimeAppData } from "./vtftk/types";
 
 async function load() {
@@ -24,9 +24,16 @@ async function load() {
 
   const eventSourceData: EventSourceData = {
     appData,
+    modelCalibration: new Map(),
     vtSocket: undefined,
     modelParameters: undefined,
   };
+
+  // Load and store model calibration data
+  const modelData = await getCalibrationData();
+  modelData.forEach((modelData) =>
+    eventSourceData.modelCalibration.set(modelData.id, modelData.calibration)
+  );
 
   const eventSource = createEventSource(eventSourceData);
 

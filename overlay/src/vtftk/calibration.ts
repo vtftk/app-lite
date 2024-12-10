@@ -7,6 +7,7 @@ import { CalibrationPoint, CalibrationStep } from "./calibration-types";
 import { LARGEST_MODEL_SIZE, SMALLEST_MODEL_SIZE } from "../constants";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 import { notifyProgressCalibration } from "./api";
+import { ModelData } from "$shared/appData";
 
 const calibrationEl = document.getElementById("calibration");
 
@@ -14,6 +15,7 @@ const calibrationEl = document.getElementById("calibration");
 // original position after calibrating
 let initialModelPosition: ModelPosition | undefined;
 let modelId: string | undefined;
+let modelName: string | undefined;
 
 // Currently selected calibration point on the screen
 let calibrationPoint: CalibrationPoint | undefined;
@@ -55,6 +57,9 @@ function subscribeCalibrate() {
     calibrationEl.style.visibility = "visible";
     calibrationEl.hidden = false;
   }
+
+  setCalibrationPoint(window.innerWidth / 2, window.innerHeight / 2);
+
   window.addEventListener("mousedown", onMouseDown);
   window.addEventListener("mouseup", onMouseUp);
   window.addEventListener("mousemove", onMouseMove);
@@ -70,10 +75,23 @@ function unsubscribeCalibrate() {
   window.removeEventListener("mousemove", onMouseMove);
 }
 
-async function resetCalibration(socket: VTubeStudioWebSocket) {
-  currentStep = CalibrationStep.NotStarted;
+async function resetCalibration(
+  socket: VTubeStudioWebSocket,
+  resetStep = true
+) {
+  if (resetStep) {
+    currentStep = CalibrationStep.NotStarted;
+  }
+
+  modelId = undefined;
+  modelName = undefined;
+
   unsubscribeCalibrate();
-  await notifyProgressCalibration({ step: CalibrationStep.NotStarted });
+
+  if (resetStep) {
+    await notifyProgressCalibration({ step: CalibrationStep.NotStarted });
+  }
+
   await resetModel(socket);
 }
 
@@ -86,7 +104,8 @@ const STEPS = [
 
 export async function beginCalibrationStep(
   socket: VTubeStudioWebSocket,
-  step: CalibrationStep
+  step: CalibrationStep,
+  onCalibrationComplete: (data: ModelData) => void
 ) {
   const currentStepIndex = STEPS.indexOf(currentStep);
   const stepIndex = STEPS.indexOf(step);
@@ -107,8 +126,14 @@ export async function beginCalibrationStep(
     case CalibrationStep.Smallest:
       subscribeCalibrate();
 
-      const { modelID, modelPosition } = await requestCurrentModel(socket);
+      const {
+        modelID,
+        modelName: _modelName,
+        modelPosition,
+      } = await requestCurrentModel(socket);
+
       modelId = modelID;
+      modelName = _modelName;
       initialModelPosition = modelPosition;
       calibrationPoint = {
         x: window.innerWidth / 2,
@@ -128,20 +153,26 @@ export async function beginCalibrationStep(
 
     // Store largest position, report calibration results and reset model
     case CalibrationStep.Complete:
-      if (smallestPoint === undefined || modelId === undefined) {
+      if (
+        smallestPoint === undefined ||
+        modelId === undefined ||
+        modelName === undefined
+      ) {
         await resetCalibration(socket);
-        console.error("missing smallest point");
+        console.error("calibration was not started");
         return;
       }
 
       largestPoint = await getModelGuidePosition(socket);
-      await notifyProgressCalibration({
+      const { model_data } = await notifyProgressCalibration({
         step: CalibrationStep.Complete,
         model_id: modelId,
+        model_name: modelName,
         smallest_point: smallestPoint,
         largest_point: largestPoint,
       });
-      await resetModel(socket);
+      await resetCalibration(socket, false);
+      onCalibrationComplete(model_data);
       break;
     default:
       break;

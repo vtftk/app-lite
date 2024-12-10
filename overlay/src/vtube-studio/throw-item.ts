@@ -5,10 +5,11 @@ import {
   AppData,
   ThrowableImageConfig,
   MinMax,
-  ModelData,
+  ModelCalibration,
   ThrowDirection,
   ItemWithImpactSoundIds,
   Sound,
+  ModelId,
 } from "../vtftk/types";
 import { flinch } from "./flinch";
 import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
@@ -46,6 +47,7 @@ export async function loadThrowableResources(
  *
  * @param socket Socket for getting model position and sending impact flinches to VTube studio
  * @param appData Global app data settings
+ * @param modelCalibration Calibration data for available models
  * @param modelParameters Parameters for the current model
  * @param config Configuration for the thrown item
  * @param image Image element to use for the thrown item
@@ -55,6 +57,7 @@ export async function loadThrowableResources(
 export async function throwItem(
   socket: VTubeStudioWebSocket,
   appData: AppData,
+  modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
   config: ItemWithImpactSoundIds,
   image: HTMLImageElement,
@@ -62,7 +65,7 @@ export async function throwItem(
 ) {
   const { modelID, modelPosition } = await requestCurrentModel(socket);
 
-  const modelData = appData.models[modelID];
+  const modelData = modelCalibration.get(modelID);
 
   // Model is not yet calibrated
   if (modelData === undefined) return;
@@ -293,7 +296,7 @@ function createPivotContainer(
   scaledWidth: number,
   scaledHeight: number,
   modelPosition: ModelPosition,
-  modelData: ModelData,
+  modelData: ModelCalibration,
   modelScale: number,
   angle: number
 ) {

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::state::app_data::ModelId;
+use crate::database::entity::{model_data::ModelId, ModelDataModel};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "step")]
@@ -17,6 +17,7 @@ pub enum CalibrationStepData {
     Largest,
     Complete {
         model_id: ModelId,
+        model_name: String,
         smallest_point: CalibrationPoint,
         largest_point: CalibrationPoint,
     },
@@ -31,4 +32,7 @@ pub enum CalibrationStep {
 }
 
 #[derive(Debug, Serialize)]
-pub struct CalibrationProgressRes {}
+pub struct CalibrationProgressRes {
+    /// Updated model data when a model calibration is complete
+    pub model_data: Option<ModelDataModel>,
+}

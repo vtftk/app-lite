@@ -20,6 +20,7 @@ export type CalibrationStepData =
   | {
       step: CalibrationStep.Complete;
       model_id: string;
+      model_name: string;
       largest_point: CalibrationPoint;
       smallest_point: CalibrationPoint;
     };

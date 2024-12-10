@@ -1,59 +1,80 @@
 use anyhow::Context;
 use axum::{Extension, Json};
 use log::info;
+use sea_orm::DatabaseConnection;
 use tauri::{AppHandle, Emitter};
 
 use crate::{
+    database::entity::{
+        model_data::{CreateModelData, ModelCalibration},
+        shared::MinMax,
+        ModelDataModel,
+    },
     http::{
         error::HttpResult,
         models::calibration::{CalibrationProgressRes, CalibrationStepData},
     },
-    state::app_data::{AppDataStore, MinMax, ModelData},
 };
 
+pub async fn handle_calibration_data(
+    Extension(db): Extension<DatabaseConnection>,
+) -> HttpResult<Vec<ModelDataModel>> {
+    Ok(Json(
+        ModelDataModel::all(&db)
+            .await
+            .context("failed to load calibration data")?,
+    ))
+}
+
 pub async fn handle_calibration_progress(
-    Extension(app_data): Extension<AppDataStore>,
+    Extension(db): Extension<DatabaseConnection>,
     Extension(app_handle): Extension<AppHandle>,
     Json(req): Json<CalibrationStepData>,
 ) -> HttpResult<CalibrationProgressRes> {
-    match &req {
-        CalibrationStepData::NotStarted => {}
-        CalibrationStepData::Smallest => {}
-        CalibrationStepData::Largest => {}
-        CalibrationStepData::Complete {
-            model_id,
-            smallest_point,
-            largest_point,
-        } => {
-            info!(
-                "COMPLETED CALIBRATION: {:?} {:?}",
-                smallest_point, largest_point
-            );
+    // Handle completed calibration
+    let model_data = if let CalibrationStepData::Complete {
+        model_id,
+        model_name,
+        smallest_point,
+        largest_point,
+    } = &req
+    {
+        info!(
+            "COMPLETED CALIBRATION: {:?} {:?}",
+            smallest_point, largest_point
+        );
 
-            app_data
-                .write(move |app_data| {
-                    app_data.models.insert(
-                        model_id.to_string(),
-                        ModelData {
-                            x: MinMax {
-                                min: smallest_point.x,
-                                max: largest_point.x,
-                            },
-                            y: MinMax {
-                                min: smallest_point.y,
-                                max: largest_point.y,
-                            },
-                        },
-                    );
-                })
-                .await
-                .context("saving app data")?;
-        }
-    }
+        let model = ModelDataModel::create(
+            &db,
+            CreateModelData {
+                id: model_id.clone(),
+                name: model_name.clone(),
+                calibration: ModelCalibration {
+                    x: MinMax {
+                        min: smallest_point.x,
+                        max: largest_point.x,
+                    },
+                    y: MinMax {
+                        min: smallest_point.y,
+                        max: largest_point.y,
+                    },
+                },
+            },
+        )
+        .await
+        .context("create model data")?;
+
+        app_handle
+            .emit("model_data_updated", &model)
+            .context("failed to inform app of model data update")?;
+        Some(model)
+    } else {
+        None
+    };
 
     app_handle
         .emit("calibration_state", req)
         .context("failed to inform app")?;
 
-    Ok(Json(CalibrationProgressRes {}))
+    Ok(Json(CalibrationProgressRes { model_data }))
 }

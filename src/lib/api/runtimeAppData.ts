@@ -7,6 +7,7 @@ import type {
   AppData,
   ExternalsConfig,
   ModelConfig,
+  ModelData,
   RuntimeAppData,
   SoundsConfig,
   ThrowablesConfig,
@@ -94,23 +95,28 @@ export function createTwitchOAuthURLQuery() {
  * ID from the runtime app data combined with the model
  * data in app data
  *
- * @param appData App data for the model calibration data
+ * @param modelData Collection of model data
  * @param runtimeAppData Runtime app data for the current model
  * @returns Readable for whether the current model is calibrated
  */
 export function createDeriveModelCalibrated(
-  appData: Readable<AppData>,
+  modelData: Readable<ModelData[]>,
   runtimeAppData: Readable<RuntimeAppData>
 ): Readable<boolean> {
-  return derived([appData, runtimeAppData], ([$appData, $runtimeAppData]) => {
-    // No model active
-    if ($runtimeAppData.model_id === null) {
-      return false;
-    }
+  return derived(
+    [modelData, runtimeAppData],
+    ([$modelData, $runtimeAppData]) => {
+      // No model active
+      if ($runtimeAppData.model_id === null) {
+        return false;
+      }
 
-    const modelData = $appData.models[$runtimeAppData.model_id];
-    return modelData !== undefined;
-  });
+      const data = $modelData.find(
+        (data) => data.id === $runtimeAppData.model_id
+      );
+      return data !== undefined;
+    }
+  );
 }
 
 type AppDataMutation = ReturnType<typeof createAppDateMutation>;

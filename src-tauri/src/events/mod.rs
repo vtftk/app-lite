@@ -32,20 +32,20 @@ pub enum EventMessage {
         frequency: u32,
     },
 
-    // Request the latest set of vtube studio hotkeys
+    /// Request the latest set of vtube studio hotkeys
     UpdateHotkeys,
 
-    // Trigger a vtube studio hotkey
+    /// Trigger a vtube studio hotkey
     TriggerHotkey {
         hotkey_id: String,
     },
 
-    // Play a sound
+    /// Play a sound
     PlaySound {
         config: SoundModel,
     },
 
-    // Play a sequence of sounds one after the other
+    /// Play a sequence of sounds one after the other
     PlaySoundSeq {
         configs: Vec<SoundModel>,
     },

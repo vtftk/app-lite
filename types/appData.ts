@@ -13,7 +13,6 @@ export type AppData = {
   model_config: ModelConfig;
   vtube_studio_config: VTubeStudioConfig;
   externals_config: ExternalsConfig;
-  models: Record<ModelId, ModelData>;
 };
 
 export type ExternalsConfig = {
@@ -44,6 +43,12 @@ export const THROW_DIRECTION_VALUES = [
 export type ModelId = string;
 
 export type ModelData = {
+  id: ModelId;
+  name: string;
+  calibration: ModelCalibration;
+};
+
+export type ModelCalibration = {
   x: MinMax;
   y: MinMax;
 };

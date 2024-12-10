@@ -3,7 +3,6 @@
     createDeriveModelCalibrated,
     createOverlayURLQuery,
     createTwitchOAuthURLQuery,
-    getAppData,
     getRuntimeAppData,
   } from "$lib/api/runtimeAppData";
   import { invoke } from "@tauri-apps/api/core";
@@ -12,8 +11,9 @@
   import { createIsAuthenticatedQuery } from "$lib/api/oauth";
   import { toast } from "svelte-sonner";
   import { setClipboard } from "$lib/utils/browser";
+  import { createModelDataQuery } from "$lib/api/calibration";
+  import { derived } from "svelte/store";
 
-  const appData = getAppData();
   const runtimeAppData = getRuntimeAppData();
   const isAuthenticated = createIsAuthenticatedQuery();
 
@@ -23,9 +23,15 @@
   // Query for the twitch OAuth URL
   const twitchOAuthURLQuery = createTwitchOAuthURLQuery();
 
+  const modelDataQuery = createModelDataQuery();
+  const modelData = derived(
+    modelDataQuery,
+    ($modelDataQuery) => $modelDataQuery.data ?? []
+  );
+
   // Model needs to be calibrated if not available here
   const isModelCalibrated = createDeriveModelCalibrated(
-    appData,
+    modelData,
     runtimeAppData
   );
 

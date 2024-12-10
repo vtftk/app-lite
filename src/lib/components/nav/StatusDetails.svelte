@@ -1,22 +1,23 @@
 <script lang="ts">
-  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import { createModelDataQuery } from "$lib/api/calibration";
+  import {
+    createDeriveModelCalibrated,
+    getRuntimeAppData,
+  } from "$lib/api/runtimeAppData";
   import { derived } from "svelte/store";
 
-  const appData = getAppData();
   const runtimeAppData = getRuntimeAppData();
 
-  // Model needs to be calibrated if not available here
-  const isModelCalibrated = derived(
-    [appData, runtimeAppData],
-    ([$appData, $runtimeAppData]) => {
-      // No model active
-      if ($runtimeAppData.model_id === null) {
-        return false;
-      }
+  const modelDataQuery = createModelDataQuery();
+  const modelData = derived(
+    modelDataQuery,
+    ($modelDataQuery) => $modelDataQuery.data ?? []
+  );
 
-      const modelData = $appData.models[$runtimeAppData.model_id];
-      return modelData !== undefined;
-    }
+  // Model needs to be calibrated if not available here
+  const isModelCalibrated = createDeriveModelCalibrated(
+    modelData,
+    runtimeAppData
   );
 </script>
 
@@ -56,10 +57,6 @@
     flex-flow: column;
     gap: 0.5rem;
     margin: 0.5rem 0;
-  }
-
-  .calibrate {
-    padding: 0.75rem 0.5rem;
   }
 
   .status-item {
