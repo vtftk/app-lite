@@ -27,6 +27,7 @@
   import { derived } from "svelte/store";
   import { createItemMutation, updateItemMutation } from "$lib/api/items";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { Tabs } from "bits-ui";
 
   type Props = {
     existing?: ItemWithImpactSounds;
@@ -223,53 +224,68 @@
       : "Create a new item that can be thrown"}
     {actions}
   >
-    <FormSections>
-      <FormSection>
-        <FormTextInput id="name" name="name" label="Name" />
-      </FormSection>
+    <div class="content">
+      <Tabs.Root>
+        <Tabs.List>
+          <Tabs.Trigger value="details">Details</Tabs.Trigger>
+          <Tabs.Trigger value="image">Image</Tabs.Trigger>
+          <Tabs.Trigger value="impact_sounds">Impact Sounds</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="details">
+          <FormSection>
+            <FormTextInput id="name" name="name" label="Name" />
+          </FormSection>
+        </Tabs.Content>
+        <Tabs.Content value="image">
+          <FormSection title="Image" description="Image that gets thrown">
+            <div class="row-group">
+              <ImageUpload
+                id="image"
+                name="image"
+                label="Image"
+                existing={existing?.image?.src}
+                scale={$data.scale}
+              />
 
-      <FormSection title="Image" description="Image that gets thrown">
-        <div class="row-group">
-          <ImageUpload
-            id="image"
-            name="image"
-            label="Image"
-            existing={existing?.image?.src}
-            scale={$data.scale}
-          />
+              <div class="row-group">
+                <FormNumberInput
+                  id="scale"
+                  name="scale"
+                  label="Scale"
+                  min={0.1}
+                  max={10}
+                  step={0.1}
+                />
 
-          <div class="row-group">
-            <FormNumberInput
-              id="scale"
-              name="scale"
-              label="Scale"
-              min={0.1}
-              max={10}
-              step={0.1}
-            />
+                <FormNumberInput
+                  id="weight"
+                  name="weight"
+                  label="Weight"
+                  min={0}
+                  max={10}
+                  step={0.1}
+                />
 
-            <FormNumberInput
-              id="weight"
-              name="weight"
-              label="Weight"
-              min={0}
-              max={10}
-              step={0.1}
-            />
-
-            <FormBoundCheckbox id="pixelate" name="pixelate" label="Pixelate" />
-          </div>
-        </div>
-      </FormSection>
-
-      <FormSection
-        title="Impact Sounds"
-        description="Choose selection of sounds that can play when the item impacts"
-      >
-        <SoundPicker bind:selected={$data.impactSoundIds} />
-        <FormErrorLabel name="impactSoundIds" />
-      </FormSection>
-    </FormSections>
+                <FormBoundCheckbox
+                  id="pixelate"
+                  name="pixelate"
+                  label="Pixelate"
+                />
+              </div>
+            </div>
+          </FormSection>
+        </Tabs.Content>
+        <Tabs.Content value="impact_sounds">
+          <FormSection
+            title="Impact Sounds"
+            description="Choose selection of sounds that can play when the item impacts"
+          >
+            <SoundPicker bind:selected={$data.impactSoundIds} />
+            <FormErrorLabel name="impactSoundIds" />
+          </FormSection>
+        </Tabs.Content>
+      </Tabs.Root>
+    </div>
   </PageLayoutList>
 </form>
 
@@ -282,5 +298,27 @@
     display: flex;
     gap: 0.5rem;
     align-items: center;
+  }
+
+  .content {
+    position: relative;
+    flex: auto;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .content :global([data-tabs-root]) {
+    height: 100%;
+    display: flex;
+    flex-flow: column;
+  }
+
+  .content :global([data-tabs-content]) {
+    position: relative;
+    flex: auto;
+    overflow: auto;
+    flex-flow: column;
+    border: 1px solid #333;
+    padding: 1rem;
   }
 </style>
