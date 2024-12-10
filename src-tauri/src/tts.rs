@@ -92,6 +92,7 @@ fn parse_message(message: &str) -> Vec<(String, String)> {
             continue;
         }
 
+        let mut message = String::new();
         let name: String = if ch == '(' {
             let mut name = String::new();
 
@@ -105,10 +106,9 @@ fn parse_message(message: &str) -> Vec<(String, String)> {
 
             name
         } else {
+            message.push(ch);
             "unknown".to_string()
         };
-
-        let mut message = String::new();
 
         while let Some(ch) = chars.next_if(|ch| *ch != '(') {
             message.push(ch);
@@ -168,7 +168,7 @@ mod test {
 
     #[test]
     fn test_parse_message() {
-        let message = "(Wretch) Test message as Wretch (Whisper) Test message as Whisper";
+        let message = "Test (Wretch) Test message as Wretch (Whisper) Test message as Whisper";
         let pairs = parse_message(message);
         dbg!(pairs);
     }
