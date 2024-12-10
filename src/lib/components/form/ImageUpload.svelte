@@ -7,12 +7,13 @@
     name: string;
     label: string;
     scale?: number;
+    pixelated?: boolean;
 
     // Existing source URL
     existing?: string;
   };
 
-  const { id, name, label, existing, scale }: Props = $props();
+  const { id, name, label, existing, pixelated, scale }: Props = $props();
 
   let inputElm: HTMLInputElement | undefined = $state();
   let currentImage = $state(existing);
@@ -44,6 +45,7 @@
     {#if currentImage !== undefined}
       <img
         class="image-preview"
+        class:image-preview--pixelate={pixelated}
         src={getBackendURL(currentImage)}
         alt="Preview"
         style="transform: translate(-50%, -50%) scale({scale});"
@@ -89,6 +91,10 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+  }
+
+  .image-preview--pixelate {
+    image-rendering: pixelated;
   }
 
   .form-input {

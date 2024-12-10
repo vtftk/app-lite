@@ -227,8 +227,8 @@
     <div class="content">
       <Tabs.Root>
         <Tabs.List>
-          <Tabs.Trigger value="details">Details</Tabs.Trigger>
           <Tabs.Trigger value="image">Image</Tabs.Trigger>
+          <Tabs.Trigger value="details">Details</Tabs.Trigger>
           <Tabs.Trigger value="impact_sounds">Impact Sounds</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="details">
@@ -245,6 +245,7 @@
                 label="Image"
                 existing={existing?.image?.src}
                 scale={$data.scale}
+                pixelated={$data.pixelate}
               />
 
               <div class="row-group">
