@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createGetRedeemsList, refreshRedeemsList } from "$lib/api/twitch";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import { derived } from "svelte/store";
   import SolarRefreshBold from "~icons/solar/refresh-bold";
 
   type Props = {
@@ -17,7 +16,7 @@
 
   const redeemsList = createGetRedeemsList();
 
-  const options = derived(redeemsList, ($redeemsList) =>
+  const items = $derived(
     ($redeemsList.data ?? []).map((item) => ({
       value: item.id,
       label: item.title,
@@ -38,7 +37,7 @@
     {id}
     {name}
     {label}
-    items={$options}
+    {items}
     item={twitchRedeemItem}
     {selected}
     {onChangeSelected}

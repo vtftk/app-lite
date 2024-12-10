@@ -10,14 +10,13 @@
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import { toast } from "svelte-sonner";
-  import { derived as derivedStore } from "svelte/store";
   import {
     bulkAppendItemSoundsMutation,
     bulkDeleteItemsMutation,
     createItemsQuery,
   } from "$lib/api/items";
   import type { Item, Sound } from "$shared/dataV2";
-  import { getErrorMessage, toastErrorMessage } from "$lib/utils/error";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -27,16 +26,11 @@
   const bulkDeleteItems = bulkDeleteItemsMutation();
 
   // Readable access to the items from the underlying items query
-  const items = derivedStore(
-    itemsQuery,
-    ($itemsQuery) => $itemsQuery.data ?? []
-  );
+  const items = $derived($itemsQuery.data ?? []);
 
   // Testing is only available when an overlay and vtube studio is connected
-  const testingEnabled = derivedStore(
-    runtimeAppData,
-    ($runtimeAppData) =>
-      $runtimeAppData.active_overlay_count > 0 &&
+  const testingEnabled = $derived(
+    $runtimeAppData.active_overlay_count > 0 &&
       $runtimeAppData.vtube_studio_connected
   );
 
@@ -51,10 +45,10 @@
   }
 
   function onToggleAllSelected() {
-    if (selected.length > 0 && selected.length === $items.length) {
+    if (selected.length > 0 && selected.length === items.length) {
       selected = [];
     } else {
-      selected = $items.map((item) => item.id);
+      selected = items.map((item) => item.id);
     }
   }
 
@@ -128,7 +122,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={selected.length > 0 && selected.length === $items.length}
+      checked={selected.length > 0 && selected.length === items.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -148,7 +142,7 @@
           type="button"
           class="btn"
           onclick={onTestThrow}
-          disabled={!$testingEnabled}
+          disabled={!testingEnabled}
         >
           <BallIcon /> Test
         </button>
@@ -156,7 +150,7 @@
           type="button"
           class="btn"
           onclick={onTestBarrage}
-          disabled={!$testingEnabled}
+          disabled={!testingEnabled}
         >
           <BallsIcon /> Test Barrage
         </button>
@@ -178,7 +172,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $items as item}
+    {#each items as item}
       <ThrowableItem
         config={item}
         selected={selected.includes(item.id)}

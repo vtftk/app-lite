@@ -26,7 +26,7 @@
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import { derived } from "svelte/store";
   import { createItemMutation, updateItemMutation } from "$lib/api/items";
-  import { getErrorMessage, toastErrorMessage } from "$lib/utils/error";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: ItemWithImpactSounds;

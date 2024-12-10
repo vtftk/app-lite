@@ -5,17 +5,13 @@
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import { derived as derivedStore } from "svelte/store";
   import type { EventId } from "$shared/dataV2";
 
   const eventsQuery = createEventsQuery();
   const bulkDeleteEvent = bulkDeleteEventMutation();
 
   // Readable access to the items from the underlying items query
-  const events = derivedStore(
-    eventsQuery,
-    ($eventsQuery) => $eventsQuery.data ?? []
-  );
+  const events = $derived($eventsQuery.data ?? []);
 
   let selected: string[] = $state([]);
 
@@ -28,10 +24,10 @@
   }
 
   function onToggleAllSelected() {
-    if ($events.length > 0 && selected.length === $events.length) {
+    if (events.length > 0 && selected.length === events.length) {
       selected = [];
     } else {
-      selected = $events.map((item) => item.id);
+      selected = events.map((item) => item.id);
     }
   }
 
@@ -60,7 +56,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={$events.length > 0 && selected.length === $events.length}
+      checked={events.length > 0 && selected.length === events.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -90,7 +86,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $events as event}
+    {#each events as event}
       <EventItem
         config={event}
         selected={selected.includes(event.id)}

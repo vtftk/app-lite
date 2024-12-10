@@ -8,17 +8,13 @@
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import { derived as derivedStore } from "svelte/store";
   import type { ScriptId } from "$shared/dataV2";
 
   const scriptsQuery = createScriptsQuery();
   const bulkDeleteScripts = bulkDeleteScriptMutation();
 
   // Readable access to the items from the underlying items query
-  const scripts = derivedStore(
-    scriptsQuery,
-    ($scriptsQuery) => $scriptsQuery.data ?? []
-  );
+  const scripts = $derived($scriptsQuery.data ?? []);
 
   let selected: ScriptId[] = $state([]);
 
@@ -31,10 +27,10 @@
   }
 
   function onToggleAllSelected() {
-    if ($scripts.length > 0 && selected.length === $scripts.length) {
+    if (scripts.length > 0 && selected.length === scripts.length) {
       selected = [];
     } else {
-      selected = $scripts.map((item) => item.id);
+      selected = scripts.map((item) => item.id);
     }
   }
 
@@ -65,7 +61,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={$scripts.length > 0 && selected.length === $scripts.length}
+      checked={scripts.length > 0 && selected.length === scripts.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -95,7 +91,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $scripts as item}
+    {#each scripts as item}
       <ScriptItem
         config={item}
         selected={selected.includes(item.id)}

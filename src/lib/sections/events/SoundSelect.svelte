@@ -2,7 +2,6 @@
   import { createSoundsQuery } from "$lib/api/sounds";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import type { SoundId } from "$shared/dataV2";
-  import { derived } from "svelte/store";
 
   type Props = {
     id: string;
@@ -19,14 +18,14 @@
 
   const soundsQuery = createSoundsQuery();
 
-  const options = derived(soundsQuery, ($sounds) =>
-    ($sounds.data ?? []).map((sound) => ({
+  const items = $derived(
+    ($soundsQuery.data ?? []).map((sound) => ({
       value: sound.id,
       label: sound.name,
     }))
   );
 
-  type Option = (typeof $options)[0];
+  type Option = (typeof items)[0];
 </script>
 
 {#if $soundsQuery.isLoading}
@@ -44,7 +43,7 @@
   {name}
   {label}
   {description}
-  items={$options}
+  {items}
   {item}
   {selected}
   {onChangeSelected}

@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import { getAppData, getRuntimeAppData } from "$lib/api/runtimeAppData";
-  import { derived } from "svelte/store";
+  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import SolarRefreshBold from "~icons/solar/refresh-bold";
   type Props = {
@@ -26,7 +25,7 @@
     updateHotkeys();
   });
 
-  const options = derived([runtimeAppData], ([$runtimeAppData]) =>
+  const items = $derived(
     $runtimeAppData.hotkeys.map((item) => ({
       value: item.hotkey_id,
       label: item.name,
@@ -34,7 +33,7 @@
   );
 </script>
 
-{#snippet hotkeyItem(item: (typeof $options)[0])}
+{#snippet item(item: (typeof items)[0])}
   <div class="text-stack">
     <p class="text-stack--top">{item.label}</p>
   </div>
@@ -45,8 +44,8 @@
     {id}
     {name}
     {label}
-    items={$options}
-    item={hotkeyItem}
+    {items}
+    {item}
     {selected}
     {onChangeSelected}
   />

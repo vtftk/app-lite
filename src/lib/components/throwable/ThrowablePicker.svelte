@@ -3,7 +3,6 @@
   import getBackendURL from "$lib/utils/url";
   import type { Item } from "$shared/dataV2";
   import { Checkbox, Dialog, Separator } from "bits-ui";
-  import { derived as derivedStore } from "svelte/store";
   import { fade, scale } from "svelte/transition";
 
   type Props = {
@@ -15,15 +14,9 @@
 
   const itemsQuery = createItemsQuery();
 
-  const items = derivedStore(
-    itemsQuery,
-    ($itemsQuery) => $itemsQuery.data ?? []
-  );
-
+  const items = $derived($itemsQuery.data ?? []);
   const selectedOptions = $derived(
-    derivedStore(items, ($items) =>
-      $items.filter((item) => selected.includes(item.id))
-    )
+    items.filter((item) => selected.includes(item.id))
   );
 
   const onSelectItem = (item: Item) => {
@@ -35,10 +28,10 @@
   };
 
   const onToggleAll = () => {
-    if ($items.length > 0 && selected.length === $items.length) {
+    if (items.length > 0 && selected.length === items.length) {
       onChangeSelect([]);
     } else {
-      onChangeSelect($items.map((item) => item.id));
+      onChangeSelect(items.map((item) => item.id));
     }
   };
 </script>
@@ -49,8 +42,8 @@
 
 <Dialog.Root>
   <Dialog.Trigger
-    >{$selectedOptions.length > 0
-      ? `${$selectedOptions.length} Items selected`
+    >{selectedOptions.length > 0
+      ? `${selectedOptions.length} Items selected`
       : "Select Items"}</Dialog.Trigger
   >
   <Dialog.Portal>
@@ -72,8 +65,7 @@
                 <Checkbox.Root
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={$items.length > 0 &&
-                    selected.length === $items.length}
+                  checked={items.length > 0 && selected.length === items.length}
                   onCheckedChange={onToggleAll}
                 >
                   <Checkbox.Indicator let:isChecked>
@@ -88,7 +80,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each $items as item (item.id)}
+            {#each items as item (item.id)}
               <tr class="item-row">
                 <td class="item-column item-column--checkbox">
                   <Checkbox.Root
@@ -135,7 +127,7 @@
   <p class="selected__title">Selected Items</p>
 
   <div class="grid">
-    {#each $selectedOptions as option}
+    {#each selectedOptions as option}
       <li class="grid-item">
         <div class="grid-item__image throwable__image-wrapper">
           <img

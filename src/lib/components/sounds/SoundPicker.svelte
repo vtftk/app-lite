@@ -4,7 +4,6 @@
   import SoundPreview from "./SoundPreview.svelte";
   import getBackendURL from "$lib/utils/url";
   import type { Sound } from "$shared/dataV2";
-  import { derived as derivedStore } from "svelte/store";
   import { createSoundsQuery } from "$lib/api/sounds";
 
   type Props = {
@@ -15,15 +14,9 @@
 
   const soundsQuery = createSoundsQuery();
 
-  const sounds = derivedStore(
-    soundsQuery,
-    ($soundsQuery) => $soundsQuery.data ?? []
-  );
-
+  const sounds = $derived($soundsQuery.data ?? []);
   const selectedOptions = $derived(
-    derivedStore(sounds, ($sounds) =>
-      $sounds.filter((sound) => selected.includes(sound.id))
-    )
+    sounds.filter((sound) => selected.includes(sound.id))
   );
 
   const onSelectSound = (sound: Sound) => {
@@ -35,10 +28,10 @@
   };
 
   const onToggleAll = () => {
-    if ($sounds.length > 0 && selected.length === $sounds.length) {
+    if (sounds.length > 0 && selected.length === sounds.length) {
       selected = [];
     } else {
-      selected = $sounds.map((sound) => sound.id);
+      selected = sounds.map((sound) => sound.id);
     }
   };
 </script>
@@ -65,8 +58,8 @@
                 <Checkbox.Root
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={$sounds.length > 0 &&
-                    selected.length === $sounds.length}
+                  checked={sounds.length > 0 &&
+                    selected.length === sounds.length}
                   onCheckedChange={onToggleAll}
                 >
                   <Checkbox.Indicator let:isChecked>
@@ -81,7 +74,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each $sounds as sound (sound.id)}
+            {#each sounds as sound (sound.id)}
               <tr class="sound-row">
                 <td class="sound-column sound-column--checkbox">
                   <Checkbox.Root
@@ -122,7 +115,7 @@
   <p class="selected__title">Selected Sounds</p>
 
   <div class="grid">
-    {#each $selectedOptions as option}
+    {#each selectedOptions as option}
       <li class="grid-item">
         <p class="grid-item__name">{option.name}</p>
       </li>

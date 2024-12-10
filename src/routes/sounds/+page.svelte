@@ -6,7 +6,6 @@
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import { derived as derivedStore } from "svelte/store";
   import type { Sound } from "$shared/dataV2";
 
   const soundsQuery = createSoundsQuery();
@@ -14,10 +13,7 @@
   const bulkDeleteSounds = bulkDeleteSoundsMutation();
 
   // Readable access to the items from the underlying items query
-  const sounds = derivedStore(
-    soundsQuery,
-    ($itemsQuery) => $itemsQuery.data ?? []
-  );
+  const sounds = $derived($soundsQuery.data ?? []);
 
   let selected: string[] = $state([]);
 
@@ -30,10 +26,10 @@
   }
 
   function onToggleAllSelected() {
-    if (selected.length > 0 && selected.length === $sounds.length) {
+    if (selected.length > 0 && selected.length === sounds.length) {
       selected = [];
     } else {
-      selected = $sounds.map((item) => item.id);
+      selected = sounds.map((item) => item.id);
     }
   }
 
@@ -64,7 +60,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={selected.length > 0 && selected.length === $sounds.length}
+      checked={selected.length > 0 && selected.length === sounds.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -94,7 +90,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $sounds as sound}
+    {#each sounds as sound}
       <SoundItem
         config={sound}
         selected={selected.includes(sound.id)}

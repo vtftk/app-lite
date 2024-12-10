@@ -8,17 +8,13 @@
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import { derived as derivedStore } from "svelte/store";
   import type { CommandId } from "$shared/dataV2";
 
   const commandsQuery = createCommandsQuery();
   const bulkDeleteCommand = bulkDeleteCommandMutation();
 
   // Readable access to the items from the underlying items query
-  const commands = derivedStore(
-    commandsQuery,
-    ($scriptsQuery) => $scriptsQuery.data ?? []
-  );
+  const commands = $derived($commandsQuery.data ?? []);
 
   let selected: string[] = $state([]);
 
@@ -31,10 +27,10 @@
   }
 
   function onToggleAllSelected() {
-    if ($commands.length > 0 && selected.length === $commands.length) {
+    if (commands.length > 0 && selected.length === commands.length) {
       selected = [];
     } else {
-      selected = $commands.map((item) => item.id);
+      selected = commands.map((item) => item.id);
     }
   }
 
@@ -64,7 +60,7 @@
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
-      checked={$commands.length > 0 && selected.length === $commands.length}
+      checked={commands.length > 0 && selected.length === commands.length}
       onCheckedChange={onToggleAllSelected}
     >
       <Checkbox.Indicator let:isChecked>
@@ -94,7 +90,7 @@
   {beforeContent}
 >
   <div class="grid">
-    {#each $commands as item}
+    {#each commands as item}
       <CommandItem
         config={item}
         selected={selected.includes(item.id)}
