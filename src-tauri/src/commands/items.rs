@@ -62,10 +62,15 @@ pub async fn get_item_sounds(
 pub async fn create_item(
     create: CreateItem,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<ItemModel> {
+) -> CmdResult<ItemWithImpactSounds> {
     let db = db.inner();
     let item = ItemModel::create(db, create).await?;
-    Ok(item)
+    let impact_sounds = item.get_impact_sounds(db).await?;
+
+    Ok(ItemWithImpactSounds {
+        item,
+        impact_sounds,
+    })
 }
 
 /// Update an existing item
@@ -74,13 +79,18 @@ pub async fn update_item(
     item_id: Uuid,
     update: UpdateItem,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<ItemModel> {
+) -> CmdResult<ItemWithImpactSounds> {
     let db = db.inner();
     let item = ItemModel::get_by_id(db, item_id)
         .await?
         .context("item not found")?;
     let item = item.update(db, update).await?;
-    Ok(item)
+    let impact_sounds = item.get_impact_sounds(db).await?;
+
+    Ok(ItemWithImpactSounds {
+        item,
+        impact_sounds,
+    })
 }
 
 /// Add impact sounds to an item

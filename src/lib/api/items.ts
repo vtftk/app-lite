@@ -41,9 +41,9 @@ export function createItemQueryDerived(id: Readable<ItemId>) {
 }
 
 export function createItemMutation() {
-  return createMutation<Item, Error, CreateItem>({
+  return createMutation<ItemWithImpactSounds, Error, CreateItem>({
     mutationFn: (createItem) =>
-      invoke<Item>("create_item", { create: createItem }),
+      invoke<ItemWithImpactSounds>("create_item", { create: createItem }),
 
     onSuccess: (data) => {
       // Invalidate the specific item query
@@ -58,11 +58,11 @@ export function createItemMutation() {
 }
 
 export function bulkCreateItemMutation() {
-  return createMutation<Item[], Error, CreateItem[]>({
+  return createMutation<ItemWithImpactSounds[], Error, CreateItem[]>({
     mutationFn: (createItems) =>
       Promise.all(
         createItems.map((createItem) =>
-          invoke<Item>("create_item", { create: createItem })
+          invoke<ItemWithImpactSounds>("create_item", { create: createItem })
         )
       ),
 
@@ -89,9 +89,9 @@ export function getItemById(itemId: ItemId) {
 }
 
 export function updateItemMutation() {
-  return createMutation<Item, Error, UpdateItem>({
+  return createMutation<ItemWithImpactSounds, Error, UpdateItem>({
     mutationFn: (updateItem) =>
-      invoke<Item>("update_item", {
+      invoke<ItemWithImpactSounds>("update_item", {
         itemId: updateItem.itemId,
         update: updateItem.update,
       }),
