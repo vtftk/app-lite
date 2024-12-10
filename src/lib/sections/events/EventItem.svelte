@@ -42,7 +42,7 @@
     </Checkbox.Indicator>
   </Checkbox.Root>
 
-  <p class="event__name">{config.name}</p>
+  <a href="/events/{config.id}" class="event__name">{config.name}</a>
 
   <div class="event__actions">
     <a class="throw-button" href="/events/{config.id}">
@@ -59,7 +59,8 @@
 
     display: flex;
     justify-content: space-between;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 1rem;
 
     padding: 0.5rem;
   }
