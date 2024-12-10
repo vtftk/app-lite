@@ -1,12 +1,16 @@
+use std::{future::poll_fn, task::Poll};
+
 use anyhow::Context;
 use deno_core::{
     serde_v8::{from_v8, to_v8},
     v8::{self, Global, Local},
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
-use log::debug;
 use serde::Serialize;
-use tokio::sync::{mpsc, oneshot};
+use tokio::{
+    sync::{mpsc, oneshot},
+    task::{self, LocalSet},
+};
 use twitch_api::types::{DisplayName, UserId, UserName};
 
 use crate::{
@@ -52,6 +56,7 @@ deno_core::extension!(
     docs = "Extension providing APIs to the JS runtime"
 );
 
+#[derive(Debug)]
 pub enum ScriptExecutorMessage {
     /// Tell the executor to run the event callbacks in the provided code
     /// on the runtime
@@ -141,6 +146,26 @@ impl ScriptExecutorHandle {
     }
 }
 
+fn spawn_script_promise(
+    js_runtime: &mut JsRuntime,
+    global_promise: anyhow::Result<v8::Global<v8::Value>>,
+    tx: oneshot::Sender<anyhow::Result<()>>,
+) {
+    let global_promise = match global_promise {
+        Ok(value) => value,
+        Err(err) => {
+            _ = tx.send(Err(err));
+            return;
+        }
+    };
+
+    let resolve = js_runtime.resolve(global_promise);
+    task::spawn_local(async move {
+        let result = resolve.await;
+        _ = tx.send(result.map(|_| ()).context("failed to resolve value"));
+    });
+}
+
 /// Creates a dedicated thread for receiving script execution requests. The
 /// thread will process the script execution requests providing the responses
 ///
@@ -156,40 +181,53 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
             .build()
             .unwrap();
 
-        runtime.block_on(async {
-            // Create runtime
-            let mut runtime = JsRuntime::new(RuntimeOptions {
-                startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
-                extensions: vec![api_extension::init_ops()],
+        // Create runtime
+        let mut js_runtime = JsRuntime::new(RuntimeOptions {
+            startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
+            extensions: vec![api_extension::init_ops()],
 
-                ..Default::default()
-            });
+            ..Default::default()
+        });
 
-            while let Some(msg) = rx.recv().await {
-                match msg {
-                    ScriptExecutorMessage::EventScript {
-                        script,
-                        event,
-                        data,
-                        tx,
-                    } => {
-                        debug!("started script execution");
-                        let result = execute_script(&mut runtime, script, event, data).await;
-                        _ = tx.send(result);
+        let local_set = LocalSet::new();
 
-                        debug!("completed script execution");
+        local_set.block_on(
+            &runtime,
+            poll_fn(|cx| {
+                // Poll incoming script execute messages
+                while let Poll::Ready(msg) = rx.poll_recv(cx) {
+                    let msg = match msg {
+                        Some(msg) => msg,
+                        None => return Poll::Ready(()),
+                    };
+
+                    match msg {
+                        ScriptExecutorMessage::EventScript {
+                            script,
+                            event,
+                            data,
+                            tx,
+                        } => {
+                            let result = execute_script(&mut js_runtime, script, event, data);
+                            spawn_script_promise(&mut js_runtime, result, tx)
+                        }
+                        ScriptExecutorMessage::CommandScript { script, ctx, tx } => {
+                            let result = execute_command(&mut js_runtime, script, ctx);
+                            spawn_script_promise(&mut js_runtime, result, tx)
+                        }
+                        ScriptExecutorMessage::EventsList { script, tx } => {
+                            let result = get_script_events(&mut js_runtime, script);
+                            _ = tx.send(result);
+                        }
                     }
-                    ScriptExecutorMessage::EventsList { script, tx } => {
-                        let result = get_script_events(&mut runtime, script).await;
-                        _ = tx.send(result);
-                    }
-                    ScriptExecutorMessage::CommandScript { script, ctx, tx } => {
-                        let result = execute_command(&mut runtime, script, ctx).await;
-                        _ = tx.send(result);
-                    }
+
+                    // Poll the event loop
+                    let _ = js_runtime.poll_event_loop(cx, PollEventLoopOptions::default());
                 }
-            }
-        })
+
+                Poll::Pending
+            }),
+        );
     });
 
     ScriptExecutorHandle { tx }
@@ -217,12 +255,14 @@ pub struct CommandContextUser {
     pub display_name: DisplayName,
 }
 
-/// Executes the provided command
-async fn execute_command(
+/// Executes the provided command'
+///
+/// Returns a promise value that resolves when the command is complete
+fn execute_command(
     runtime: &mut JsRuntime,
     script: String,
     ctx: CommandContext,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<v8::Global<v8::Value>> {
     let script = JS_COMMAND_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script (Wrapper returns a function)
@@ -248,23 +288,18 @@ async fn execute_command(
         Global::new(scope, result)
     };
 
-    let resolve = runtime.resolve(global_promise);
-
-    // Run event loop to completion
-    let _result = runtime
-        .with_event_loop_promise(resolve, PollEventLoopOptions::default())
-        .await?;
-
-    Ok(())
+    Ok(global_promise)
 }
 
 /// Executes the provided script using the provided event
-async fn execute_script(
+///
+/// Returns a promise value that resolves when the script is complete
+fn execute_script(
     runtime: &mut JsRuntime,
     script: String,
     event: ScriptEvent,
     data: EventData,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<v8::Global<v8::Value>> {
     let script = JS_CALL_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script
@@ -291,22 +326,12 @@ async fn execute_script(
         Global::new(scope, result)
     };
 
-    let resolve = runtime.resolve(global_promise);
-
-    // Run event loop to completion
-    let _result = runtime
-        .with_event_loop_promise(resolve, PollEventLoopOptions::default())
-        .await?;
-
-    Ok(())
+    Ok(global_promise)
 }
 
 /// Executes a script, uses the wrapper code to determine which events the user
 /// has subscribed to
-async fn get_script_events(
-    runtime: &mut JsRuntime,
-    script: String,
-) -> anyhow::Result<Vec<ScriptEvent>> {
+fn get_script_events(runtime: &mut JsRuntime, script: String) -> anyhow::Result<Vec<ScriptEvent>> {
     let script = JS_EVENTS_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script
@@ -321,7 +346,7 @@ async fn get_script_events(
     let events = names
         .into_iter()
         // Parse event names
-        .filter_map(|name| serde_json::from_str::<ScriptEvent>(&name).ok())
+        .filter_map(|name| serde_json::from_str::<ScriptEvent>(&format!("\"{name}\"")).ok())
         .collect();
 
     Ok(events)

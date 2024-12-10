@@ -144,11 +144,40 @@ pub async fn match_redeem_event(
     db: &DatabaseConnection,
     event: TwitchEventRedeem,
 ) -> anyhow::Result<EventMatchingData> {
-    // Loading matching event types
-    let events = EventModel::get_by_trigger_type(db, EventTriggerType::Redeem).await?;
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::Redeem),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::Redeem)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
 
     // Get requested reward ID
     let event_reward_id = event.reward.id.to_string();
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::Redeem,
+        })
+        .collect();
 
     // Filter events for the matching reward ID
     let events = events
@@ -177,7 +206,7 @@ pub async fn match_redeem_event(
 
     Ok(EventMatchingData {
         events,
-        scripts: Default::default(),
+        scripts,
         commands: Default::default(),
         event_data,
     })
@@ -189,8 +218,37 @@ pub async fn match_cheer_bits_event(
 ) -> anyhow::Result<EventMatchingData> {
     let bits = event.bits;
 
-    // Loading matching event types
-    let events = EventModel::get_by_trigger_type(db, EventTriggerType::Bits).await?;
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::Bits),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::CheerBits)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::CheerBits,
+        })
+        .collect();
 
     // Filter events for the matching reward ID
     let events = events
@@ -221,7 +279,7 @@ pub async fn match_cheer_bits_event(
 
     Ok(EventMatchingData {
         events,
-        scripts: Default::default(),
+        scripts,
         commands: Default::default(),
         event_data,
     })
@@ -231,8 +289,37 @@ pub async fn match_follow_event(
     db: &DatabaseConnection,
     event: TwitchEventFollow,
 ) -> anyhow::Result<EventMatchingData> {
-    // Loading matching event types
-    let events = EventModel::get_by_trigger_type(db, EventTriggerType::Follow).await?;
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::Follow),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::Follow)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::Follow,
+        })
+        .collect();
 
     let event_data = EventData {
         user: Some(TwitchEventUser {
@@ -245,7 +332,7 @@ pub async fn match_follow_event(
 
     Ok(EventMatchingData {
         events,
-        scripts: Default::default(),
+        scripts,
         commands: Default::default(),
         event_data,
     })
@@ -255,8 +342,37 @@ pub async fn match_subscription_event(
     db: &DatabaseConnection,
     event: TwitchEventSub,
 ) -> anyhow::Result<EventMatchingData> {
-    // Loading matching event types
-    let events = EventModel::get_by_trigger_type(db, EventTriggerType::Subscription).await?;
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::Subscription),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::Subscription)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::Subscription,
+        })
+        .collect();
 
     let event_data = EventData {
         input_data: EventInputData::Subscription {
@@ -272,7 +388,7 @@ pub async fn match_subscription_event(
 
     Ok(EventMatchingData {
         events,
-        scripts: Default::default(),
+        scripts,
         commands: Default::default(),
         event_data,
     })
@@ -282,8 +398,37 @@ pub async fn match_gifted_subscription_event(
     db: &DatabaseConnection,
     event: TwitchEventGiftSub,
 ) -> anyhow::Result<EventMatchingData> {
-    // Loading matching event types
-    let events = EventModel::get_by_trigger_type(db, EventTriggerType::Subscription).await?;
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::GiftedSubscription),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::GiftSubscription)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::GiftSubscription,
+        })
+        .collect();
 
     // Create user (Bits can be anonymous)
     let user = match (event.user_id, event.user_name, event.user_display_name) {
@@ -307,7 +452,7 @@ pub async fn match_gifted_subscription_event(
 
     Ok(EventMatchingData {
         events,
-        scripts: Default::default(),
+        scripts,
         commands: Default::default(),
         event_data,
     })
@@ -317,8 +462,37 @@ pub async fn match_re_subscription_event(
     db: &DatabaseConnection,
     event: TwitchEventReSub,
 ) -> anyhow::Result<EventMatchingData> {
-    // Loading matching event types
-    let events = EventModel::get_by_trigger_type(db, EventTriggerType::Subscription).await?;
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::Subscription),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::ReSubscription)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::ReSubscription,
+        })
+        .collect();
 
     let event_data = EventData {
         input_data: EventInputData::ReSubscription {
@@ -337,7 +511,7 @@ pub async fn match_re_subscription_event(
 
     Ok(EventMatchingData {
         events,
-        scripts: Default::default(),
+        scripts,
         commands: Default::default(),
         event_data,
     })
