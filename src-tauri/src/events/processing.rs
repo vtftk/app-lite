@@ -169,7 +169,7 @@ pub async fn execute_command(
     };
 
     // Ensure required role is present
-    if !assert_required_role(
+    if !has_required_role(
         twitch_manager,
         event_data.user.as_ref().map(|user| user.id.clone()),
         &command.command.require_role,
@@ -267,7 +267,7 @@ pub async fn execute_event(
     event_data: EventData,
 ) -> anyhow::Result<()> {
     // Ensure required role is present
-    if !assert_required_role(
+    if !has_required_role(
         twitch_manager,
         event_data.user.as_ref().map(|value| value.id.clone()),
         &event.require_role,
@@ -324,62 +324,50 @@ pub async fn execute_event(
     Ok(())
 }
 
-pub async fn assert_required_role(
+pub async fn has_required_role(
     twitch_manager: &TwitchManager,
     user_id: Option<UserId>,
     required_role: &MinimumRequireRole,
 ) -> bool {
-    match required_role {
-        MinimumRequireRole::None => true,
-        MinimumRequireRole::Vip => {
-            let user = match user_id {
-                Some(user) => user,
-                None => return false,
-            };
+    // No role required (Initial level)
+    if let MinimumRequireRole::None = required_role {
+        return true;
+    }
 
-            // User is the broadcaster
-            if twitch_manager
-                .get_user_token()
-                .await
-                .is_some_and(|value| value.user_id == user)
-            {
-                return true;
-            }
+    // User must be authenticated at this point
+    let user = match user_id {
+        Some(user) => user,
+        None => return false,
+    };
 
-            let (vips, mods) = match try_join!(
-                twitch_manager.get_vip_list(),
-                twitch_manager.get_moderator_list()
-            ) {
-                Ok(value) => value,
-                Err(_) => return false,
-            };
+    // User is the broadcaster
+    if twitch_manager
+        .get_user_token()
+        .await
+        .is_some_and(|value| value.user_id == user)
+    {
+        return true;
+    }
 
+    // Check VIP and moderator lists
+    if let MinimumRequireRole::Vip = required_role {
+        return try_join!(
+            twitch_manager.get_vip_list(),
+            twitch_manager.get_moderator_list()
+        )
+        .is_ok_and(|(vips, mods)| {
             vips.iter().any(|vip| vip.user_id == user)
                 || mods.iter().any(|mods| mods.user_id == user)
-        }
-        MinimumRequireRole::Mod => {
-            let user = match user_id {
-                Some(user) => user,
-                None => return false,
-            };
-
-            // User is the broadcaster
-            if twitch_manager
-                .get_user_token()
-                .await
-                .is_some_and(|value| value.user_id == user)
-            {
-                return true;
-            }
-
-            let mods = match twitch_manager.get_moderator_list().await {
-                Ok(value) => value,
-                Err(_) => {
-                    return false;
-                }
-            };
-
-            mods.iter().any(|mods| mods.user_id == user)
-        }
+        });
     }
+
+    // Check just moderator list
+    if let MinimumRequireRole::Mod = required_role {
+        return twitch_manager
+            .get_moderator_list()
+            .await
+            .is_ok_and(|mods| mods.iter().any(|mods| mods.user_id == user));
+    }
+
+    false
 }

@@ -13,6 +13,8 @@ pub enum MinimumRequireRole {
     Mod,
     #[sea_orm(string_value = "Vip")]
     Vip,
+    #[sea_orm(string_value = "Broadcaster")]
+    Broadcaster,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
