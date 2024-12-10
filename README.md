@@ -58,3 +58,14 @@ Integrated with [TTS Monster](https://tts.monster/) to use AI generated text to 
 Below is an example script allowing the user to redeem a "TTS" redeem and input a message for the AI TTS to say:
 
 ![TTS Scripting](./docs/tts-scripting.png)
+
+## Low resource usage
+
+Built on Rust for the core logic and storing user data in an SQLite database the app maintains a low memory footprint keeping resource usage as low as possible.
+
+The web technologies used for the UI can take up a bit of resource which is unavoidable. However, to combat this you can close the **VTFTK** window and it will continue to run in the background as just the server, this removes any usage that the Webview for the app
+would normally have.
+
+You can then re-open the webview or completely quit **VTFTK** by clicking on the tray menu icon:
+
+![Tray Icon](./docs/tray-icon.png)
