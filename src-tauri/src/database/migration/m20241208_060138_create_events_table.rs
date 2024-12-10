@@ -33,7 +33,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum Events {
+pub enum Events {
     Table,
     Id,
     Enabled,

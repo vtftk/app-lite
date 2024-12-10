@@ -32,7 +32,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum Commands {
+pub enum Commands {
     Table,
     Id,
     Enabled,

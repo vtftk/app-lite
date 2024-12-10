@@ -1,13 +1,18 @@
 use std::{sync::Arc, time::Duration};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
+use chrono::TimeDelta;
 use futures::{future::BoxFuture, stream::FuturesUnordered};
 use log::{debug, error};
-use sea_orm::DatabaseConnection;
+use sea_orm::{prelude::DateTimeUtc, sqlx::types::chrono::Utc, DatabaseConnection};
 use tokio::sync::broadcast;
 
 use crate::{
-    database::entity::{commands::CommandOutcome, EventModel},
+    database::entity::{
+        commands::CommandOutcome,
+        event_executions::{CreateEventExecution, EventExecutionModel},
+        EventModel,
+    },
     script::runtime::{CommandContext, CommandContextUser, ScriptExecutorHandle},
     twitch::manager::{TwitchEvent, TwitchManager},
 };
@@ -139,7 +144,6 @@ async fn process_twitch_event(
                     &db,
                     &twitch_manager,
                     &event_sender,
-                    &events_state,
                     event,
                     match_data.event_data.clone(),
                 ))
@@ -245,7 +249,6 @@ pub async fn execute_event(
     db: &DatabaseConnection,
     twitch_manager: &Arc<TwitchManager>,
     event_sender: &broadcast::Sender<EventMessage>,
-    events_state: &EventsStateShared,
     event: EventModel,
     event_data: EventData,
 ) -> anyhow::Result<()> {
@@ -261,14 +264,29 @@ pub async fn execute_event(
         return Ok(());
     }
 
-    // Ensure cooldown is not active
-    if !events_state
-        .is_cooldown_elapsed(&event.id, Duration::from_millis(event.cooldown as u64))
+    let current_time = Utc::now();
+
+    let last_execution = event
+        .last_execution(db)
         .await
-    {
-        debug!("skipping event: cooldown");
-        return Ok(());
+        .context("failed to request last execution for event")?;
+
+    // Ensure cooldown is not active
+    if let Some(last_execution) = last_execution {
+        let cooldown_end_time = last_execution
+            .created_at
+            .checked_add_signed(TimeDelta::milliseconds(event.cooldown as i64))
+            .context("cooldown finishes too far in the future to compute")?;
+
+        if current_time < cooldown_end_time {
+            debug!("skipping event: cooldown");
+            return Ok(());
+        }
     }
+
+    // Create metadata for storage
+    let metadata =
+        serde_json::to_value(&event_data).context("failed to serialize event metadata")?;
 
     // Wait for outcome delay
     tokio::time::sleep(Duration::from_millis(event.outcome_delay as u64)).await;
@@ -277,8 +295,17 @@ pub async fn execute_event(
     let msg = produce_outcome_message(db, event_data, event.outcome).await?;
     _ = event_sender.send(msg);
 
-    // Update last execution time
-    events_state.set_last_executed(&event.id).await;
+    // Store event execution
+    EventExecutionModel::create(
+        db,
+        CreateEventExecution {
+            event_id: event.id,
+            created_at: current_time,
+            metadata,
+        },
+    )
+    .await
+    .context("failed to store last event execution")?;
 
     Ok(())
 }

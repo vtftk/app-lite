@@ -1,8 +1,13 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel};
+use sea_orm::{
+    entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel, QueryOrder,
+};
 use serde::{Deserialize, Serialize};
 
-use super::shared::{DbResult, MinimumRequireRole};
+use super::{
+    event_executions::{EventExecutionColumn, EventExecutionEntity, EventExecutionModel},
+    shared::{DbResult, MinimumRequireRole},
+};
 
 // Type alias helpers for the database entity types
 pub type EventModel = Model;
@@ -185,7 +190,17 @@ pub enum EventOutcome {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    /// Event can have many executions
+    #[sea_orm(has_many = "super::event_executions::Entity")]
+    Executions,
+}
+
+impl Related<super::event_executions::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Executions.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}
 
@@ -239,6 +254,17 @@ impl Model {
             .context("model was not inserted")?;
 
         Ok(model)
+    }
+
+    /// Find the most recent execution of this event
+    pub async fn last_execution<C>(&self, db: &C) -> DbResult<Option<EventExecutionModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        self.find_related(super::event_executions::Entity)
+            .order_by_desc(EventExecutionColumn::CreatedAt)
+            .one(db)
+            .await
     }
 
     /// Find a specific event by ID

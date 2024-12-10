@@ -27,7 +27,7 @@ impl MigrationTrait for Migration {
                             .col(ScriptEvents::ScriptId)
                             .col(ScriptEvents::Event),
                     )
-                    // Connect to items table
+                    // Connect to scripts table
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_script_events_script_id")
