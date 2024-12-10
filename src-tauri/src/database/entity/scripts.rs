@@ -27,9 +27,29 @@ pub struct Model {
     pub events: ScriptEvents,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[serde(rename_all = "camelCase")]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum ScriptEvent {
+    #[sea_orm(string_value = "redeem")]
+    Redeem,
+    #[sea_orm(string_value = "cheerBits")]
+    CheerBits,
+    #[sea_orm(string_value = "follow")]
+    Follow,
+    #[sea_orm(string_value = "subscription")]
+    Subscription,
+    #[sea_orm(string_value = "giftSubscription")]
+    GiftSubscription,
+    #[sea_orm(string_value = "reSubscription")]
+    ReSubscription,
+    #[sea_orm(string_value = "chat")]
+    Chat,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
 #[serde(transparent)]
-pub struct ScriptEvents(pub Vec<String>);
+pub struct ScriptEvents(pub Vec<ScriptEvent>);
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
@@ -87,7 +107,7 @@ impl Model {
     }
 
     /// Find a script by the event its subscribed to filters to only enabled
-    pub async fn get_by_event<C>(db: &C, name: &str) -> DbResult<Vec<Self>>
+    pub async fn get_by_event<C>(db: &C, script_event: ScriptEvent) -> DbResult<Vec<Self>>
     where
         C: ConnectionTrait + Send + 'static,
     {
@@ -96,7 +116,9 @@ impl Model {
 
         Ok(scripts
             .into_iter()
-            .filter(|script| script.enabled && script.events.0.iter().any(|event| name.eq(event)))
+            .filter(|script| {
+                script.enabled && script.events.0.iter().any(|event| script_event.eq(event))
+            })
             .collect())
     }
 

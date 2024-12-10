@@ -1,7 +1,9 @@
 use tokio::sync::broadcast;
 
 use crate::{
-    database::entity::SoundModel, events::EventMessage, script::runtime::ScriptExecutorHandle,
+    database::entity::{scripts::ScriptEvent, SoundModel},
+    events::EventMessage,
+    script::runtime::ScriptExecutorHandle,
     state::app_data::ThrowableConfig,
 };
 
@@ -63,7 +65,7 @@ pub fn test_sound(
 pub async fn test_get_script_events(
     script: String,
     script_handle: tauri::State<'_, ScriptExecutorHandle>,
-) -> CmdResult<Vec<String>> {
+) -> CmdResult<Vec<ScriptEvent>> {
     let events = script_handle.get_events(script).await?;
     Ok(events)
 }

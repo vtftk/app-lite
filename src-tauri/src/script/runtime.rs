@@ -9,7 +9,10 @@ use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
 use twitch_api::types::{DisplayName, UserId, UserName};
 
-use crate::events::matching::{EventData, EventInputData, ScriptEvent};
+use crate::{
+    database::entity::scripts::ScriptEvent,
+    events::matching::{EventData, EventInputData},
+};
 
 use super::ops::{
     http::op_http_get,
@@ -80,7 +83,7 @@ pub enum ScriptExecutorMessage {
         /// The script code to run
         script: String,
         /// Channel to send back the result
-        tx: oneshot::Sender<anyhow::Result<Vec<String>>>,
+        tx: oneshot::Sender<anyhow::Result<Vec<ScriptEvent>>>,
     },
 }
 
@@ -126,7 +129,7 @@ impl ScriptExecutorHandle {
         rx.await.context("executor closed without response")?
     }
 
-    pub async fn get_events(&self, script: String) -> anyhow::Result<Vec<String>> {
+    pub async fn get_events(&self, script: String) -> anyhow::Result<Vec<ScriptEvent>> {
         let (tx, rx) = oneshot::channel();
 
         self.tx
@@ -300,7 +303,10 @@ async fn execute_script(
 
 /// Executes a script, uses the wrapper code to determine which events the user
 /// has subscribed to
-async fn get_script_events(runtime: &mut JsRuntime, script: String) -> anyhow::Result<Vec<String>> {
+async fn get_script_events(
+    runtime: &mut JsRuntime,
+    script: String,
+) -> anyhow::Result<Vec<ScriptEvent>> {
     let script = JS_EVENTS_WRAPPER.replace("USER_CODE;", &script);
 
     // Execute script
@@ -312,5 +318,11 @@ async fn get_script_events(runtime: &mut JsRuntime, script: String) -> anyhow::R
         from_v8(&mut scope, local).context("invalid events output")?
     };
 
-    Ok(names)
+    let events = names
+        .into_iter()
+        // Parse event names
+        .filter_map(|name| serde_json::from_str::<ScriptEvent>(&name).ok())
+        .collect();
+
+    Ok(events)
 }

@@ -1,12 +1,13 @@
 use log::error;
 use sea_orm::DatabaseConnection;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tokio::join;
 use twitch_api::{eventsub::channel::chat::Fragment, types::SubscriptionTier};
 
 use crate::{
     database::entity::{
         events::{EventTrigger, EventTriggerType},
+        scripts::ScriptEvent,
         CommandModel, EventModel, ScriptModel,
     },
     twitch::manager::{
@@ -49,18 +50,6 @@ pub struct ScriptWithContext {
 
     /// Event that was triggered
     pub event: ScriptEvent,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ScriptEvent {
-    Redeem,
-    CheerBits,
-    Follow,
-    Subscription,
-    GiftSubscription,
-    ReSubscription,
-    Chat,
 }
 
 #[derive(Default, Debug, Clone, Serialize)]
@@ -380,7 +369,7 @@ pub async fn match_chat_event(
             // Load all commands
             CommandModel::get_by_command(db, &command_arg),
             // Load all chat subscribed script
-            ScriptModel::get_by_event(db, "chat")
+            ScriptModel::get_by_event(db, ScriptEvent::Chat)
         );
 
         let events = match events {
