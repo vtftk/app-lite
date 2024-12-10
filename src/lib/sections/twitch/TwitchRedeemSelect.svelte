@@ -26,7 +26,7 @@
 </script>
 
 {#snippet twitchRedeemItem(item: any)}
-  <div class="text-stack">
+  <div class="text-stack item">
     <p class="text-stack--top">{item.label}</p>
     <p class="text-stack--bottom">{item.description}</p>
   </div>
@@ -56,8 +56,15 @@
 <style>
   .container {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: flex-end;
     width: 100%;
+  }
+
+  .container :global(.form-input) {
+    flex: auto;
+  }
+  .container :global(.form-input [data-select-trigger]) {
+    height: 2.65rem;
   }
 </style>
