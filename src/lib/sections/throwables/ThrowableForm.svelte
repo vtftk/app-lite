@@ -28,6 +28,9 @@
   import { createItemMutation, updateItemMutation } from "$lib/api/items";
   import { toastErrorMessage } from "$lib/utils/error";
   import { Tabs } from "bits-ui";
+  import SolarAlbumBoldDuotone from "~icons/solar/album-bold-duotone";
+  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
+  import SolarVolumeLoudBoldDuotone from "~icons/solar/volume-loud-bold-duotone";
 
   type Props = {
     existing?: ItemWithImpactSounds;
@@ -227,9 +230,18 @@
     <div class="content">
       <Tabs.Root>
         <Tabs.List>
-          <Tabs.Trigger value="image">Image</Tabs.Trigger>
-          <Tabs.Trigger value="details">Details</Tabs.Trigger>
-          <Tabs.Trigger value="impact_sounds">Impact Sounds</Tabs.Trigger>
+          <Tabs.Trigger value="image">
+            <SolarAlbumBoldDuotone />
+            Image
+          </Tabs.Trigger>
+          <Tabs.Trigger value="details">
+            <SolarBookBoldDuotone />
+            Details
+          </Tabs.Trigger>
+          <Tabs.Trigger value="impact_sounds">
+            <SolarVolumeLoudBoldDuotone />
+            Impact Sounds
+          </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="details">
           <FormSection>

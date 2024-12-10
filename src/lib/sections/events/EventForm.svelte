@@ -30,6 +30,10 @@
   import { createEventMutation, updateEventMutation } from "$lib/api/vevents";
   import type { VEvent } from "$shared/dataV2";
   import { Tabs } from "bits-ui";
+  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
+  import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
+  import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
+  import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
 
   type Props = {
     existing?: VEvent;
@@ -336,10 +340,22 @@
     <div class="content">
       <Tabs.Root>
         <Tabs.List>
-          <Tabs.Trigger value="details">Details</Tabs.Trigger>
-          <Tabs.Trigger value="trigger">Trigger</Tabs.Trigger>
-          <Tabs.Trigger value="outcome">Outcome</Tabs.Trigger>
-          <Tabs.Trigger value="cooldown">Requirements</Tabs.Trigger>
+          <Tabs.Trigger value="details">
+            <SolarBookBoldDuotone />
+            Details
+          </Tabs.Trigger>
+          <Tabs.Trigger value="trigger">
+            <SolarCardReciveBoldDuotone />
+            Trigger
+          </Tabs.Trigger>
+          <Tabs.Trigger value="outcome">
+            <SolarCardSendBoldDuotone />
+            Outcome
+          </Tabs.Trigger>
+          <Tabs.Trigger value="cooldown">
+            <SolarChecklistMinimalisticBoldDuotone />
+            Requirements
+          </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="details">
           <!-- Base options -->
@@ -495,7 +511,6 @@
             {/if}
           </FormSection>
         </Tabs.Content>
-
         <Tabs.Content value="cooldown">
           <!-- Cooldown and role requirements -->
           <FormSection
