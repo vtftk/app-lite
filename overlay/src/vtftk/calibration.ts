@@ -37,19 +37,19 @@ function setCalibrationPoint(x: number, y: number) {
   }
 }
 
-let mouseDown = true;
+let dragging = true;
 
 function onMouseDown(event: MouseEvent) {
   setCalibrationPoint(event.clientX, event.clientY);
-  mouseDown = true;
+  dragging = true;
 }
 
 function onMouseUp() {
-  mouseDown = false;
+  dragging = false;
 }
 
 function onMouseMove(event: MouseEvent) {
-  if (mouseDown) setCalibrationPoint(event.clientX, event.clientY);
+  if (dragging) setCalibrationPoint(event.clientX, event.clientY);
 }
 
 function subscribeCalibrate() {
@@ -132,6 +132,7 @@ export async function beginCalibrationStep(
         modelPosition,
       } = await requestCurrentModel(socket);
 
+      dragging = true;
       modelId = modelID;
       modelName = _modelName;
       initialModelPosition = modelPosition;
@@ -146,6 +147,7 @@ export async function beginCalibrationStep(
 
     // Store smallest position and grow model
     case CalibrationStep.Largest:
+      dragging = true;
       smallestPoint = await getModelGuidePosition(socket);
       await notifyProgressCalibration({ step: CalibrationStep.Largest });
       await growModel(socket);
