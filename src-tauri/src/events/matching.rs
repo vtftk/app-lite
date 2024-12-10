@@ -7,7 +7,7 @@ use twitch_api::{eventsub::channel::chat::Fragment, types::SubscriptionTier};
 use crate::{
     database::entity::{
         events::{EventTrigger, EventTriggerType},
-        scripts::ScriptEvent,
+        script_events::ScriptEvent,
         CommandModel, EventModel, ScriptModel,
     },
     twitch::manager::{

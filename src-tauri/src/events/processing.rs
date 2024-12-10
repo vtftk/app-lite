@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::anyhow;
-use futures::{future::BoxFuture, stream::FuturesUnordered, StreamExt};
+use futures::{future::BoxFuture, stream::FuturesUnordered};
 use log::{debug, error};
 use sea_orm::DatabaseConnection;
 use tokio::sync::broadcast;
@@ -149,6 +149,8 @@ async fn process_twitch_event(
         .chain(script_futures)
         .chain(event_futures)
         .collect::<FuturesUnordered<BoxFuture<'_, anyhow::Result<()>>>>();
+
+    use futures::StreamExt;
 
     while let Some(result) = futures.next().await {
         if let Err(err) = result {

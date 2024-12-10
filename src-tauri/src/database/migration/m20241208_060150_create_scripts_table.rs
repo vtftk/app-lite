@@ -15,7 +15,6 @@ impl MigrationTrait for Migration {
                     .col(boolean(Scripts::Enabled))
                     .col(string(Scripts::Name))
                     .col(text(Scripts::Script))
-                    .col(json(Scripts::Events))
                     .to_owned(),
             )
             .await
@@ -35,5 +34,4 @@ pub enum Scripts {
     Enabled,
     Name,
     Script,
-    Events,
 }

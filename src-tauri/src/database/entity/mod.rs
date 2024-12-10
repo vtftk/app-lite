@@ -4,6 +4,7 @@ pub mod items;
 pub mod items_impact_sounds;
 pub mod links;
 pub mod model_data;
+pub mod script_events;
 pub mod scripts;
 pub mod shared;
 pub mod sounds;

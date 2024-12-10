@@ -10,7 +10,7 @@ use tokio::sync::{mpsc, oneshot};
 use twitch_api::types::{DisplayName, UserId, UserName};
 
 use crate::{
-    database::entity::scripts::ScriptEvent,
+    database::entity::script_events::ScriptEvent,
     events::matching::{EventData, EventInputData},
 };
 

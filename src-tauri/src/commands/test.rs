@@ -1,7 +1,7 @@
 use tokio::sync::broadcast;
 
 use crate::{
-    database::entity::{scripts::ScriptEvent, SoundModel},
+    database::entity::{script_events::ScriptEvent, SoundModel},
     events::EventMessage,
     script::runtime::ScriptExecutorHandle,
     state::app_data::ThrowableConfig,

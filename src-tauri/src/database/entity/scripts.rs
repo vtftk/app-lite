@@ -1,8 +1,11 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel};
 use serde::{Deserialize, Serialize};
 
-use super::shared::DbResult;
+use super::{
+    script_events::{ScriptEvent, ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity},
+    shared::DbResult,
+};
 
 // Type alias helpers for the database entity types
 pub type ScriptModel = Model;
@@ -22,37 +25,20 @@ pub struct Model {
     pub name: String,
     /// The actual script contents
     pub script: String,
-    /// Names for events the script is known to be subscribed to
-    /// script will be run for these events
-    pub events: ScriptEvents,
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
-#[serde(rename_all = "camelCase")]
-#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
-pub enum ScriptEvent {
-    #[sea_orm(string_value = "redeem")]
-    Redeem,
-    #[sea_orm(string_value = "cheerBits")]
-    CheerBits,
-    #[sea_orm(string_value = "follow")]
-    Follow,
-    #[sea_orm(string_value = "subscription")]
-    Subscription,
-    #[sea_orm(string_value = "giftSubscription")]
-    GiftSubscription,
-    #[sea_orm(string_value = "reSubscription")]
-    ReSubscription,
-    #[sea_orm(string_value = "chat")]
-    Chat,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
-#[serde(transparent)]
-pub struct ScriptEvents(pub Vec<ScriptEvent>);
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    /// Script can have many events
+    #[sea_orm(has_many = "super::script_events::Entity")]
+    Events,
+}
+
+impl Related<super::script_events::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Events.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}
 
@@ -61,7 +47,7 @@ pub struct CreateScript {
     pub enabled: bool,
     pub name: String,
     pub script: String,
-    pub events: ScriptEvents,
+    pub events: Vec<ScriptEvent>,
 }
 
 #[derive(Default, Deserialize)]
@@ -69,7 +55,7 @@ pub struct UpdateScript {
     pub enabled: Option<bool>,
     pub name: Option<String>,
     pub script: Option<String>,
-    pub events: Option<ScriptEvents>,
+    pub events: Option<Vec<ScriptEvent>>,
 }
 
 impl Model {
@@ -84,7 +70,6 @@ impl Model {
             enabled: Set(create.enabled),
             name: Set(create.name),
             script: Set(create.script),
-            events: Set(create.events),
         };
 
         Entity::insert(active_model)
@@ -94,6 +79,8 @@ impl Model {
         let model = Self::get_by_id(db, id)
             .await?
             .context("model was not inserted")?;
+
+        model.set_script_events(db, &create.events).await?;
 
         Ok(model)
     }
@@ -111,15 +98,11 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        // TODO: DATABASE LEVEL FILTERING, USE SEPARATE COLUMN TO STORE SUBSCRIBED EVENTS
-        let scripts = Self::all(db).await?;
-
-        Ok(scripts
-            .into_iter()
-            .filter(|script| {
-                script.enabled && script.events.0.iter().any(|event| script_event.eq(event))
-            })
-            .collect())
+        Entity::find()
+            .inner_join(super::script_events::Entity)
+            .filter(ScriptEventsColumn::Event.eq(script_event))
+            .all(db)
+            .await
     }
 
     /// Find all script
@@ -149,11 +132,54 @@ impl Model {
             this.script = Set(script);
         }
 
+        let this = this.update(db).await?;
+
         if let Some(events) = data.events {
-            this.events = Set(events);
+            this.set_script_events(db, &events).await?;
         }
 
-        let this = this.update(db).await?;
         Ok(this)
+    }
+
+    pub async fn set_script_events<C>(&self, db: &C, script_events: &[ScriptEvent]) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        // Delete any impact sounds not in the provided list
+        ScriptEventsEntity::delete_many()
+            .filter(
+                ScriptEventsColumn::ScriptId
+                    .eq(self.id)
+                    .and(ScriptEventsColumn::Event.is_not_in(script_events.iter().copied())),
+            )
+            .exec(db)
+            .await?;
+
+        self.append_script_events(db, script_events).await?;
+
+        Ok(())
+    }
+
+    pub async fn append_script_events<C>(
+        &self,
+        db: &C,
+        script_events: &[ScriptEvent],
+    ) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        // Insert the new connections
+        ScriptEventsEntity::insert_many(script_events.iter().map(|script_event| {
+            ScriptEventsActiveModel {
+                script_id: Set(self.id),
+                event: Set(*script_event),
+            }
+        }))
+        // Ignore already existing connections
+        .on_conflict_do_nothing()
+        .exec(db)
+        .await?;
+
+        Ok(())
     }
 }
