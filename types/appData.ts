@@ -85,12 +85,14 @@ export enum MinimumRequiredRole {
   None = "None",
   Vip = "Vip",
   Mod = "Mod",
+  Broadcaster = "Broadcaster",
 }
 
 export const MINIMUM_REQUIRED_ROLE_VALUES = [
   MinimumRequiredRole.None,
   MinimumRequiredRole.Vip,
   MinimumRequiredRole.Mod,
+  MinimumRequiredRole.Broadcaster,
 ] as const;
 
 export const MINIMUM_REQUIRED_ROLE_NAMES: Record<MinimumRequiredRole, string> =
@@ -98,6 +100,7 @@ export const MINIMUM_REQUIRED_ROLE_NAMES: Record<MinimumRequiredRole, string> =
     [MinimumRequiredRole.None]: "None",
     [MinimumRequiredRole.Vip]: "Vip",
     [MinimumRequiredRole.Mod]: "Moderator",
+    [MinimumRequiredRole.Broadcaster]: "Broadcaster",
   } as const;
 
 export enum EventTriggerType {
