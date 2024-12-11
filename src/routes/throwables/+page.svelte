@@ -21,7 +21,11 @@
   } from "$lib/api/items";
   import type { Item, Sound } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { dndzone, type DndEvent } from "svelte-dnd-action";
+  import {
+    dndzone,
+    SHADOW_ITEM_MARKER_PROPERTY_NAME,
+    type DndEvent,
+  } from "svelte-dnd-action";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -201,16 +205,39 @@
     onfinalize={handleDndFinalize}
   >
     {#each items as item (item.id)}
-      <ThrowableItem
-        config={item}
-        selected={selected.includes(item.id)}
-        onToggleSelected={() => onToggleSelected(item)}
-      />
+      <div class="item-wrapper">
+        <ThrowableItem
+          config={item}
+          selected={selected.includes(item.id)}
+          onToggleSelected={() => onToggleSelected(item)}
+        />
+
+        {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+          <div class="custom-shadow-item"></div>
+        {/if}
+      </div>
     {/each}
   </div>
 </PageLayoutList>
 
 <style>
+  .item-wrapper {
+    position: relative;
+  }
+
+  .custom-shadow-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    visibility: visible;
+    border: 3px dashed #444;
+    background: #212121;
+    opacity: 0.5;
+    margin: 0;
+  }
+
   .selection {
     display: flex;
     align-items: center;
