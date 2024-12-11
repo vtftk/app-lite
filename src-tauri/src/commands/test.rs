@@ -1,50 +1,55 @@
-use tokio::sync::broadcast;
-
 use crate::{
     database::entity::{script_events::ScriptEvent, SoundModel},
-    events::EventMessage,
+    events::{outcome::create_throwable_config, EventMessage},
     script::runtime::ScriptExecutorHandle,
-    state::app_data::ThrowableConfig,
 };
+use sea_orm::DatabaseConnection;
+use tauri::State;
+use tokio::sync::broadcast;
+use uuid::Uuid;
 
 use super::CmdResult;
 
 /// Plays a test throw item event
 #[tauri::command]
-pub fn test_throw(
-    config: ThrowableConfig,
+pub async fn test_throw(
+    item_ids: Vec<Uuid>,
     amount: Option<u32>,
+    db: State<'_, DatabaseConnection>,
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
-) -> Result<bool, ()> {
-    event_sender
-        .send(EventMessage::ThrowItem {
-            config,
-            amount: amount.unwrap_or_default(),
-        })
-        .map_err(|_| ())?;
+) -> CmdResult<()> {
+    let db = db.inner();
+    let config = create_throwable_config(db, &item_ids).await?;
 
-    Ok(true)
+    event_sender.send(EventMessage::ThrowItem {
+        config,
+        amount: amount.unwrap_or_default(),
+    })?;
+
+    Ok(())
 }
 
 /// Plays a test throw item event
 #[tauri::command]
-pub fn test_throw_barrage(
-    config: ThrowableConfig,
+pub async fn test_throw_barrage(
+    item_ids: Vec<Uuid>,
     amount_per_throw: u32,
     amount: u32,
     frequency: u32,
+    db: State<'_, DatabaseConnection>,
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
-) -> Result<bool, ()> {
-    event_sender
-        .send(EventMessage::ThrowItemBarrage {
-            config,
-            amount_per_throw,
-            amount,
-            frequency,
-        })
-        .map_err(|_| ())?;
+) -> CmdResult<()> {
+    let db = db.inner();
+    let config = create_throwable_config(db, &item_ids).await?;
 
-    Ok(true)
+    event_sender.send(EventMessage::ThrowItemBarrage {
+        config,
+        amount_per_throw,
+        amount,
+        frequency,
+    })?;
+
+    Ok(())
 }
 
 /// Plays a test sound event

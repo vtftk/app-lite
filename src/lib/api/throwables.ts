@@ -1,45 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { getItemById } from "./items";
-import type {
-  ItemWithImpactSoundIds,
-  Sound,
-  ThrowableConfig,
-} from "$shared/dataV2";
-
-async function getItemsWithSounds(
-  itemIds: string[]
-): Promise<{ items: ItemWithImpactSoundIds[]; impact_sounds: Sound[] }> {
-  const rawItems = await Promise.all(
-    itemIds.map((itemId) => getItemById(itemId))
-  );
-
-  const impact_sounds: Sound[] = [];
-  const items: ItemWithImpactSoundIds[] = [];
-
-  for (const rawItem of rawItems) {
-    if (rawItem === null) continue;
-
-    const { impact_sounds: item_impact_sounds, ...item } = rawItem;
-    items.push({
-      ...item,
-      impact_sound_ids: impact_sounds.map((sound) => sound.id),
-    });
-
-    // Add non duplicate sounds
-    for (const impact_sound of item_impact_sounds) {
-      const existing = impact_sounds.find(
-        (sound) => sound.id === impact_sound.id
-      );
-      if (existing !== undefined) continue;
-      impact_sounds.push(impact_sound);
-    }
-  }
-
-  return {
-    items,
-    impact_sounds,
-  };
-}
 
 /**
  * Throws a test item (or items depending on amount) from the selection of
@@ -51,14 +10,8 @@ async function getItemsWithSounds(
  * @returns Promise that completes when the throw has been sent
  */
 export async function testThrow(itemIds: string[], amount: number = 1) {
-  const { items, impact_sounds } = await getItemsWithSounds(itemIds);
-  const throwable: ThrowableConfig = {
-    items,
-    impact_sounds,
-  };
-
   return invoke<void>("test_throw", {
-    config: throwable,
+    itemIds,
     amount,
   });
 }
@@ -80,14 +33,8 @@ export async function testThrowBarrage(
   amountPerThrow: number = 2,
   frequency: number = 100
 ) {
-  const { items, impact_sounds } = await getItemsWithSounds(itemIds);
-  const throwable: ThrowableConfig = {
-    items,
-    impact_sounds,
-  };
-
   return invoke<void>("test_throw_barrage", {
-    config: throwable,
+    itemIds,
     amount,
     amountPerThrow,
     frequency,

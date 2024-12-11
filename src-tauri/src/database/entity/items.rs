@@ -127,12 +127,28 @@ impl Model {
     }
 
     /// Find items with IDs present in the provided list
+    #[allow(unused)]
     pub async fn get_by_ids<C>(db: &C, id: &[Uuid]) -> DbResult<Vec<Self>>
     where
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find()
             .filter(Column::Id.is_in(id.iter().copied()))
+            .all(db)
+            .await
+    }
+
+    /// Find items with IDs present in the provided list
+    pub async fn get_by_ids_with_impact_sounds<C>(
+        db: &C,
+        id: &[Uuid],
+    ) -> DbResult<Vec<(Self, Vec<super::items_impact_sounds::Model>)>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find()
+            .filter(Column::Id.is_in(id.iter().copied()))
+            .find_with_related(super::items_impact_sounds::Entity)
             .all(db)
             .await
     }

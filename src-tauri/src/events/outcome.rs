@@ -1,6 +1,6 @@
+use std::collections::HashSet;
+
 use anyhow::{anyhow, Context};
-use futures::{future::BoxFuture, stream::FuturesUnordered};
-use log::error;
 use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
@@ -10,7 +10,6 @@ use crate::{
             BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound,
             EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
         },
-        shared::DbResult,
         ItemModel, SoundModel,
     },
     state::app_data::{ItemWithImpactSoundIds, ThrowableConfig},
@@ -76,11 +75,7 @@ async fn throw_bits_outcome(
 
     let bit_icon = bit_icon.context("no bit icon available")?;
 
-    let item = ItemModel::get_by_id(db, bit_icon)
-        .await?
-        .context("bit icon item missing")?;
-
-    let throwable_config = create_throwable_config(db, vec![item]).await?;
+    let throwable_config = create_throwable_config(db, &[bit_icon]).await?;
 
     let amount = match data.amount {
         BitsAmount::Dynamic { max_amount } => input.min(max_amount),
@@ -103,8 +98,7 @@ async fn throwable_outcome(
             throwable_ids,
             amount,
         } => {
-            let items = ItemModel::get_by_ids(db, &throwable_ids).await?;
-            let throwable_config = create_throwable_config(db, items).await?;
+            let throwable_config = create_throwable_config(db, &throwable_ids).await?;
 
             Ok(EventMessage::ThrowItem {
                 config: throwable_config,
@@ -117,8 +111,7 @@ async fn throwable_outcome(
             frequency,
             amount,
         } => {
-            let items = ItemModel::get_by_ids(db, &throwable_ids).await?;
-            let throwable_config = create_throwable_config(db, items).await?;
+            let throwable_config = create_throwable_config(db, &throwable_ids).await?;
 
             Ok(EventMessage::ThrowItemBarrage {
                 config: throwable_config,
@@ -151,45 +144,31 @@ async fn play_sound_outcome(
 
 pub async fn create_throwable_config(
     db: &DatabaseConnection,
-    items: Vec<ItemModel>,
+    item_ids: &[Uuid],
 ) -> anyhow::Result<ThrowableConfig> {
-    // Find all the referenced sounds
-    let mut futures = items
+    let items: Vec<ItemWithImpactSoundIds> = ItemModel::get_by_ids_with_impact_sounds(db, item_ids)
+        .await?
         .into_iter()
-        .map(
-            |item| -> BoxFuture<'_, DbResult<(ItemWithImpactSoundIds, Vec<SoundModel>)>> {
-                Box::pin(async move {
-                    let sounds = item.get_impact_sounds(db).await?;
+        .map(|(item, impact_sounds)| ItemWithImpactSoundIds {
+            item,
+            impact_sound_ids: impact_sounds
+                .into_iter()
+                .map(|impact_sound| impact_sound.sound_id)
+                .collect(),
+        })
+        .collect();
 
-                    let impact_sound_ids = sounds.iter().map(|sound| sound.id).collect();
-                    Ok((
-                        ItemWithImpactSoundIds {
-                            item,
-                            impact_sound_ids,
-                        },
-                        sounds,
-                    ))
-                })
-            },
-        )
-        .collect::<FuturesUnordered<_>>();
+    // Collect all unique impact sound IDs
+    let impact_sound_ids: Vec<Uuid> = items
+        .iter()
+        .flat_map(|item| item.impact_sound_ids.iter())
+        .cloned()
+        // Collect to HashSet first for unique IDs
+        .collect::<HashSet<Uuid>>()
+        .into_iter()
+        .collect::<Vec<Uuid>>();
 
-    let mut items = Vec::new();
-    let mut impact_sounds = Vec::new();
-
-    use futures::StreamExt;
-
-    while let Some(result) = futures.next().await {
-        match result {
-            Ok((item, mut sounds)) => {
-                items.push(item);
-                impact_sounds.append(&mut sounds);
-            }
-            Err(err) => {
-                error!("error loading impact sounds: {:?}", err);
-            }
-        }
-    }
+    let impact_sounds = SoundModel::get_by_ids(db, &impact_sound_ids).await?;
 
     Ok(ThrowableConfig {
         items,

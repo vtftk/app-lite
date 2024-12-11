@@ -89,6 +89,17 @@ impl Model {
         Entity::find_by_id(id).one(db).await
     }
 
+    /// Find sounds with IDs present in the provided list
+    pub async fn get_by_ids<C>(db: &C, ids: &[Uuid]) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find()
+            .filter(Column::Id.is_in(ids.iter().copied()))
+            .all(db)
+            .await
+    }
+
     /// Find all sounds
     pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
     where
