@@ -20,6 +20,12 @@ Aiming to be a tailored and improved version of [KBonk](https://github.com/typeo
 
 ![Throwables](./docs/throwables.png)
 
+## Events
+
+React to stream events such as channel point redeems, follows, subscriptions etc and perform actions such as throwing items, playing sounds, and triggering **VTube Studio** hotkeys
+
+![Event](./docs/event.png)
+
 ## Custom Commands
 
 Write custom commands using JavaScript powered by `deno_core`.  Build in editor running on [Monaco](https://microsoft.github.io/monaco-editor/) providing great editing experience and type hinting for the APIs.
@@ -78,5 +84,6 @@ Collection of built in pre-configured throwable items from [Pixel Mart](https://
 Sounds sourced from [KBonk](https://github.com/typeou/karasubonk) which is originally sourced from 
 
 [Game Audio GDC](https://sonniss.com/gameaudiogdc) from the [Hong Kong Action Kit Hit Kit 1](http://www.sonniss.com/sound-effects/hong-kong-action-kit-hit-kit-1/)
+
 
 ![Builtins](./docs/builtins.png)
