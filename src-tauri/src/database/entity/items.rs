@@ -31,8 +31,8 @@ pub struct ThrowableImageConfig {
     /// Src URL for the image
     pub src: String,
     /// Weight of impact the image has
-    pub weight: u32,
-    /// Scale of the image 0-1
+    pub weight: f32,
+    /// Scale of the image
     pub scale: f32,
     /// Whether to allow pixelation when rendering at a
     /// different scale

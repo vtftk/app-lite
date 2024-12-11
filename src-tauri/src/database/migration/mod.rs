@@ -10,6 +10,7 @@ mod m20241208_063859_create_items_impact_sounds_junction_table;
 mod m20241210_061820_create_script_events_table;
 mod m20241210_082256_create_event_executions_table;
 mod m20241210_082316_create_command_executions_table;
+mod m20241211_102725_seed_defaults;
 
 pub struct Migrator;
 
@@ -27,6 +28,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20241210_061820_create_script_events_table::Migration),
             Box::new(m20241210_082256_create_event_executions_table::Migration),
             Box::new(m20241210_082316_create_command_executions_table::Migration),
+            Box::new(m20241211_102725_seed_defaults::Migration),
         ]
     }
 }

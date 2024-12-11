@@ -69,3 +69,14 @@ would normally have.
 You can then re-open the webview or completely quit **VTFTK** by clicking on the tray menu icon:
 
 ![Tray Icon](./docs/tray-icon.png)
+
+
+## Built-in assets
+
+Collection of built in pre-configured throwable items from [Pixel Mart](https://ghostpixxells.itch.io/pixel-mart)
+
+Sounds sourced from [KBonk](https://github.com/typeou/karasubonk) which is originally sourced from 
+
+[Game Audio GDC](https://sonniss.com/gameaudiogdc) from the [Hong Kong Action Kit Hit Kit 1](http://www.sonniss.com/sound-effects/hong-kong-action-kit-hit-kit-1/)
+
+http://localhost:58371/defaults/throwable_images/American_cheese_p.png

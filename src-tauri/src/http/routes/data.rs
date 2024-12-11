@@ -13,7 +13,7 @@ use axum::{
     Extension, Json,
 };
 use reqwest::header::CONTENT_TYPE;
-use tauri::{AppHandle, Manager};
+use tauri::{path::BaseDirectory, AppHandle, Manager};
 
 /// GET /app-data
 ///
@@ -93,8 +93,6 @@ pub async fn get_bits_icon(Path(amount): Path<u32>) -> Result<Response<Body>, Dy
 }
 
 /// GET /content/:folder/:name
-///
-/// Sets the current state of the app at runtime
 pub async fn get_content_file(
     Path((folder, name)): Path<(String, String)>,
     Extension(app): Extension<AppHandle>,
@@ -105,6 +103,36 @@ pub async fn get_content_file(
         .context("failed to get app data dir")?;
     let content_path = app_data_path.join("content");
     let file_path = content_path.join(folder).join(name);
+
+    if !file_path.exists() {
+        return Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(vec![].into())
+            .context("failed to make response")?);
+    }
+
+    let mime = mime_guess::from_path(&file_path);
+
+    let file_bytes = tokio::fs::read(file_path)
+        .await
+        .context("failed to read content file")?;
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(CONTENT_TYPE, mime.first_or_octet_stream().essence_str())
+        .body(file_bytes.into())
+        .context("failed to make response")?)
+}
+
+/// GET /defaults/:folder/:name
+pub async fn get_defaults_file(
+    Path((folder, name)): Path<(String, String)>,
+    Extension(app): Extension<AppHandle>,
+) -> Result<Response<Body>, DynHttpError> {
+    let file_path = app
+        .path()
+        .resolve(format!("defaults/{folder}/{name}"), BaseDirectory::Resource)
+        .context("failed to get file path")?;
 
     if !file_path.exists() {
         return Ok(Response::builder()
