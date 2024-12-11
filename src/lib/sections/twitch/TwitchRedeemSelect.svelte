@@ -7,12 +7,14 @@
     id: string;
     name: string;
     label: string;
+    description?: string;
 
     selected: any;
     onChangeSelected: (value: any) => void;
   };
 
-  const { id, label, name, selected, onChangeSelected }: Props = $props();
+  const { id, label, name, description, selected, onChangeSelected }: Props =
+    $props();
 
   const redeemsList = createGetRedeemsList();
 
@@ -49,6 +51,10 @@
   </button>
 </div>
 
+{#if description}
+  <p class="description">{description}</p>
+{/if}
+
 {#if $redeemsList.isLoading}
   Loading...
 {/if}
@@ -66,5 +72,11 @@
   }
   .container :global(.form-input [data-select-trigger]) {
     height: 2.65rem;
+  }
+
+  .description {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.5rem;
   }
 </style>

@@ -13,7 +13,13 @@
   const { icon: Icon, href, title, text }: Props = $props();
 </script>
 
-<a {href} class="button" class:button--selected={$page.route.id == href}>
+<a
+  {href}
+  class="button"
+  class:button--selected={href === "/"
+    ? $page.route.id === href
+    : $page.route.id?.startsWith(href)}
+>
   <Icon class="icon" />
   <div class="content">
     <p class="title">{title}</p>

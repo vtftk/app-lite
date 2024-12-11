@@ -19,7 +19,6 @@
   import { goto } from "$app/navigation";
   import ThrowablePicker from "$lib/components/throwable/ThrowablePicker.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import EventTriggerTypeSelect from "./EventTriggerTypeSelect.svelte";
   import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
   import OutcomeTypeSelect from "./OutcomeTypeSelect.svelte";
   import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
@@ -34,6 +33,14 @@
   import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
+  import SolarBoltCircleBoldDuotone from "~icons/solar/bolt-circle-bold-duotone";
+  import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
+  import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
+  import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
+  import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
+  import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
+  import SolarTextSquareBoldDuotone from "~icons/solar/text-square-bold-duotone";
+  import EventTriggerItem from "./EventTriggerItem.svelte";
 
   type Props = {
     existing?: VEvent;
@@ -227,7 +234,7 @@
       case EventTriggerType.Redeem:
         return { type: EventTriggerType.Redeem, reward_id: "" };
       case EventTriggerType.Command:
-        return { type: EventTriggerType.Command, message: "" };
+        return { type: EventTriggerType.Command, message: "!test" };
       case EventTriggerType.Follow:
         return { type: EventTriggerType.Follow };
       case EventTriggerType.Subscription:
@@ -322,7 +329,116 @@
     const defaults = getThrowableDataDefaults(type);
     setFields("outcome.data", defaults, true);
   }
+
+  const eventTriggerOptions = [
+    {
+      icon: SolarBoltCircleBoldDuotone,
+      color: "purple",
+      value: EventTriggerType.Redeem,
+      label: "Redeem",
+      description:
+        "Event will be triggered when a specific channel points redeem is redeemed",
+      content: redeemContent,
+    },
+    {
+      icon: SolarTextSquareBoldDuotone,
+      color: "red",
+      value: EventTriggerType.Command,
+      label: "Command",
+      description:
+        "Event will be triggered when a specific phrase appears at the start of a message",
+      content: commandContent,
+    },
+    {
+      icon: SolarUsersGroupRoundedBoldDuotone,
+      color: "yellow",
+      value: EventTriggerType.Follow,
+      label: "Follow",
+      description:
+        "Event will be triggered when a user follows the twitch channel",
+    },
+    {
+      icon: SolarCard2BoldDuotone,
+      color: "green",
+      value: EventTriggerType.Subscription,
+      label: "Subscription",
+      description:
+        "Event will be triggered when a user purchases a subscription",
+    },
+    {
+      icon: SolarGiftBoldDuotone,
+      color: "blue",
+      value: EventTriggerType.GiftedSubscription,
+      label: "Gifted Subscription",
+      description:
+        "Event will be triggered when a user gifts any number of subscriptions",
+    },
+    {
+      icon: SolarHandMoneyBoldDuotone,
+      color: "purple",
+      value: EventTriggerType.Bits,
+      label: "Bits",
+      description: "Event will trigger when bits are gifted to the channel",
+      content: bitsContent,
+    },
+    {
+      icon: SolarSkateboardingBoldDuotone,
+      color: "red",
+      value: EventTriggerType.Raid,
+      label: "Raid",
+      description:
+        "Event will trigger when the channel is raided by another channel",
+      content: raidContent,
+    },
+  ];
 </script>
+
+{#snippet redeemContent()}
+  {#if $data.trigger.type === EventTriggerType.Redeem}
+    <TwitchRedeemSelect
+      id="trigger.reward_id"
+      name="trigger.reward_id"
+      label="Reward"
+      selected={$data.trigger.reward_id}
+      onChangeSelected={(selected) =>
+        setFields("trigger.reward_id", selected, true)}
+      description="Choose the twitch redeem that will trigger this event"
+    />
+  {/if}
+{/snippet}
+
+{#snippet commandContent()}
+  {#if $data.trigger.type === EventTriggerType.Command}
+    <FormTextInput
+      id="trigger.message"
+      name="trigger.message"
+      label="Command phrase"
+      description="Triggers when a chat message starting with the provided phrase is received (e.g !test)"
+    />
+  {/if}
+{/snippet}
+
+{#snippet bitsContent()}
+  {#if $data.trigger.type === EventTriggerType.Bits}
+    <FormNumberInput
+      id="trigger.min_bits"
+      name="trigger.min_bits"
+      label="Minimum Bits"
+      description="Minimum number of bits that must be gifted to trigger"
+    />
+  {/if}
+{/snippet}
+
+{#snippet raidContent()}
+  {#if $data.trigger.type === EventTriggerType.Raid}
+    <FormNumberInput
+      id="trigger.min_raiders"
+      name="trigger.min_raiders"
+      label="Minimum Raiders"
+      description="Minimum number of people that must be apart of the raid to trigger"
+    />
+  {/if}
+{/snippet}
 
 <form use:form>
   {#snippet actions()}
@@ -348,6 +464,7 @@
             <SolarCardReciveBoldDuotone />
             Trigger
           </Tabs.Trigger>
+
           <Tabs.Trigger value="outcome">
             <SolarCardSendBoldDuotone />
             Outcome
@@ -373,51 +490,22 @@
           </FormSection>
         </Tabs.Content>
         <Tabs.Content value="trigger">
-          <!-- Trigger options -->
-          <FormSection
-            title="Trigger"
-            description="What should trigger this event"
-          >
-            <EventTriggerTypeSelect
-              id="trigger.type"
-              name="trigger.type"
-              label="Event Trigger"
-              selected={$data.trigger.type}
-              onChangeSelected={(selected) => {
-                onChangeTriggerType(selected);
-              }}
-            />
-
-            {#if $data.trigger.type === EventTriggerType.Redeem}
-              <TwitchRedeemSelect
-                id="trigger.reward_id"
-                name="trigger.reward_id"
-                label="Reward"
-                selected={$data.trigger.reward_id}
-                onChangeSelected={(selected) =>
-                  setFields("trigger.reward_id", selected, true)}
+          <div class="event-trigger-grid">
+            {#each eventTriggerOptions as option (option.value)}
+              <EventTriggerItem
+                icon={option.icon}
+                color={option.color}
+                label={option.label}
+                description={option.description}
+                selected={$data.trigger.type === option.value}
+                onClick={() => onChangeTriggerType(option.value)}
+                content={option.content}
+                contentVisible={$data.trigger.type === option.value}
               />
-            {:else if $data.trigger.type === EventTriggerType.Command}
-              <FormTextInput
-                id="trigger.message"
-                name="trigger.message"
-                label="Command Message"
-              />
-            {:else if $data.trigger.type === EventTriggerType.Bits}
-              <FormNumberInput
-                id="trigger.min_bits"
-                name="trigger.min_bits"
-                label="Minimum Bits"
-              />
-            {:else if $data.trigger.type === EventTriggerType.Raid}
-              <FormNumberInput
-                id="trigger.min_raiders"
-                name="trigger.min_raiders"
-                label="Minimum Raiders"
-              />
-            {/if}
-          </FormSection>
+            {/each}
+          </div>
         </Tabs.Content>
+
         <Tabs.Content value="outcome">
           <!-- Outcome options -->
           <FormSection
@@ -570,5 +658,12 @@
     flex-flow: column;
     border: 1px solid #333;
     padding: 1rem;
+  }
+
+  .event-trigger-grid {
+    display: grid;
+
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 </style>
