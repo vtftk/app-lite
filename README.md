@@ -79,4 +79,4 @@ Sounds sourced from [KBonk](https://github.com/typeou/karasubonk) which is origi
 
 [Game Audio GDC](https://sonniss.com/gameaudiogdc) from the [Hong Kong Action Kit Hit Kit 1](http://www.sonniss.com/sound-effects/hong-kong-action-kit-hit-kit-1/)
 
-http://localhost:58371/defaults/throwable_images/American_cheese_p.png
+![Builtins](./docs/builtins.png)
