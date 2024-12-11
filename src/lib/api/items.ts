@@ -107,6 +107,31 @@ export function updateItemMutation() {
   });
 }
 
+export function updateItemsMutation() {
+  return createMutation<ItemWithImpactSounds[], Error, UpdateItem[]>({
+    mutationFn: (updateItems) =>
+      Promise.all(
+        updateItems.map((updateItem) =>
+          invoke<ItemWithImpactSounds>("update_item", {
+            itemId: updateItem.itemId,
+            update: updateItem.update,
+          })
+        )
+      ),
+    onSuccess: (data) => {
+      for (const item of data) {
+        // Invalidate the specific item query
+        const itemKey = createItemKey(item.id);
+        queryClient.setQueryData(itemKey, item);
+      }
+    },
+    onSettled: (_data, _err, _updateItem) => {
+      // Invalid the list of items
+      queryClient.invalidateQueries({ queryKey: ITEMS_KEY });
+    },
+  });
+}
+
 export function deleteItemMutation() {
   return createMutation<void, Error, ItemId>({
     mutationFn: (itemId) => invoke<void>("delete_item", { itemId }),

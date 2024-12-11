@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { flip } from "svelte/animate";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -14,9 +15,12 @@
     bulkAppendItemSoundsMutation,
     bulkDeleteItemsMutation,
     createItemsQuery,
+    updateItemMutation,
+    updateItemsMutation,
   } from "$lib/api/items";
   import type { Item, Sound } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { dndzone, type DndEvent } from "svelte-dnd-action";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -24,9 +28,14 @@
 
   const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
   const bulkDeleteItems = bulkDeleteItemsMutation();
+  const updateItems = updateItemsMutation();
+
+  let items: Item[] = $state([]);
 
   // Readable access to the items from the underlying items query
-  const items = $derived($itemsQuery.data ?? []);
+  $effect(() => {
+    items = $itemsQuery.data ?? [];
+  });
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
@@ -112,6 +121,22 @@
       error: toastErrorMessage("Failed to throw barrage"),
     });
   }
+
+  const flipDurationMs = 100;
+
+  function handleDndConsider(e: CustomEvent<DndEvent<Item>>) {
+    items = e.detail.items;
+  }
+
+  async function handleDndFinalize(e: CustomEvent<DndEvent<Item>>) {
+    items = e.detail.items;
+    $updateItems.mutateAsync(
+      items.map((item, index) => ({
+        itemId: item.id,
+        update: { order: index },
+      }))
+    );
+  }
 </script>
 
 {#snippet actions()}
@@ -171,13 +196,20 @@
   {actions}
   {beforeContent}
 >
-  <div class="grid">
-    {#each items as item}
-      <ThrowableItem
-        config={item}
-        selected={selected.includes(item.id)}
-        onToggleSelected={() => onToggleSelected(item)}
-      />
+  <div
+    class="grid"
+    use:dndzone={{ items, flipDurationMs }}
+    onconsider={handleDndConsider}
+    onfinalize={handleDndFinalize}
+  >
+    {#each items as item (item.id)}
+      <div animate:flip={{ duration: flipDurationMs }}>
+        <ThrowableItem
+          config={item}
+          selected={selected.includes(item.id)}
+          onToggleSelected={() => onToggleSelected(item)}
+        />
+      </div>
     {/each}
   </div>
 </PageLayoutList>
