@@ -6,6 +6,7 @@ import type {
   Sound,
   SoundId,
   UpdateItem,
+  UpdateItemOrdering,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -23,6 +24,12 @@ export function createItemsQuery() {
 
 function createItemKey(id: ItemId) {
   return ["item", id] as const;
+}
+
+export async function updateItemOrder(update: UpdateItemOrdering[]) {
+  await invoke("update_item_orderings", { update });
+
+  queryClient.invalidateQueries({ queryKey: ITEMS_KEY });
 }
 
 export function createItemQuery(id: ItemId) {

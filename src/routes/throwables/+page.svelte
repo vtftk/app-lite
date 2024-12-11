@@ -16,6 +16,7 @@
     bulkDeleteItemsMutation,
     createItemsQuery,
     updateItemMutation,
+    updateItemOrder,
     updateItemsMutation,
   } from "$lib/api/items";
   import type { Item, Sound } from "$shared/dataV2";
@@ -130,11 +131,8 @@
 
   async function handleDndFinalize(e: CustomEvent<DndEvent<Item>>) {
     items = e.detail.items;
-    $updateItems.mutateAsync(
-      items.map((item, index) => ({
-        itemId: item.id,
-        update: { order: index },
-      }))
+    updateItemOrder(
+      items.map((item, index) => ({ id: item.id, order: index }))
     );
   }
 </script>
@@ -198,18 +196,16 @@
 >
   <div
     class="grid"
-    use:dndzone={{ items, flipDurationMs }}
+    use:dndzone={{ items }}
     onconsider={handleDndConsider}
     onfinalize={handleDndFinalize}
   >
     {#each items as item (item.id)}
-      <div animate:flip={{ duration: flipDurationMs }}>
-        <ThrowableItem
-          config={item}
-          selected={selected.includes(item.id)}
-          onToggleSelected={() => onToggleSelected(item)}
-        />
-      </div>
+      <ThrowableItem
+        config={item}
+        selected={selected.includes(item.id)}
+        onToggleSelected={() => onToggleSelected(item)}
+      />
     {/each}
   </div>
 </PageLayoutList>

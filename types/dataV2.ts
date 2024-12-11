@@ -16,6 +16,11 @@ export type Item = {
   order: number;
 };
 
+export type UpdateItemOrdering = {
+  id: string;
+  order: number;
+};
+
 export type ItemWithImpactSoundIds = Item & {
   impact_sound_ids: SoundId[];
 };

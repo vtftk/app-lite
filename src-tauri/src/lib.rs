@@ -134,6 +134,7 @@ pub fn run() {
             commands::items::get_item_sounds,
             commands::items::create_item,
             commands::items::update_item,
+            commands::items::update_item_orderings,
             commands::items::delete_item,
             commands::items::append_item_impact_sounds,
             // Sound commands
