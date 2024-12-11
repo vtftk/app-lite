@@ -35,6 +35,8 @@ pub struct Model {
     pub cooldown: u32,
     /// Minimum required role to trigger the command
     pub require_role: MinimumRequireRole,
+    /// Ordering
+    pub order: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -83,6 +85,7 @@ pub struct UpdateCommand {
     pub outcome: Option<CommandOutcome>,
     pub cooldown: Option<u32>,
     pub require_role: Option<MinimumRequireRole>,
+    pub order: Option<u32>,
 }
 
 impl Model {
@@ -101,6 +104,7 @@ impl Model {
             outcome: Set(create.outcome),
             cooldown: Set(create.cooldown),
             require_role: Set(create.require_role),
+            order: Set(0),
         };
 
         Entity::insert(active_model)
@@ -151,7 +155,7 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().all(db).await
+        Entity::find().order_by_asc(Column::Order).all(db).await
     }
 
     /// Update the current sound
@@ -168,6 +172,7 @@ impl Model {
         this.outcome = data.outcome.map(Set).unwrap_or(this.outcome);
         this.cooldown = data.cooldown.map(Set).unwrap_or(this.cooldown);
         this.require_role = data.require_role.map(Set).unwrap_or(this.require_role);
+        this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
         Ok(this)

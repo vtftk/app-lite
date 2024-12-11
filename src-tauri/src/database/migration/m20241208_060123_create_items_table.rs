@@ -19,6 +19,7 @@ impl MigrationTrait for Migration {
                     .col(pk_uuid(Items::Id))
                     .col(string(Items::Name))
                     .col(json(Items::Image))
+                    .col(integer(Items::Order))
                     .to_owned(),
             )
             .await
@@ -37,4 +38,5 @@ pub enum Items {
     Id,
     Name,
     Image,
+    Order,
 }

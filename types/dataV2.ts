@@ -13,6 +13,7 @@ export type Item = {
   id: ItemId;
   name: string;
   image: ThrowableImageConfig;
+  order: number;
 };
 
 export type ItemWithImpactSoundIds = Item & {
@@ -33,6 +34,7 @@ export type UpdateItem = {
     name: string;
     image: ThrowableImageConfig;
     impact_sounds: SoundId[];
+    order: number;
   }>;
 };
 
@@ -48,6 +50,7 @@ export type Sound = {
   name: string;
   src: string;
   volume: number;
+  order: number;
 };
 
 export type CreateSound = {
@@ -62,6 +65,7 @@ export type UpdateSound = {
     name: string;
     src: string;
     volume: number;
+    order: number;
   }>;
 };
 
@@ -73,6 +77,7 @@ export type Script = {
   name: string;
   script: string;
   events: string[];
+  order: number;
 };
 
 export type CreateScript = {
@@ -89,6 +94,7 @@ export type UpdateScript = {
     name: string;
     script: string;
     events: string[];
+    order: number;
   }>;
 };
 
@@ -103,6 +109,7 @@ export type Command = {
   outcome: CommandOutcome;
   cooldown: number;
   require_role: MinimumRequiredRole;
+  order: number;
 };
 
 export type CreateCommand = {
@@ -125,6 +132,7 @@ export type UpdateCommand = {
     outcome: CommandOutcome;
     cooldown: number;
     require_role: MinimumRequiredRole;
+    order: number;
   }>;
 };
 
@@ -139,6 +147,7 @@ export type VEvent = {
   cooldown: number;
   require_role: MinimumRequiredRole;
   outcome_delay: number;
+  order: number;
 };
 
 export type CreateEvent = {
@@ -161,5 +170,6 @@ export type UpdateEvent = {
     cooldown: number;
     require_role: MinimumRequiredRole;
     outcome_delay: number;
+    order: number;
   }>;
 };

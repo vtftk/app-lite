@@ -1,5 +1,7 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel};
+use sea_orm::{
+    entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel, QueryOrder,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -23,6 +25,8 @@ pub struct Model {
     pub name: String,
     /// Image to use for the throwable item
     pub image: ThrowableImageConfig,
+    /// Ordering
+    pub order: u32,
 }
 
 /// Configuration for a throwable image
@@ -60,6 +64,7 @@ pub struct UpdateItem {
     pub name: Option<String>,
     pub image: Option<ThrowableImageConfig>,
     pub impact_sounds: Option<Vec<Uuid>>,
+    pub order: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -87,6 +92,7 @@ impl Model {
             id: Set(id),
             name: Set(create.name),
             image: Set(create.image),
+            order: Set(0),
         };
 
         Entity::insert(active_model)
@@ -128,7 +134,7 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().all(db).await
+        Entity::find().order_by_asc(Column::Order).all(db).await
     }
 
     /// Update the current item
@@ -145,6 +151,8 @@ impl Model {
         if let Some(image) = data.image {
             this.image = Set(image);
         }
+
+        this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
 

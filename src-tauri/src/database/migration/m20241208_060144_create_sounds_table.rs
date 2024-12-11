@@ -15,6 +15,7 @@ impl MigrationTrait for Migration {
                     .col(string(Sounds::Name))
                     .col(string(Sounds::Src))
                     .col(float(Sounds::Volume))
+                    .col(integer(Sounds::Order))
                     .to_owned(),
             )
             .await
@@ -34,4 +35,5 @@ pub enum Sounds {
     Name,
     Src,
     Volume,
+    Order,
 }

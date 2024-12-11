@@ -39,6 +39,8 @@ pub struct Model {
     pub require_role: MinimumRequireRole,
     /// Delay before executing the outcome
     pub outcome_delay: u32,
+    /// Ordering
+    pub order: u32,
 }
 
 /// Copy of the [EventTrigger] enum but string variants to
@@ -224,6 +226,7 @@ pub struct UpdateEvent {
     pub cooldown: Option<u32>,
     pub require_role: Option<MinimumRequireRole>,
     pub outcome_delay: Option<u32>,
+    pub order: Option<u32>,
 }
 
 impl Model {
@@ -243,6 +246,7 @@ impl Model {
             cooldown: Set(create.cooldown),
             require_role: Set(create.require_role),
             outcome_delay: Set(create.outcome_delay),
+            order: Set(0),
         };
 
         Entity::insert(active_model)
@@ -300,7 +304,7 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().all(db).await
+        Entity::find().order_by_asc(Column::Order).all(db).await
     }
 
     /// Update the current event
@@ -323,6 +327,7 @@ impl Model {
         this.cooldown = data.cooldown.map(Set).unwrap_or(this.cooldown);
         this.require_role = data.require_role.map(Set).unwrap_or(this.require_role);
         this.outcome_delay = data.outcome_delay.map(Set).unwrap_or(this.outcome_delay);
+        this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
         Ok(this)

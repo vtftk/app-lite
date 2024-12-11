@@ -1,5 +1,5 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder};
 use serde::{Deserialize, Serialize};
 
 use super::shared::DbResult;
@@ -22,6 +22,8 @@ pub struct Model {
     pub src: String,
     /// Volume of the sound 0-1
     pub volume: f32,
+    /// Ordering
+    pub order: u32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -51,6 +53,7 @@ pub struct UpdateSound {
     pub name: Option<String>,
     pub src: Option<String>,
     pub volume: Option<f32>,
+    pub order: Option<u32>,
 }
 
 impl Model {
@@ -65,6 +68,7 @@ impl Model {
             name: Set(create.name),
             src: Set(create.src),
             volume: Set(create.volume),
+            order: Set(0),
         };
 
         Entity::insert(active_model)
@@ -90,7 +94,7 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().all(db).await
+        Entity::find().order_by_asc(Column::Order).all(db).await
     }
 
     /// Update the current sound
@@ -111,6 +115,7 @@ impl Model {
         if let Some(volume) = data.volume {
             this.volume = Set(volume);
         }
+        this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
         Ok(this)

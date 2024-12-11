@@ -1,5 +1,5 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -25,6 +25,8 @@ pub struct Model {
     pub name: String,
     /// The actual script contents
     pub script: String,
+    /// Ordering
+    pub order: u32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -56,6 +58,7 @@ pub struct UpdateScript {
     pub name: Option<String>,
     pub script: Option<String>,
     pub events: Option<Vec<ScriptEvent>>,
+    pub order: Option<u32>,
 }
 
 impl Model {
@@ -70,6 +73,7 @@ impl Model {
             enabled: Set(create.enabled),
             name: Set(create.name),
             script: Set(create.script),
+            order: Set(0),
         };
 
         Entity::insert(active_model)
@@ -110,7 +114,7 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().all(db).await
+        Entity::find().order_by_asc(Column::Order).all(db).await
     }
 
     /// Update the current script
@@ -131,6 +135,8 @@ impl Model {
         if let Some(script) = data.script {
             this.script = Set(script);
         }
+
+        this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
 

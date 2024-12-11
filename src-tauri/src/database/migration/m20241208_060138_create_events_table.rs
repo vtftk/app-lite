@@ -20,6 +20,7 @@ impl MigrationTrait for Migration {
                     .col(integer(Events::Cooldown))
                     .col(string(Events::RequireRole))
                     .col(integer(Events::OutcomeDelay))
+                    .col(integer(Events::Order))
                     .to_owned(),
             )
             .await
@@ -44,4 +45,5 @@ pub enum Events {
     Cooldown,
     RequireRole,
     OutcomeDelay,
+    Order,
 }

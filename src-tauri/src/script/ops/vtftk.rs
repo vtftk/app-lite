@@ -18,6 +18,7 @@ pub async fn op_vtftk_play_sound(#[string] src: String, volume: f32) -> anyhow::
         name: "<internal>".to_string(),
         src,
         volume,
+        order: 0,
     };
 
     global_script_event(PlaySound { config })
@@ -41,6 +42,7 @@ pub async fn op_vtftk_play_sound_seq(#[serde] seq: Vec<SoundSeq>) -> anyhow::Res
             name: "<internal>".to_string(),
             src: seq.src,
             volume: seq.volume,
+            order: 0,
         })
         .collect();
 
