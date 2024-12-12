@@ -690,13 +690,24 @@
               selected={$data.require_role}
               onChangeSelected={(selected) =>
                 setFields("require_role", selected, true)}
+              description="Minimum required role the user triggering the event must have in order for the event to trigger"
             />
 
-            <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
+            <FormNumberInput
+              id="cooldown"
+              name="cooldown"
+              label="Cooldown"
+              description="Cooldown before this event can be triggered again (ms)"
+              min={0}
+              step={100}
+            />
             <FormNumberInput
               id="outcome_delay"
               name="outcome_delay"
               label="Outcome Delay"
+              description="Delay before this event will be triggered (ms)"
+              min={0}
+              step={100}
             />
           </FormSection>
         </Tabs.Content>
