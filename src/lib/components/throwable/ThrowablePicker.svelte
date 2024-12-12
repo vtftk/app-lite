@@ -41,7 +41,7 @@
 {/if}
 
 <Dialog.Root>
-  <Dialog.Trigger
+  <Dialog.Trigger type="button"
     >{selectedOptions.length > 0
       ? `${selectedOptions.length} Items selected`
       : "Select Items"}</Dialog.Trigger
@@ -57,16 +57,31 @@
 
       <Separator.Root />
 
+      <div class="selection">
+        <Checkbox.Root
+          id="terms"
+          aria-labelledby="terms-label"
+          checked={items.length > 0 && selected.length === items.length}
+          onCheckedChange={onToggleAll}
+        >
+          <Checkbox.Indicator let:isChecked>
+            {#if isChecked}
+              <span>&#10003;</span>
+            {/if}
+          </Checkbox.Indicator>
+        </Checkbox.Root>
+      </div>
+
       <div class="throwable-table-wrapper">
-        <table class="throwable-table">
-          <thead>
-            <tr>
-              <th class="item-column item-column--checkbox">
+        <div class="items">
+          {#each items as item (item.id)}
+            <div class="item">
+              <div class="item-column item-column--checkbox">
                 <Checkbox.Root
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={items.length > 0 && selected.length === items.length}
-                  onCheckedChange={onToggleAll}
+                  checked={selected.includes(item.id)}
+                  onCheckedChange={() => onSelectItem(item)}
                 >
                   <Checkbox.Indicator let:isChecked>
                     {#if isChecked}
@@ -74,44 +89,22 @@
                     {/if}
                   </Checkbox.Indicator>
                 </Checkbox.Root>
-              </th>
-              <th class="item-column item-column--preview">Preview</th>
-              <th class="item-column item-column--name">Item Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each items as item (item.id)}
-              <tr class="item-row">
-                <td class="item-column item-column--checkbox">
-                  <Checkbox.Root
-                    id="terms"
-                    aria-labelledby="terms-label"
-                    checked={selected.includes(item.id)}
-                    onCheckedChange={() => onSelectItem(item)}
-                  >
-                    <Checkbox.Indicator let:isChecked>
-                      {#if isChecked}
-                        <span>&#10003;</span>
-                      {/if}
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
-                </td>
+              </div>
 
-                <td class="item-column item-column--preview">
-                  <div class="throwable__image-wrapper">
-                    <img
-                      class="throwable__image"
-                      src={getBackendURL(item.image.src)}
-                      alt="Throwable"
-                    />
-                  </div>
-                </td>
+              <div class="item-column item-column--preview">
+                <div class="throwable__image-wrapper">
+                  <img
+                    class="throwable__image"
+                    src={getBackendURL(item.image.src)}
+                    alt="Throwable"
+                  />
+                </div>
+              </div>
 
-                <td class="item-column item-column--name"> {item.name} </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+              <div class="item-column item-column--name">{item.name}</div>
+            </div>
+          {/each}
+        </div>
       </div>
 
       <div data-dialog-actions>
@@ -123,32 +116,48 @@
   </Dialog.Portal>
 </Dialog.Root>
 
-<div class="selected">
-  <p class="selected__title">Selected Items</p>
+{#if selectedOptions.length > 0}
+  <div class="selected">
+    <p class="selected__title">Selected Items</p>
 
-  <div class="grid">
-    {#each selectedOptions as option}
-      <li class="grid-item">
-        <div class="grid-item__image throwable__image-wrapper">
-          <img
-            class="throwable__image"
-            src={getBackendURL(option.image.src)}
-            alt="Throwable"
-          />
-        </div>
+    <div class="grid-wrapper">
+      <div class="grid">
+        {#each selectedOptions as option}
+          <li class="grid-item">
+            <div class="grid-item__image throwable__image-wrapper">
+              <img
+                class="throwable__image"
+                src={getBackendURL(option.image.src)}
+                alt="Throwable"
+              />
+            </div>
 
-        <p class="grid-item__name">{option.name}</p>
-      </li>
-    {/each}
+            <p class="grid-item__name">{option.name}</p>
+          </li>
+        {/each}
+      </div>
+    </div>
   </div>
-</div>
+{/if}
 
 <style>
   .selected {
-    margin: 1rem 0;
+    margin-top: 0.5rem;
     display: flex;
     gap: 1rem;
     flex-flow: column;
+    background-color: #333;
+    padding: 1rem;
+  }
+
+  .selection {
+    padding-left: 1rem;
+  }
+
+  .items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 
   .selected__title {
@@ -156,15 +165,20 @@
     font-weight: bold;
   }
 
+  .grid-wrapper {
+    max-height: 12rem;
+    overflow: auto;
+  }
+
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    overflow: hidden;
+    gap: 0.5rem;
   }
 
   .grid-item {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: center;
     width: 100%;
     overflow: hidden;
@@ -191,38 +205,10 @@
     width: 100%;
   }
 
-  .throwable-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .throwable-table tr {
-    border: 1px solid #333;
-  }
-
-  .throwable-table thead {
-    position: sticky;
-    top: -25px;
-    z-index: 1;
-    background-color: #111;
-  }
-
-  .throwable-table td,
-  .throwable-table th {
-    padding: 0.5rem 0.25rem;
-  }
-
-  .throwable-table .item-column--checkbox {
-    padding-left: 1rem;
-    padding-right: 0rem;
-  }
-
-  .throwable-table .item-column--preview {
-    padding-right: 1rem;
-  }
-
-  .throwable-table th {
-    text-align: left;
-    height: 2.5rem;
+  .item {
+    display: flex;
+    flex-flow: row;
+    gap: 1rem;
+    align-items: center;
   }
 </style>

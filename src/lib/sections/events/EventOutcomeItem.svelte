@@ -161,5 +161,6 @@
     display: flex;
     flex-flow: column;
     cursor: default;
+    gap: 0.5rem;
   }
 </style>

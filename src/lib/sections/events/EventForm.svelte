@@ -41,6 +41,10 @@
   import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
   import SolarTextSquareBoldDuotone from "~icons/solar/text-square-bold-duotone";
   import EventTriggerItem from "./EventTriggerItem.svelte";
+  import EventOutcomeItem from "./EventOutcomeItem.svelte";
+  import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
+  import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
+  import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
 
   type Props = {
     existing?: VEvent;
@@ -391,6 +395,45 @@
       content: raidContent,
     },
   ];
+
+  const outcomeOptions = $derived([
+    ...($data.trigger.type === EventTriggerType.Bits
+      ? [
+          {
+            icon: SolarHandMoneyBoldDuotone,
+            color: "green",
+            value: EventOutcomeType.ThrowBits,
+            label: "Throw Bits",
+            description:
+              "Only available when using the bits trigger, will throw bits",
+          },
+        ]
+      : []),
+    {
+      icon: SolarBasketballBoldDuotone,
+      color: "purple",
+      value: EventOutcomeType.Throwable,
+      label: "Throw Item",
+      description: "Throw a random item from the specified collection",
+      content: throwableOutcomeContent,
+    },
+    {
+      icon: SolarKeyboardBoldDuotone,
+      color: "red",
+      value: EventOutcomeType.TriggerHotkey,
+      label: "Trigger Hotkey",
+      description: "Trigger a VTube studio hotkey",
+      content: triggerHotkeyOutcomeContent,
+    },
+    {
+      icon: SolarHeadphonesRoundSoundBoldDuotone,
+      color: "yellow",
+      value: EventOutcomeType.PlaySound,
+      label: "Play Sound",
+      description: "Play a sound from the available sounds",
+      content: playSoundOutcomeContent,
+    },
+  ]);
 </script>
 
 {#snippet redeemContent()}
@@ -436,6 +479,114 @@
       name="trigger.min_raiders"
       label="Minimum Raiders"
       description="Minimum number of people that must be apart of the raid to trigger"
+    />
+  {/if}
+{/snippet}
+
+{#snippet throwableOutcomeContent()}
+  {#if $data.outcome.type === EventOutcomeType.Throwable}
+    <ThrowableDataTypeSelect
+      id="outcome.data.type"
+      name="outcome.data.type"
+      label="Throwable Type"
+      selected={$data.outcome.data.type}
+      onChangeSelected={(selected) => {
+        onChangeThrowableDataType(selected);
+      }}
+    />
+
+    {#if $data.outcome.data.type === ThrowableDataType.Throw}
+      <FormNumberInput
+        id="outcome.data.amount"
+        name="outcome.data.amount"
+        label="Total number of items to throw"
+        min={1}
+      />
+
+      <p>
+        {$data.outcome.data.amount} random item{$data.outcome.data.amount > 1
+          ? "s"
+          : ""} will be chosen from your selection below and thrown
+      </p>
+
+      <ThrowablePicker
+        selected={$data.outcome.data.throwable_ids}
+        onChangeSelect={(selected) => {
+          setFields("outcome.data.throwable_ids", selected, true);
+        }}
+      />
+    {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
+      <div class="throwable-config-grid">
+        <FormNumberInput
+          id="outcome.data.amount_per_throw"
+          name="outcome.data.amount_per_throw"
+          label="Amount per throw"
+          description="How many items to throw in each barrage"
+          min={1}
+        />
+
+        <FormNumberInput
+          id="outcome.data.frequency"
+          name="outcome.data.frequency"
+          label="Frequency"
+          description="Time between each barrage of items (ms)"
+          step={100}
+          min={0}
+          max={1000 * 60 * 60}
+        />
+
+        <FormNumberInput
+          id="outcome.data.amount"
+          name="outcome.data.amount"
+          label="Total number of throws"
+          description="Total number of items to throw for the whole barrage"
+          min={1}
+          step={1}
+        />
+      </div>
+
+      <p>
+        {$data.outcome.data.amount_per_throw} random item{$data.outcome.data
+          .amount > 1
+          ? "s"
+          : ""} will be chosen from your selection below and thrown every {$data
+          .outcome.data.frequency}ms until a total of {$data.outcome.data
+          .amount ?? 1} item{$data.outcome.data.amount > 1 ? "s" : ""} have been
+        thrown
+      </p>
+
+      <ThrowablePicker
+        selected={$data.outcome.data.throwable_ids}
+        onChangeSelect={(selected) => {
+          setFields("outcome.data.throwable_ids", selected, true);
+        }}
+      />
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet triggerHotkeyOutcomeContent()}
+  {#if $data.outcome.type === EventOutcomeType.TriggerHotkey}
+    <HotkeySelect
+      id="outcome.hotkey_id"
+      name="outcome.hotkey_id"
+      label="Hotkey"
+      selected={$data.outcome.hotkey_id}
+      onChangeSelected={(selected) =>
+        setFields("outcome.hotkey_id", selected, true)}
+      description="Choose which VTube Studio hotkey to trigger"
+    />
+  {/if}
+{/snippet}
+{#snippet playSoundOutcomeContent()}
+  {#if $data.outcome.type === EventOutcomeType.PlaySound}
+    <SoundSelect
+      id="outcome.sound_id"
+      name="outcome.sound_id"
+      label="Sound"
+      selected={$data.outcome.sound_id}
+      onChangeSelected={(selected) =>
+        setFields("outcome.sound_id", selected, true)}
     />
   {/if}
 {/snippet}
@@ -498,7 +649,9 @@
                 label={option.label}
                 description={option.description}
                 selected={$data.trigger.type === option.value}
-                onClick={() => onChangeTriggerType(option.value)}
+                onClick={() =>
+                  $data.trigger.type !== option.value &&
+                  onChangeTriggerType(option.value)}
                 content={option.content}
                 contentVisible={$data.trigger.type === option.value}
               />
@@ -507,97 +660,22 @@
         </Tabs.Content>
 
         <Tabs.Content value="outcome">
-          <!-- Outcome options -->
-          <FormSection
-            title="Outcome"
-            description="What should happen when this event is triggered"
-          >
-            <OutcomeTypeSelect
-              id="outcome.type"
-              name="outcome.type"
-              label="Event Outcome"
-              triggerType={$data.trigger.type}
-              selected={$data.outcome.type}
-              onChangeSelected={(selected) => {
-                onChangeOutcomeType(selected);
-              }}
-            />
-
-            {#if $data.outcome.type === EventOutcomeType.ThrowBits}
-              <div></div>
-            {:else if $data.outcome.type === EventOutcomeType.Throwable}
-              <ThrowableDataTypeSelect
-                id="outcome.data.type"
-                name="outcome.data.type"
-                label="Throwable Type"
-                selected={$data.outcome.data.type}
-                onChangeSelected={(selected) => {
-                  onChangeThrowableDataType(selected);
-                }}
+          <div class="event-trigger-grid">
+            {#each outcomeOptions as option (option.value)}
+              <EventOutcomeItem
+                icon={option.icon}
+                color={option.color}
+                label={option.label}
+                description={option.description}
+                selected={$data.outcome.type === option.value}
+                onClick={() =>
+                  $data.outcome.type !== option.value &&
+                  onChangeOutcomeType(option.value)}
+                content={option.content}
+                contentVisible={$data.outcome.type === option.value}
               />
-
-              {#if $data.outcome.data.type === ThrowableDataType.Throw}
-                <FormNumberInput
-                  id="outcome.data.amount"
-                  name="outcome.data.amount"
-                  label="Total number of items to throw"
-                />
-                <ThrowablePicker
-                  selected={$data.outcome.data.throwable_ids}
-                  onChangeSelect={(selected) => {
-                    setFields("outcome.data.throwable_ids", selected, true);
-                  }}
-                />
-              {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
-                <div>
-                  <ThrowablePicker
-                    selected={$data.outcome.data.throwable_ids}
-                    onChangeSelect={(selected) => {
-                      setFields("outcome.data.throwable_ids", selected, true);
-                    }}
-                  />
-
-                  <div class="throwable-config-grid">
-                    <FormNumberInput
-                      id="outcome.data.amount_per_throw"
-                      name="outcome.data.amount_per_throw"
-                      label="Amount of items per throw"
-                    />
-
-                    <FormNumberInput
-                      id="outcome.data.frequency"
-                      name="outcome.data.frequency"
-                      label="Frequency"
-                    />
-
-                    <FormNumberInput
-                      id="outcome.data.amount"
-                      name="outcome.data.amount"
-                      label="Total number of throws"
-                    />
-                  </div>
-                </div>
-              {/if}
-            {:else if $data.outcome.type === EventOutcomeType.TriggerHotkey}
-              <HotkeySelect
-                id="outcome.hotkey_id"
-                name="outcome.hotkey_id"
-                label="Hotkey"
-                selected={$data.outcome.hotkey_id}
-                onChangeSelected={(selected) =>
-                  setFields("outcome.hotkey_id", selected, true)}
-              />
-            {:else if $data.outcome.type === EventOutcomeType.PlaySound}
-              <SoundSelect
-                id="outcome.sound_id"
-                name="outcome.sound_id"
-                label="Sound"
-                selected={$data.outcome.sound_id}
-                onChangeSelected={(selected) =>
-                  setFields("outcome.sound_id", selected, true)}
-              />
-            {/if}
-          </FormSection>
+            {/each}
+          </div>
         </Tabs.Content>
         <Tabs.Content value="cooldown">
           <!-- Cooldown and role requirements -->

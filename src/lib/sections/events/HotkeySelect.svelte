@@ -8,12 +8,14 @@
     id: string;
     name: string;
     label: string;
+    description?: string;
 
     selected: any;
     onChangeSelected: (value: any) => void;
   };
 
-  const { id, label, name, selected, onChangeSelected }: Props = $props();
+  const { id, label, name, description, selected, onChangeSelected }: Props =
+    $props();
 
   const updateHotkeys = () => {
     invoke("update_hotkeys");
@@ -39,27 +41,33 @@
   </div>
 {/snippet}
 
-<div class="container">
-  <FormSelect
-    {id}
-    {name}
-    {label}
-    {items}
-    {item}
-    {selected}
-    {onChangeSelected}
-  />
+<div>
+  <div class="container">
+    <FormSelect
+      {id}
+      {name}
+      {label}
+      {items}
+      {item}
+      {selected}
+      {onChangeSelected}
+    />
 
-  <button type="button" class="btn" onclick={updateHotkeys}>
-    <SolarRefreshBold /> Refresh Hotkeys
-  </button>
+    <button type="button" class="btn" onclick={updateHotkeys}>
+      <SolarRefreshBold /> Refresh Hotkeys
+    </button>
+  </div>
+
+  {#if description}
+    <p class="description">{description}</p>
+  {/if}
+
+  {#if !$runtimeAppData.vtube_studio_connected}
+    <p class="error">
+      Not connected to VTube studio... Connect to see available Hotkeys
+    </p>
+  {/if}
 </div>
-
-{#if !$runtimeAppData.vtube_studio_connected}
-  <p class="error">
-    Not connected to VTube studio... Connect to see available Hotkeys
-  </p>
-{/if}
 
 <style>
   .container {
@@ -71,5 +79,18 @@
 
   .error {
     color: #dba33a;
+  }
+
+  .description {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.5rem;
+  }
+
+  .container :global(.form-input) {
+    flex: auto;
+  }
+  .container :global(.form-input [data-select-trigger]) {
+    height: 2.65rem;
   }
 </style>
