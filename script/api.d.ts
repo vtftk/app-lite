@@ -85,12 +85,63 @@ declare global {
   }
 
   export interface KvStoreApi {
-    get: (key: string) => Promise<string | null>;
+    getRaw: (key: string) => Promise<string | null>;
     remove: (key: string) => Promise<void>;
-    set: (key: string, value: string) => Promise<void>;
+
+    getText: (key: string, defaultValue?: string) => Promise<string | null>;
+    setText: (key: string, value: string) => Promise<void>;
+
+    getNumber: (key: string, defaultValue?: number) => Promise<number | null>;
+    setNumber: (key: string, value: number) => Promise<number>;
+
+    getArray: (key: string, defaultValue?: any[]) => Promise<any[] | null>;
+    setArray: (key: string, value: any[]) => Promise<any[]>;
 
     getObject: (key: string, defaultValue?: any) => Promise<any | null>;
     setObject: (key: string, value: any) => Promise<void>;
+
+    createCounter: (key: string) => KvCounter;
+    createScopedCounter: (key: string) => KvScopedCounter;
+  }
+
+  export interface KvCounter {
+    /**
+     * Get the current counter value
+     *
+     * @returns Promise resolved to the current counter value
+     */
+    get: () => Promise<number>;
+
+    /**
+     * Set the counter to a specific value
+     *
+     * @param value The value to set the counter to
+     * @returns Promise resolved when the counter is updated
+     */
+    set: (value: number) => Promise<void>;
+
+    /**
+     * Increase the counter by the provided amount, defaults to 1
+     *
+     * @param amount Amount to increase by (Defaults to 1)
+     * @returns Promise resolved to the new counter value
+     */
+    increase: (amount?: number) => Promise<number>;
+
+    /**
+     * Decrease the counter by the provided amount, defaults to 1
+     *
+     * @param amount Amount to increase by (Defaults to 1)
+     * @returns Promise resolved to the new counter value
+     */
+    decrease: (amount?: number) => Promise<number>;
+  }
+
+  export interface KvScopedCounter {
+    get: (scope: string) => Promise<number>;
+    set: (scope: string, value: number) => Promise<void>;
+    increase: (scope: string, amount?: number) => Promise<number>;
+    decrease: (scope: string, amount?: number) => Promise<number>;
   }
 
   interface TtsGenerateRequest {

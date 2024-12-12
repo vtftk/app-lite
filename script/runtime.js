@@ -78,6 +78,112 @@ function getUsernameArg(arg, validate = false) {
   return arg;
 }
 
+function kvSetText(key, value) {
+  if (typeof key !== "string") throw new Error("key must be a string");
+  if (typeof value !== "string") throw new Error("value must be a string");
+
+  return Deno.core.ops.op_kv_set("Text", key, value);
+}
+
+async function kvGetText(key, defaultValue) {
+  const value = await Deno.core.ops.op_kv_get(key);
+  if (value === null) return defaultValue ?? null;
+  return value;
+}
+
+function kvGetRaw(key) {
+  return Deno.core.ops.op_kv_get(key);
+}
+
+function kvRemove(key) {
+  return Deno.core.ops.op_kv_remove(key);
+}
+
+function kvSetNumber(key, value) {
+  if (typeof key !== "string") throw new Error("key must be a string");
+  if (typeof value !== "number") throw new Error("value must be a number");
+
+  return Deno.core.ops.op_kv_set("Number", key, value);
+}
+
+async function kvGetNumber(key, defaultValue) {
+  const value = await Deno.core.ops.op_kv_get(key);
+  if (value === null) return defaultValue ?? null;
+  return Number(value);
+}
+
+function kvSetArray(key, value) {
+  if (typeof key !== "string") throw new Error("key must be a string");
+  if (!Array.isArray(value)) throw new Error("value must be an array");
+
+  return Deno.core.ops.op_kv_set("Array", key, value);
+}
+
+async function kvGetArray(key, defaultValue) {
+  const value = await Deno.core.ops.op_kv_get(key);
+  if (value === null) return defaultValue ?? null;
+  return JSON.parse(value);
+}
+
+function kvSetObject(key, value) {
+  if (typeof key !== "string") throw new Error("key must be a string");
+  if (typeof value !== "object") throw new Error("value must be a object");
+
+  return Deno.core.ops.op_kv_set("Object", key, JSON.stringify(value));
+}
+
+async function kvGetObject(key, defaultValue) {
+  const value = await Deno.core.ops.op_kv_get(key);
+  if (value === null) return defaultValue ?? null;
+  return JSON.parse(value);
+}
+
+function createCounter(key) {
+  const update = async (action) => {
+    const value = await kvGetNumber(key, 0);
+    const updated = action(value);
+    await kvSetNumber(key, updated);
+    return updated;
+  };
+
+  return {
+    get: () => kvGetNumber(key, 0),
+    set: (value) => kvSetNumber(key, value),
+    increase: (amount) => update((value) => value + (amount ?? 1)),
+    decrease: (amount) => update((value) => value - (amount ?? 1)),
+  };
+}
+
+function createScopedCounter(key) {
+  const update = async (scope, action) => {
+    const objectValue = await kvGetObject(key, {});
+    const value = objectValue[scope] ?? 0;
+    const updated = action(value);
+    objectValue[scope] = updated;
+    await kvSetObject(key, objectValue);
+    return updated;
+  };
+
+  return {
+    get: async (scope) => {
+      if (typeof scope !== "string") throw new Error("scope must be a string");
+      const objectValue = await kvGetObject(key, {});
+      return objectValue[scope] ?? 0;
+    },
+    set: async (scope, value) => {
+      if (typeof scope !== "string") throw new Error("scope must be a string");
+      if (typeof value !== "number") throw new Error("value must be a number");
+      const objectValue = await kvGetObject(key, {});
+      objectValue[scope] = value;
+      return kvSetObject(key, objectValue);
+    },
+    increase: (scope, amount) =>
+      update(scope, (value) => value + (amount ?? 1)),
+    decrease: (scope, amount) =>
+      update(scope, (value) => value - (amount ?? 1)),
+  };
+}
+
 // API functions provided to the runtime
 const api = {
   twitch: {
@@ -87,17 +193,20 @@ const api = {
     getUsernameArg: (arg) => getUsernameArg(arg),
   },
   kv: {
-    get: (key) => Deno.core.ops.op_kv_get(key),
-    remove: (key) => Deno.core.ops.op_kv_remove(key),
-    set: (key, value) => Deno.core.ops.op_kv_set(key, value),
+    createCounter,
+    createScopedCounter,
 
-    setObject: (key, value) =>
-      Deno.core.ops.op_kv_set(key, JSON.stringify(value)),
-    getObject: async (key, defaultValue) => {
-      const value = await Deno.core.ops.op_kv_get(key);
-      if (value === null) return defaultValue ?? null;
-      return JSON.parse(value);
-    },
+    getRaw: kvGetRaw,
+    remove: kvRemove,
+
+    setText: kvSetText,
+    getText: kvGetText,
+    setNumber: kvSetNumber,
+    getNumber: kvGetNumber,
+    setArray: kvSetArray,
+    getArray: kvGetArray,
+    setObject: kvSetObject,
+    getObject: kvGetObject,
   },
   http: {
     get: (url) => Deno.core.ops.op_http_get(url),

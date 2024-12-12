@@ -13,6 +13,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(string(KeyValue::Key).primary_key())
                     .col(string(KeyValue::Value))
+                    .col(string(KeyValue::Type))
                     .to_owned(),
             )
             .await
@@ -30,4 +31,5 @@ enum KeyValue {
     Table,
     Key,
     Value,
+    Type,
 }

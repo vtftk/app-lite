@@ -7,7 +7,7 @@ use twitch_api::types::UserId;
 
 use crate::{
     database::entity::{
-        key_value::{CreateKeyValue, KeyValueModel},
+        key_value::{CreateKeyValue, KeyValueModel, KeyValueType},
         SoundModel,
     },
     events::EventMessage,
@@ -143,6 +143,7 @@ impl Handler<TwitchIsVip> for ScriptEventActor {
 #[msg(rtype = "anyhow::Result<()>")]
 pub struct KvSet {
     pub key: String,
+    pub ty: KeyValueType,
     pub value: String,
 }
 
@@ -157,6 +158,7 @@ impl Handler<KvSet> for ScriptEventActor {
                 CreateKeyValue {
                     key: msg.key,
                     value: msg.value,
+                    ty: msg.ty,
                 },
             )
             .await?;

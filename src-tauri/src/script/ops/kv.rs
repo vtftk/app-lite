@@ -1,4 +1,7 @@
-use crate::script::events::{global_script_event, KvGet, KvRemove, KvSet};
+use crate::{
+    database::entity::key_value::KeyValueType,
+    script::events::{global_script_event, KvGet, KvRemove, KvSet},
+};
 use anyhow::Context;
 use deno_core::*;
 
@@ -19,8 +22,14 @@ pub async fn op_kv_remove(#[string] key: String) -> anyhow::Result<()> {
 }
 
 #[op2(async)]
-pub async fn op_kv_set(#[string] key: String, #[string] value: String) -> anyhow::Result<()> {
-    global_script_event(KvSet { key, value })
+pub async fn op_kv_set(
+    #[string] ty: String,
+    #[string] key: String,
+    #[string] value: String,
+) -> anyhow::Result<()> {
+    let ty = serde_json::from_str::<KeyValueType>(&format!("\"{ty}\""))?;
+
+    global_script_event(KvSet { key, value, ty })
         .await
         .context("failed to send event")?
 }

@@ -1,5 +1,9 @@
+//! # Key Value
+//!
+//! Key value store in the database
+
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, sea_query::OnConflict, ActiveValue::Set, IntoActiveModel};
+use sea_orm::{entity::prelude::*, sea_query::OnConflict, ActiveValue::Set};
 use serde::{Deserialize, Serialize};
 
 use super::shared::DbResult;
@@ -16,7 +20,28 @@ pub struct Model {
     /// Key for the key value pair
     #[sea_orm(primary_key)]
     pub key: String,
+    #[serde(rename = "type")]
+    #[sea_orm(column_name = "type")]
+    pub ty: KeyValueType,
     pub value: String,
+}
+
+/// Key value type
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum KeyValueType {
+    /// Plain text is stored
+    #[sea_orm(string_value = "Text")]
+    Text,
+    /// Number is stored as plain text
+    #[sea_orm(string_value = "Number")]
+    Number,
+    /// Object is stored as JSON
+    #[sea_orm(string_value = "Object")]
+    Object,
+    /// Array is stored as JSON
+    #[sea_orm(string_value = "Array")]
+    Array,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -28,12 +53,8 @@ impl ActiveModelBehavior for ActiveModel {}
 pub struct CreateKeyValue {
     pub key: String,
     pub value: String,
-}
-
-#[derive(Default, Deserialize)]
-#[allow(unused)]
-pub struct UpdateKeyValue {
-    pub value: Option<String>,
+    #[serde(rename = "type")]
+    pub ty: KeyValueType,
 }
 
 impl Model {
@@ -45,12 +66,14 @@ impl Model {
         let active_model = ActiveModel {
             key: Set(create.key.to_string()),
             value: Set(create.value),
+            ty: Set(create.ty),
         };
 
         Entity::insert(active_model)
             .on_conflict(
                 OnConflict::column(Column::Key)
                     .update_column(Column::Value)
+                    .update_column(Column::Ty)
                     .to_owned(),
             )
             .exec_without_returning(db)
@@ -77,19 +100,5 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find().all(db).await
-    }
-
-    /// Update the current key value
-    #[allow(unused)]
-    pub async fn update<C>(self, db: &C, data: UpdateKeyValue) -> DbResult<Self>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        let mut this = self.into_active_model();
-
-        this.value = data.value.map(Set).unwrap_or(this.value);
-
-        let this = this.update(db).await?;
-        Ok(this)
     }
 }
