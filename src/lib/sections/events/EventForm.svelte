@@ -631,12 +631,17 @@
             title="Details"
             description="Basic details about the event"
           >
-            <FormTextInput id="name" name="name" label="Name" />
+            <FormTextInput
+              id="name"
+              name="name"
+              label="Name"
+              placeholder="Example Event"
+            />
             <FormBoundCheckbox
               id="enabled"
               name="enabled"
               label="Enabled"
-              description="Whether this event can be triggered"
+              description="Whether this event will be triggered"
             />
           </FormSection>
         </Tabs.Content>
