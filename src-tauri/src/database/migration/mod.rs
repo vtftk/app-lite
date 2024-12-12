@@ -11,6 +11,7 @@ mod m20241210_061820_create_script_events_table;
 mod m20241210_082256_create_event_executions_table;
 mod m20241210_082316_create_command_executions_table;
 mod m20241211_102725_seed_defaults;
+mod m20241212_114700_create_key_value_table;
 
 pub struct Migrator;
 
@@ -29,6 +30,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20241210_082256_create_event_executions_table::Migration),
             Box::new(m20241210_082316_create_command_executions_table::Migration),
             Box::new(m20241211_102725_seed_defaults::Migration),
+            Box::new(m20241212_114700_create_key_value_table::Migration),
         ]
     }
 }

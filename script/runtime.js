@@ -90,6 +90,14 @@ const api = {
     get: (key) => Deno.core.ops.op_kv_get(key),
     remove: (key) => Deno.core.ops.op_kv_remove(key),
     set: (key, value) => Deno.core.ops.op_kv_set(key, value),
+
+    setObject: (key, value) =>
+      Deno.core.ops.op_kv_set(key, JSON.stringify(value)),
+    getObject: async (key, defaultValue) => {
+      const value = await Deno.core.ops.op_kv_get(key);
+      if (value === null) return defaultValue ?? null;
+      return JSON.parse(value);
+    },
   },
   http: {
     get: (url) => Deno.core.ops.op_http_get(url),

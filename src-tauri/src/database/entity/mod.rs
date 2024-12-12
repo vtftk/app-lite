@@ -4,6 +4,7 @@ pub mod event_executions;
 pub mod events;
 pub mod items;
 pub mod items_impact_sounds;
+pub mod key_value;
 pub mod links;
 pub mod model_data;
 pub mod script_events;
@@ -49,3 +50,6 @@ pub use command_executions::{
 pub use event_executions::{
     EventExecutionActiveModel, EventExecutionColumn, EventExecutionEntity, EventExecutionModel,
 };
+
+#[allow(unused)]
+pub use key_value::{KeyValueActiveModel, KeyValueColumn, KeyValueEntity, KeyValueModel};

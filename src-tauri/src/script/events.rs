@@ -1,11 +1,15 @@
 use anyhow::Context;
 use interlink::prelude::*;
+use sea_orm::{DatabaseConnection, ModelTrait};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use twitch_api::types::UserId;
 
 use crate::{
-    database::entity::SoundModel,
+    database::entity::{
+        key_value::{CreateKeyValue, KeyValueModel},
+        SoundModel,
+    },
     events::EventMessage,
     state::app_data::AppDataStore,
     tts::{
@@ -14,8 +18,6 @@ use crate::{
     },
     twitch::manager::TwitchManager,
 };
-
-use super::kv::KVStore;
 
 /// Current global instance of the script event actor
 pub static GLOBAL_SCRIPT_EVENT_ACTOR: RwLock<Option<Link<ScriptEventActor>>> =
@@ -56,8 +58,8 @@ pub struct ScriptEventActor {
     /// Sender handle for submitting event messages
     event_sender: broadcast::Sender<EventMessage>,
 
-    /// Access to the KV store
-    kv_store: KVStore,
+    /// Access to the database
+    db: DatabaseConnection,
 
     /// Access to the twitch manager
     twitch_manager: Arc<TwitchManager>,
@@ -67,13 +69,13 @@ impl ScriptEventActor {
     pub fn new(
         app_data: AppDataStore,
         event_sender: broadcast::Sender<EventMessage>,
-        kv_store: KVStore,
+        db: DatabaseConnection,
         twitch_manager: Arc<TwitchManager>,
     ) -> Self {
         Self {
             app_data,
             event_sender,
-            kv_store,
+            db,
             twitch_manager,
         }
     }
@@ -148,9 +150,17 @@ impl Handler<KvSet> for ScriptEventActor {
     type Response = Fr<KvSet>;
 
     fn handle(&mut self, msg: KvSet, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let kv_store = self.kv_store.clone();
+        let db = self.db.clone();
         Fr::new_box(async move {
-            kv_store.set(&msg.key, msg.value).await?;
+            KeyValueModel::create(
+                &db,
+                CreateKeyValue {
+                    key: msg.key,
+                    value: msg.value,
+                },
+            )
+            .await?;
+
             Ok(())
         })
     }
@@ -167,9 +177,12 @@ impl Handler<KvRemove> for ScriptEventActor {
     type Response = Fr<KvRemove>;
 
     fn handle(&mut self, msg: KvRemove, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let kv_store = self.kv_store.clone();
+        let db = self.db.clone();
         Fr::new_box(async move {
-            kv_store.remove(&msg.key).await?;
+            if let Some(key_value) = KeyValueModel::get_by_key(&db, &msg.key).await? {
+                key_value.delete(&db).await?;
+            }
+
             Ok(())
         })
     }
@@ -186,9 +199,10 @@ impl Handler<KvGet> for ScriptEventActor {
     type Response = Fr<KvGet>;
 
     fn handle(&mut self, msg: KvGet, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let kv_store = self.kv_store.clone();
+        let db = self.db.clone();
         Fr::new_box(async move {
-            let value = kv_store.get(&msg.key).await;
+            let key_value = KeyValueModel::get_by_key(&db, &msg.key).await?;
+            let value = key_value.map(|value| value.value);
             Ok(value)
         })
     }

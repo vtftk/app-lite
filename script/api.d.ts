@@ -88,6 +88,9 @@ declare global {
     get: (key: string) => Promise<string | null>;
     remove: (key: string) => Promise<void>;
     set: (key: string, value: string) => Promise<void>;
+
+    getObject: (key: string, defaultValue?: any) => Promise<any | null>;
+    setObject: (key: string, value: any) => Promise<void>;
   }
 
   interface TtsGenerateRequest {

@@ -1,7 +1,7 @@
 use anyhow::Context;
 use events::{create_event_channel, processing::process_twitch_events};
 use log::error;
-use script::{events::ScriptEventActor, kv::KVStore, runtime::create_script_executor};
+use script::{events::ScriptEventActor, runtime::create_script_executor};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use std::sync::Arc;
 use tauri::Manager;
@@ -34,7 +34,6 @@ pub fn run() {
                 .app_data_dir()
                 .context("failed to get app data dir")?;
             let app_data_file = app_data_path.join("data.json");
-            let kv_file = app_data_path.join("kv_data.json");
 
             let db_file = app_data_path.join("app.db");
 
@@ -46,8 +45,6 @@ pub fn run() {
 
             let app_data = tauri::async_runtime::block_on(AppDataStore::load(app_data_file))
                 .expect("failed to load app data");
-            let kv_store = tauri::async_runtime::block_on(KVStore::load(kv_file))
-                .expect("failed to load kv data");
 
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
@@ -77,7 +74,7 @@ pub fn run() {
             let actor = ScriptEventActor::new(
                 app_data.clone(),
                 event_tx.clone(),
-                kv_store,
+                db.clone(),
                 twitch_manager.clone(),
             );
 
