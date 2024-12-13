@@ -470,13 +470,11 @@
         break;
     }
 
-    console.log(eventData);
-
     const throwPromise = testEvent(existing.id, eventData);
 
     toast.promise(throwPromise, {
-      loading: "Sending barrage...",
-      success: "Threw barrage",
+      loading: "Sending test event...",
+      success: "Tested event",
       error: toastErrorMessage("Failed to test event"),
     });
   }

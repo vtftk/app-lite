@@ -1,6 +1,6 @@
 use log::error;
 use sea_orm::DatabaseConnection;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use tokio::join;
 use twitch_api::{eventsub::channel::chat::Fragment, types::SubscriptionTier};
 
@@ -66,10 +66,6 @@ pub struct EventData {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum EventInputData {
-    /// No additional input data
-    #[default]
-    None,
-
     /// Redeems specific data
     Redeem {
         /// ID of the redeemed award
@@ -138,6 +134,17 @@ pub enum EventInputData {
         /// Optional amount of bits cheered (If user cheered bits)
         cheer: Option<usize>,
     },
+
+    /// No additional input data
+    #[default]
+    #[serde(deserialize_with = "deserialize_ignore_any")]
+    None,
+}
+
+pub fn deserialize_ignore_any<'de, D: Deserializer<'de>, T: Default>(
+    deserializer: D,
+) -> Result<T, D::Error> {
+    serde::de::IgnoredAny::deserialize(deserializer).map(|_| T::default())
 }
 
 pub async fn match_redeem_event(
