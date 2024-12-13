@@ -100,7 +100,7 @@ pub async fn update_item_orderings(
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();
-    let item = ItemModel::update_order(db, update).await;
+    let _item = ItemModel::update_order(db, update).await?;
 
     Ok(())
 }

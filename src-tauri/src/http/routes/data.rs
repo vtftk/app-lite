@@ -58,6 +58,10 @@ pub async fn update_runtime_data(
                 runtime_app_data.vtube_studio_connected = vtube_studio_connected;
             }
 
+            if let Some(vtube_studio_auth) = req.vtube_studio_auth {
+                runtime_app_data.vtube_studio_auth = vtube_studio_auth;
+            }
+
             if let Some(hotkeys) = req.hotkeys {
                 runtime_app_data.hotkeys = hotkeys;
             }

@@ -1,4 +1,3 @@
-import { attemptAuthorization } from "./auth";
 import { APIError } from "./error";
 import { VTubeMessage } from "./message";
 
@@ -41,10 +40,6 @@ export class VTubeStudioWebSocket {
       this.websocket.onopen = async () => {
         const socket = this.websocket!;
         if (socket.readyState !== WebSocket.OPEN) return;
-
-        await attemptAuthorization(this);
-
-        console.debug("VTube studio authorization complete");
 
         if (this.onConnected) this.onConnected();
       };

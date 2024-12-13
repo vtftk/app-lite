@@ -26,7 +26,11 @@
     <div>VTube Studio</div>
     <div
       class="status-indicator"
-      data-status={$runtimeAppData.vtube_studio_connected ? "green" : "red"}
+      data-status={$runtimeAppData.vtube_studio_connected
+        ? $isModelCalibrated && $runtimeAppData.vtube_studio_auth
+          ? "green"
+          : "orange"
+        : "red"}
     ></div>
   </div>
   <div class="status-item">

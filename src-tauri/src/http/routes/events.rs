@@ -85,6 +85,7 @@ impl Drop for OverlayEventStream {
                     // No longer connected to vtube studio or model
                     if app_data.active_overlay_count == 0 {
                         app_data.vtube_studio_connected = false;
+                        app_data.vtube_studio_auth = false;
                         app_data.model_id = None;
                     }
                 })

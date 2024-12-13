@@ -12,12 +12,14 @@ import {
 import { createEventSource, EventSourceData } from "./vtftk/events";
 import { getCalibrationData, updateRuntimeData } from "./vtftk/api";
 import { RuntimeAppData } from "./vtftk/types";
+import { attemptAuthorization } from "./vtube-studio/auth";
 
 async function load() {
   // Tell the backend we aren't connected
   await updateRuntimeData({
     model_id: null,
     vtube_studio_connected: false,
+    vtube_studio_auth: false,
   });
 
   const appData = await getAppData();
@@ -51,20 +53,30 @@ async function load() {
 
   // Run when the socket is connected
   vtSocket.onConnected = async () => {
-    // Tell the backend we aren't connected
+    // Tell the backend we are connected
     updateRuntimeData({
       model_id: null,
       vtube_studio_connected: true,
+      vtube_studio_auth: false,
     });
+
+    // Make a login attempt
+    await attemptAuthorization(vtSocket);
+
+    // Tell the backend we are authenticated
+    updateRuntimeData({
+      vtube_studio_auth: true,
+    });
+
+    console.debug("VTube studio authorization complete");
 
     console.debug("Connected to VTube studio");
 
     const { modelID } = await requestCurrentModel(vtSocket);
 
-    // Tell the backend we aren't connected
+    // Update the current active model
     updateRuntimeData({
       model_id: modelID,
-      vtube_studio_connected: true,
     });
 
     // Only needs to be done on initial load, can be stored until next refresh
@@ -81,6 +93,8 @@ async function load() {
     updateRuntimeData({
       model_id: null,
       vtube_studio_connected: false,
+      vtube_studio_auth: false,
+      hotkeys: [],
     });
   };
 

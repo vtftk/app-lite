@@ -85,33 +85,41 @@
       <div class="status-text">
         <h2>VTube Studio</h2>
 
-        {#if $runtimeAppData.vtube_studio_connected && $isModelCalibrated}
-          <p>
-            Connected to VTube studio, model is calibrated. Ready to throw items
-          </p>
+        {#if $runtimeAppData.vtube_studio_connected}
+          <p>Connected to VTube studio.</p>
 
-          <div class="actions">
-            <a class="btn" href="/calibration">Recalibrate Model</a>
-          </div>
-        {:else if $runtimeAppData.vtube_studio_connected}
-          <p>
-            Connected to VTube studio.
+          {#if $runtimeAppData.vtube_studio_auth}
+            <p>Authenticated</p>
 
-            <br />
+            {#if $isModelCalibrated}
+              <p>
+                Connected to VTube studio, model is calibrated. Ready to throw
+                items
+              </p>
 
-            <span class="warning">
-              Current model is not calibrated, you must calibrate your model in
-              order to throw items.
-            </span>
-          </p>
+              <div class="actions">
+                <a class="btn" href="/calibration">Recalibrate Model</a>
+              </div>
+            {:else}
+              <span class="warning">
+                Current model is not calibrated, you must calibrate your model
+                in order to throw items.
+              </span>
 
-          <div class="actions">
-            <a class="btn" href="/calibration">Calibrate Model</a>
-          </div>
+              <div class="actions">
+                <a class="btn" href="/calibration">Calibrate Model</a>
+              </div>
+            {/if}
+          {:else}
+            <p>
+              Not Authenticated, please accept the access request prompt within
+              VTube Studio
+            </p>
+          {/if}
         {:else}
           <p>
-            Not connected to VTube studio, throwing items will not work. <br /> Ensure
-            you have the overlay setup in OBS and authorized in VTube Studio
+            Not connected to VTube studio, throwing items will not work. <br />
+            Ensure you have the overlay setup in OBS and authorized in VTube Studio
           </p>
         {/if}
       </div>
@@ -119,7 +127,7 @@
       <div
         class="status-indicator"
         data-status={$runtimeAppData.vtube_studio_connected
-          ? $isModelCalibrated
+          ? $isModelCalibrated && $runtimeAppData.vtube_studio_auth
             ? "green"
             : "orange"
           : "red"}
@@ -202,7 +210,7 @@
   .status {
     display: flex;
     flex-flow: column;
-    gap: 0.5rem;
+    gap: 1rem;
     margin: 0.5rem 0;
   }
 
@@ -215,7 +223,7 @@
     display: flex;
     border: 1px solid #333;
     justify-content: space-between;
-    padding: 0.5rem;
+    padding: 1rem;
     align-items: center;
     border-radius: 0.5rem;
   }

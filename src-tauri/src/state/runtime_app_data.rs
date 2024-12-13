@@ -58,6 +58,9 @@ pub struct RuntimeAppData {
     /// vtube studio connection state
     pub vtube_studio_connected: bool,
 
+    /// VTube studio authentication state
+    pub vtube_studio_auth: bool,
+
     /// Current hotkey list from vtube studio
     pub hotkeys: Vec<VTubeStudioHotkey>,
 
@@ -78,6 +81,7 @@ pub struct UpdateRuntimeAppData {
     #[serde(default, deserialize_with = "deserialize_some")]
     pub model_id: Option<Option<String>>,
     pub vtube_studio_connected: Option<bool>,
+    pub vtube_studio_auth: Option<bool>,
     pub hotkeys: Option<Vec<VTubeStudioHotkey>>,
 }
 
