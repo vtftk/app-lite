@@ -1,9 +1,9 @@
-use std::{path::Display, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
 use log::error;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use tokio::{
     join,
@@ -411,7 +411,7 @@ impl TwitchManager {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(unused)]
 pub struct TwitchEventUser {
     pub id: UserId,

@@ -158,6 +158,7 @@ pub fn run() {
             commands::events::create_event,
             commands::events::update_event,
             commands::events::delete_event,
+            commands::events::test_event_by_id,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

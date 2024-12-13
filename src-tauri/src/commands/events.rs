@@ -2,13 +2,19 @@
 //!
 //! Commands for interacting with events from the frontend
 
-use crate::database::entity::{
-    events::{CreateEvent, UpdateEvent},
-    EventModel,
+use crate::events::outcome::produce_outcome_message;
+use crate::events::EventMessage;
+use crate::{
+    database::entity::{
+        events::{CreateEvent, UpdateEvent},
+        EventModel,
+    },
+    events::matching::EventData,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
 use tauri::State;
+use tokio::sync::broadcast;
 use uuid::Uuid;
 
 use super::CmdResult;
@@ -66,5 +72,25 @@ pub async fn delete_event(event_id: Uuid, db: State<'_, DatabaseConnection>) -> 
         .await?
         .context("event not found")?;
     event.delete(db).await?;
+    Ok(())
+}
+
+/// Get a specific event by ID
+#[tauri::command]
+pub async fn test_event_by_id(
+    event_id: Uuid,
+    event_data: EventData,
+
+    db: State<'_, DatabaseConnection>,
+    event_sender: State<'_, broadcast::Sender<EventMessage>>,
+) -> CmdResult<()> {
+    let db = db.inner();
+    let event = EventModel::get_by_id(db, event_id)
+        .await?
+        .context("unknown event")?;
+
+    let msg = produce_outcome_message(db, event_data, event.outcome).await?;
+    _ = event_sender.send(msg);
+
     Ok(())
 }

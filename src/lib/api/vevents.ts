@@ -3,6 +3,7 @@ import type {
   VEvent as Event,
   UpdateEvent,
   CreateEvent,
+  VEventData,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -86,6 +87,10 @@ export function bulkCreateEventMutation() {
 
 function updateEvent(eventId: EventId, update: UpdateEvent["update"]) {
   return invoke<Event>("update_event", { eventId, update });
+}
+
+export function testEvent(eventId: EventId, eventData: VEventData) {
+  return invoke<Event>("test_event_by_id", { eventId, eventData });
 }
 
 export function updateEventMutation() {

@@ -1,6 +1,6 @@
 use log::error;
 use sea_orm::DatabaseConnection;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::join;
 use twitch_api::{eventsub::channel::chat::Fragment, types::SubscriptionTier};
 
@@ -52,7 +52,7 @@ pub struct ScriptWithContext {
     pub event: ScriptEvent,
 }
 
-#[derive(Default, Debug, Clone, Serialize)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct EventData {
     /// User who triggered the event
     pub user: Option<TwitchEventUser>,
@@ -63,7 +63,7 @@ pub struct EventData {
 }
 
 /// Additional event-specific input data
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum EventInputData {
     /// No additional input data

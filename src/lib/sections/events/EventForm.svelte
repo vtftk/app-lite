@@ -26,8 +26,12 @@
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import { toast } from "svelte-sonner";
   import SoundSelect from "./SoundSelect.svelte";
-  import { createEventMutation, updateEventMutation } from "$lib/api/vevents";
-  import type { VEvent } from "$shared/dataV2";
+  import {
+    createEventMutation,
+    testEvent,
+    updateEventMutation,
+  } from "$lib/api/vevents";
+  import type { EventInputData, VEvent, VEventData } from "$shared/dataV2";
   import { Tabs } from "bits-ui";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
@@ -45,6 +49,8 @@
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
+  import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: VEvent;
@@ -434,6 +440,46 @@
       content: playSoundOutcomeContent,
     },
   ]);
+
+  function onTest() {
+    if (existing === undefined) return;
+
+    let eventData: VEventData = {
+      user: {
+        id: "test_user",
+        name: "test_user",
+        display_name: "TestTwitchUser",
+      },
+    };
+
+    switch ($data.outcome.type) {
+      case EventOutcomeType.ThrowBits: {
+        eventData = {
+          user: {
+            id: "test_user",
+            name: "test_user",
+            display_name: "TestTwitchUser",
+          },
+          bits: 100,
+          anonymous: false,
+          message: "Wooo bits!",
+        };
+        break;
+      }
+      default:
+        break;
+    }
+
+    console.log(eventData);
+
+    const throwPromise = testEvent(existing.id, eventData);
+
+    toast.promise(throwPromise, {
+      loading: "Sending barrage...",
+      success: "Threw barrage",
+      error: toastErrorMessage("Failed to test event"),
+    });
+  }
 </script>
 
 {#snippet redeemContent()}
@@ -593,6 +639,12 @@
 
 <form use:form>
   {#snippet actions()}
+    {#if existing}
+      <button type="button" class="btn" onclick={onTest}>
+        <BallIcon /> Test
+      </button>
+    {/if}
+
     <button type="submit" class="btn">{existing ? "Save" : "Create"}</button>
     <a type="button" class="btn" href="/events">Back</a>
   {/snippet}

@@ -178,3 +178,63 @@ export type UpdateEvent = {
     order: number;
   }>;
 };
+
+export type VEventData = {
+  user: {
+    id: string;
+    name: string;
+    display_name: string;
+  } | null;
+} & EventInputData;
+
+export type EventInputData =
+  | EventInputDataNone
+  | EventInputDataRedeem
+  | EventInputDataBits
+  | EventInputDataSubscription
+  | EventInputDataGiftedSubscription
+  | EventInputDataReSubscription
+  | EventInputDataChat;
+
+export type EventInputDataNone = {};
+export type EventInputDataRedeem = {
+  reward_id: string;
+  reward_name: string;
+  cost: number;
+  user_input: string;
+};
+export type EventInputDataBits = {
+  bits: number;
+  anonymous: boolean;
+  message: string;
+};
+
+export enum SubscriptionTier {
+  Tier1 = "1000",
+  Tier2 = "2000",
+  Tier3 = "3000",
+  Prime = "Prime",
+}
+
+export type EventInputDataSubscription = {
+  tier: SubscriptionTier;
+  is_gift: boolean;
+};
+export type EventInputDataGiftedSubscription = {
+  tier: SubscriptionTier;
+  cumulative_total: number | null;
+  anonymous: boolean;
+  total: number;
+};
+export type EventInputDataReSubscription = {
+  cumulative_months: number;
+  duration_months: number;
+  message: string;
+  streak_months: number | null;
+  tier: SubscriptionTier;
+};
+export type EventInputDataChat = {
+  message: string;
+  fragments: any[];
+  cheer: number | null;
+};
