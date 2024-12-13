@@ -13,6 +13,7 @@
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
   import Sidebar from "$lib/components/nav/Sidebar.svelte";
+  import AppToaster from "$lib/components/AppToaster.svelte";
 </script>
 
 <!-- Global query client context -->
@@ -27,14 +28,7 @@
 </QueryClientProvider>
 
 <!-- Toast popup provider -->
-<Toaster
-  theme="dark"
-  richColors
-  closeButton
-  position="bottom-center"
-  visibleToasts={3}
-  duration={1000}
-/>
+<AppToaster />
 
 <style>
   .main {

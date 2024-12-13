@@ -4,6 +4,7 @@
   import type { Item } from "$shared/dataV2";
   import { Checkbox, Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
+  import SearchInput from "../form/SearchInput.svelte";
 
   type Props = {
     selected: string[];
@@ -12,12 +13,29 @@
 
   const { selected, onChangeSelect }: Props = $props();
 
+  let search = $state("");
+
+  $effect(() => {
+    console.log(search);
+  });
+
   const itemsQuery = createItemsQuery();
 
-  const items = $derived($itemsQuery.data ?? []);
-  const selectedOptions = $derived(
-    items.filter((item) => selected.includes(item.id))
-  );
+  const items = $derived(filterOptionsSearch($itemsQuery.data ?? [], search));
+  const selectedOptions = $derived(filterOptionsSelected(items, selected));
+
+  function filterOptionsSelected(options: Item[], selected: string[]) {
+    return options.filter((option) => selected.includes(option.id));
+  }
+
+  function filterOptionsSearch(options: Item[], search: string) {
+    search = search.trim().toLowerCase();
+
+    return options.filter((option) => {
+      const name = option.name.trim().toLowerCase();
+      return name.startsWith(search) || name.includes(search);
+    });
+  }
 
   const onSelectItem = (item: Item) => {
     if (selected.includes(item.id)) {
@@ -70,6 +88,8 @@
             {/if}
           </Checkbox.Indicator>
         </Checkbox.Root>
+
+        <SearchInput bind:value={search} placeholder="Search" />
       </div>
 
       <div class="throwable-table-wrapper">
@@ -151,7 +171,12 @@
   }
 
   .selection {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
     padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
   }
 
   .items {
@@ -203,6 +228,7 @@
     max-height: 300px;
     overflow-y: auto;
     width: 100%;
+    min-height: 300px;
   }
 
   .item {
