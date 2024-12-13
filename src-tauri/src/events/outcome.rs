@@ -10,6 +10,7 @@ use crate::{
             BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound,
             EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
         },
+        items::ThrowableImageConfig,
         ItemModel, SoundModel,
     },
     state::app_data::{ItemWithImpactSoundIds, ThrowableConfig},
@@ -41,7 +42,7 @@ async fn throw_bits_outcome(
     data: EventOutcomeBits,
 ) -> anyhow::Result<EventMessage> {
     let input = match event_data.input_data {
-        EventInputData::Bits { bits, .. } => bits as u32,
+        EventInputData::Bits { bits, .. } => bits,
         _ => {
             return Err(anyhow!(
                 "unexpected event input, throw bits requires bit count"
@@ -73,13 +74,14 @@ async fn throw_bits_outcome(
         }
     }
 
-    let bit_icon = bit_icon.context("no bit icon available")?;
-
-    let throwable_config = create_throwable_config(db, &[bit_icon]).await?;
+    let throwable_config = match bit_icon {
+        Some(bit_icon) => create_throwable_config(db, &[bit_icon]).await?,
+        None => create_default_bit_throwable(input),
+    };
 
     let amount = match data.amount {
-        BitsAmount::Dynamic { max_amount } => input.min(max_amount),
-        BitsAmount::Fixed { amount } => amount,
+        BitsAmount::Dynamic { max_amount } => input.min(max_amount as i64) as u32,
+        BitsAmount::Fixed { amount } => amount as u32,
     };
 
     Ok(EventMessage::ThrowItem {
@@ -174,4 +176,77 @@ pub async fn create_throwable_config(
         items,
         impact_sounds,
     })
+}
+
+// Default sound file names
+#[rustfmt::skip]
+const DEFAULT_SOUND_FILES: &[(&str, &str)] = &[
+    ("Seq 2.1 Hit #1 96 HK1", "Seq_2_1_Hit_1_96_HK1.wav"),
+    ("Seq 2.1 Hit #2 96 HK1", "Seq_2_1_Hit_2_96_HK1.wav"),
+    ("Seq 2.1 Hit #3 96 HK1", "Seq_2_1_Hit_3_96_HK1.wav"),
+    ("Seq 2.27 Hit #1 96 HK1", "Seq_2_27_Hit_1_96_HK1.wav"),
+    ("Seq 2.27 Hit #2 96 HK1", "Seq_2_27_Hit_2_96_HK1.wav"),
+    ("Seq 2.27 Hit #3 96 HK1", "Seq_2_27_Hit_3_96_HK1.wav"),
+    ("Seq1.15 Hit #1 96 HK1", "Seq1_15_Hit_1_96_HK1.wav"),
+    ("Seq1.15 Hit #2 96 HK1", "Seq1_15_Hit_2_96_HK1.wav"),
+    ("Seq1.15 Hit #3 96 HK1", "Seq1_15_Hit_3_96_HK1.wav"),
+];
+
+pub fn create_default_bit_throwable(amount: i64) -> ThrowableConfig {
+    // Get the general bit category
+    let bit_index: usize = match amount {
+        1..=99 => 0,
+        100..=999 => 1,
+        1000..=4999 => 2,
+        5000..=9999 => 3,
+        _ => 4,
+    };
+
+    let bit_file_name = match bit_index {
+        0 => "1.png",
+        1 => "100.png",
+        2 => "1000.png",
+        3 => "5000.png",
+        _ => "10000.png",
+    };
+
+    let bit_src = format!("backend://defaults/bits/{bit_file_name}");
+
+    // Create sounds from builtins
+    let impact_sounds: Vec<SoundModel> = DEFAULT_SOUND_FILES
+        .iter()
+        .map(|(name, file_name)| SoundModel {
+            id: Uuid::new_v4(),
+            name: name.to_string(),
+            src: format!("backend://defaults/sounds/{file_name}"),
+            volume: 1.,
+            order: 0,
+        })
+        .collect();
+
+    let impact_sound_ids: Vec<Uuid> = impact_sounds.iter().map(|sound| sound.id).collect();
+
+    let item = ItemModel {
+        id: Uuid::new_v4(),
+        name: "<builtin-bits>".to_string(),
+        image: ThrowableImageConfig {
+            src: bit_src,
+            pixelate: false,
+            scale: 1.0,
+            weight: 1.0,
+        },
+        order: 0,
+    };
+
+    let item = ItemWithImpactSoundIds {
+        item,
+        impact_sound_ids,
+    };
+
+    let items = vec![item];
+
+    ThrowableConfig {
+        items,
+        impact_sounds,
+    }
 }

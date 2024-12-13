@@ -460,7 +460,7 @@
             name: "test_user",
             display_name: "TestTwitchUser",
           },
-          bits: 100,
+          bits: 1000,
           anonymous: false,
           message: "Wooo bits!",
         };
