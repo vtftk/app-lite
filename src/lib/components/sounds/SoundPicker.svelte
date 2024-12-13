@@ -5,6 +5,7 @@
   import getBackendURL from "$lib/utils/url";
   import type { Sound } from "$shared/dataV2";
   import { createSoundsQuery } from "$lib/api/sounds";
+  import SearchInput from "../form/SearchInput.svelte";
 
   type Props = {
     selected: string[];
@@ -12,12 +13,25 @@
 
   let { selected = $bindable() }: Props = $props();
 
+  let search = $state("");
+
   const soundsQuery = createSoundsQuery();
 
-  const sounds = $derived($soundsQuery.data ?? []);
-  const selectedOptions = $derived(
-    sounds.filter((sound) => selected.includes(sound.id))
-  );
+  const sounds = $derived(filterOptionsSearch($soundsQuery.data ?? [], search));
+  const selectedOptions = $derived(filterOptionsSelected(sounds, selected));
+
+  function filterOptionsSelected(options: Sound[], selected: string[]) {
+    return options.filter((option) => selected.includes(option.id));
+  }
+
+  function filterOptionsSearch(options: Sound[], search: string) {
+    search = search.trim().toLowerCase();
+
+    return options.filter((option) => {
+      const name = option.name.trim().toLowerCase();
+      return name.startsWith(search) || name.includes(search);
+    });
+  }
 
   const onSelectSound = (sound: Sound) => {
     if (selected.includes(sound.id)) {
@@ -49,6 +63,10 @@
       </Dialog.Description>
 
       <Separator.Root />
+
+      <div class="selection">
+        <SearchInput bind:value={search} placeholder="Search" />
+      </div>
 
       <div class="sound-table-wrapper">
         <table class="sound-table">
@@ -156,9 +174,18 @@
     white-space: nowrap;
   }
 
+  .selection {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
+  }
+
   .sound-table-wrapper {
-    padding: 1rem;
     max-height: 300px;
+    min-height: 300px;
     overflow-y: auto;
     width: 100%;
   }

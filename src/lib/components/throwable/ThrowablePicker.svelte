@@ -15,10 +15,6 @@
 
   let search = $state("");
 
-  $effect(() => {
-    console.log(search);
-  });
-
   const itemsQuery = createItemsQuery();
 
   const items = $derived(filterOptionsSearch($itemsQuery.data ?? [], search));
