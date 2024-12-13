@@ -15,6 +15,7 @@ export class VTubeStudioWebSocket {
   private websocket: WebSocket | null;
   private requestID: number;
   private requestHandlers: Map<number, PromiseExecutor>;
+  private authenticated: boolean;
 
   onDisconnect: VoidFunction | undefined;
   onConnected: VoidFunction | undefined;
@@ -25,6 +26,15 @@ export class VTubeStudioWebSocket {
     this.websocket = null;
     this.requestID = 0;
     this.requestHandlers = new Map();
+    this.authenticated = false;
+  }
+
+  getAuthenticated(): boolean {
+    return this.authenticated;
+  }
+
+  setAuthenticated(authenticated: boolean) {
+    this.authenticated = authenticated;
   }
 
   isConnected(): boolean {

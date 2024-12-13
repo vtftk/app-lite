@@ -5,6 +5,8 @@ use deno_core::extension;
 fn main() {
     tauri_build::build();
 
+    println!("cargo:rerun-if-changed=../overlay/index.html");
+
     create_runtime_snapshot();
 }
 

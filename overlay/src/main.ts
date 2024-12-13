@@ -53,6 +53,8 @@ async function load() {
 
   // Run when the socket is connected
   vtSocket.onConnected = async () => {
+    vtSocket.setAuthenticated(false);
+
     // Tell the backend we are connected
     updateRuntimeData({
       model_id: null,
@@ -62,6 +64,8 @@ async function load() {
 
     // Make a login attempt
     await attemptAuthorization(vtSocket);
+
+    vtSocket.setAuthenticated(true);
 
     // Tell the backend we are authenticated
     updateRuntimeData({
@@ -96,6 +100,8 @@ async function load() {
       vtube_studio_auth: false,
       hotkeys: [],
     });
+
+    vtSocket.setAuthenticated(false);
   };
 
   vtSocket.connect();
@@ -106,6 +112,7 @@ async function reportCurrentRuntimeData(vtSocket: VTubeStudioWebSocket) {
 
   if (vtSocket.isConnected()) {
     runtimeData.vtube_studio_connected = true;
+    runtimeData.vtube_studio_auth = vtSocket.getAuthenticated();
 
     try {
       const { modelID } = await requestCurrentModel(vtSocket);
