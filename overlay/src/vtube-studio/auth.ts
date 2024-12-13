@@ -1,4 +1,5 @@
-import { pluginDeveloper, pluginIcon, pluginName } from "./constants";
+import { getVTFTKLogo } from "../vtftk/api";
+import { pluginDeveloper, pluginName } from "./constants";
 import { InvalidMessageTypeError } from "./error";
 import { createVTubeMessage } from "./message";
 import { VTubeStudioWebSocket } from "./socket";
@@ -45,6 +46,7 @@ export async function attemptAuthorization(
 async function requestAuthenticationToken(
   socket: VTubeStudioWebSocket
 ): Promise<string> {
+  const pluginIcon = await getVTFTKLogo();
   const request = createVTubeMessage("AuthenticationTokenRequest", {
     pluginName,
     pluginDeveloper,

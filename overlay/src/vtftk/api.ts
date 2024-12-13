@@ -1,4 +1,5 @@
 import { BACKEND_HTTP } from "../constants";
+import { base64ArrayBuffer } from "../utils/base64";
 import { CalibrationStepData } from "./calibration-types";
 import { ModelData, RuntimeAppData } from "./types";
 
@@ -27,4 +28,10 @@ export async function updateRuntimeData(body: Partial<RuntimeAppData>) {
   } catch (e) {
     console.error("failed to set runtime data", e);
   }
+}
+
+export async function getVTFTKLogo(): Promise<string> {
+  const response = await fetch(new URL("/overlay/icon", BACKEND_HTTP));
+  const arrayBuffer = await response.arrayBuffer();
+  return base64ArrayBuffer(arrayBuffer);
 }
