@@ -181,6 +181,13 @@ function createScopedCounter(key) {
       update(scope, (value) => value + (amount ?? 1)),
     decrease: (scope, amount) =>
       update(scope, (value) => value - (amount ?? 1)),
+    all: async () => {
+      const objectValue = await kvGetObject(key, {});
+      return Object.entries(objectValue).map(([scope, amount]) => ({
+        scope,
+        amount,
+      }));
+    },
   };
 }
 

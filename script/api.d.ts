@@ -142,6 +142,12 @@ declare global {
     set: (scope: string, value: number) => Promise<void>;
     increase: (scope: string, amount?: number) => Promise<number>;
     decrease: (scope: string, amount?: number) => Promise<number>;
+    all: () => Promise<ScopedCounterEntry[]>;
+  }
+
+  export interface ScopedCounterEntry {
+    scope: string;
+    amount: number;
   }
 
   interface TtsGenerateRequest {
