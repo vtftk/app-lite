@@ -27,6 +27,13 @@ declare global {
   // Global API access
   export const api: RuntimeApi;
 
+  export type TwitchAnnouncementColor =
+    | "blue"
+    | "green"
+    | "orange"
+    | "purple"
+    | "primary";
+
   export interface RuntimeTwitchApi {
     /**
      * Send a chat message to twitch
@@ -35,6 +42,11 @@ declare global {
      * @returns Promise resolved when the message has sent
      */
     sendChat: (message: string) => Promise<void>;
+
+    sendChatAnnouncement: (
+      message: string,
+      color?: TwitchAnnouncementColor
+    ) => Promise<void>;
 
     /**
      * Checks if the user is a vip on the twitch channel

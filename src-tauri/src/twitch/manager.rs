@@ -18,9 +18,13 @@ use twitch_api::{
             subscription::message::SubscriptionMessage,
         },
     },
+    extra::AnnouncementColor,
     helix::{
         channels::Vip,
-        chat::{SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse},
+        chat::{
+            SendChatAnnouncementBody, SendChatAnnouncementRequest, SendChatAnnouncementResponse,
+            SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse,
+        },
         moderation::Moderator,
         points::CustomReward,
     },
@@ -110,6 +114,32 @@ impl TwitchManager {
 
         // Send request and get response
         let response: SendChatMessageResponse = self
+            .helix_client
+            .req_post(request, body, &token)
+            .await?
+            .data;
+
+        Ok(response)
+    }
+
+    pub async fn send_chat_announcement_message(
+        &self,
+        message: String,
+        color: String,
+    ) -> anyhow::Result<SendChatAnnouncementResponse> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let user_id = token.user_id.clone();
+
+        // Create chat message request
+        let request = SendChatAnnouncementRequest::new(user_id.clone(), user_id.clone());
+        let body = SendChatAnnouncementBody::new(message, color.as_str())
+            .context("failed to create body")?;
+
+        // Send request and get response
+        let response: SendChatAnnouncementResponse = self
             .helix_client
             .req_post(request, body, &token)
             .await?

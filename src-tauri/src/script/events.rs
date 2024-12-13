@@ -138,6 +138,32 @@ impl Handler<TwitchIsVip> for ScriptEventActor {
     }
 }
 
+/// Message to trigger sending a message to Twitch chat
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TwitchSendChatAnnouncement {
+    pub message: String,
+    pub color: String,
+}
+
+impl Handler<TwitchSendChatAnnouncement> for ScriptEventActor {
+    type Response = Fr<TwitchSendChatAnnouncement>;
+
+    fn handle(
+        &mut self,
+        msg: TwitchSendChatAnnouncement,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            _ = twitch_manager
+                .send_chat_announcement_message(msg.message, msg.color)
+                .await?;
+            Ok(())
+        })
+    }
+}
+
 /// Message to set a key value on the key value store
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]

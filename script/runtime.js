@@ -195,6 +195,11 @@ function createScopedCounter(key) {
 const api = {
   twitch: {
     sendChat: (message) => Deno.core.ops.op_twitch_send_chat(message),
+    sendChatAnnouncement: (message, color) =>
+      Deno.core.ops.op_twitch_send_chat_announcement(
+        message,
+        color ?? "primary"
+      ),
     isModerator: (userId) => Deno.core.ops.op_twitch_is_mod(userId),
     isVip: (userId) => Deno.core.ops.op_twitch_is_vip(userId),
     getUsernameArg: (arg) => getUsernameArg(arg),
