@@ -13,6 +13,7 @@
     "rtype",
     "rustls",
     "serde",
+    "Shoutout",
     "sonner",
     "sqlx",
     "staticlib",

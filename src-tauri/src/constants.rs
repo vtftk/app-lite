@@ -25,6 +25,10 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::ChannelReadVips,
     // Send chat messages
     Scope::UserWriteChat,
+    // Allows sending shoutouts from the scripting API
+    Scope::ModeratorManageShoutouts,
+    // Allow sending chat announcements
+    Scope::ModeratorManageAnnouncements,
 ];
 
 /// Port to run the local server on

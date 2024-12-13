@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Display, sync::Arc};
 
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
@@ -18,15 +18,16 @@ use twitch_api::{
             subscription::message::SubscriptionMessage,
         },
     },
-    extra::AnnouncementColor,
     helix::{
         channels::Vip,
         chat::{
-            SendChatAnnouncementBody, SendChatAnnouncementRequest, SendChatAnnouncementResponse,
-            SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse,
+            SendAShoutoutRequest, SendAShoutoutResponse, SendChatAnnouncementBody,
+            SendChatAnnouncementRequest, SendChatAnnouncementResponse, SendChatMessageBody,
+            SendChatMessageRequest, SendChatMessageResponse,
         },
         moderation::Moderator,
         points::CustomReward,
+        EmptyBody,
     },
     twitch_oauth2::{AccessToken, UserToken},
     types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
@@ -65,6 +66,15 @@ enum TwitchManagerState {
     Initial,
     // Twitch is authenticated
     Authenticated(TwitchManagerStateAuthenticated),
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TwitchUser {
+    pub id: UserId,
+    pub name: UserName,
+    pub display_name: DisplayName,
+    pub profile_image_url: Option<String>,
 }
 
 impl TwitchManager {
@@ -142,6 +152,46 @@ impl TwitchManager {
         let response: SendChatAnnouncementResponse = self
             .helix_client
             .req_post(request, body, &token)
+            .await?
+            .data;
+
+        Ok(response)
+    }
+
+    pub async fn get_user_by_username(&self, username: &str) -> anyhow::Result<Option<TwitchUser>> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        let user = self
+            .helix_client
+            .get_user_from_login(username, &token)
+            .await?;
+
+        Ok(user.map(|user| TwitchUser {
+            id: user.id,
+            name: user.login,
+            display_name: user.display_name,
+            profile_image_url: user.profile_image_url,
+        }))
+    }
+
+    pub async fn send_shoutout(
+        &self,
+        target_user_id: UserId,
+    ) -> anyhow::Result<SendAShoutoutResponse> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let user_id = token.user_id.clone();
+
+        // Create chat message request
+        let request = SendAShoutoutRequest::new(user_id.clone(), target_user_id, user_id.clone());
+
+        // Send request and get response
+        let response: SendAShoutoutResponse = self
+            .helix_client
+            .req_post(request, EmptyBody, &token)
             .await?
             .data;
 

@@ -16,7 +16,7 @@ use crate::{
         tts_monster_generate, tts_monster_generate_parsed, tts_monster_get_voices, GenerateRequest,
         GenerateResponse, Voice,
     },
-    twitch::manager::TwitchManager,
+    twitch::manager::{TwitchManager, TwitchUser},
 };
 
 /// Current global instance of the script event actor
@@ -138,7 +138,7 @@ impl Handler<TwitchIsVip> for ScriptEventActor {
     }
 }
 
-/// Message to trigger sending a message to Twitch chat
+/// Message to trigger sending an announcement message to Twitch chat
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]
 pub struct TwitchSendChatAnnouncement {
@@ -159,6 +159,52 @@ impl Handler<TwitchSendChatAnnouncement> for ScriptEventActor {
             _ = twitch_manager
                 .send_chat_announcement_message(msg.message, msg.color)
                 .await?;
+            Ok(())
+        })
+    }
+}
+
+/// Message to get a twitch user using their username
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<Option<TwitchUser>>")]
+pub struct TwitchGetUserByUsername {
+    pub username: String,
+}
+
+impl Handler<TwitchGetUserByUsername> for ScriptEventActor {
+    type Response = Fr<TwitchGetUserByUsername>;
+
+    fn handle(
+        &mut self,
+        msg: TwitchGetUserByUsername,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            let user = twitch_manager.get_user_by_username(&msg.username).await?;
+            Ok(user)
+        })
+    }
+}
+
+/// Message to send a shoutout to a user
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TwitchSendShoutout {
+    pub user_id: UserId,
+}
+
+impl Handler<TwitchSendShoutout> for ScriptEventActor {
+    type Response = Fr<TwitchSendShoutout>;
+
+    fn handle(
+        &mut self,
+        msg: TwitchSendShoutout,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            _ = twitch_manager.send_shoutout(msg.user_id).await?;
             Ok(())
         })
     }

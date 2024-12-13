@@ -34,6 +34,15 @@ declare global {
     | "purple"
     | "primary";
 
+  type UserId = string;
+
+  export interface TwitchUser {
+    id: UserId;
+    name: string;
+    displayName: string;
+    profileImageUrl: string;
+  }
+
   export interface RuntimeTwitchApi {
     /**
      * Send a chat message to twitch
@@ -48,13 +57,17 @@ declare global {
       color?: TwitchAnnouncementColor
     ) => Promise<void>;
 
+    getUserByUsername: (username: string) => Promise<TwitchUser>;
+
+    sendShoutout: (targetUserId: UserId) => Promise<void>;
+
     /**
      * Checks if the user is a vip on the twitch channel
      *
      * @param userId The ID of the user
      * @returns Promise resolved with whether the user is a vip
      */
-    isVip: (userId: string) => Promise<boolean>;
+    isVip: (userId: UserId) => Promise<boolean>;
 
     /**
      * Checks if the user is a mod on the twitch channel
@@ -62,7 +75,7 @@ declare global {
      * @param userId The ID of the user
      * @returns Promise resolved with whether the user is a mod
      */
-    isModerator: (userId: string) => Promise<boolean>;
+    isModerator: (userId: UserId) => Promise<boolean>;
 
     /**
      * Validates a Twitch username, strict checks ensuring the name

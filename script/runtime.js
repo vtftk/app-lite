@@ -200,6 +200,10 @@ const api = {
         message,
         color ?? "primary"
       ),
+    getUserByUsername: (username) =>
+      Deno.core.ops.op_twitch_get_user_by_username(username),
+    sendShoutout: (targetUserId) =>
+      Deno.core.ops.op_twitch_send_shoutout(targetUserId),
     isModerator: (userId) => Deno.core.ops.op_twitch_is_mod(userId),
     isVip: (userId) => Deno.core.ops.op_twitch_is_vip(userId),
     getUsernameArg: (arg) => getUsernameArg(arg),
