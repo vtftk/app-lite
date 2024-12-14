@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { invalidateScriptLogs, scriptLogsQuery } from "$lib/api/scripts";
+  import {
+    bulkDeleteScriptLogsMutation,
+    invalidateScriptLogs,
+    scriptLogsQuery,
+  } from "$lib/api/scripts";
   import LogsTable from "$lib/components/LogsTable.svelte";
   import { type LogId, type LogsQuery, type ScriptId } from "$shared/dataV2";
   import { onMount } from "svelte";
@@ -15,11 +19,17 @@
   const logsQuery = $derived(scriptLogsQuery(id, query));
   const logs = $derived($logsQuery.data ?? []);
 
+  const bulkDeleteScriptLogs = bulkDeleteScriptLogsMutation(id);
+
   onMount(() => {
     onRefresh();
   });
 
-  async function onBulkDelete(logs: LogId[]) {}
+  async function onBulkDelete(logIds: LogId[]) {
+    await $bulkDeleteScriptLogs.mutateAsync({
+      logIds,
+    });
+  }
 
   function onRefresh() {
     invalidateScriptLogs(id, query);

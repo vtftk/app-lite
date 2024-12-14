@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { commandLogsQuery, invalidateCommandLogs } from "$lib/api/commands";
+  import {
+    bulkDeleteCommandLogsMutation,
+    commandLogsQuery,
+    invalidateCommandLogs,
+  } from "$lib/api/commands";
   import LogsTable from "$lib/components/LogsTable.svelte";
   import { type CommandId, type LogId, type LogsQuery } from "$shared/dataV2";
   import { onMount } from "svelte";
@@ -15,11 +19,17 @@
   const logsQuery = $derived(commandLogsQuery(id, query));
   const logs = $derived($logsQuery.data ?? []);
 
+  const bulkDeleteCommandLogs = bulkDeleteCommandLogsMutation(id);
+
   onMount(() => {
     onRefresh();
   });
 
-  async function onBulkDelete(logs: LogId[]) {}
+  async function onBulkDelete(logIds: LogId[]) {
+    await $bulkDeleteCommandLogs.mutateAsync({
+      logIds,
+    });
+  }
 
   function onRefresh() {
     invalidateCommandLogs(id, query);

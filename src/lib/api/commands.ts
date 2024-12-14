@@ -5,6 +5,7 @@ import type {
   CreateCommand,
   LogsQuery,
   CommandLog,
+  LogId,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -47,26 +48,6 @@ export function createCommandQuery(id: CommandId | Readable<CommandId>) {
 
 export function getCommandById(commandId: CommandId) {
   return invoke<Command | null>("get_command_by_id", { commandId });
-}
-
-function createCommandLogsKey(id: CommandId, query: LogsQuery) {
-  return ["command-logs", id, query] as const;
-}
-
-export function getCommandLogs(commandId: CommandId, query: LogsQuery) {
-  return invoke<CommandLog[]>("get_command_logs", { commandId, query });
-}
-
-export function commandLogsQuery(commandId: CommandId, query: LogsQuery) {
-  return createQuery({
-    queryKey: createCommandLogsKey(commandId, query),
-    queryFn: () => getCommandLogs(commandId, query),
-  });
-}
-
-export function invalidateCommandLogs(commandId: CommandId, query: LogsQuery) {
-  const queryKey = createCommandLogsKey(commandId, query);
-  queryClient.invalidateQueries({ queryKey });
 }
 
 function createCommand(create: CreateCommand) {
@@ -183,6 +164,60 @@ export function bulkDeleteCommandMutation() {
 
       // Invalid the list of items
       queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
+    },
+  });
+}
+
+function createCommandLogsKey(id: CommandId, query?: LogsQuery) {
+  if (query === undefined) {
+    return ["command-logs", id] as const;
+  }
+  return ["command-logs", id, query] as const;
+}
+
+export function getCommandLogs(commandId: CommandId, query: LogsQuery) {
+  return invoke<CommandLog[]>("get_command_logs", { commandId, query });
+}
+
+export function commandLogsQuery(commandId: CommandId, query: LogsQuery) {
+  return createQuery({
+    queryKey: createCommandLogsKey(commandId, query),
+    queryFn: () => getCommandLogs(commandId, query),
+  });
+}
+
+export function invalidateCommandLogs(commandId: CommandId, query: LogsQuery) {
+  const queryKey = createCommandLogsKey(commandId, query);
+  queryClient.invalidateQueries({ queryKey });
+}
+
+export function deleteCommandLogs(logIds: LogId[]) {
+  return invoke<void>("delete_command_logs", { logIds });
+}
+
+type BulkDeleteCommandLogs = {
+  logIds: LogId[];
+};
+
+export function bulkDeleteCommandLogsMutation(commandId: CommandId) {
+  return createMutation<void, Error, BulkDeleteCommandLogs>({
+    mutationFn: (deleteLogs) => deleteCommandLogs(deleteLogs.logIds),
+    onMutate: (deleteLogs) => {
+      queryClient.setQueriesData<CommandLog[]>(
+        { queryKey: createCommandLogsKey(commandId) },
+        (data) => {
+          if (data === undefined) return undefined;
+          return data.filter((log) => !deleteLogs.logIds.includes(log.id));
+        }
+      );
+
+      return undefined;
+    },
+    onSettled: (_data, _err) => {
+      // Invalid the list of items
+      queryClient.invalidateQueries({
+        queryKey: createCommandLogsKey(commandId),
+      });
     },
   });
 }

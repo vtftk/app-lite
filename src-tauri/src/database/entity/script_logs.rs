@@ -73,4 +73,15 @@ impl Model {
 
         Ok(())
     }
+
+    pub async fn delete_many<C>(db: &C, ids: &[Uuid]) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::delete_many()
+            .filter(Column::Id.is_in(ids.iter().copied()))
+            .exec(db)
+            .await?;
+        Ok(())
+    }
 }

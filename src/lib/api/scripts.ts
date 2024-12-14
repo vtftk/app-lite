@@ -5,6 +5,7 @@ import type {
   CreateScript,
   LogsQuery,
   ScriptLog,
+  LogId,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -43,26 +44,6 @@ export function createScriptQuery(id: ScriptId | Readable<ScriptId>) {
       queryFn: () => getScriptById(id),
     }))
   );
-}
-
-function createScriptLogsKey(id: ScriptId, query: LogsQuery) {
-  return ["script-logs", id, query] as const;
-}
-
-export function getScriptLogs(scriptId: ScriptId, query: LogsQuery) {
-  return invoke<ScriptLog[]>("get_script_logs", { scriptId, query });
-}
-
-export function invalidateScriptLogs(scriptId: ScriptId, query: LogsQuery) {
-  const queryKey = createScriptLogsKey(scriptId, query);
-  queryClient.invalidateQueries({ queryKey });
-}
-
-export function scriptLogsQuery(scriptId: ScriptId, query: LogsQuery) {
-  return createQuery({
-    queryKey: createScriptLogsKey(scriptId, query),
-    queryFn: () => getScriptLogs(scriptId, query),
-  });
 }
 
 export function getScriptById(scriptId: ScriptId) {
@@ -183,6 +164,61 @@ export function bulkDeleteScriptMutation() {
 
       // Invalid the list of items
       queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+    },
+  });
+}
+
+function createScriptLogsKey(id: ScriptId, query?: LogsQuery) {
+  if (query === undefined) {
+    return ["script-logs", id] as const;
+  }
+
+  return ["script-logs", id, query] as const;
+}
+
+export function getScriptLogs(scriptId: ScriptId, query: LogsQuery) {
+  return invoke<ScriptLog[]>("get_script_logs", { scriptId, query });
+}
+
+export function invalidateScriptLogs(scriptId: ScriptId, query: LogsQuery) {
+  const queryKey = createScriptLogsKey(scriptId, query);
+  queryClient.invalidateQueries({ queryKey });
+}
+
+export function scriptLogsQuery(scriptId: ScriptId, query: LogsQuery) {
+  return createQuery({
+    queryKey: createScriptLogsKey(scriptId, query),
+    queryFn: () => getScriptLogs(scriptId, query),
+  });
+}
+
+export function deleteScriptLogs(logIds: LogId[]) {
+  return invoke<void>("delete_script_logs", { logIds });
+}
+
+type BulkDeleteScriptLogs = {
+  logIds: LogId[];
+};
+
+export function bulkDeleteScriptLogsMutation(scriptId: ScriptId) {
+  return createMutation<void, Error, BulkDeleteScriptLogs>({
+    mutationFn: (deleteLogs) => deleteScriptLogs(deleteLogs.logIds),
+    onMutate: (deleteLogs) => {
+      queryClient.setQueriesData<ScriptLog[]>(
+        { queryKey: createScriptLogsKey(scriptId) },
+        (data) => {
+          if (data === undefined) return undefined;
+          return data.filter((log) => !deleteLogs.logIds.includes(log.id));
+        }
+      );
+
+      return undefined;
+    },
+    onSettled: (_data, _err) => {
+      // Invalid the list of items
+      queryClient.invalidateQueries({
+        queryKey: createScriptLogsKey(scriptId),
+      });
     },
   });
 }

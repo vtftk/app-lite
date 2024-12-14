@@ -86,3 +86,15 @@ pub async fn get_script_logs(
 
     Ok(logs)
 }
+
+#[tauri::command]
+pub async fn delete_script_logs(
+    log_ids: Vec<Uuid>,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
+    let db = db.inner();
+
+    ScriptLogsModel::delete_many(db, &log_ids).await?;
+
+    Ok(())
+}
