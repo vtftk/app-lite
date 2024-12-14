@@ -1,4 +1,6 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{prelude::*, schema::*};
+
+use super::m20241208_060200_create_commands_table::Commands;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -6,42 +8,43 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
             .create_table(
                 Table::create()
-                    .table(Post::Table)
+                    .table(CommandLogs::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Post::Id)
-                            .integer()
-                            .not_null()
-                            .auto_increment()
-                            .primary_key(),
+                    .col(pk_uuid(CommandLogs::Id))
+                    .col(uuid(CommandLogs::CommandId))
+                    .col(integer(CommandLogs::Level))
+                    .col(string(CommandLogs::Message))
+                    .col(date_time(CommandLogs::CreatedAt))
+                    // Connect to commands table
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk_command_logs_command_id")
+                            .from(CommandLogs::Table, CommandLogs::CommandId)
+                            .to(Commands::Table, Commands::Id)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(Post::Title).string().not_null())
-                    .col(ColumnDef::new(Post::Text).string().not_null())
                     .to_owned(),
             )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
-            .drop_table(Table::drop().table(Post::Table).to_owned())
+            .drop_table(Table::drop().table(CommandLogs::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Post {
+enum CommandLogs {
     Table,
     Id,
-    Title,
-    Text,
+    CommandId,
+    Level,
+    Message,
+    CreatedAt,
 }

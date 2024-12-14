@@ -69,7 +69,7 @@ deno_core::extension!(
 
 /// Context passed to the JS runtime that is tracked
 /// across async calls for handling logging sources
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum RuntimeExecutionContext {
     /// Runtime execution started from a script
     Script { script_id: Uuid },

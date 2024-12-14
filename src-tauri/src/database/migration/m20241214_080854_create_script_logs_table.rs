@@ -1,4 +1,6 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{prelude::*, schema::*};
+
+use super::m20241208_060150_create_scripts_table::Scripts;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -6,42 +8,43 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
             .create_table(
                 Table::create()
-                    .table(Post::Table)
+                    .table(ScriptLogs::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Post::Id)
-                            .integer()
-                            .not_null()
-                            .auto_increment()
-                            .primary_key(),
+                    .col(pk_uuid(ScriptLogs::Id))
+                    .col(uuid(ScriptLogs::ScriptId))
+                    .col(integer(ScriptLogs::Level))
+                    .col(string(ScriptLogs::Message))
+                    .col(date_time(ScriptLogs::CreatedAt))
+                    // Connect to scripts table
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk_script_logs_script_id")
+                            .from(ScriptLogs::Table, ScriptLogs::ScriptId)
+                            .to(Scripts::Table, Scripts::Id)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(Post::Title).string().not_null())
-                    .col(ColumnDef::new(Post::Text).string().not_null())
                     .to_owned(),
             )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
-            .drop_table(Table::drop().table(Post::Table).to_owned())
+            .drop_table(Table::drop().table(ScriptLogs::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Post {
+enum ScriptLogs {
     Table,
     Id,
-    Title,
-    Text,
+    ScriptId,
+    Level,
+    Message,
+    CreatedAt,
 }

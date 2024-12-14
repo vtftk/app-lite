@@ -24,3 +24,16 @@ pub struct MinMax<T> {
     /// Maximum value
     pub max: T,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "i32", db_type = "Integer")]
+pub enum LoggingLevelDb {
+    #[sea_orm(num_value = 0)]
+    Debug,
+    #[sea_orm(num_value = 1)]
+    Info,
+    #[sea_orm(num_value = 2)]
+    Warn,
+    #[sea_orm(num_value = 3)]
+    Error,
+}

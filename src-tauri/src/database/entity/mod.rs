@@ -1,4 +1,5 @@
 pub mod command_executions;
+pub mod command_logs;
 pub mod commands;
 pub mod event_executions;
 pub mod events;
@@ -8,6 +9,7 @@ pub mod key_value;
 pub mod links;
 pub mod model_data;
 pub mod script_events;
+pub mod script_logs;
 pub mod scripts;
 pub mod shared;
 pub mod sounds;

@@ -1,13 +1,17 @@
 use anyhow::Context;
 use interlink::prelude::*;
-use sea_orm::{DatabaseConnection, ModelTrait};
+use log::error;
+use sea_orm::{prelude::DateTimeUtc, DatabaseConnection, ModelTrait};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use twitch_api::types::UserId;
 
 use crate::{
     database::entity::{
+        command_logs::{CommandLogsModel, CreateCommandLog},
         key_value::{CreateKeyValue, KeyValueModel, KeyValueType},
+        script_logs::{CreateScriptLog, ScriptLogsModel},
+        shared::LoggingLevelDb,
         SoundModel,
     },
     events::EventMessage,
@@ -18,6 +22,8 @@ use crate::{
     },
     twitch::manager::{TwitchManager, TwitchUser},
 };
+
+use super::runtime::RuntimeExecutionContext;
 
 /// Current global instance of the script event actor
 pub static GLOBAL_SCRIPT_EVENT_ACTOR: RwLock<Option<Link<ScriptEventActor>>> =
@@ -372,5 +378,55 @@ impl Handler<TTSGenerateParsed> for ScriptEventActor {
     ) -> Self::Response {
         let app_data: AppDataStore = self.app_data.clone();
         Fr::new_box(tts_monster_generate_parsed(app_data, msg.message))
+    }
+}
+#[derive(Message)]
+#[msg(rtype = "()")]
+pub struct LogPersistEvent {
+    pub ctx: RuntimeExecutionContext,
+    pub level: LoggingLevelDb,
+    pub message: String,
+    pub created_at: DateTimeUtc,
+}
+
+impl Handler<LogPersistEvent> for ScriptEventActor {
+    type Response = Fr<LogPersistEvent>;
+
+    fn handle(&mut self, msg: LogPersistEvent, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let db = self.db.clone();
+        Fr::new_box(async move {
+            match msg.ctx {
+                RuntimeExecutionContext::Script { script_id } => {
+                    if let Err(err) = ScriptLogsModel::create(
+                        &db,
+                        CreateScriptLog {
+                            script_id,
+                            level: msg.level,
+                            message: msg.message,
+                            created_at: msg.created_at,
+                        },
+                    )
+                    .await
+                    {
+                        error!("failed to persist script log: {:?}", err);
+                    }
+                }
+                RuntimeExecutionContext::Command { command_id } => {
+                    if let Err(err) = CommandLogsModel::create(
+                        &db,
+                        CreateCommandLog {
+                            command_id,
+                            level: msg.level,
+                            message: msg.message,
+                            created_at: msg.created_at,
+                        },
+                    )
+                    .await
+                    {
+                        error!("failed to persist command log: {:?}", err);
+                    }
+                }
+            };
+        })
     }
 }
