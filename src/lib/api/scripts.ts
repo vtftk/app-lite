@@ -49,19 +49,20 @@ function createScriptLogsKey(id: ScriptId, query: LogsQuery) {
   return ["script-logs", id, query] as const;
 }
 
-type GetScriptLogs = { id: ScriptId; query: LogsQuery };
-
 export function getScriptLogs(scriptId: ScriptId, query: LogsQuery) {
   return invoke<ScriptLog[]>("get_script_logs", { scriptId, query });
 }
 
-export function scriptLogsQuery(query: Readable<GetScriptLogs>) {
-  return createQuery(
-    derived(query, ({ id, query }) => ({
-      queryKey: createScriptLogsKey(id, query),
-      queryFn: () => getScriptLogs(id, query),
-    }))
-  );
+export function invalidateScriptLogs(scriptId: ScriptId, query: LogsQuery) {
+  const queryKey = createScriptLogsKey(scriptId, query);
+  queryClient.invalidateQueries({ queryKey });
+}
+
+export function scriptLogsQuery(scriptId: ScriptId, query: LogsQuery) {
+  return createQuery({
+    queryKey: createScriptLogsKey(scriptId, query),
+    queryFn: () => getScriptLogs(scriptId, query),
+  });
 }
 
 export function getScriptById(scriptId: ScriptId) {

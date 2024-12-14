@@ -215,6 +215,9 @@ impl Model {
             select = select.limit(limit);
         }
 
-        select.all(db).await
+        select
+            .order_by(CommandLogsColumn::CreatedAt, sea_orm::Order::Desc)
+            .all(db)
+            .await
     }
 }

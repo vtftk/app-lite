@@ -5,6 +5,6 @@ export function formatDate(date: Date) {
 }
 export function formatTime(date: Date) {
   return new Intl.DateTimeFormat(undefined, {
-    timeStyle: "medium",
+    timeStyle: "short",
   }).format(date);
 }

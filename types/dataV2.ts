@@ -245,16 +245,15 @@ export type EventInputDataRaid = {
 };
 
 export type ScriptLog = {
-  id: string;
   script_id: string;
-  level: LoggingLevelStr;
-  message: string;
-  created_at: string;
-};
+} & LogData;
 
 export type CommandLog = {
-  id: string;
   command_id: string;
+} & LogData;
+
+export type LogData = {
+  id: string;
   level: LoggingLevelStr;
   message: string;
   created_at: string;

@@ -53,8 +53,6 @@ function createCommandLogsKey(id: CommandId, query: LogsQuery) {
   return ["command-logs", id, query] as const;
 }
 
-export type GetCommandLogs = { id: CommandId; query: LogsQuery };
-
 export function getCommandLogs(commandId: CommandId, query: LogsQuery) {
   return invoke<CommandLog[]>("get_command_logs", { commandId, query });
 }

@@ -20,6 +20,8 @@
   // Example code for the editor
   import exampleCode from "../../../../script/example.js?raw";
   import { createScriptMutation, updateScriptMutation } from "$lib/api/scripts";
+  import ScriptLogs from "./ScriptLogs.svelte";
+  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
 
   type Props = {
     existing?: Script;
@@ -135,7 +137,7 @@
   </div>
 
   <div class="content">
-    <Tabs.Root>
+    <Tabs.Root let:value>
       <Tabs.List>
         <Tabs.Trigger value="settings">
           <SolarSettingsBoldDuotone /> Settings
@@ -143,6 +145,11 @@
         <Tabs.Trigger value="code">
           <SolarCodeSquareBoldDuotone /> Code
         </Tabs.Trigger>
+        {#if existing !== undefined}
+          <Tabs.Trigger value="logs">
+            <SolarReorderBoldDuotone /> Logs
+          </Tabs.Trigger>
+        {/if}
       </Tabs.List>
       <Tabs.Content value="code">
         <section class="editor">
@@ -170,6 +177,13 @@
           </FormSection>
         </FormSections>
       </Tabs.Content>
+      {#if existing !== undefined}
+        <Tabs.Content value="logs">
+          {#if value === "logs"}
+            <ScriptLogs id={existing.id} />
+          {/if}
+        </Tabs.Content>
+      {/if}
     </Tabs.Root>
   </div>
 </form>

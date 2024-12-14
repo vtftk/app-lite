@@ -1,30 +1,30 @@
 <script lang="ts">
-  import { commandLogsQuery, invalidateCommandLogs } from "$lib/api/commands";
+  import { invalidateScriptLogs, scriptLogsQuery } from "$lib/api/scripts";
   import LogsTable from "$lib/components/LogsTable.svelte";
   import {
-    type CommandId,
-    type CommandLog,
     type LogsQuery,
+    type ScriptId,
+    type ScriptLog,
   } from "$shared/dataV2";
   import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
   type Props = {
-    id: CommandId;
+    id: ScriptId;
   };
 
   const { id }: Props = $props();
 
   const query: LogsQuery = $state({});
 
-  const logsQuery = $derived(commandLogsQuery(id, query));
+  const logsQuery = $derived(scriptLogsQuery(id, query));
   const logs = $derived($logsQuery.data ?? []);
 
   onMount(() => {
-    invalidateCommandLogs(id, query);
+    invalidateScriptLogs(id, query);
   });
 
-  async function onDelete(log: CommandLog) {
+  async function onDelete(log: ScriptLog) {
     if (!confirm("Are you sure you want to delete this log entry?")) {
       return;
     }
