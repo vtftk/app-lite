@@ -7,10 +7,12 @@
     }
   };
 
-  return async (ctx) => {
-    const value = await userFunction(ctx);
-    if (typeof value === "string") {
-      await api.twitch.sendChat(value);
-    }
+  return async (ctx, cmd_ctx) => {
+    _asyncLocalStorage.run(ctx, async () => {
+      const value = await userFunction(cmd_ctx);
+      if (typeof value === "string") {
+        await api.twitch.sendChat(value);
+      }
+    });
   };
-})()
+})();

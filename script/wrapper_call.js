@@ -17,24 +17,26 @@
     }
   })();
 
-  return async (type, data) => {
-    const handler = __eventHandlers[type];
+  return async (ctx, type, data) => {
+    _asyncLocalStorage.run(ctx, async () => {
+      const handler = __eventHandlers[type];
 
-    if (handler === undefined) {
-      return;
-    }
-
-    // Wait for all promises to resolve
-    const results = await Promise.allSettled(
-      handler.map((callback) => callback(data))
-    );
-
-    // Log out all failures
-    for (const result of results) {
-      if (result.status === "rejected") {
-        const reason = result.reason;
-        console.error(`Error in callback for event "${type}":`, reason);
+      if (handler === undefined) {
+        return;
       }
-    }
+
+      // Wait for all promises to resolve
+      const results = await Promise.allSettled(
+        handler.map((callback) => callback(data))
+      );
+
+      // Log out all failures
+      for (const result of results) {
+        if (result.status === "rejected") {
+          const reason = result.reason;
+          console.error(`Error in callback for event "${type}":`, reason);
+        }
+      }
+    });
   };
-})()
+})();

@@ -10,12 +10,13 @@ use deno_core::{
     v8::{self, Global, Local},
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::{
     sync::{mpsc, oneshot},
     task::{self, LocalSet},
 };
 use twitch_api::types::{DisplayName, UserId, UserName};
+use uuid::Uuid;
 
 use crate::{
     database::entity::script_events::ScriptEvent,
@@ -66,11 +67,23 @@ deno_core::extension!(
     docs = "Extension providing APIs to the JS runtime"
 );
 
+/// Context passed to the JS runtime that is tracked
+/// across async calls for handling logging sources
+#[derive(Debug, Serialize, Deserialize)]
+pub enum RuntimeExecutionContext {
+    /// Runtime execution started from a script
+    Script { script_id: Uuid },
+    /// Runtime execution started from a command
+    Command { command_id: Uuid },
+}
+
 #[derive(Debug)]
 pub enum ScriptExecutorMessage {
     /// Tell the executor to run the event callbacks in the provided code
     /// on the runtime
     EventScript {
+        /// Context for logging
+        ctx: RuntimeExecutionContext,
         /// The script code to run
         script: String,
         /// The event to trigger within the code
@@ -84,10 +97,12 @@ pub enum ScriptExecutorMessage {
     /// Tell the executor to run the event callbacks in the provided code
     /// on the runtime
     CommandScript {
+        /// Context for logging
+        ctx: RuntimeExecutionContext,
         /// The script code to run
         script: String,
         /// Context for the command run
-        ctx: CommandContext,
+        cmd_ctx: CommandContext,
         /// Channel to send back the result
         tx: oneshot::Sender<anyhow::Result<()>>,
     },
@@ -114,6 +129,7 @@ impl ScriptExecutorHandle {
     /// is linked to, returning the result
     pub async fn execute(
         &self,
+        ctx: RuntimeExecutionContext,
         script: String,
         event: ScriptEvent,
         data: EventData,
@@ -122,6 +138,7 @@ impl ScriptExecutorHandle {
 
         self.tx
             .send(ScriptExecutorMessage::EventScript {
+                ctx,
                 script,
                 event,
                 data,
@@ -133,11 +150,21 @@ impl ScriptExecutorHandle {
         rx.await.context("executor closed without response")?
     }
 
-    pub async fn execute_command(&self, script: String, ctx: CommandContext) -> anyhow::Result<()> {
+    pub async fn execute_command(
+        &self,
+        ctx: RuntimeExecutionContext,
+        script: String,
+        cmd_ctx: CommandContext,
+    ) -> anyhow::Result<()> {
         let (tx, rx) = oneshot::channel();
 
         self.tx
-            .send(ScriptExecutorMessage::CommandScript { script, ctx, tx })
+            .send(ScriptExecutorMessage::CommandScript {
+                ctx,
+                script,
+                cmd_ctx,
+                tx,
+            })
             .await
             .context("executor is not running")?;
 
@@ -222,16 +249,22 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
 
                 match msg {
                     ScriptExecutorMessage::EventScript {
+                        ctx,
                         script,
                         event,
                         data,
                         tx,
                     } => {
-                        let result = execute_script(&mut js_runtime, script, event, data);
+                        let result = execute_script(&mut js_runtime, ctx, script, event, data);
                         spawn_script_promise(&mut js_runtime, result, tx)
                     }
-                    ScriptExecutorMessage::CommandScript { script, ctx, tx } => {
-                        let result = execute_command(&mut js_runtime, script, ctx);
+                    ScriptExecutorMessage::CommandScript {
+                        ctx,
+                        script,
+                        cmd_ctx,
+                        tx,
+                    } => {
+                        let result = execute_command(&mut js_runtime, ctx, script, cmd_ctx);
                         spawn_script_promise(&mut js_runtime, result, tx)
                     }
                     ScriptExecutorMessage::EventsList { script, tx } => {
@@ -281,8 +314,9 @@ pub struct CommandContextUser {
 /// Returns a promise value that resolves when the command is complete
 fn execute_command(
     runtime: &mut JsRuntime,
+    ctx: RuntimeExecutionContext,
     script: String,
-    ctx: CommandContext,
+    cmd_ctx: CommandContext,
 ) -> anyhow::Result<v8::Global<v8::Value>> {
     let script = JS_COMMAND_WRAPPER.replace("USER_CODE;", &script);
 
@@ -302,9 +336,10 @@ fn execute_command(
             .context("wrapper didn't produce function")?;
 
         let ctx_value = to_v8(scope, ctx)?;
+        let cmd_ctx_value = to_v8(scope, cmd_ctx)?;
 
         let result = local_fn
-            .call(scope, global, &[ctx_value])
+            .call(scope, global, &[ctx_value, cmd_ctx_value])
             .context("function provided no return value")?;
         Global::new(scope, result)
     };
@@ -317,6 +352,7 @@ fn execute_command(
 /// Returns a promise value that resolves when the script is complete
 fn execute_script(
     runtime: &mut JsRuntime,
+    ctx: RuntimeExecutionContext,
     script: String,
     event: ScriptEvent,
     data: EventData,
@@ -338,11 +374,12 @@ fn execute_script(
             .try_into()
             .context("wrapper didn't produce function")?;
 
+        let ctx_value = to_v8(scope, ctx)?;
         let event_value = to_v8(scope, event)?;
         let data_value = to_v8(scope, data)?;
 
         let result = local_fn
-            .call(scope, global, &[event_value, data_value])
+            .call(scope, global, &[ctx_value, event_value, data_value])
             .context("function provided no return value")?;
         Global::new(scope, result)
     };

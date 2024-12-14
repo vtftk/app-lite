@@ -5,20 +5,51 @@
  * See api.d.ts for type definitions exposed to app
  */
 
+const { AsyncVariable, setAsyncContext } = Deno.core;
+
+// Local storage provider for tracking task execution
+export class AsyncLocalStorage {
+  #variable = new AsyncVariable();
+  enabled = false;
+
+  run(store, callback, ...args) {
+    this.enabled = true;
+    const previous = this.#variable.enter(store);
+    try {
+      return Reflect.apply(callback, null, args);
+    } finally {
+      setAsyncContext(previous);
+    }
+  }
+
+  getStore() {
+    if (!this.enabled) {
+      return undefined;
+    }
+    return this.#variable.get();
+  }
+}
+
+const asyncLocalStorage = new AsyncLocalStorage();
+
 function info(...args) {
-  Deno.core.ops.op_log_info(`${argsToMessage(...args)}\n`);
+  const ctx = asyncLocalStorage.getStore();
+  Deno.core.ops.op_log_info(ctx, `${argsToMessage(...args)}\n`);
 }
 
 function error(...args) {
-  Deno.core.ops.op_log_error(`${argsToMessage(...args)}\n`);
+  const ctx = asyncLocalStorage.getStore();
+  Deno.core.ops.op_log_error(ctx, `${argsToMessage(...args)}\n`);
 }
 
 function warn(...args) {
-  Deno.core.ops.op_log_warn(`${argsToMessage(...args)}\n`);
+  const ctx = asyncLocalStorage.getStore();
+  Deno.core.ops.op_log_warn(ctx, `${argsToMessage(...args)}\n`);
 }
 
 function debug(...args) {
-  Deno.core.ops.op_log_debug(`${argsToMessage(...args)}\n`);
+  const ctx = asyncLocalStorage.getStore();
+  Deno.core.ops.op_log_debug(ctx, `${argsToMessage(...args)}\n`);
 }
 
 function argsToMessage(...args) {
@@ -250,3 +281,5 @@ globalThis.console = {
   error,
   debug,
 };
+
+globalThis._asyncLocalStorage = asyncLocalStorage;

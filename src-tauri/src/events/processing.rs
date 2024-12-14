@@ -18,7 +18,9 @@ use crate::{
         EventModel,
     },
     events::matching::match_raid_event,
-    script::runtime::{CommandContext, CommandContextUser, ScriptExecutorHandle},
+    script::runtime::{
+        CommandContext, CommandContextUser, RuntimeExecutionContext, ScriptExecutorHandle,
+    },
     twitch::manager::{TwitchEvent, TwitchManager},
 };
 
@@ -231,7 +233,15 @@ pub async fn execute_command(
                 user,
             };
 
-            script_handle.execute_command(script, ctx).await?;
+            script_handle
+                .execute_command(
+                    RuntimeExecutionContext::Command {
+                        command_id: command.command.id,
+                    },
+                    script,
+                    ctx,
+                )
+                .await?;
         }
     }
 
@@ -256,7 +266,14 @@ pub async fn execute_script(
     event_data: EventData,
 ) -> anyhow::Result<()> {
     script_handle
-        .execute(script.script.script, script.event, event_data)
+        .execute(
+            RuntimeExecutionContext::Script {
+                script_id: script.script.id,
+            },
+            script.script.script,
+            script.event,
+            event_data,
+        )
         .await?;
     Ok(())
 }
