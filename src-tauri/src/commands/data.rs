@@ -6,9 +6,11 @@ use crate::{
         runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
     },
 };
+use anyhow::Context;
+use log::{debug, error};
 use serde::Deserialize;
-use std::path::Path;
-use tauri::{AppHandle, Manager};
+use std::{path::Path, str::FromStr};
+use tauri::{AppHandle, Manager, Url};
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
@@ -109,4 +111,44 @@ pub async fn upload_file(
     let url = format!("backend://content/{}/{}", type_folder, file_name);
 
     Ok(url)
+}
+
+pub async fn delete_src_file(url: String, app_handle: AppHandle) -> anyhow::Result<()> {
+    let url = match Url::from_str(&url) {
+        Ok(value) => value,
+        Err(err) => {
+            error!("invalid src url: {err:?}");
+            return Ok(());
+        }
+    };
+
+    // Ignore non-backend URLs
+    if url.scheme() != "backend" {
+        return Ok(());
+    }
+
+    if url.domain().is_none_or(|value| !value.eq("content")) {
+        return Ok(());
+    }
+
+    let file_path = url.path();
+
+    let app_data_path = app_handle
+        .path()
+        .app_data_dir()
+        .expect("failed to get app data dir");
+
+    let file_path = app_data_path
+        .join("content")
+        .join(file_path.strip_prefix("/").unwrap_or(file_path));
+
+    debug!("attempt delete content: {:?} {:?}", url, file_path);
+
+    if file_path.exists() {
+        tokio::fs::remove_file(file_path)
+            .await
+            .context("failed to delete file")?;
+    }
+
+    Ok(())
 }

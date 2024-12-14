@@ -2,16 +2,18 @@
 //!
 //! Commands for interacting with sounds from the frontend
 
+use std::{path::Path, str::FromStr};
+
 use crate::database::entity::{
-    sounds::{CreateSound, UpdateSound, UpdateSoundOrdering},
+    sounds::{self, CreateSound, UpdateSound, UpdateSoundOrdering},
     SoundModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
-use tauri::State;
+use tauri::{AppHandle, Manager, State, Url};
 use uuid::Uuid;
 
-use super::CmdResult;
+use super::{data::delete_src_file, CmdResult};
 
 /// Get all sounds
 #[tauri::command]
@@ -60,12 +62,22 @@ pub async fn update_sound(
 
 /// Delete a sound
 #[tauri::command]
-pub async fn delete_sound(sound_id: Uuid, db: State<'_, DatabaseConnection>) -> CmdResult<()> {
+pub async fn delete_sound(
+    sound_id: Uuid,
+    app_handle: AppHandle,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
     let db = db.inner();
     let sound = SoundModel::get_by_id(db, sound_id)
         .await?
         .context("sound not found")?;
+
+    let sound_url = sound.src.clone();
+
     sound.delete(db).await?;
+
+    delete_src_file(sound_url, app_handle).await?;
+
     Ok(())
 }
 

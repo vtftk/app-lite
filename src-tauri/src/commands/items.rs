@@ -2,16 +2,18 @@
 //!
 //! Commands for interacting with items from the frontend
 
+use std::str::FromStr;
+
 use crate::database::entity::{
     items::{CreateItem, ItemWithImpactSounds, UpdateItem, UpdateItemOrdering},
     ItemModel, SoundModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
-use tauri::State;
+use tauri::{AppHandle, Manager, State, Url};
 use uuid::Uuid;
 
-use super::CmdResult;
+use super::{data::delete_src_file, CmdResult};
 
 /// Get all items
 #[tauri::command]
@@ -121,11 +123,21 @@ pub async fn append_item_impact_sounds(
 
 /// Delete an item
 #[tauri::command]
-pub async fn delete_item(item_id: Uuid, db: State<'_, DatabaseConnection>) -> CmdResult<()> {
+pub async fn delete_item(
+    item_id: Uuid,
+    app_handle: AppHandle,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
     let db = db.inner();
     let item = ItemModel::get_by_id(db, item_id)
         .await?
         .context("item not found")?;
+
+    let item_url = item.image.src.clone();
+
     item.delete(db).await?;
+
+    delete_src_file(item_url, app_handle).await?;
+
     Ok(())
 }
