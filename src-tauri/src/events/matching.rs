@@ -8,6 +8,7 @@ use crate::{
     database::entity::{
         events::{EventTrigger, EventTriggerType},
         script_events::ScriptEvent,
+        scripts::ScriptWithEvent,
         CommandModel, EventModel, ScriptModel,
     },
     twitch::manager::{
@@ -23,8 +24,8 @@ pub struct EventMatchingData {
     /// List of events to attempt to trigger
     pub events: Vec<EventModel>,
 
-    // TODO: Future
-    pub scripts: Vec<ScriptWithContext>,
+    // List of scripts to trigger
+    pub scripts: Vec<ScriptWithEvent>,
 
     /// List of commands to trigger
     pub commands: Vec<CommandWithContext>,
@@ -42,14 +43,6 @@ pub struct CommandWithContext {
 
     /// Args with the first argument command/alias removed
     pub args: Vec<String>,
-}
-
-pub struct ScriptWithContext {
-    /// The script itself
-    pub script: ScriptModel,
-
-    /// Event that was triggered
-    pub event: ScriptEvent,
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -183,15 +176,6 @@ pub async fn match_redeem_event(
     // Get requested reward ID
     let event_reward_id = event.reward.id.to_string();
 
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::Redeem,
-        })
-        .collect();
-
     // Filter events for the matching reward ID
     let events = events
         .into_iter()
@@ -253,15 +237,6 @@ pub async fn match_cheer_bits_event(
             Default::default()
         }
     };
-
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::CheerBits,
-        })
-        .collect();
 
     // Filter events for the matching reward ID
     let events = events
@@ -325,15 +300,6 @@ pub async fn match_follow_event(
         }
     };
 
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::Follow,
-        })
-        .collect();
-
     let event_data = EventData {
         user: Some(TwitchEventUser {
             id: event.user_id,
@@ -377,15 +343,6 @@ pub async fn match_subscription_event(
             Default::default()
         }
     };
-
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::Subscription,
-        })
-        .collect();
 
     let event_data = EventData {
         input_data: EventInputData::Subscription {
@@ -433,15 +390,6 @@ pub async fn match_gifted_subscription_event(
             Default::default()
         }
     };
-
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::GiftSubscription,
-        })
-        .collect();
 
     // Create user (Bits can be anonymous)
     let user = match (event.user_id, event.user_name, event.user_display_name) {
@@ -497,15 +445,6 @@ pub async fn match_re_subscription_event(
             Default::default()
         }
     };
-
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::ReSubscription,
-        })
-        .collect();
 
     let event_data = EventData {
         input_data: EventInputData::ReSubscription {
@@ -582,15 +521,6 @@ pub async fn match_chat_event(
                 Default::default()
             }
         };
-
-        // Add context to the scripts
-        let scripts = scripts
-            .into_iter()
-            .map(|script| ScriptWithContext {
-                script,
-                event: ScriptEvent::Chat,
-            })
-            .collect();
 
         // Filter events for matching command messages
         let events = events
@@ -679,15 +609,6 @@ pub async fn match_raid_event(
            matches!(&event.trigger, EventTrigger::Raid { min_raiders } if raiders >= *min_raiders as i64)
        })
        .collect();
-
-    // Add context to the scripts
-    let scripts = scripts
-        .into_iter()
-        .map(|script| ScriptWithContext {
-            script,
-            event: ScriptEvent::Raid,
-        })
-        .collect();
 
     let event_data = EventData {
         input_data: EventInputData::Raid {

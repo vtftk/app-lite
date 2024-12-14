@@ -29,6 +29,11 @@ pub struct Model {
     pub order: u32,
 }
 
+pub struct ScriptWithEvent {
+    pub script: ScriptModel,
+    pub event: ScriptEvent,
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     /// Script can have many events
@@ -98,15 +103,30 @@ impl Model {
     }
 
     /// Find a script by the event its subscribed to filters to only enabled
-    pub async fn get_by_event<C>(db: &C, script_event: ScriptEvent) -> DbResult<Vec<Self>>
+    pub async fn get_by_event<C>(
+        db: &C,
+        script_event: ScriptEvent,
+    ) -> DbResult<Vec<ScriptWithEvent>>
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find()
+        // Load scripts with matching events
+        let scripts = Entity::find()
             .inner_join(super::script_events::Entity)
             .filter(ScriptEventsColumn::Event.eq(script_event))
             .all(db)
-            .await
+            .await?;
+
+        // Provide event context to the script
+        let scripts = scripts
+            .into_iter()
+            .map(|script| ScriptWithEvent {
+                script,
+                event: script_event,
+            })
+            .collect();
+
+        Ok(scripts)
     }
 
     /// Find all script

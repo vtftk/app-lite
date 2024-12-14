@@ -13,6 +13,7 @@ use crate::{
         command_executions::{CommandExecutionModel, CreateCommandExecution},
         commands::CommandOutcome,
         event_executions::{CreateEventExecution, EventExecutionModel},
+        scripts::ScriptWithEvent,
         shared::MinimumRequireRole,
         EventModel,
     },
@@ -26,7 +27,6 @@ use super::{
         match_chat_event, match_cheer_bits_event, match_follow_event,
         match_gifted_subscription_event, match_re_subscription_event, match_redeem_event,
         match_subscription_event, CommandWithContext, EventData, EventInputData, EventMatchingData,
-        ScriptWithContext,
     },
     outcome::produce_outcome_message,
     EventMessage,
@@ -252,7 +252,7 @@ pub async fn execute_command(
 
 pub async fn execute_script(
     script_handle: &ScriptExecutorHandle,
-    script: ScriptWithContext,
+    script: ScriptWithEvent,
     event_data: EventData,
 ) -> anyhow::Result<()> {
     script_handle
