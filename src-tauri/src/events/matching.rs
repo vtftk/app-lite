@@ -12,7 +12,7 @@ use crate::{
     },
     twitch::manager::{
         TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
-        TwitchEventReSub, TwitchEventRedeem, TwitchEventSub, TwitchEventUser,
+        TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub, TwitchEventUser,
     },
 };
 
@@ -133,6 +133,12 @@ pub enum EventInputData {
 
         /// Optional amount of bits cheered (If user cheered bits)
         cheer: Option<usize>,
+    },
+
+    /// Raid specific data
+    Raid {
+        /// The number of viewers in the raid.
+        viewers: i64,
     },
 
     /// No additional input data
@@ -633,6 +639,71 @@ pub async fn match_chat_event(
         events,
         scripts,
         commands,
+        event_data,
+    })
+}
+
+pub async fn match_raid_event(
+    db: &DatabaseConnection,
+    event: TwitchEventRaid,
+) -> anyhow::Result<EventMatchingData> {
+    let (events, scripts) = join!(
+        // Loading matching event types
+        EventModel::get_by_trigger_type(db, EventTriggerType::Raid),
+        // Load all subscribed scripts
+        ScriptModel::get_by_event(db, ScriptEvent::Raid)
+    );
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let scripts = match scripts {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load scripts: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let raiders = event.viewers;
+
+    // Filter events for the matching reward ID
+    let events = events
+       .into_iter()
+       .filter(|event| {
+           matches!(&event.trigger, EventTrigger::Raid { min_raiders } if raiders >= *min_raiders as i64)
+       })
+       .collect();
+
+    // Add context to the scripts
+    let scripts = scripts
+        .into_iter()
+        .map(|script| ScriptWithContext {
+            script,
+            event: ScriptEvent::Raid,
+        })
+        .collect();
+
+    let event_data = EventData {
+        input_data: EventInputData::Raid {
+            viewers: event.viewers,
+        },
+        user: Some(TwitchEventUser {
+            id: event.user_id,
+            name: event.user_name,
+            display_name: event.user_display_name,
+        }),
+    };
+
+    Ok(EventMatchingData {
+        events,
+        scripts,
+        commands: Default::default(),
         event_data,
     })
 }

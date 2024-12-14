@@ -52,6 +52,7 @@ You can listen for events the events below and run code when they happen:
 - resubscription
 - redeems
 - subscriptions
+- raid
 
 ![Scripting](./docs/scripting.png)
 

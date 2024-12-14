@@ -10,6 +10,7 @@ use tokio_tungstenite::{
 use twitch_api::{
     eventsub::{
         self,
+        channel::ChannelRaidV1,
         event::websocket::{EventsubWebsocketData, SessionData},
         Event, EventSubscription, PayloadParseError,
     },
@@ -24,7 +25,7 @@ use tungstenite::{
 
 use super::manager::{
     TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
-    TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
+    TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
 };
 
 #[derive(Debug, Error)]
@@ -306,6 +307,17 @@ impl WebsocketClient {
                 _ = self.tx.send(TwitchEvent::RewardsChanged)
             }
 
+            // Channel is raided
+            Event::ChannelRaidV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self.tx.send(TwitchEvent::Raid(TwitchEventRaid {
+                    user_id: msg.from_broadcaster_user_id,
+                    user_name: msg.from_broadcaster_user_login,
+                    user_display_name: msg.from_broadcaster_user_name,
+                    viewers: msg.viewers,
+                }))
+            }
+
             _ => {}
         }
 
@@ -420,7 +432,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe message chat message")?;
 
         // Subscribe to vip added
         self.client
@@ -430,7 +442,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe message vip add")?;
 
         // Subscribe to vip removed
         self.client
@@ -440,7 +452,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe message vip remove")?;
 
         // Subscribe to mod added
         self.client
@@ -450,7 +462,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe mod added")?;
 
         // Subscribe to mod removed
         self.client
@@ -460,7 +472,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe mod removed")?;
 
         // Subscribe to reward added
         self.client
@@ -470,7 +482,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe reward added")?;
 
         // Subscribe to reward removed
         self.client
@@ -480,7 +492,7 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe reward removed")?;
 
         // Subscribe to reward updated
         self.client
@@ -490,7 +502,17 @@ impl WebsocketClient {
                 token,
             )
             .await
-            .context("subscribe message")?;
+            .context("subscribe reward update")?;
+
+        // Subscribe to raids for the user channel
+        self.client
+            .create_eventsub_subscription(
+                ChannelRaidV1::to_broadcaster_user_id(user_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribe raid")?;
 
         Ok(())
     }

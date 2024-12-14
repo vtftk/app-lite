@@ -268,6 +268,9 @@ declare global {
       fragments: any[];
       cheer: number | null;
     };
+    raid: {
+      viewers: number;
+    };
   };
 
   export interface CommandContext {

@@ -194,7 +194,8 @@ export type EventInputData =
   | EventInputDataSubscription
   | EventInputDataGiftedSubscription
   | EventInputDataReSubscription
-  | EventInputDataChat;
+  | EventInputDataChat
+  | EventInputDataRaid;
 
 export type EventInputDataNone = {};
 export type EventInputDataRedeem = {
@@ -237,4 +238,8 @@ export type EventInputDataChat = {
   message: string;
   fragments: any[];
   cheer: number | null;
+};
+
+export type EventInputDataRaid = {
+  viewers: number;
 };

@@ -16,6 +16,7 @@ use crate::{
         shared::MinimumRequireRole,
         EventModel,
     },
+    events::matching::match_raid_event,
     script::runtime::{CommandContext, CommandContextUser, ScriptExecutorHandle},
     twitch::manager::{TwitchEvent, TwitchManager},
 };
@@ -77,6 +78,7 @@ async fn process_twitch_event(
         TwitchEvent::GiftSub(event) => match_gifted_subscription_event(&db, event).await?,
         TwitchEvent::ResubMsg(event) => match_re_subscription_event(&db, event).await?,
         TwitchEvent::ChatMsg(event) => match_chat_event(&db, event).await?,
+        TwitchEvent::Raid(event) => match_raid_event(&db, event).await?,
 
         // Internal events
         TwitchEvent::ModeratorsChanged => {

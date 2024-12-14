@@ -507,6 +507,19 @@ pub struct TwitchEventChatMsg {
 
 #[derive(Debug, Clone)]
 #[allow(unused)]
+pub struct TwitchEventRaid {
+    /// The broadcaster ID that created the raid.
+    pub user_id: UserId,
+    /// The broadcaster user name that created the raid.
+    pub user_name: UserName,
+    /// The broadcaster display name that created the raid.
+    pub user_display_name: DisplayName,
+    /// The number of viewers in the raid.
+    pub viewers: i64,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
 pub enum TwitchEvent {
     Redeem(TwitchEventRedeem),
     CheerBits(TwitchEventCheerBits),
@@ -515,6 +528,7 @@ pub enum TwitchEvent {
     GiftSub(TwitchEventGiftSub),
     ResubMsg(TwitchEventReSub),
     ChatMsg(TwitchEventChatMsg),
+    Raid(TwitchEventRaid),
 
     ModeratorsChanged,
     VipsChanged,

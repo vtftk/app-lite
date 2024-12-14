@@ -81,7 +81,7 @@ async fn throw_bits_outcome(
 
     let amount = match data.amount {
         BitsAmount::Dynamic { max_amount } => input.min(max_amount as i64) as u32,
-        BitsAmount::Fixed { amount } => amount as u32,
+        BitsAmount::Fixed { amount } => amount,
     };
 
     Ok(EventMessage::ThrowItem {

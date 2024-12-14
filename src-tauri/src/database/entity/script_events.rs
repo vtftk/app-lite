@@ -36,6 +36,8 @@ pub enum ScriptEvent {
     ReSubscription,
     #[sea_orm(string_value = "chat")]
     Chat,
+    #[sea_orm(string_value = "raid")]
+    Raid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
