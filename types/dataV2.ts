@@ -252,8 +252,10 @@ export type CommandLog = {
   command_id: string;
 } & LogData;
 
+export type LogId = string;
+
 export type LogData = {
-  id: string;
+  id: LogId;
   level: LoggingLevelStr;
   message: string;
   created_at: string;

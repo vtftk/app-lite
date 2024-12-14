@@ -1,13 +1,8 @@
 <script lang="ts">
   import { commandLogsQuery, invalidateCommandLogs } from "$lib/api/commands";
   import LogsTable from "$lib/components/LogsTable.svelte";
-  import {
-    type CommandId,
-    type CommandLog,
-    type LogsQuery,
-  } from "$shared/dataV2";
+  import { type CommandId, type LogId, type LogsQuery } from "$shared/dataV2";
   import { onMount } from "svelte";
-  import { toast } from "svelte-sonner";
 
   type Props = {
     id: CommandId;
@@ -21,22 +16,18 @@
   const logs = $derived($logsQuery.data ?? []);
 
   onMount(() => {
-    invalidateCommandLogs(id, query);
+    onRefresh();
   });
 
-  async function onDelete(log: CommandLog) {
-    if (!confirm("Are you sure you want to delete this log entry?")) {
-      return;
-    }
+  async function onBulkDelete(logs: LogId[]) {}
 
-    const deletePromise = async () => {};
-
-    toast.promise(deletePromise, {
-      loading: "Deleting log entry...",
-      success: "Deleted log entry",
-      error: "Failed to delete log entry",
-    });
+  function onRefresh() {
+    invalidateCommandLogs(id, query);
   }
 </script>
 
-<LogsTable {onDelete} {logs} />
+{#if $logsQuery.isPending}
+  Loading...
+{/if}
+
+<LogsTable {onRefresh} {onBulkDelete} {logs} />

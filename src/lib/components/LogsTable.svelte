@@ -1,76 +1,163 @@
-<script lang="ts" generics="T extends LogData">
+<script lang="ts">
   import { formatDate, formatTime } from "$lib/utils/date";
-  import { LoggingLevelStr, type LogData } from "$shared/dataV2";
+  import { LoggingLevelStr, type LogData, type LogId } from "$shared/dataV2";
+  import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
   import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
   import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-
+  import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
   type Props = {
-    logs: T[];
+    logs: LogData[];
 
-    onDelete: (log: T) => void;
+    onRefresh: VoidFunction;
+    onBulkDelete: (logs: LogId[]) => Promise<void>;
   };
 
-  const { logs, onDelete }: Props = $props();
+  const { logs, onRefresh, onBulkDelete: _onBulkDelete }: Props = $props();
+
+  let selected: LogId[] = $state([]);
+
+  function onToggleSelected(item: LogId) {
+    if (selected.includes(item)) {
+      selected = selected.filter((id) => id !== item);
+    } else {
+      selected = [...selected, item];
+    }
+  }
+
+  function onToggleAllSelected() {
+    if (logs.length > 0 && selected.length === logs.length) {
+      selected = [];
+    } else {
+      selected = logs.map((item) => item.id);
+    }
+  }
+
+  function onBulkDelete() {
+    if (!confirm("Are you sure you want to delete the selected log entries?")) {
+      return;
+    }
+
+    const deletePromise = _onBulkDelete(selected);
+
+    toast.promise(deletePromise, {
+      loading: "Deleting log entries...",
+      success: "Deleted log entries",
+      error: "Failed to delete log entries",
+    });
+
+    // Clear selection since all items are removed
+    selected = [];
+  }
 </script>
 
-<div class="wrapper">
-  <table>
-    <thead>
-      <tr>
-        <th class="column--level">Level</th>
-        <th class="column--msg">Message</th>
-        <th class="column--date">Timestamp</th>
-        <th class="column--actions">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each logs as log}
+<div class="container">
+  <div class="selection">
+    <div class="selection__count">
+      {#if selected.length > 0}
+        {selected.length} Selected
+      {/if}
+    </div>
+
+    <div class="selection__actions">
+      {#if selected.length > 0}
+        <button type="button" class="btn" onclick={onBulkDelete}>
+          <DeleteIcon /> Delete
+        </button>
+      {/if}
+
+      <button type="button" class="btn" onclick={onRefresh}>
+        <SolarRefreshBoldDuotone /> Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="wrapper">
+    <table>
+      <thead>
         <tr>
-          <td class="column--level" data-level={log.level}>
-            <span>
-              {#if log.level == LoggingLevelStr.Debug}
-                <SolarInfoCircleBoldDuotone />
-              {:else if log.level == LoggingLevelStr.Info}
-                <SolarInfoCircleBoldDuotone />
-              {:else if log.level == LoggingLevelStr.Warn}
-                <SolarDangerTriangleBoldDuotone />
-              {:else if log.level == LoggingLevelStr.Error}
-                <SolarDangerTriangleBoldDuotone />
-              {/if}
-            </span>
-          </td>
-          <td class="column--msg">
-            <p class="message">{log.message}</p>
-          </td>
-          <td class="column--date">
-            <span class="date-date">
-              {formatDate(new Date(log.created_at))}
-            </span>
-            <span class="date-time">
-              {formatTime(new Date(log.created_at))}
-            </span>
-          </td>
-          <td class="column--actions">
-            <div class="actions">
-              <button class="btn" onclick={() => onDelete(log)}>
-                <DeleteIcon />
-              </button>
+          <th class="column--select">
+            <div class="select-actions">
+              <Checkbox.Root
+                checked={logs.length > 0 && selected.length === logs.length}
+                onCheckedChange={() => onToggleAllSelected()}
+              >
+                <Checkbox.Indicator let:isChecked>
+                  {#if isChecked}
+                    <span>&#10003;</span>
+                  {/if}
+                </Checkbox.Indicator>
+              </Checkbox.Root>
             </div>
-          </td>
+          </th>
+          <th class="column--level">Level</th>
+          <th class="column--msg">Message</th>
+          <th class="column--date">Timestamp</th>
         </tr>
-      {/each}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {#each logs as log}
+          <tr>
+            <td class="column--select">
+              <div class="select-actions">
+                <Checkbox.Root
+                  checked={selected.includes(log.id)}
+                  onCheckedChange={() => onToggleSelected(log.id)}
+                >
+                  <Checkbox.Indicator let:isChecked>
+                    {#if isChecked}
+                      <span>&#10003;</span>
+                    {/if}
+                  </Checkbox.Indicator>
+                </Checkbox.Root>
+              </div>
+            </td>
+            <td class="column--level" data-level={log.level} title={log.level}>
+              <span>
+                {#if log.level == LoggingLevelStr.Debug}
+                  <SolarInfoCircleBoldDuotone />
+                {:else if log.level == LoggingLevelStr.Info}
+                  <SolarInfoCircleBoldDuotone />
+                {:else if log.level == LoggingLevelStr.Warn}
+                  <SolarDangerTriangleBoldDuotone />
+                {:else if log.level == LoggingLevelStr.Error}
+                  <SolarDangerTriangleBoldDuotone />
+                {/if}
+              </span>
+              <span class="log-level">{log.level}</span>
+            </td>
+            <td class="column--msg">
+              <p class="message">{log.message}</p>
+            </td>
+            <td class="column--date">
+              <span class="date-date">
+                {formatDate(new Date(log.created_at))}
+              </span>
+              <span class="date-time">
+                {formatTime(new Date(log.created_at))}
+              </span>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <style>
   .wrapper {
     width: 100%;
-    height: 100%;
-    max-width: 100%;
     overflow-x: hidden;
     position: relative;
+    flex: auto;
+  }
+
+  .container {
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    height: 100%;
   }
 
   table {
@@ -82,16 +169,28 @@
 
   th,
   td {
-    word-wrap: break-word; /* Forces text to break inside cells */
-    overflow: hidden; /* Prevents text from spilling out */
-    text-overflow: ellipsis; /* Optional: Adds "..." for clipped text */
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 0.5rem;
-    vertical-align: top;
     border: 1px solid #333;
+    border-top: none;
+  }
+
+  td {
+    vertical-align: top;
+  }
+
+  thead {
+    position: sticky;
+    top: 0px;
+    background-color: #222;
+    z-index: 1;
   }
 
   table th {
     color: #fff;
+    vertical-align: center;
   }
 
   .column--level {
@@ -102,8 +201,15 @@
 
   .column--level > span {
     margin: 0.5rem auto;
+    margin-bottom: 0;
     font-size: 1.5rem;
     display: inline-block;
+    line-height: 1;
+  }
+
+  .column--level > .log-level {
+    font-size: 0.9rem;
+    margin-top: 0rem;
   }
 
   .column--level[data-level="Info"] > span {
@@ -143,20 +249,38 @@
     position: relative;
     display: block;
     color: #ccc;
-    /* height: 3rem; */
     overflow: hidden;
     font-family: "Jetbrains Mono";
     font-size: 0.9rem;
   }
 
-  .column--actions {
-    width: 4rem;
+  .column--select {
+    width: 3.5rem;
   }
 
-  .column--actions .actions {
+  .select-actions {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .selection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 4rem;
+    flex-shrink: 0;
+    padding: 1rem;
+    border: 1px solid #333;
+  }
+
+  .selection__count {
+    flex: auto;
+  }
+
+  .selection__actions {
+    display: flex;
+    gap: 1rem;
   }
 </style>
