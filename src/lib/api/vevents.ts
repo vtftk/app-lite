@@ -4,13 +4,14 @@ import type {
   UpdateEvent,
   CreateEvent,
   VEventData,
+  UpdateOrdering,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
 import { queryClient } from "./utils";
 import { derived, type Readable } from "svelte/store";
 
-const SCRIPTS_KEY = ["events"];
+const EVENTS_KEY = ["events"];
 
 export function getEvents() {
   return invoke<Event[]>("get_events");
@@ -18,7 +19,7 @@ export function getEvents() {
 
 export function createEventsQuery() {
   return createQuery({
-    queryKey: SCRIPTS_KEY,
+    queryKey: EVENTS_KEY,
     queryFn: getEvents,
   });
 }
@@ -63,7 +64,7 @@ export function createEventMutation() {
     },
     onSettled: (_data, _err, _createItem) => {
       // Invalid the list of events
-      queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
     },
   });
 }
@@ -80,7 +81,7 @@ export function bulkCreateEventMutation() {
     },
     onSettled: (_data, _err, _createSound) => {
       // Invalid the list of events
-      queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
     },
   });
 }
@@ -103,7 +104,7 @@ export function updateEventMutation() {
     },
     onSettled: (_data, _err, _updateItem) => {
       // Invalid the list of items
-      queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
     },
   });
 }
@@ -130,7 +131,7 @@ export function deleteEventMutation() {
       queryClient.invalidateQueries({ queryKey: eventKey });
 
       // Invalid the list of items
-      queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
     },
   });
 }
@@ -161,11 +162,16 @@ export function bulkDeleteEventMutation() {
         queryClient.invalidateQueries({ queryKey: eventKey });
 
         // Invalid the list of items
-        queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+        queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
       }
 
       // Invalid the list of items
-      queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
     },
   });
+}
+
+export async function updateEventOrder(update: UpdateOrdering[]) {
+  await invoke("update_event_orderings", { update });
+  queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
 }

@@ -16,7 +16,7 @@ export type Item = {
   order: number;
 };
 
-export type UpdateItemOrdering = {
+export type UpdateOrdering = {
   id: string;
   order: number;
 };

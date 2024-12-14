@@ -6,6 +6,7 @@ import type {
   LogsQuery,
   ScriptLog,
   LogId,
+  UpdateOrdering,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -221,4 +222,9 @@ export function bulkDeleteScriptLogsMutation(scriptId: ScriptId) {
       });
     },
   });
+}
+
+export async function updateScriptOrder(update: UpdateOrdering[]) {
+  await invoke("update_script_orderings", { update });
+  queryClient.invalidateQueries({ queryKey: SCRIPTS_KEY });
 }

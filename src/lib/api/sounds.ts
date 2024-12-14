@@ -1,4 +1,10 @@
-import type { CreateSound, Sound, SoundId, UpdateSound } from "$shared/dataV2";
+import type {
+  CreateSound,
+  Sound,
+  SoundId,
+  UpdateOrdering,
+  UpdateSound,
+} from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
 import { queryClient } from "./utils";
@@ -154,4 +160,9 @@ export function bulkDeleteSoundsMutation() {
       queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
     },
   });
+}
+
+export async function updateSoundOrder(update: UpdateOrdering[]) {
+  await invoke("update_sound_orderings", { update });
+  queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
 }

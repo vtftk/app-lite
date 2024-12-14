@@ -6,6 +6,7 @@ import type {
   LogsQuery,
   CommandLog,
   LogId,
+  UpdateOrdering,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -220,4 +221,9 @@ export function bulkDeleteCommandLogsMutation(commandId: CommandId) {
       });
     },
   });
+}
+
+export async function updateCommandOrder(update: UpdateOrdering[]) {
+  await invoke("update_command_orderings", { update });
+  queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
 }
