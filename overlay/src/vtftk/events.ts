@@ -107,7 +107,7 @@ async function onMessage(data: EventSourceData, event: any) {
 
     case "PlaySound": {
       if (data.vtSocket) {
-        onPlaySoundEvent(event.config);
+        onPlaySoundEvent(data.appData, event.config);
       }
 
       break;
@@ -115,7 +115,7 @@ async function onMessage(data: EventSourceData, event: any) {
 
     case "PlaySoundSeq": {
       if (data.vtSocket) {
-        onPlaySoundSeqEvent(event.configs);
+        onPlaySoundSeqEvent(data.appData, event.configs);
       }
 
       break;
@@ -136,13 +136,13 @@ async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
   return hotkeys;
 }
 
-async function onPlaySoundEvent(config: Sound) {
+async function onPlaySoundEvent(appData: AppData, config: Sound) {
   const audio = await loadAudio(config.src);
-  audio.volume = config.volume;
+  audio.volume = config.volume * appData.sounds_config.global_volume;
   audio.play();
 }
 
-async function onPlaySoundSeqEvent(configs: Sound[]) {
+async function onPlaySoundSeqEvent(appData: AppData, configs: Sound[]) {
   const sounds = await loadSounds(configs);
 
   for (const config of configs) {
@@ -157,7 +157,7 @@ async function onPlaySoundSeqEvent(configs: Sound[]) {
 
     // Play the sound
     const audio = soundData.sound;
-    audio.volume = config.volume;
+    audio.volume = config.volume * appData.sounds_config.global_volume;
 
     const completePromise = new Promise<void>((resolve, reject) => {
       audio.onended = () => resolve();
