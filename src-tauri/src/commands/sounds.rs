@@ -3,7 +3,7 @@
 //! Commands for interacting with sounds from the frontend
 
 use crate::database::entity::{
-    sounds::{CreateSound, UpdateSound},
+    sounds::{CreateSound, UpdateSound, UpdateSoundOrdering},
     SoundModel,
 };
 use anyhow::Context;
@@ -66,5 +66,16 @@ pub async fn delete_sound(sound_id: Uuid, db: State<'_, DatabaseConnection>) -> 
         .await?
         .context("sound not found")?;
     sound.delete(db).await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_sound_orderings(
+    update: Vec<UpdateSoundOrdering>,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
+    let db = db.inner();
+    SoundModel::update_order(db, update).await?;
+
     Ok(())
 }

@@ -33,7 +33,6 @@
 
   const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
   const bulkDeleteItems = bulkDeleteItemsMutation();
-  const updateItems = updateItemsMutation();
 
   let items: Item[] = $state([]);
 
@@ -126,8 +125,6 @@
       error: toastErrorMessage("Failed to throw barrage"),
     });
   }
-
-  const flipDurationMs = 100;
 
   function handleDndConsider(e: CustomEvent<DndEvent<Item>>) {
     items = e.detail.items;

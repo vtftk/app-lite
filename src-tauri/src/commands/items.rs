@@ -93,7 +93,6 @@ pub async fn update_item(
     })
 }
 
-/// Update an existing item
 #[tauri::command]
 pub async fn update_item_orderings(
     update: Vec<UpdateItemOrdering>,

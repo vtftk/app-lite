@@ -1,7 +1,8 @@
 use anyhow::Context;
+use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
     entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel, QueryOrder,
-    QuerySelect,
+    QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -38,6 +39,12 @@ pub struct Model {
     /// Minimum required role to trigger the command
     pub require_role: MinimumRequireRole,
     /// Ordering
+    pub order: u32,
+}
+
+#[derive(Default, Deserialize)]
+pub struct UpdateCommandOrdering {
+    pub id: Uuid,
     pub order: u32,
 }
 
@@ -219,5 +226,26 @@ impl Model {
             .order_by(CommandLogsColumn::CreatedAt, sea_orm::Order::Desc)
             .all(db)
             .await
+    }
+
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateCommandOrdering>) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let _results: Result<Vec<UpdateResult>, DbErr> = data
+            .into_iter()
+            .map(|data| -> BoxFuture<'_, DbResult<UpdateResult>> {
+                Box::pin(
+                    Entity::update_many()
+                        .filter(Column::Id.eq(data.id))
+                        .col_expr(Column::Order, data.order.into())
+                        .exec(db),
+                )
+            })
+            .collect::<FuturesUnordered<BoxFuture<'_, DbResult<UpdateResult>>>>()
+            .try_collect()
+            .await;
+
+        Ok(())
     }
 }

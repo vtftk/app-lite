@@ -140,6 +140,7 @@ pub fn run() {
             commands::sounds::create_sound,
             commands::sounds::update_sound,
             commands::sounds::delete_sound,
+            commands::sounds::update_sound_orderings,
             // Script commands
             commands::scripts::get_scripts,
             commands::scripts::get_script_by_id,
@@ -148,6 +149,7 @@ pub fn run() {
             commands::scripts::delete_script,
             commands::scripts::get_script_logs,
             commands::scripts::delete_script_logs,
+            commands::scripts::update_script_orderings,
             // Command commands
             commands::commands::get_commands,
             commands::commands::get_command_by_id,
@@ -156,6 +158,7 @@ pub fn run() {
             commands::commands::delete_command,
             commands::commands::get_command_logs,
             commands::commands::delete_command_logs,
+            commands::commands::update_command_orderings,
             // Event commands
             commands::events::get_events,
             commands::events::get_event_by_id,
@@ -163,6 +166,7 @@ pub fn run() {
             commands::events::update_event,
             commands::events::delete_event,
             commands::events::test_event_by_id,
+            commands::events::update_event_orderings,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

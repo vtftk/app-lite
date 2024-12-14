@@ -187,7 +187,6 @@ impl Model {
         Ok(this)
     }
 
-    /// Update the current item
     pub async fn update_order<C>(db: &C, data: Vec<UpdateItemOrdering>) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,

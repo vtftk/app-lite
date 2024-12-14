@@ -4,7 +4,7 @@
 
 use crate::database::entity::{
     script_logs::ScriptLogsModel,
-    scripts::{CreateScript, UpdateScript},
+    scripts::{CreateScript, UpdateScript, UpdateScriptOrdering},
     shared::LogsQuery,
     ScriptModel,
 };
@@ -95,6 +95,17 @@ pub async fn delete_script_logs(
     let db = db.inner();
 
     ScriptLogsModel::delete_many(db, &log_ids).await?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_script_orderings(
+    update: Vec<UpdateScriptOrdering>,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
+    let db = db.inner();
+    ScriptModel::update_order(db, update).await?;
 
     Ok(())
 }

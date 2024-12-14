@@ -1,5 +1,8 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, QuerySelect};
+use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
+use sea_orm::{
+    entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, QuerySelect, UpdateResult,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -27,6 +30,12 @@ pub struct Model {
     /// The actual script contents
     pub script: String,
     /// Ordering
+    pub order: u32,
+}
+
+#[derive(Default, Deserialize)]
+pub struct UpdateScriptOrdering {
+    pub id: Uuid,
     pub order: u32,
 }
 
@@ -249,5 +258,26 @@ impl Model {
             .order_by(ScriptLogsColumn::CreatedAt, sea_orm::Order::Desc)
             .all(db)
             .await
+    }
+
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateScriptOrdering>) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let _results: Result<Vec<UpdateResult>, DbErr> = data
+            .into_iter()
+            .map(|data| -> BoxFuture<'_, DbResult<UpdateResult>> {
+                Box::pin(
+                    Entity::update_many()
+                        .filter(Column::Id.eq(data.id))
+                        .col_expr(Column::Order, data.order.into())
+                        .exec(db),
+                )
+            })
+            .collect::<FuturesUnordered<BoxFuture<'_, DbResult<UpdateResult>>>>()
+            .try_collect()
+            .await;
+
+        Ok(())
     }
 }

@@ -1,5 +1,6 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder};
+use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, UpdateResult};
 use serde::{Deserialize, Serialize};
 
 use super::shared::DbResult;
@@ -23,6 +24,12 @@ pub struct Model {
     /// Volume of the sound 0-1
     pub volume: f32,
     /// Ordering
+    pub order: u32,
+}
+
+#[derive(Default, Deserialize)]
+pub struct UpdateSoundOrdering {
+    pub id: Uuid,
     pub order: u32,
 }
 
@@ -130,5 +137,26 @@ impl Model {
 
         let this = this.update(db).await?;
         Ok(this)
+    }
+
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateSoundOrdering>) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let _results: Result<Vec<UpdateResult>, DbErr> = data
+            .into_iter()
+            .map(|data| -> BoxFuture<'_, DbResult<UpdateResult>> {
+                Box::pin(
+                    Entity::update_many()
+                        .filter(Column::Id.eq(data.id))
+                        .col_expr(Column::Order, data.order.into())
+                        .exec(db),
+                )
+            })
+            .collect::<FuturesUnordered<BoxFuture<'_, DbResult<UpdateResult>>>>()
+            .try_collect()
+            .await;
+
+        Ok(())
     }
 }
