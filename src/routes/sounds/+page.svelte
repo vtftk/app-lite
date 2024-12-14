@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { bulkDeleteSoundsMutation, createSoundsQuery } from "$lib/api/sounds";
+  import {
+    bulkDeleteSoundsMutation,
+    createSoundsQuery,
+    updateSoundOrder,
+  } from "$lib/api/sounds";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
@@ -7,13 +11,22 @@
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { Sound } from "$shared/dataV2";
+  import {
+    dndzone,
+    SHADOW_ITEM_MARKER_PROPERTY_NAME,
+    type DndEvent,
+  } from "svelte-dnd-action";
 
   const soundsQuery = createSoundsQuery();
 
   const bulkDeleteSounds = bulkDeleteSoundsMutation();
 
+  let sounds: Sound[] = $state([]);
+
   // Readable access to the items from the underlying items query
-  const sounds = $derived($soundsQuery.data ?? []);
+  $effect(() => {
+    sounds = $soundsQuery.data ?? [];
+  });
 
   let selected: string[] = $state([]);
 
@@ -49,6 +62,17 @@
     });
 
     selected = [];
+  }
+
+  function handleDndConsider(e: CustomEvent<DndEvent<Sound>>) {
+    sounds = e.detail.items;
+  }
+
+  async function handleDndFinalize(e: CustomEvent<DndEvent<Sound>>) {
+    sounds = e.detail.items;
+    updateSoundOrder(
+      sounds.map((sound, index) => ({ id: sound.id, order: index }))
+    );
   }
 </script>
 
@@ -89,18 +113,46 @@
   {actions}
   {beforeContent}
 >
-  <div class="grid">
-    {#each sounds as sound}
-      <SoundItem
-        config={sound}
-        selected={selected.includes(sound.id)}
-        onToggleSelected={() => onToggleSelected(sound)}
-      />
+  <div
+    class="grid"
+    use:dndzone={{ items: sounds }}
+    onconsider={handleDndConsider}
+    onfinalize={handleDndFinalize}
+  >
+    {#each sounds as sound (sound.id)}
+      <div class="item-wrapper">
+        <SoundItem
+          config={sound}
+          selected={selected.includes(sound.id)}
+          onToggleSelected={() => onToggleSelected(sound)}
+        />
+
+        {#if (sound as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+          <div class="custom-shadow-item"></div>
+        {/if}
+      </div>
     {/each}
   </div>
 </PageLayoutList>
 
 <style>
+  .item-wrapper {
+    position: relative;
+  }
+
+  .custom-shadow-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    visibility: visible;
+    border: 3px dashed #444;
+    background: #212121;
+    opacity: 0.5;
+    margin: 0;
+  }
+
   .selection {
     display: flex;
     align-items: center;

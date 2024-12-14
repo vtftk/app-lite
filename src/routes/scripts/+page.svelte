@@ -2,19 +2,29 @@
   import {
     bulkDeleteScriptMutation,
     createScriptsQuery,
+    updateScriptOrder,
   } from "$lib/api/scripts";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import ScriptItem from "$lib/sections/scripts/ScriptItem.svelte";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import type { ScriptId } from "$shared/dataV2";
+  import type { Script, ScriptId } from "$shared/dataV2";
+  import {
+    dndzone,
+    SHADOW_ITEM_MARKER_PROPERTY_NAME,
+    type DndEvent,
+  } from "svelte-dnd-action";
 
   const scriptsQuery = createScriptsQuery();
   const bulkDeleteScripts = bulkDeleteScriptMutation();
 
+  let scripts: Script[] = $state([]);
+
   // Readable access to the items from the underlying items query
-  const scripts = $derived($scriptsQuery.data ?? []);
+  $effect(() => {
+    scripts = $scriptsQuery.data ?? [];
+  });
 
   let selected: ScriptId[] = $state([]);
 
@@ -51,6 +61,17 @@
 
     // Clear selection since all items are removed
     selected = [];
+  }
+
+  function handleDndConsider(e: CustomEvent<DndEvent<Script>>) {
+    scripts = e.detail.items;
+  }
+
+  async function handleDndFinalize(e: CustomEvent<DndEvent<Script>>) {
+    scripts = e.detail.items;
+    updateScriptOrder(
+      scripts.map((sound, index) => ({ id: sound.id, order: index }))
+    );
   }
 </script>
 
@@ -90,18 +111,45 @@
   {actions}
   {beforeContent}
 >
-  <div class="grid">
-    {#each scripts as item}
-      <ScriptItem
-        config={item}
-        selected={selected.includes(item.id)}
-        onToggleSelected={() => onToggleSelected(item.id)}
-      />
+  <div
+    class="grid"
+    use:dndzone={{ items: scripts }}
+    onconsider={handleDndConsider}
+    onfinalize={handleDndFinalize}
+  >
+    {#each scripts as item (item.id)}
+      <div class="item-wrapper">
+        <ScriptItem
+          config={item}
+          selected={selected.includes(item.id)}
+          onToggleSelected={() => onToggleSelected(item.id)}
+        />
+        {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+          <div class="custom-shadow-item"></div>
+        {/if}
+      </div>
     {/each}
   </div>
 </PageLayoutList>
 
 <style>
+  .item-wrapper {
+    position: relative;
+  }
+
+  .custom-shadow-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    visibility: visible;
+    border: 3px dashed #444;
+    background: #212121;
+    opacity: 0.5;
+    margin: 0;
+  }
+
   .selection {
     display: flex;
     align-items: center;
