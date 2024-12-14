@@ -24,6 +24,7 @@
   import EyesModeSelect from "./EyesModeSelect.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -110,7 +111,7 @@
       toast.promise(savePromise, {
         loading: "Saving settings...",
         success: "Saved settings",
-        error: "Failed to save settings",
+        error: toastErrorMessage("Failed to save settings"),
       });
 
       await savePromise;

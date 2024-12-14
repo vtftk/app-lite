@@ -16,6 +16,7 @@
     SHADOW_ITEM_MARKER_PROPERTY_NAME,
     type DndEvent,
   } from "svelte-dnd-action";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const soundsQuery = createSoundsQuery();
 
@@ -58,7 +59,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting sounds...",
       success: "Deleted sounds",
-      error: "Failed to delete sounds",
+      error: toastErrorMessage("Failed to delete sounds"),
     });
 
     selected = [];

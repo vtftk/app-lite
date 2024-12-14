@@ -7,6 +7,7 @@
   import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
+  import { toastErrorMessage } from "$lib/utils/error";
   type Props = {
     logs: LogData[];
 
@@ -44,7 +45,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting log entries...",
       success: "Deleted log entries",
-      error: "Failed to delete log entries",
+      error: toastErrorMessage("Failed to delete log entries"),
     });
 
     // Clear selection since all items are removed

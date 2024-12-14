@@ -6,6 +6,7 @@
   import { Checkbox } from "bits-ui";
   import { deleteScriptMutation } from "$lib/api/scripts";
   import { toast } from "svelte-sonner";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     config: Script;
@@ -28,7 +29,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting script...",
       success: "Deleted script",
-      error: "Failed to delete script",
+      error: toastErrorMessage("Failed to delete script"),
     });
   }
 </script>

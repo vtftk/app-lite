@@ -15,6 +15,7 @@
   import { toast } from "svelte-sonner";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import { createSoundMutation, updateSoundMutation } from "$lib/api/sounds";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: Sound;
@@ -74,12 +75,12 @@
             ? {
                 loading: "Saving sound...",
                 success: "Saved sound",
-                error: "Failed to save sound",
+                error: toastErrorMessage("Failed to save sound"),
               }
             : {
                 loading: "Creating sound...",
                 success: "Created sound",
-                error: "Failed to create sound",
+                error: toastErrorMessage("Failed to create sound"),
               }
         );
 

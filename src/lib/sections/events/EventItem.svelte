@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { VEvent } from "$lib/api/types";
   import { deleteEventMutation } from "$lib/api/vevents";
+  import { toastErrorMessage } from "$lib/utils/error";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
 
@@ -28,7 +29,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting event...",
       success: "Deleted event",
-      error: "Failed to delete event",
+      error: toastErrorMessage("Failed to delete event"),
     });
   }
 </script>

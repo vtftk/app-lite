@@ -108,12 +108,12 @@
           ? {
               loading: "Saving item...",
               success: "Saved item",
-              error: "Failed to save item",
+              error: toastErrorMessage("Failed to save item"),
             }
           : {
               loading: "Creating item...",
               success: "Created item",
-              error: "Failed to create item",
+              error: toastErrorMessage("Failed to create item"),
             }
       );
 

@@ -22,6 +22,7 @@
   import { createScriptMutation, updateScriptMutation } from "$lib/api/scripts";
   import ScriptLogs from "./ScriptLogs.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: Script;
@@ -73,12 +74,12 @@
           ? {
               loading: "Saving script...",
               success: "Saved script",
-              error: "Failed to save script",
+              error: toastErrorMessage("Failed to save script"),
             }
           : {
               loading: "Creating script...",
               success: "Created script",
-              error: "Failed to create script",
+              error: toastErrorMessage("Failed to create script"),
             }
       );
 

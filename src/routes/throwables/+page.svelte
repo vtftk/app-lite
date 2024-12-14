@@ -77,7 +77,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting items...",
       success: "Deleted items",
-      error: "Failed to delete items",
+      error: toastErrorMessage("Failed to delete items"),
     });
 
     selected = [];
@@ -102,7 +102,7 @@
     toast.promise(addPromise, {
       loading: "Adding impact sounds...",
       success: "Added impact sounds",
-      error: "Failed to add impact sounds",
+      error: toastErrorMessage("Failed to add impact sounds"),
     });
   }
 

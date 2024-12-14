@@ -7,6 +7,7 @@
   import getBackendURL from "$lib/utils/url";
   import { deleteSoundMutation } from "$lib/api/sounds";
   import { toast } from "svelte-sonner";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     config: Sound;
@@ -29,7 +30,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting sound...",
       success: "Deleted sound",
-      error: "Failed to delete sound",
+      error: toastErrorMessage("Failed to delete sound"),
     });
   }
 </script>

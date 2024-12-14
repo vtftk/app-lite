@@ -30,6 +30,7 @@
     updateCommandMutation,
   } from "$lib/api/commands";
   import CommandLogs from "./CommandLogs.svelte";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: Command;
@@ -111,12 +112,12 @@
         ? {
             loading: "Saving command...",
             success: "Saved command",
-            error: "Failed to save command",
+            error: toastErrorMessage("Failed to save command"),
           }
         : {
             loading: "Creating command...",
             success: "Created command",
-            error: "Failed to create command",
+            error: toastErrorMessage("Failed to create command"),
           }
     );
 

@@ -9,6 +9,7 @@
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { CommandId } from "$shared/dataV2";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const commandsQuery = createCommandsQuery();
   const bulkDeleteCommand = bulkDeleteCommandMutation();
@@ -46,7 +47,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting commands...",
       success: "Deleted commands",
-      error: "Failed to delete commands",
+      error: toastErrorMessage("Failed to delete commands"),
     });
 
     selected = [];

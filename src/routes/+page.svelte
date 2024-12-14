@@ -13,6 +13,7 @@
   import { setClipboard } from "$lib/utils/browser";
   import { createModelDataQuery } from "$lib/api/calibration";
   import { derived } from "svelte/store";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const runtimeAppData = getRuntimeAppData();
   const isAuthenticated = createIsAuthenticatedQuery();
@@ -47,7 +48,7 @@
     toast.promise(copyPromise, {
       loading: "Copying overlay URL...",
       success: "Copied overlay URL",
-      error: "Failed to copy overlay URL",
+      error: toastErrorMessage("Failed to copy overlay URL"),
     });
   }
 
@@ -61,7 +62,7 @@
     toast.promise(openPromise, {
       loading: "Opening Twitch login...",
       success: "Opened in default browser",
-      error: "Failed to open in default browser",
+      error: toastErrorMessage("Failed to open in default browser"),
     });
   }
 
@@ -74,7 +75,7 @@
     toast.promise(logoutPromise, {
       loading: "Logging out...",
       success: "Logged out",
-      error: "Failed to logout",
+      error: toastErrorMessage("Failed to logout"),
     });
   }
 </script>

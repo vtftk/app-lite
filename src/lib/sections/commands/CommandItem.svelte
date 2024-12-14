@@ -6,6 +6,7 @@
   import { Checkbox } from "bits-ui";
   import { deleteCommandMutation } from "$lib/api/commands";
   import { toast } from "svelte-sonner";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     config: Command;
@@ -28,7 +29,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting command...",
       success: "Deleted command",
-      error: "Failed to delete command",
+      error: toastErrorMessage("Failed to delete command"),
     });
   }
 </script>

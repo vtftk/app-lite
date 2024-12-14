@@ -2,6 +2,7 @@
   import { uploadFile } from "$lib/api/data";
   import { bulkCreateItemMutation } from "$lib/api/items";
   import { FileType } from "$lib/api/types";
+  import { toastErrorMessage } from "$lib/utils/error";
   import type { ThrowableImageConfig } from "$shared/appData";
   import type { CreateItem } from "$shared/dataV2";
   import { invoke } from "@tauri-apps/api/core";
@@ -44,7 +45,7 @@
     toast.promise(createPromise, {
       loading: "Creating items...",
       success: "Created items",
-      error: "Failed to create items",
+      error: toastErrorMessage("Failed to create items"),
     });
   }
 </script>

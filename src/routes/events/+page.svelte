@@ -6,6 +6,7 @@
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { EventId } from "$shared/dataV2";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const eventsQuery = createEventsQuery();
   const bulkDeleteEvent = bulkDeleteEventMutation();
@@ -41,7 +42,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting events...",
       success: "Deleted events",
-      error: "Failed to delete events",
+      error: toastErrorMessage("Failed to delete events"),
     });
 
     // Clear selection since all items are removed

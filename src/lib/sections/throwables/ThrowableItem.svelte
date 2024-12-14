@@ -8,6 +8,7 @@
   import getBackendURL from "$lib/utils/url";
   import { deleteItemMutation } from "$lib/api/items";
   import { toast } from "svelte-sonner";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     config: Item;
@@ -30,7 +31,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting item...",
       success: "Deleted item",
-      error: "Failed to delete item",
+      error: toastErrorMessage("Failed to delete item"),
     });
   }
 </script>

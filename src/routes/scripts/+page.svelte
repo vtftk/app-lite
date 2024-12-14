@@ -15,6 +15,7 @@
     SHADOW_ITEM_MARKER_PROPERTY_NAME,
     type DndEvent,
   } from "svelte-dnd-action";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   const scriptsQuery = createScriptsQuery();
   const bulkDeleteScripts = bulkDeleteScriptMutation();
@@ -56,7 +57,7 @@
     toast.promise(deletePromise, {
       loading: "Deleting scripts...",
       success: "Deleted scripts",
-      error: "Failed to delete scripts",
+      error: toastErrorMessage("Failed to delete scripts"),
     });
 
     // Clear selection since all items are removed
