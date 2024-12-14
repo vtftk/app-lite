@@ -39,7 +39,11 @@
   }
 
   .content {
+    display: flex;
+    flex-flow: column;
+    position: relative;
     flex: auto;
     height: 100%;
+    overflow: hidden;
   }
 </style>

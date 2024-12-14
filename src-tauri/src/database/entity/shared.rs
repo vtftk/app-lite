@@ -37,3 +37,12 @@ pub enum LoggingLevelDb {
     #[sea_orm(num_value = 3)]
     Error,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LogsQuery {
+    pub level: Option<LoggingLevelDb>,
+    pub start_date: Option<DateTimeUtc>,
+    pub end_date: Option<DateTimeUtc>,
+    pub offset: Option<u64>,
+    pub limit: Option<u64>,
+}

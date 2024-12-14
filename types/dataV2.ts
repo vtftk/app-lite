@@ -243,3 +243,41 @@ export type EventInputDataChat = {
 export type EventInputDataRaid = {
   viewers: number;
 };
+
+export type ScriptLog = {
+  id: string;
+  script_id: string;
+  level: LoggingLevelStr;
+  message: string;
+  created_at: string;
+};
+
+export type CommandLog = {
+  id: string;
+  command_id: string;
+  level: LoggingLevelStr;
+  message: string;
+  created_at: string;
+};
+
+export enum LoggingLevelDb {
+  Debug = 0,
+  Info = 1,
+  Warn = 2,
+  Error = 3,
+}
+
+export enum LoggingLevelStr {
+  Debug = "Debug",
+  Info = "Info",
+  Warn = "Warn",
+  Error = "Error",
+}
+
+export type LogsQuery = Partial<{
+  level: LoggingLevelDb;
+  start_date: string;
+  end_date: string;
+  offset: number;
+  limit: number;
+}>;

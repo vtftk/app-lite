@@ -3,6 +3,8 @@ import type {
   Command,
   UpdateCommand,
   CreateCommand,
+  LogsQuery,
+  CommandLog,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -45,6 +47,28 @@ export function createCommandQuery(id: CommandId | Readable<CommandId>) {
 
 export function getCommandById(commandId: CommandId) {
   return invoke<Command | null>("get_command_by_id", { commandId });
+}
+
+function createCommandLogsKey(id: CommandId, query: LogsQuery) {
+  return ["command-logs", id, query] as const;
+}
+
+export type GetCommandLogs = { id: CommandId; query: LogsQuery };
+
+export function getCommandLogs(commandId: CommandId, query: LogsQuery) {
+  return invoke<CommandLog[]>("get_command_logs", { commandId, query });
+}
+
+export function commandLogsQuery(commandId: CommandId, query: LogsQuery) {
+  return createQuery({
+    queryKey: createCommandLogsKey(commandId, query),
+    queryFn: () => getCommandLogs(commandId, query),
+  });
+}
+
+export function invalidateCommandLogs(commandId: CommandId, query: LogsQuery) {
+  const queryKey = createCommandLogsKey(commandId, query);
+  queryClient.invalidateQueries({ queryKey });
 }
 
 function createCommand(create: CreateCommand) {

@@ -3,6 +3,8 @@ import type {
   Script,
   UpdateScript,
   CreateScript,
+  LogsQuery,
+  ScriptLog,
 } from "$shared/dataV2";
 import { createMutation, createQuery } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
@@ -39,6 +41,25 @@ export function createScriptQuery(id: ScriptId | Readable<ScriptId>) {
     derived(id, (id) => ({
       queryKey: createScriptKey(id),
       queryFn: () => getScriptById(id),
+    }))
+  );
+}
+
+function createScriptLogsKey(id: ScriptId, query: LogsQuery) {
+  return ["script-logs", id, query] as const;
+}
+
+type GetScriptLogs = { id: ScriptId; query: LogsQuery };
+
+export function getScriptLogs(scriptId: ScriptId, query: LogsQuery) {
+  return invoke<ScriptLog[]>("get_script_logs", { scriptId, query });
+}
+
+export function scriptLogsQuery(query: Readable<GetScriptLogs>) {
+  return createQuery(
+    derived(query, ({ id, query }) => ({
+      queryKey: createScriptLogsKey(id, query),
+      queryFn: () => getScriptLogs(id, query),
     }))
   );
 }

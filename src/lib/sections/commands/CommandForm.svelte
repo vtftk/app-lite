@@ -23,11 +23,13 @@
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
   import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
+  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import { toast } from "svelte-sonner";
   import {
     createCommandMutation,
     updateCommandMutation,
   } from "$lib/api/commands";
+  import CommandLogs from "./CommandLogs.svelte";
 
   type Props = {
     existing?: Command;
@@ -188,7 +190,7 @@
     {actions}
   >
     <div class="content">
-      <Tabs.Root>
+      <Tabs.Root let:value>
         <Tabs.List>
           <Tabs.Trigger value="settings">
             <SolarSettingsBoldDuotone /> Settings
@@ -196,6 +198,11 @@
           <Tabs.Trigger value="code">
             <SolarCodeSquareBoldDuotone /> Code
           </Tabs.Trigger>
+          {#if existing !== undefined}
+            <Tabs.Trigger value="logs">
+              <SolarReorderBoldDuotone /> Logs
+            </Tabs.Trigger>
+          {/if}
         </Tabs.List>
         <Tabs.Content value="code">
           {#if $data.outcome.type === CommandOutcomeType.Script}
@@ -276,6 +283,13 @@
             </FormSection>
           </FormSections>
         </Tabs.Content>
+        {#if existing !== undefined}
+          <Tabs.Content value="logs">
+            {#if value === "logs"}
+              <CommandLogs id={existing.id} />
+            {/if}
+          </Tabs.Content>
+        {/if}
       </Tabs.Root>
     </div>
   </PageLayoutList>
@@ -308,6 +322,7 @@
     flex-flow: column;
     border: 1px solid #333;
   }
+
   .content :global([data-tabs-content]:nth-child(3)) {
     padding: 1rem;
   }

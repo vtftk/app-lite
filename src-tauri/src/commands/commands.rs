@@ -3,7 +3,9 @@
 //! Commands for interacting with commands from the frontend
 
 use crate::database::entity::{
+    command_logs::CommandLogsModel,
     commands::{CreateCommand, UpdateCommand},
+    shared::LogsQuery,
     CommandModel,
 };
 use anyhow::Context;
@@ -67,4 +69,20 @@ pub async fn delete_command(command_id: Uuid, db: State<'_, DatabaseConnection>)
         .context("command not found")?;
     command.delete(db).await?;
     Ok(())
+}
+
+/// Get logs of a command
+#[tauri::command]
+pub async fn get_command_logs(
+    command_id: Uuid,
+    query: LogsQuery,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<Vec<CommandLogsModel>> {
+    let db = db.inner();
+    let command = CommandModel::get_by_id(db, command_id)
+        .await?
+        .context("command not found")?;
+    let logs = command.get_logs(db, query).await?;
+
+    Ok(logs)
 }

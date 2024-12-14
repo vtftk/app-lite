@@ -1,12 +1,14 @@
 use anyhow::Context;
 use sea_orm::{
     entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel, QueryOrder,
+    QuerySelect,
 };
 use serde::{Deserialize, Serialize};
 
 use super::{
     command_executions::{CommandExecutionColumn, CommandExecutionModel},
-    shared::{DbResult, MinimumRequireRole},
+    command_logs::{CommandLogsColumn, CommandLogsModel},
+    shared::{DbResult, LogsQuery, MinimumRequireRole},
 };
 
 // Type alias helpers for the database entity types
@@ -52,14 +54,23 @@ pub struct CommandAliases(pub Vec<String>);
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    /// Event can have many executions
+    /// Command can have many executions
     #[sea_orm(has_many = "super::command_executions::Entity")]
     Executions,
+    /// Command can have many logs
+    #[sea_orm(has_many = "super::command_logs::Entity")]
+    Logs,
 }
 
 impl Related<super::command_executions::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Executions.def()
+    }
+}
+
+impl Related<super::command_logs::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Logs.def()
     }
 }
 
@@ -176,5 +187,34 @@ impl Model {
 
         let this = this.update(db).await?;
         Ok(this)
+    }
+
+    pub async fn get_logs<C>(&self, db: &C, query: LogsQuery) -> DbResult<Vec<CommandLogsModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut select = self.find_related(super::command_logs::Entity);
+
+        if let Some(level) = query.level {
+            select = select.filter(CommandLogsColumn::Level.eq(level))
+        }
+
+        if let Some(start_date) = query.start_date {
+            select = select.filter(CommandLogsColumn::CreatedAt.gt(start_date))
+        }
+
+        if let Some(end_date) = query.end_date {
+            select = select.filter(CommandLogsColumn::CreatedAt.lt(end_date))
+        }
+
+        if let Some(offset) = query.offset {
+            select = select.offset(offset);
+        }
+
+        if let Some(limit) = query.limit {
+            select = select.limit(limit);
+        }
+
+        select.all(db).await
     }
 }

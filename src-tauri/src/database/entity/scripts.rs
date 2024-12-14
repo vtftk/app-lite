@@ -1,10 +1,11 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder};
+use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, QuerySelect};
 use serde::{Deserialize, Serialize};
 
 use super::{
     script_events::{ScriptEvent, ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity},
-    shared::DbResult,
+    script_logs::{ScriptLogsColumn, ScriptLogsModel},
+    shared::{DbResult, LogsQuery},
 };
 
 // Type alias helpers for the database entity types
@@ -39,11 +40,20 @@ pub enum Relation {
     /// Script can have many events
     #[sea_orm(has_many = "super::script_events::Entity")]
     Events,
+    /// Script can have many logs
+    #[sea_orm(has_many = "super::script_logs::Entity")]
+    Logs,
 }
 
 impl Related<super::script_events::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Events.def()
+    }
+}
+
+impl Related<super::script_logs::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Logs.def()
     }
 }
 
@@ -207,5 +217,34 @@ impl Model {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn get_logs<C>(&self, db: &C, query: LogsQuery) -> DbResult<Vec<ScriptLogsModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut select = self.find_related(super::script_logs::Entity);
+
+        if let Some(level) = query.level {
+            select = select.filter(ScriptLogsColumn::Level.eq(level))
+        }
+
+        if let Some(start_date) = query.start_date {
+            select = select.filter(ScriptLogsColumn::CreatedAt.gt(start_date))
+        }
+
+        if let Some(end_date) = query.end_date {
+            select = select.filter(ScriptLogsColumn::CreatedAt.lt(end_date))
+        }
+
+        if let Some(offset) = query.offset {
+            select = select.offset(offset);
+        }
+
+        if let Some(limit) = query.limit {
+            select = select.limit(limit);
+        }
+
+        select.all(db).await
     }
 }
