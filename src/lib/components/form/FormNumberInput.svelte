@@ -18,6 +18,7 @@
 <div class="form-input">
   <label for={id}>{label}</label>
   <input
+    data-felte-keep-on-remove
     type="number"
     {id}
     {name}

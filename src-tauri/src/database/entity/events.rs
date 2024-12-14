@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     event_executions::{EventExecutionColumn, EventExecutionModel},
-    shared::{DbResult, MinimumRequireRole},
+    shared::{DbResult, MinMax, MinimumRequireRole},
 };
 
 // Type alias helpers for the database entity types
@@ -116,8 +116,15 @@ pub enum ThrowableData {
     Throw {
         /// IDs of the items that can be thrown
         throwable_ids: Vec<Uuid>,
-        /// Amount to throw
-        amount: u32,
+        /// Amount of items to throw
+        amount: i64,
+
+        /// Override to derive amount of items to throw
+        #[serde(default)]
+        use_input_amount: bool,
+        /// Additional configuration for when use_input_amount is true
+        #[serde(default)]
+        input_amount_config: InputAmountConfig,
     },
 
     /// Throw a throwable barrage
@@ -129,8 +136,32 @@ pub enum ThrowableData {
         /// Time between each thrown item (Milliseconds)
         frequency: u32,
         /// Total amount of items to throw
-        amount: u32,
+        amount: i64,
+
+        /// Override to derive amount of items to throw
+        #[serde(default)]
+        use_input_amount: bool,
+        /// Additional configuration for when use_input_amount is true
+        #[serde(default)]
+        input_amount_config: InputAmountConfig,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct InputAmountConfig {
+    /// Multiplier to apply against the input amount
+    pub multiplier: f64,
+    /// Allowed range for the input
+    pub range: MinMax<i64>,
+}
+
+impl Default for InputAmountConfig {
+    fn default() -> Self {
+        Self {
+            multiplier: 1.,
+            range: MinMax { min: 1, max: 100 },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -153,12 +184,12 @@ pub struct EventOutcomeBits {
 #[serde(tag = "type")]
 pub enum BitsAmount {
     /// Throw fixed amount of bits
-    Fixed { amount: u32 },
+    Fixed { amount: i64 },
 
     /// Throw the number of bits the user provided
     Dynamic {
         /// Maximum number to throw
-        max_amount: u32,
+        max_amount: i64,
     },
 }
 

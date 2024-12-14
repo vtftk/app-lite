@@ -21,14 +21,14 @@ pub enum EventMessage {
     /// Throw a specific item
     ThrowItem {
         config: ThrowableConfig,
-        amount: u32,
+        amount: i64,
     },
 
     /// Throw a barrage of many items
     ThrowItemBarrage {
         config: ThrowableConfig,
         amount_per_throw: u32,
-        amount: u32,
+        amount: i64,
         frequency: u32,
     },
 

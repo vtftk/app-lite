@@ -91,7 +91,7 @@
       <Select.Arrow />
     </Select.Content>
 
-    <Select.Input {name} {id} />
+    <Select.Input {name} {id} data-felte-keep-on-remove />
   </Select.Root>
 
   {#if description}

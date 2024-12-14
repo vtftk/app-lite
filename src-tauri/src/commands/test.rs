@@ -14,7 +14,7 @@ use super::CmdResult;
 #[tauri::command]
 pub async fn test_throw(
     item_ids: Vec<Uuid>,
-    amount: Option<u32>,
+    amount: Option<i64>,
     db: State<'_, DatabaseConnection>,
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
 ) -> CmdResult<()> {
@@ -34,7 +34,7 @@ pub async fn test_throw(
 pub async fn test_throw_barrage(
     item_ids: Vec<Uuid>,
     amount_per_throw: u32,
-    amount: u32,
+    amount: i64,
     frequency: u32,
     db: State<'_, DatabaseConnection>,
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,

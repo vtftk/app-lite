@@ -161,6 +161,8 @@ export enum ThrowableDataType {
 export type ThrowableDataThrow = {
   throwable_ids: Uuid[];
   amount: number;
+  use_input_amount: boolean;
+  input_amount_config: InputAmountConfig;
 };
 
 export type ThrowableDataBarrage = {
@@ -168,6 +170,13 @@ export type ThrowableDataBarrage = {
   amount_per_throw: number;
   frequency: number;
   amount: number;
+  use_input_amount: boolean;
+  input_amount_config: InputAmountConfig;
+};
+
+export type InputAmountConfig = {
+  multiplier: number;
+  range: MinMax;
 };
 
 export type ThrowableData =

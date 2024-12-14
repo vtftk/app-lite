@@ -13,7 +13,14 @@
 </script>
 
 <div class="form-input">
-  <input hidden type="checkbox" {id} {name} aria-labelledby="{name}-label" />
+  <input
+    data-felte-keep-on-remove
+    hidden
+    type="checkbox"
+    {id}
+    {name}
+    aria-labelledby="{name}-label"
+  />
   <label for={id} class="checkbox">
     <span class="checkbox__indicator">&#10003; </span>
   </label>

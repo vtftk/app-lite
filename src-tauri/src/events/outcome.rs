@@ -29,7 +29,7 @@ pub async fn produce_outcome_message(
 ) -> anyhow::Result<EventMessage> {
     match outcome {
         EventOutcome::ThrowBits(data) => throw_bits_outcome(db, event_data, data).await,
-        EventOutcome::Throwable(data) => throwable_outcome(db, data).await,
+        EventOutcome::Throwable(data) => throwable_outcome(db, event_data, data).await,
         EventOutcome::TriggerHotkey(data) => trigger_hotkey_outcome(data),
         EventOutcome::PlaySound(data) => play_sound_outcome(db, data).await,
     }
@@ -80,7 +80,7 @@ async fn throw_bits_outcome(
     };
 
     let amount = match data.amount {
-        BitsAmount::Dynamic { max_amount } => input.min(max_amount as i64) as u32,
+        BitsAmount::Dynamic { max_amount } => input.min(max_amount),
         BitsAmount::Fixed { amount } => amount,
     };
 
@@ -93,14 +93,45 @@ async fn throw_bits_outcome(
 // Produce a throwable message
 async fn throwable_outcome(
     db: &DatabaseConnection,
+    event_data: EventData,
     data: EventOutcomeThrowable,
 ) -> anyhow::Result<EventMessage> {
+    // Compute amount derived from input
+    let input_amount = match event_data.input_data {
+        EventInputData::Bits { bits, .. } => Some(bits),
+        EventInputData::GiftedSubscription { total, .. } => Some(total),
+        EventInputData::Subscription { .. } => Some(1),
+        EventInputData::ReSubscription {
+            cumulative_months, ..
+        } => Some(cumulative_months),
+        EventInputData::Chat { cheer, .. } => cheer.map(|value| value as i64),
+        EventInputData::Raid { viewers } => Some(viewers),
+
+        _ => None,
+    };
+
     match data.data {
         ThrowableData::Throw {
             throwable_ids,
             amount,
+            use_input_amount,
+            input_amount_config,
         } => {
             let throwable_config = create_throwable_config(db, &throwable_ids).await?;
+
+            let amount = if use_input_amount {
+                let input_amount = input_amount.unwrap_or(amount);
+
+                // Apply multiplier
+                let input_amount =
+                    (input_amount as f64 * input_amount_config.multiplier).floor() as i64;
+
+                // Clamp within allowed range
+
+                input_amount.clamp(input_amount_config.range.min, input_amount_config.range.max)
+            } else {
+                amount
+            };
 
             Ok(EventMessage::ThrowItem {
                 config: throwable_config,
@@ -112,8 +143,24 @@ async fn throwable_outcome(
             amount_per_throw,
             frequency,
             amount,
+            use_input_amount,
+            input_amount_config,
         } => {
             let throwable_config = create_throwable_config(db, &throwable_ids).await?;
+
+            let amount = if use_input_amount {
+                let input_amount = input_amount.unwrap_or(amount);
+
+                // Apply multiplier
+                let input_amount =
+                    (input_amount as f64 * input_amount_config.multiplier).floor() as i64;
+
+                // Clamp within allowed range
+
+                input_amount.clamp(input_amount_config.range.min, input_amount_config.range.max)
+            } else {
+                amount
+            };
 
             Ok(EventMessage::ThrowItemBarrage {
                 config: throwable_config,

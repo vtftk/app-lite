@@ -31,7 +31,12 @@
     testEvent,
     updateEventMutation,
   } from "$lib/api/vevents";
-  import type { EventInputData, VEvent, VEventData } from "$shared/dataV2";
+  import {
+    SubscriptionTier,
+    type EventInputData,
+    type VEvent,
+    type VEventData,
+  } from "$shared/dataV2";
   import { Tabs } from "bits-ui";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
@@ -51,6 +56,7 @@
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { minMax } from "$lib/utils/validation";
 
   type Props = {
     existing?: VEvent;
@@ -89,20 +95,28 @@
     }),
   ]);
 
+  const inputAmountConfigSchema = z.object({
+    multiplier: z.number(),
+    range: minMax,
+  });
   type TriggerSchema = z.infer<typeof triggerSchema>;
 
   const throwableDataSchema = z.discriminatedUnion("type", [
     z.object({
       type: z.literal(ThrowableDataType.Throw),
       throwable_ids: z.array(z.string()),
-      amount: z.number(),
+      amount: z.number().default(1),
+      use_input_amount: z.boolean().default(false),
+      input_amount_config: inputAmountConfigSchema,
     }),
     z.object({
       type: z.literal(ThrowableDataType.Barrage),
       throwable_ids: z.array(z.string()),
       amount_per_throw: z.number(),
       frequency: z.number(),
-      amount: z.number(),
+      amount: z.number().default(1),
+      use_input_amount: z.boolean().default(false),
+      input_amount_config: inputAmountConfigSchema,
     }),
   ]);
 
@@ -168,6 +182,11 @@
         type: ThrowableDataType.Throw,
         throwable_ids: [],
         amount: 1,
+        use_input_amount: false,
+        input_amount_config: {
+          multiplier: 1,
+          range: { min: 1, max: 1000 },
+        },
       },
     },
     require_role: MinimumRequiredRole.None,
@@ -197,12 +216,12 @@
           ? {
               loading: "Saving event...",
               success: "Saved event",
-              error: "Failed to save event",
+              error: toastErrorMessage("Failed to save event"),
             }
           : {
               loading: "Creating event...",
               success: "Created event",
-              error: "Failed to create event",
+              error: toastErrorMessage("Failed to create event"),
             }
       );
 
@@ -280,6 +299,11 @@
             type: ThrowableDataType.Throw,
             amount: 1,
             throwable_ids: [],
+            use_input_amount: false,
+            input_amount_config: {
+              multiplier: 1,
+              range: { min: 1, max: 100 },
+            },
           },
         };
       case EventOutcomeType.TriggerHotkey:
@@ -294,6 +318,40 @@
         };
     }
   }
+
+  const EVENT_TRIGGERS_WITH_INPUT = [
+    EventTriggerType.Bits,
+    EventTriggerType.GiftedSubscription,
+    EventTriggerType.Subscription,
+    EventTriggerType.Raid,
+  ];
+
+  const EVENT_TRIGGER_INPUT_LABEL: Partial<
+    Record<EventTriggerType, { label: string; description: string }>
+  > = {
+    [EventTriggerType.Bits]: {
+      label: "Use bits amount",
+      description: "Use the amount of bits for the amount of thrown items",
+    },
+    [EventTriggerType.GiftedSubscription]: {
+      label: "Use total gifted subs",
+      description:
+        "Use the amount of gifted subscriptions for the amount of thrown items",
+    },
+    [EventTriggerType.Subscription]: {
+      label: "Use total gifted subs",
+      description:
+        "Use the amount of months subscribed for the amount of thrown items",
+    },
+    [EventTriggerType.Raid]: {
+      label: "Use raiders count",
+      description: "Use the number of raiders for the amount of thrown items",
+    },
+  };
+
+  const isEventTriggerWithInput = $derived(
+    EVENT_TRIGGERS_WITH_INPUT.includes($data.trigger.type)
+  );
 
   function onChangeTriggerType(type: EventTriggerType) {
     const defaults = getTriggerDefaults(type);
@@ -310,6 +368,23 @@
       );
     }
 
+    // Disable "use_input_amount" when trigger becomes a trigger that
+    // does not produce an input amount
+    if (
+      $data.outcome.type === EventOutcomeType.Throwable &&
+      !EVENT_TRIGGERS_WITH_INPUT.includes(type)
+    ) {
+      const tData = $data.outcome.data;
+
+      if (
+        (tData.type === ThrowableDataType.Throw ||
+          tData.type === ThrowableDataType.Barrage) &&
+        tData.use_input_amount
+      ) {
+        setFields("outcome.data.use_input_amount", false, true);
+      }
+    }
+
     setFields("trigger", defaults, true);
   }
 
@@ -323,14 +398,28 @@
   ): ThrowableDataSchema {
     switch (type) {
       case ThrowableDataType.Throw:
-        return { type: ThrowableDataType.Throw, amount: 1, throwable_ids: [] };
+        return {
+          type: ThrowableDataType.Throw,
+          amount: 1,
+          throwable_ids: [],
+          use_input_amount: false,
+          input_amount_config: {
+            multiplier: 1,
+            range: { min: 1, max: 1000 },
+          },
+        };
       case ThrowableDataType.Barrage:
         return {
           type: ThrowableDataType.Barrage,
-          amount: 1,
-          amount_per_throw: 1,
+          amount: 50,
+          amount_per_throw: 5,
           frequency: 100,
           throwable_ids: [],
+          use_input_amount: false,
+          input_amount_config: {
+            multiplier: 1,
+            range: { min: 1, max: 1000 },
+          },
         };
     }
   }
@@ -460,11 +549,59 @@
             name: "test_user",
             display_name: "TestTwitchUser",
           },
-          bits: 1000,
+          bits: Math.floor(Math.random() * 10_000),
           anonymous: false,
           message: "Wooo bits!",
         };
         break;
+      }
+      case EventOutcomeType.Throwable: {
+        switch ($data.trigger.type) {
+          case EventTriggerType.Subscription:
+            eventData = {
+              user: {
+                id: "test_user",
+                name: "test_user",
+                display_name: "TestTwitcwhUser",
+              },
+              tier: SubscriptionTier.Tier1,
+              is_gift: Math.random() < 0.5,
+            };
+          case EventTriggerType.GiftedSubscription:
+            eventData = {
+              user: {
+                id: "test_user",
+                name: "test_user",
+                display_name: "TestTwitchUser",
+              },
+              tier: SubscriptionTier.Tier1,
+              cumulative_total: Math.floor(Math.random() * 12),
+              anonymous: false,
+              total: Math.floor(Math.random() * 100),
+            };
+          case EventTriggerType.Bits:
+            eventData = {
+              user: {
+                id: "test_user",
+                name: "test_user",
+                display_name: "TestTwitchUser",
+              },
+              bits: Math.floor(Math.random() * 30_000),
+              anonymous: false,
+              message: "Test bits donation message",
+            };
+          case EventTriggerType.Raid:
+            eventData = {
+              user: {
+                id: "test_user",
+                name: "test_user",
+                display_name: "TestTwitchUser",
+              },
+              viewers: Math.floor(Math.random() * 10_000),
+            };
+          default:
+            break;
+        }
       }
       default:
         break;
@@ -540,12 +677,55 @@
     />
 
     {#if $data.outcome.data.type === ThrowableDataType.Throw}
-      <FormNumberInput
-        id="outcome.data.amount"
-        name="outcome.data.amount"
-        label="Total number of items to throw"
-        min={1}
-      />
+      {#if isEventTriggerWithInput}
+        {@const { label, description } =
+          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
+        <FormBoundCheckbox
+          id="outcome.data.use_input_amount"
+          name="outcome.data.use_input_amount"
+          {label}
+          {description}
+        />
+      {/if}
+
+      {#if isEventTriggerWithInput && $data.outcome.data.use_input_amount}
+        <FormNumberInput
+          id="outcome.data.input_amount_config.multiplier"
+          name="outcome.data.input_amount_config.multiplier"
+          label="Multiplier"
+          description="Multiplier applied against the amount"
+          min={1}
+          step={0.1}
+          max={100}
+        />
+        <div class="throwable-config-grid">
+          <FormNumberInput
+            id="outcome.data.input_amount_config.range.min"
+            name="outcome.data.input_amount_config.range.min"
+            label="Minimum Amount"
+            description="Minimum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+          <FormNumberInput
+            id="outcome.data.input_amount_config.range.max"
+            name="outcome.data.input_amount_config.range.max"
+            label="Maximum Amount"
+            description="Maximum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+        </div>
+      {:else}
+        <FormNumberInput
+          id="outcome.data.amount"
+          name="outcome.data.amount"
+          label="Total number of items to throw"
+          min={1}
+        />
+      {/if}
 
       <p>
         {$data.outcome.data.amount} random item{$data.outcome.data.amount > 1
@@ -578,25 +758,72 @@
           min={0}
           max={1000 * 60 * 60}
         />
+      </div>
 
+      {#if isEventTriggerWithInput}
+        {@const { label, description } =
+          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
+        <FormBoundCheckbox
+          id="outcome.data.use_input_amount"
+          name="outcome.data.use_input_amount"
+          {label}
+          {description}
+        />
+      {/if}
+
+      {#if isEventTriggerWithInput && $data.outcome.data.use_input_amount}
+        <div class="throwable-config-grid">
+          <FormNumberInput
+            id="outcome.data.input_amount_config.multiplier"
+            name="outcome.data.input_amount_config.multiplier"
+            label="Multiplier"
+            description="Multiplier applied against the amount"
+            min={1}
+            step={0.1}
+            max={100}
+          />
+          <FormNumberInput
+            id="outcome.data.input_amount_config.range.min"
+            name="outcome.data.input_amount_config.range.min"
+            label="Minimum Amount"
+            description="Minimum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+          <FormNumberInput
+            id="outcome.data.input_amount_config.range.max"
+            name="outcome.data.input_amount_config.range.max"
+            label="Maximum Amount"
+            description="Maximum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+        </div>
+      {:else}
         <FormNumberInput
           id="outcome.data.amount"
           name="outcome.data.amount"
-          label="Total number of throws"
+          label="Total number of items to throw"
           description="Total number of items to throw for the whole barrage"
           min={1}
-          step={1}
         />
-      </div>
+      {/if}
 
       <p>
         {$data.outcome.data.amount_per_throw} random item{$data.outcome.data
           .amount > 1
           ? "s"
           : ""} will be chosen from your selection below and thrown every {$data
-          .outcome.data.frequency}ms until a total of {$data.outcome.data
-          .amount ?? 1} item{$data.outcome.data.amount > 1 ? "s" : ""} have been
-        thrown
+          .outcome.data.frequency}ms {$data.outcome.data.use_input_amount
+          ? "until a maximum of " +
+            $data.outcome.data.input_amount_config.range.max +
+            " have been thrown based on the input "
+          : "until a total of " + ($data.outcome.data.amount ?? 1)} item{$data
+          .outcome.data.amount > 1
+          ? "s"
+          : ""} have been thrown
       </p>
 
       <ThrowablePicker
