@@ -2,20 +2,30 @@
   import {
     bulkDeleteCommandMutation,
     createCommandsQuery,
+    updateCommandOrder,
   } from "$lib/api/commands";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandItem from "$lib/sections/commands/CommandItem.svelte";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import type { CommandId } from "$shared/dataV2";
+  import type { Command, CommandId } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
+  import {
+    dndzone,
+    SHADOW_ITEM_MARKER_PROPERTY_NAME,
+    type DndEvent,
+  } from "svelte-dnd-action";
 
   const commandsQuery = createCommandsQuery();
   const bulkDeleteCommand = bulkDeleteCommandMutation();
 
+  let commands: Command[] = $state([]);
+
   // Readable access to the items from the underlying items query
-  const commands = $derived($commandsQuery.data ?? []);
+  $effect(() => {
+    commands = $commandsQuery.data ?? [];
+  });
 
   let selected: string[] = $state([]);
 
@@ -51,6 +61,17 @@
     });
 
     selected = [];
+  }
+
+  function handleDndConsider(e: CustomEvent<DndEvent<Command>>) {
+    commands = e.detail.items;
+  }
+
+  async function handleDndFinalize(e: CustomEvent<DndEvent<Command>>) {
+    commands = e.detail.items;
+    updateCommandOrder(
+      commands.map((command, index) => ({ id: command.id, order: index }))
+    );
   }
 </script>
 
@@ -90,13 +111,23 @@
   {actions}
   {beforeContent}
 >
-  <div class="grid">
-    {#each commands as item}
-      <CommandItem
-        config={item}
-        selected={selected.includes(item.id)}
-        onToggleSelected={() => onToggleSelected(item.id)}
-      />
+  <div
+    class="grid"
+    use:dndzone={{ items: commands }}
+    onconsider={handleDndConsider}
+    onfinalize={handleDndFinalize}
+  >
+    {#each commands as item (item.id)}
+      <div class="item-wrapper">
+        <CommandItem
+          config={item}
+          selected={selected.includes(item.id)}
+          onToggleSelected={() => onToggleSelected(item.id)}
+        />
+        {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+          <div class="custom-shadow-item"></div>
+        {/if}
+      </div>
     {/each}
   </div>
 </PageLayoutList>

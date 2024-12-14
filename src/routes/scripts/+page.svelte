@@ -71,7 +71,7 @@
   async function handleDndFinalize(e: CustomEvent<DndEvent<Script>>) {
     scripts = e.detail.items;
     updateScriptOrder(
-      scripts.map((sound, index) => ({ id: sound.id, order: index }))
+      scripts.map((script, index) => ({ id: script.id, order: index }))
     );
   }
 </script>
