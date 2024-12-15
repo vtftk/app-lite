@@ -1,5 +1,9 @@
 use anyhow::Context;
-use futures::StreamExt;
+use axum::async_trait;
+use futures::{
+    future::{try_join_all, BoxFuture},
+    StreamExt,
+};
 use log::warn;
 use thiserror::Error;
 use tokio::{net::TcpStream, sync::broadcast};
@@ -12,7 +16,7 @@ use twitch_api::{
         self,
         channel::ChannelRaidV1,
         event::websocket::{EventsubWebsocketData, SessionData},
-        Event, EventSubscription, PayloadParseError,
+        Event, EventSubscription, PayloadParseError, Transport,
     },
     twitch_oauth2::{TwitchToken, UserToken},
     HelixClient,
@@ -364,156 +368,105 @@ impl WebsocketClient {
 
         let transport = eventsub::Transport::websocket(session_id);
 
-        // Subscribe to reward redemptions
-        self.client
-            .create_eventsub_subscription(
+        let client = &self.client;
+
+        let subscriptions: Vec<Box<dyn EventSubTrait>> = vec![
+            // Subscribe to reward redemptions
+            Box::new(EventSub(
                 ChannelPointsCustomRewardRedemptionAddV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe redeems")?;
-
-        // Subscribe to bits cheering
-        self.client
-            .create_eventsub_subscription(
-                ChannelCheerV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe cheers")?;
-
-        // Subscribe to channel follows
-        self.client
-            .create_eventsub_subscription(
-                ChannelFollowV2::new(user_id.clone(), user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe follows")?;
-
-        // Subscribe to channel subscriptions
-        self.client
-            .create_eventsub_subscription(
-                ChannelSubscribeV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe subs")?;
-
-        // Subscribe to channel gifted subscriptions
-        self.client
-            .create_eventsub_subscription(
-                ChannelSubscriptionGiftV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe gifted subs")?;
-
-        // Subscribe to channel resub message
-        self.client
-            .create_eventsub_subscription(
-                ChannelSubscriptionMessageV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe resub message")?;
-
-        // Subscribe to channel chat message
-        self.client
-            .create_eventsub_subscription(
-                ChannelChatMessageV1::new(user_id.clone(), user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe message chat message")?;
-
-        // Subscribe to vip added
-        self.client
-            .create_eventsub_subscription(
-                ChannelVipAddV1::new(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe message vip add")?;
-
-        // Subscribe to vip removed
-        self.client
-            .create_eventsub_subscription(
-                ChannelVipRemoveV1::new(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe message vip remove")?;
-
-        // Subscribe to mod added
-        self.client
-            .create_eventsub_subscription(
-                ChannelModeratorAddV1::new(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe mod added")?;
-
-        // Subscribe to mod removed
-        self.client
-            .create_eventsub_subscription(
-                ChannelModeratorRemoveV1::new(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe mod removed")?;
-
-        // Subscribe to reward added
-        self.client
-            .create_eventsub_subscription(
+            )),
+            // Subscribe to bits cheering
+            Box::new(EventSub(ChannelCheerV1::broadcaster_user_id(
+                user_id.clone(),
+            ))),
+            // Subscribe to channel follows
+            Box::new(EventSub(ChannelFollowV2::new(
+                user_id.clone(),
+                user_id.clone(),
+            ))),
+            // Subscribe to channel chat message
+            Box::new(EventSub(ChannelChatMessageV1::new(
+                user_id.clone(),
+                user_id.clone(),
+            ))),
+            // Subscribe to raids for the user channel
+            Box::new(EventSub(ChannelRaidV1::to_broadcaster_user_id(
+                user_id.clone(),
+            ))),
+            // Subscribe to channel subscriptions
+            Box::new(EventSub(ChannelSubscribeV1::broadcaster_user_id(
+                user_id.clone(),
+            ))),
+            // Subscribe to channel gifted subscriptions
+            Box::new(EventSub(ChannelSubscriptionGiftV1::broadcaster_user_id(
+                user_id.clone(),
+            ))),
+            // Subscribe to channel resubscription message
+            Box::new(EventSub(ChannelSubscriptionMessageV1::broadcaster_user_id(
+                user_id.clone(),
+            ))),
+            // Subscribe to vip added
+            Box::new(EventSub(ChannelVipAddV1::new(user_id.clone()))),
+            // Subscribe to vip removed
+            Box::new(EventSub(ChannelVipRemoveV1::new(user_id.clone()))),
+            // Subscribe to mod added
+            Box::new(EventSub(ChannelModeratorAddV1::new(user_id.clone()))),
+            // Subscribe to mod removed
+            Box::new(EventSub(ChannelModeratorRemoveV1::new(user_id.clone()))),
+            // Subscribe to reward added
+            Box::new(EventSub(
                 ChannelPointsCustomRewardAddV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe reward added")?;
-
-        // Subscribe to reward removed
-        self.client
-            .create_eventsub_subscription(
+            )),
+            // Subscribe to reward removed
+            Box::new(EventSub(
                 ChannelPointsCustomRewardRemoveV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe reward removed")?;
-
-        // Subscribe to reward updated
-        self.client
-            .create_eventsub_subscription(
+            )),
+            // Subscribe to reward updated
+            Box::new(EventSub(
                 ChannelPointsCustomRewardUpdateV1::broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe reward update")?;
+            )),
+        ];
 
-        // Subscribe to raids for the user channel
-        self.client
-            .create_eventsub_subscription(
-                ChannelRaidV1::to_broadcaster_user_id(user_id.clone()),
-                transport.clone(),
-                token,
-            )
-            .await
-            .context("subscribe raid")?;
+        let mut subscriptions = subscriptions.into_iter().peekable();
+
+        // Process adding subscriptions in batches of 5
+        while subscriptions.peek().is_some() {
+            let chunk = subscriptions
+                .by_ref()
+                .take(5)
+                .map(|subscription| subscription.subscribe(client, transport.clone(), token));
+
+            _ = try_join_all(chunk).await;
+        }
 
         Ok(())
+    }
+}
+
+pub struct EventSub<T: EventSubscription + Send + 'static>(T);
+
+pub trait EventSubTrait: Send + 'static {
+    fn subscribe<'a>(
+        self: Box<Self>,
+        client: &'a HelixClient<'static, reqwest::Client>,
+        transport: Transport,
+        token: &'a UserToken,
+    ) -> BoxFuture<'a, anyhow::Result<()>>;
+}
+
+#[async_trait]
+impl<T: EventSubscription + Send + 'static> EventSubTrait for EventSub<T> {
+    fn subscribe<'a>(
+        self: Box<Self>,
+        client: &'a HelixClient<'static, reqwest::Client>,
+        transport: Transport,
+        token: &'a UserToken,
+    ) -> BoxFuture<'a, anyhow::Result<()>> {
+        Box::pin(async move {
+            _ = client
+                .create_eventsub_subscription(self.0, transport, token)
+                .await?;
+            Ok(())
+        })
     }
 }
