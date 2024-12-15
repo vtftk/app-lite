@@ -4,7 +4,6 @@
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
-  import { Checkbox } from "bits-ui";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
@@ -33,6 +32,7 @@
   const bulkDeleteItems = bulkDeleteItemsMutation();
 
   let search = $state("");
+  let selected: string[] = $state([]);
 
   const items = $derived(filterItemsSearch($itemsQuery.data ?? [], search));
 
@@ -52,8 +52,6 @@
     $runtimeAppData.active_overlay_count > 0 &&
       $runtimeAppData.vtube_studio_connected
   );
-
-  let selected: string[] = $state([]);
 
   function onToggleSelected(item: Item) {
     if (selected.includes(item.id)) {

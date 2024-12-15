@@ -6,28 +6,35 @@
   } from "$lib/api/commands";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandItem from "$lib/sections/commands/CommandItem.svelte";
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { Command, CommandId } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
-  import {
-    dndzone,
-    SHADOW_ITEM_MARKER_PROPERTY_NAME,
-    type DndEvent,
-  } from "svelte-dnd-action";
+  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import Button from "$lib/components/input/Button.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
 
   const commandsQuery = createCommandsQuery();
   const bulkDeleteCommand = bulkDeleteCommandMutation();
 
-  let commands: Command[] = $state([]);
-
-  // Readable access to the items from the underlying items query
-  $effect(() => {
-    commands = $commandsQuery.data ?? [];
-  });
-
+  let search = $state("");
   let selected: string[] = $state([]);
+
+  const commands = $derived(
+    filterItemsSearch($commandsQuery.data ?? [], search)
+  );
+
+  function filterItemsSearch(options: Command[], search: string) {
+    search = search.trim().toLowerCase();
+
+    if (search.length < 1) return options;
+
+    return options.filter((option) => {
+      const name = option.name.trim().toLowerCase();
+      return name.startsWith(search) || name.includes(search);
+    });
+  }
 
   function onToggleSelected(item: CommandId) {
     if (selected.includes(item)) {
@@ -62,17 +69,6 @@
 
     selected = [];
   }
-
-  function handleDndConsider(e: CustomEvent<DndEvent<Command>>) {
-    commands = e.detail.items;
-  }
-
-  async function handleDndFinalize(e: CustomEvent<DndEvent<Command>>) {
-    commands = e.detail.items;
-    updateCommandOrder(
-      commands.map((command, index) => ({ id: command.id, order: index }))
-    );
-  }
 </script>
 
 {#snippet actions()}
@@ -81,16 +77,14 @@
 
 {#snippet beforeContent()}
   <div class="selection">
-    <Checkbox.Root
-      checked={commands.length > 0 && selected.length === commands.length}
+    <ControlledCheckbox
+      checked={selected.length > 0 && selected.length === commands.length}
       onCheckedChange={onToggleAllSelected}
-    >
-      <Checkbox.Indicator let:isChecked>
-        {#if isChecked}
-          <span>&#10003;</span>
-        {/if}
-      </Checkbox.Indicator>
-    </Checkbox.Root>
+    />
+
+    <div class="search-wrapper">
+      <SearchInput bind:value={search} placeholder="Search..." />
+    </div>
 
     {#if selected.length > 0}
       <div class="selection__count">
@@ -98,11 +92,19 @@
       </div>
 
       <div class="selection__actions">
-        <button class="btn" onclick={onBulkDelete}><DeleteIcon /> Delete</button
-        >
+        <Button onclick={onBulkDelete}><DeleteIcon /> Delete</Button>
       </div>
     {/if}
   </div>
+{/snippet}
+
+<!-- Snippet for rendering items within the grid -->
+{#snippet item(item: Command)}
+  <CommandItem
+    config={item}
+    selected={selected.includes(item.id)}
+    onToggleSelected={() => onToggleSelected(item.id)}
+  />
 {/snippet}
 
 <PageLayoutList
@@ -111,25 +113,12 @@
   {actions}
   {beforeContent}
 >
-  <div
-    class="grid"
-    use:dndzone={{ items: commands }}
-    onconsider={handleDndConsider}
-    onfinalize={handleDndFinalize}
-  >
-    {#each commands as item (item.id)}
-      <div class="item-wrapper">
-        <CommandItem
-          config={item}
-          selected={selected.includes(item.id)}
-          onToggleSelected={() => onToggleSelected(item.id)}
-        />
-        {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-          <div class="custom-shadow-item"></div>
-        {/if}
-      </div>
-    {/each}
-  </div>
+  <OrderableGrid
+    items={commands}
+    {item}
+    onUpdateOrder={updateCommandOrder}
+    disableOrdering={search.length > 0}
+  />
 </PageLayoutList>
 
 <style>
@@ -150,10 +139,11 @@
     gap: 1rem;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    width: 100%;
+  .search-wrapper {
+    display: flex;
+    flex: auto;
+    flex-shrink: 1;
+    flex-grow: 0;
+    max-width: 20rem;
   }
 </style>

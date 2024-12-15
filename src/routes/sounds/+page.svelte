@@ -7,29 +7,35 @@
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { Sound } from "$shared/dataV2";
-  import {
-    dndzone,
-    SHADOW_ITEM_MARKER_PROPERTY_NAME,
-    type DndEvent,
-  } from "svelte-dnd-action";
   import { toastErrorMessage } from "$lib/utils/error";
+  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import Button from "$lib/components/input/Button.svelte";
 
   const soundsQuery = createSoundsQuery();
-
   const bulkDeleteSounds = bulkDeleteSoundsMutation();
 
-  let sounds: Sound[] = $state([]);
-
-  // Readable access to the items from the underlying items query
-  $effect(() => {
-    sounds = $soundsQuery.data ?? [];
-  });
-
+  let search = $state("");
   let selected: string[] = $state([]);
+
+  const sounds: Sound[] = $derived(
+    filterItemsSearch($soundsQuery.data ?? [], search)
+  );
+
+  function filterItemsSearch(options: Sound[], search: string) {
+    search = search.trim().toLowerCase();
+
+    if (search.length < 1) return options;
+
+    return options.filter((option) => {
+      const name = option.name.trim().toLowerCase();
+      return name.startsWith(search) || name.includes(search);
+    });
+  }
 
   function onToggleSelected(item: Sound) {
     if (selected.includes(item.id)) {
@@ -64,17 +70,6 @@
 
     selected = [];
   }
-
-  function handleDndConsider(e: CustomEvent<DndEvent<Sound>>) {
-    sounds = e.detail.items;
-  }
-
-  async function handleDndFinalize(e: CustomEvent<DndEvent<Sound>>) {
-    sounds = e.detail.items;
-    updateSoundOrder(
-      sounds.map((sound, index) => ({ id: sound.id, order: index }))
-    );
-  }
 </script>
 
 {#snippet actions()}
@@ -84,16 +79,14 @@
 
 {#snippet beforeContent()}
   <div class="selection">
-    <Checkbox.Root
+    <ControlledCheckbox
       checked={selected.length > 0 && selected.length === sounds.length}
       onCheckedChange={onToggleAllSelected}
-    >
-      <Checkbox.Indicator let:isChecked>
-        {#if isChecked}
-          <span>&#10003;</span>
-        {/if}
-      </Checkbox.Indicator>
-    </Checkbox.Root>
+    />
+
+    <div class="search-wrapper">
+      <SearchInput bind:value={search} placeholder="Search..." />
+    </div>
 
     {#if selected.length > 0}
       <div class="selection__count">
@@ -101,11 +94,19 @@
       </div>
 
       <div class="selection__actions">
-        <button class="btn" onclick={onBulkDelete}><DeleteIcon /> Delete</button
-        >
+        <Button onclick={onBulkDelete}><DeleteIcon /> Delete</Button>
       </div>
     {/if}
   </div>
+{/snippet}
+
+<!-- Snippet for rendering items within the grid -->
+{#snippet item(sound: Sound)}
+  <SoundItem
+    config={sound}
+    selected={selected.includes(sound.id)}
+    onToggleSelected={() => onToggleSelected(sound)}
+  />
 {/snippet}
 
 <PageLayoutList
@@ -114,46 +115,15 @@
   {actions}
   {beforeContent}
 >
-  <div
-    class="grid"
-    use:dndzone={{ items: sounds }}
-    onconsider={handleDndConsider}
-    onfinalize={handleDndFinalize}
-  >
-    {#each sounds as sound (sound.id)}
-      <div class="item-wrapper">
-        <SoundItem
-          config={sound}
-          selected={selected.includes(sound.id)}
-          onToggleSelected={() => onToggleSelected(sound)}
-        />
-
-        {#if (sound as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-          <div class="custom-shadow-item"></div>
-        {/if}
-      </div>
-    {/each}
-  </div>
+  <OrderableGrid
+    items={sounds}
+    {item}
+    onUpdateOrder={updateSoundOrder}
+    disableOrdering={search.length > 0}
+  />
 </PageLayoutList>
 
 <style>
-  .item-wrapper {
-    position: relative;
-  }
-
-  .custom-shadow-item {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    visibility: visible;
-    border: 3px dashed #444;
-    background: #212121;
-    opacity: 0.5;
-    margin: 0;
-  }
-
   .selection {
     display: flex;
     align-items: center;
@@ -171,10 +141,11 @@
     gap: 1rem;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    width: 100%;
+  .search-wrapper {
+    display: flex;
+    flex: auto;
+    flex-shrink: 1;
+    flex-grow: 0;
+    max-width: 20rem;
   }
 </style>
