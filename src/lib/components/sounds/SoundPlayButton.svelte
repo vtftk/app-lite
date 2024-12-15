@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+
   import PlayIcon from "~icons/solar/play-bold";
   import StopIcon from "~icons/solar/stop-bold";
 

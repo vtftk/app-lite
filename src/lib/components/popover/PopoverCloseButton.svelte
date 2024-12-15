@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { Popover, type PopoverCloseProps } from "bits-ui";
   import type { HTMLButtonAttributes } from "svelte/elements";
+
+  import { Popover, type PopoverCloseProps } from "bits-ui";
 
   type Props = {
     children?: Snippet;

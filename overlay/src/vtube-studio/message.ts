@@ -8,7 +8,7 @@ export type VTubeMessage<D> = {
 
 export function createVTubeMessage<D = undefined>(
   messageType: string,
-  data: D
+  data: D,
 ): VTubeMessage<D> {
   return {
     apiName: "VTubeStudioPublicAPI",

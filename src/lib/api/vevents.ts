@@ -1,6 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-import { derived, type Readable } from "svelte/store";
-import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
   EventId,
   VEventData,
@@ -9,6 +6,10 @@ import type {
   UpdateOrdering,
   VEvent as Event,
 } from "$shared/dataV2";
+
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
 
@@ -42,7 +43,7 @@ export function createEventQuery(id: EventId | Readable<EventId>) {
     derived(id, (id) => ({
       queryKey: createEventKey(id),
       queryFn: () => getEventById(id),
-    }))
+    })),
   );
 }
 

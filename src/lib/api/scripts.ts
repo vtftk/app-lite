@@ -1,6 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-import { derived, type Readable } from "svelte/store";
-import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
   LogId,
   Script,
@@ -11,6 +8,10 @@ import type {
   CreateScript,
   UpdateOrdering,
 } from "$shared/dataV2";
+
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
 
@@ -44,7 +45,7 @@ export function createScriptQuery(id: ScriptId | Readable<ScriptId>) {
     derived(id, (id) => ({
       queryKey: createScriptKey(id),
       queryFn: () => getScriptById(id),
-    }))
+    })),
   );
 }
 
@@ -211,7 +212,7 @@ export function bulkDeleteScriptLogsMutation(scriptId: ScriptId) {
         (data) => {
           if (data === undefined) return undefined;
           return data.filter((log) => !deleteLogs.logIds.includes(log.id));
-        }
+        },
       );
 
       return undefined;

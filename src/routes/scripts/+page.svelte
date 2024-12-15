@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { Script, ScriptId } from "$shared/dataV2";
+
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
-  import type { Script, ScriptId } from "$shared/dataV2";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";

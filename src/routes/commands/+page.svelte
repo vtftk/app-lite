@@ -1,8 +1,9 @@
 <script lang="ts">
+  import type { Command, CommandId } from "$shared/dataV2";
+
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import type { Command, CommandId } from "$shared/dataV2";
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";

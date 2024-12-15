@@ -33,7 +33,7 @@ export async function requestCurrentModel(socket: VTubeStudioWebSocket) {
   if (response.messageType !== "CurrentModelResponse") {
     throw new InvalidMessageTypeError(
       "CurrentModelResponse",
-      response.messageType
+      response.messageType,
     );
   }
 
@@ -59,7 +59,7 @@ export type InputParameterListData = {
 };
 
 export async function requestInputParameterList(
-  socket: VTubeStudioWebSocket
+  socket: VTubeStudioWebSocket,
 ): Promise<InputParameterListData> {
   const request = createVTubeMessage("InputParameterListRequest", undefined);
   const response = await socket.send(request);
@@ -67,7 +67,7 @@ export async function requestInputParameterList(
   if (response.messageType !== "InputParameterListResponse") {
     throw new InvalidMessageTypeError(
       "InputParameterListResponse",
-      response.messageType
+      response.messageType,
     );
   }
 
@@ -85,7 +85,7 @@ type MoveModelData = {
 
 export async function requestMoveModel(
   socket: VTubeStudioWebSocket,
-  data: MoveModelData
+  data: MoveModelData,
 ) {
   const request = createVTubeMessage("MoveModelRequest", data);
   const response = await socket.send(request);
@@ -105,7 +105,7 @@ export type InjectParameterValue = {
 
 export async function injectParameterData(
   socket: VTubeStudioWebSocket,
-  data: InjectParameterData
+  data: InjectParameterData,
 ) {
   const request = createVTubeMessage("InjectParameterDataRequest", data);
   const response = await socket.send(request);
@@ -133,13 +133,13 @@ const VERTICAL_PARAM_NAMES = ["FaceAngleY", "FacePositionY"];
 const EYE_PARAM_NAMES = ["EyeOpenLeft", "EyeOpenRight"];
 
 export function createModelParameters(
-  params: InputParameter[]
+  params: InputParameter[],
 ): ModelParameters {
   const getOrDefault = (
     name: string,
     value: number,
     min: number,
-    max: number
+    max: number,
   ): ModelParameter => {
     const param = params.find((value) => value.name === name);
     if (param) {
@@ -150,16 +150,16 @@ export function createModelParameters(
   };
 
   const horizontal = HORIZONTAL_PARAM_NAMES.map((name) =>
-    getOrDefault(name, 0, -30, 30)
+    getOrDefault(name, 0, -30, 30),
   ) as [ModelParameter, ModelParameter, ModelParameter];
 
   const vertical = VERTICAL_PARAM_NAMES.map((name) =>
-    getOrDefault(name, 0, -30, 30)
+    getOrDefault(name, 0, -30, 30),
   ) as [ModelParameter, ModelParameter];
 
   const eyes = EYE_PARAM_NAMES.map((name) => getOrDefault(name, 0, 0, 1)) as [
     ModelParameter,
-    ModelParameter
+    ModelParameter,
   ];
 
   return { horizontal, vertical, eyes };

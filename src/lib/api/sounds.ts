@@ -1,6 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-import { derived, type Readable } from "svelte/store";
-import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
   Sound,
   SoundId,
@@ -8,6 +5,10 @@ import type {
   UpdateSound,
   UpdateOrdering,
 } from "$shared/dataV2";
+
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
 
@@ -37,7 +38,7 @@ export function createSoundQuery(id: SoundId | Readable<SoundId>) {
     derived(id, (id) => ({
       queryKey: createSoundKey(id),
       queryFn: () => getSoundById(id),
-    }))
+    })),
   );
 }
 

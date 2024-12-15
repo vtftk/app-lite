@@ -11,7 +11,7 @@ import type { FileType } from "./types";
  */
 export async function uploadFile(
   fileType: FileType,
-  file: File
+  file: File,
 ): Promise<string> {
   const fileName = file.name;
   const fileData = await file.arrayBuffer();

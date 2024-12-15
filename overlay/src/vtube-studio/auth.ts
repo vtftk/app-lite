@@ -15,7 +15,7 @@ let authToken: string | null = getPersistedAuthToken();
  */
 export async function attemptAuthorization(
   socket: VTubeStudioWebSocket,
-  attempt: number = 1
+  attempt: number = 1,
 ) {
   // Attempt to acquire a token if one is not available
   if (authToken === null) {
@@ -44,7 +44,7 @@ export async function attemptAuthorization(
  * @returns The token on success
  */
 async function requestAuthenticationToken(
-  socket: VTubeStudioWebSocket
+  socket: VTubeStudioWebSocket,
 ): Promise<string> {
   const pluginIcon = await getVTFTKLogo();
   const request = createVTubeMessage("AuthenticationTokenRequest", {
@@ -57,7 +57,7 @@ async function requestAuthenticationToken(
   if (response.messageType !== "AuthenticationTokenResponse") {
     throw new InvalidMessageTypeError(
       "AuthenticationTokenResponse",
-      response.messageType
+      response.messageType,
     );
   }
 
@@ -77,7 +77,7 @@ async function requestAuthenticationToken(
 async function requestAuthentication(
   socket: VTubeStudioWebSocket,
 
-  authenticationToken: string
+  authenticationToken: string,
 ): Promise<boolean> {
   const request = createVTubeMessage("AuthenticationRequest", {
     pluginName,
@@ -89,7 +89,7 @@ async function requestAuthentication(
   if (response.messageType !== "AuthenticationResponse") {
     throw new InvalidMessageTypeError(
       "AuthenticationResponse",
-      response.messageType
+      response.messageType,
     );
   }
 

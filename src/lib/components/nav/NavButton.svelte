@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { page } from "$app/stores";
   import type { Component } from "svelte";
   import type { SvelteHTMLElements } from "svelte/elements";
+
+  import { page } from "$app/stores";
 
   type Props = {
     icon: Component<SvelteHTMLElements["svg"]>;

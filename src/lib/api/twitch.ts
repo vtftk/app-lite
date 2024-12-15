@@ -1,11 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
-import {
-  createQuery,
-  type CreateQueryResult,
-} from "@tanstack/svelte-query";
+import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
+
+import type { CustomReward } from "./types";
 
 import { queryClient } from "./utils";
-import type { CustomReward } from "./types";
 
 export const GET_REDEEMS_LIST_KEY = ["get-redeems-list"];
 

@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends { id: string }">
   import type { Snippet } from "svelte";
   import type { UpdateOrdering } from "$shared/dataV2";
+
   import {
     dndzone,
     type DndEvent,

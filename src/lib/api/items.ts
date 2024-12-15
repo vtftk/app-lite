@@ -1,6 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-import { derived, type Readable } from "svelte/store";
-import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
   Item,
   Sound,
@@ -11,6 +8,10 @@ import type {
   UpdateOrdering,
   ItemWithImpactSounds,
 } from "$shared/dataV2";
+
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
 
@@ -44,7 +45,7 @@ export function createItemQueryDerived(id: Readable<ItemId>) {
     derived(id, (id) => ({
       queryKey: createItemKey(id),
       queryFn: () => getItemById(id),
-    }))
+    })),
   );
 }
 
@@ -70,8 +71,8 @@ export function bulkCreateItemMutation() {
     mutationFn: (createItems) =>
       Promise.all(
         createItems.map((createItem) =>
-          invoke<ItemWithImpactSounds>("create_item", { create: createItem })
-        )
+          invoke<ItemWithImpactSounds>("create_item", { create: createItem }),
+        ),
       ),
 
     onSuccess: (items) => {
@@ -123,8 +124,8 @@ export function updateItemsMutation() {
           invoke<ItemWithImpactSounds>("update_item", {
             itemId: updateItem.itemId,
             update: updateItem.update,
-          })
-        )
+          }),
+        ),
       ),
     onSuccess: (data) => {
       for (const item of data) {
@@ -176,8 +177,8 @@ export function bulkAppendItemSoundsMutation() {
           invoke<void>("append_item_impact_sounds", {
             itemId,
             sounds: bulkAppendSounds.soundIds,
-          })
-        )
+          }),
+        ),
       );
     },
     onMutate: async (bulkAppendSounds) => {
@@ -212,8 +213,8 @@ export function bulkDeleteItemsMutation() {
     mutationFn: (deleteItems) => {
       return Promise.all(
         deleteItems.itemIds.map((itemId) =>
-          invoke<void>("delete_item", { itemId })
-        )
+          invoke<void>("delete_item", { itemId }),
+        ),
       );
     },
     onMutate: async (deleteItems) => {

@@ -1,6 +1,7 @@
 <script lang="ts">
-  import getBackendURL from "$lib/utils/url";
   import type { Item } from "$shared/dataV2";
+
+  import getBackendURL from "$lib/utils/url";
   import { fade, scale } from "svelte/transition";
   import { createItemsQuery } from "$lib/api/items";
   import { Dialog, Checkbox, Separator } from "bits-ui";

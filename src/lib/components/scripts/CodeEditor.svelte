@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
   import type * as Monaco from "monaco-editor/esm/vs/editor/editor.api";
+
+  import { onMount, onDestroy } from "svelte";
 
   type Props = {
     value: string;

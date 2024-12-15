@@ -24,7 +24,7 @@ type FlinchConfig = {
 export function flinch(
   socket: VTubeStudioWebSocket,
   modelParameters: ModelParameters,
-  config: FlinchConfig
+  config: FlinchConfig,
 ) {
   const parameterValues: InjectParameterValue[] = [];
 
@@ -73,7 +73,7 @@ export function flinch(
 function createFlinchReturn(
   socket: VTubeStudioWebSocket,
   modelParameters: ModelParameters,
-  config: FlinchConfig
+  config: FlinchConfig,
 ): FlinchReturn {
   let running = true;
   let flinchWeight: number = 1;
@@ -118,7 +118,7 @@ export function flinchReturn(
   socket: VTubeStudioWebSocket,
   modelParameters: ModelParameters,
   config: FlinchConfig,
-  flinchWeight: number
+  flinchWeight: number,
 ) {
   const parameterValues: InjectParameterValue[] = [];
 

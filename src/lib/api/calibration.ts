@@ -1,7 +1,8 @@
+import type { ModelData } from "$shared/appData";
+
 import { writable } from "svelte/store";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { ModelData } from "$shared/appData";
 import { createQuery } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
@@ -28,7 +29,7 @@ listen<{ step: CalibrationStep }>(
   "calibration_state",
   ({ payload: { step } }) => {
     calibrationState.set(step);
-  }
+  },
 );
 
 const CALIBRATION_DATA_KEY = ["calibration-data"];
@@ -51,6 +52,6 @@ listen<ModelData>("model_data_updated", ({ payload: modelData }) => {
         ...existingModelData.filter((data) => data.id !== modelData.id),
         modelData,
       ];
-    }
+    },
   );
 });

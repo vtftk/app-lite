@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { scale } from "svelte/transition";
   import type { HTMLButtonAttributes } from "svelte/elements";
+
+  import { scale } from "svelte/transition";
   import {
     Popover,
     type PopoverProps,

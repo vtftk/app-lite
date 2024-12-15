@@ -1,10 +1,11 @@
 <script lang="ts">
+  import type { Script } from "$lib/api/types";
+
   import { z } from "zod";
   import { Tabs } from "bits-ui";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
-  import type { Script } from "$lib/api/types";
   import reporterDom from "@felte/reporter-dom";
   import { invoke } from "@tauri-apps/api/core";
   import { validator } from "@felte/validator-zod";

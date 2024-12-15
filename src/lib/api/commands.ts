@@ -1,6 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
-import { derived, type Readable } from "svelte/store";
-import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
   LogId,
   Command,
@@ -11,6 +8,10 @@ import type {
   CreateCommand,
   UpdateOrdering,
 } from "$shared/dataV2";
+
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
 
@@ -44,7 +45,7 @@ export function createCommandQuery(id: CommandId | Readable<CommandId>) {
     derived(id, (id) => ({
       queryKey: createCommandKey(id),
       queryFn: () => getCommandById(id),
-    }))
+    })),
   );
 }
 
@@ -210,7 +211,7 @@ export function bulkDeleteCommandLogsMutation(commandId: CommandId) {
         (data) => {
           if (data === undefined) return undefined;
           return data.filter((log) => !deleteLogs.logIds.includes(log.id));
-        }
+        },
       );
 
       return undefined;

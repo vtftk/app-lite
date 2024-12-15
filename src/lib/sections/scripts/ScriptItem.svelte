@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { Script } from "$lib/api/types";
+
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
-  import type { Script } from "$lib/api/types";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";

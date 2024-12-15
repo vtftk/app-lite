@@ -1,6 +1,7 @@
 <script lang="ts">
-  import getBackendURL from "$lib/utils/url";
   import type { Sound } from "$shared/dataV2";
+
+  import getBackendURL from "$lib/utils/url";
   import { fade, scale } from "svelte/transition";
   import { createSoundsQuery } from "$lib/api/sounds";
   import { Dialog, Checkbox, Separator } from "bits-ui";

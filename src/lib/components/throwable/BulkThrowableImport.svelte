@@ -1,11 +1,12 @@
 <script lang="ts">
+  import type { CreateItem } from "$shared/dataV2";
+  import type { ThrowableImageConfig } from "$shared/appData";
+
   import { toast } from "svelte-sonner";
   import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
-  import type { CreateItem } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
   import { bulkCreateItemMutation } from "$lib/api/items";
-  import type { ThrowableImageConfig } from "$shared/appData";
 
   const bulkCreateItem = bulkCreateItemMutation();
 

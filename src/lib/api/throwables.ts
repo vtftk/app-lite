@@ -31,7 +31,7 @@ export async function testThrowBarrage(
   itemIds: string[],
   amount: number = 50,
   amountPerThrow: number = 2,
-  frequency: number = 100
+  frequency: number = 100,
 ) {
   return invoke<void>("test_throw_barrage", {
     itemIds,

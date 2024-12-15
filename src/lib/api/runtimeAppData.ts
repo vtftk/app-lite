@@ -7,7 +7,6 @@ import {
   type CreateQueryResult,
 } from "@tanstack/svelte-query";
 
-import { queryClient } from "./utils";
 import type {
   AppData,
   ModelData,
@@ -18,6 +17,8 @@ import type {
   ThrowablesConfig,
   VTubeStudioConfig,
 } from "./types";
+
+import { queryClient } from "./utils";
 
 export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
 export const RUNTIME_APP_DATA_CONTEXT = Symbol("runtime-app-data");
@@ -102,7 +103,7 @@ export function createTwitchOAuthURLQuery() {
  */
 export function createDeriveModelCalibrated(
   modelData: Readable<ModelData[]>,
-  runtimeAppData: Readable<RuntimeAppData>
+  runtimeAppData: Readable<RuntimeAppData>,
 ): Readable<boolean> {
   return derived(
     [modelData, runtimeAppData],
@@ -113,10 +114,10 @@ export function createDeriveModelCalibrated(
       }
 
       const data = $modelData.find(
-        (data) => data.id === $runtimeAppData.model_id
+        (data) => data.id === $runtimeAppData.model_id,
       );
       return data !== undefined;
-    }
+    },
   );
 }
 
@@ -126,12 +127,12 @@ type AppDataMutator<V> = (input: V) => Promise<boolean>;
 export function createAppDataMutator<V>(
   appData: Readable<AppData>,
   appDataMutation: AppDataMutation,
-  action: (appData: AppData, value: V) => AppData
+  action: (appData: AppData, value: V) => AppData,
 ): Readable<AppDataMutator<V>> {
   return derived(
     appDataMutation,
     ($appDataMutation) => (input: V) =>
-      $appDataMutation.mutateAsync(action(get(appData), input))
+      $appDataMutation.mutateAsync(action(get(appData), input)),
   );
 }
 
@@ -145,7 +146,7 @@ type UpdateSettingsMutation = {
 
 export function createUpdateSettingsMutation(
   appData: Readable<AppData>,
-  appDataMutation: AppDataMutation
+  appDataMutation: AppDataMutation,
 ) {
   return createAppDataMutator<UpdateSettingsMutation>(
     appData,
@@ -158,7 +159,7 @@ export function createUpdateSettingsMutation(
         sounds_config,
         vtube_studio_config,
         externals_config,
-      }
+      },
     ) => ({
       ...appData,
 
@@ -173,6 +174,6 @@ export function createUpdateSettingsMutation(
         ...appData.externals_config,
         ...externals_config,
       },
-    })
+    }),
   );
 }

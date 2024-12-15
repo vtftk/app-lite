@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { VEvent, EventId } from "$shared/dataV2";
+
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
-  import type { VEvent, EventId } from "$shared/dataV2";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import EventItem from "$lib/sections/events/EventItem.svelte";

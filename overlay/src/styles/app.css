@@ -28,7 +28,8 @@ body {
   font-family: "Noto Sans";
   font-display: swap;
   unicode-range: U+000-5FF;
-  src: local("Noto Sans") format("ttf"),
+  src:
+    local("Noto Sans") format("ttf"),
     url("NotoSans-Regular.ttf") format("ttf");
 }
 

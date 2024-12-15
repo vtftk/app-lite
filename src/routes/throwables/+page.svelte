@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { toast } from "svelte-sonner";
   import type { Item, Sound } from "$shared/dataV2";
+
+  import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";

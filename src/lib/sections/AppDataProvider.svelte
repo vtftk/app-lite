@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { setContext } from "svelte";
   import type { RuntimeAppData } from "$lib/api/types";
+
+  import { setContext } from "svelte";
   import { derived, type Readable } from "svelte/store";
   import {
     APP_DATA_CONTEXT,

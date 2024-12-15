@@ -4,7 +4,7 @@ export class InvalidMessageTypeError extends Error {
 
   constructor(expected: string | undefined, messageType: string | undefined) {
     super(
-      `unexpected response message type '${messageType}' expecting ${expected}`
+      `unexpected response message type '${messageType}' expecting ${expected}`,
     );
     this.expected = expected;
     this.messageType = messageType;

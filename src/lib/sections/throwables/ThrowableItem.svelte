@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { Item } from "$lib/api/types";
+
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
-  import type { Item } from "$lib/api/types";
   import getBackendURL from "$lib/utils/url";
   import { deleteItemMutation } from "$lib/api/items";
   import { toastErrorMessage } from "$lib/utils/error";

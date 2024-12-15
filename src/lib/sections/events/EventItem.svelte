@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { VEvent } from "$lib/api/types";
+
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
-  import type { VEvent } from "$lib/api/types";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import { deleteEventMutation } from "$lib/api/vevents";

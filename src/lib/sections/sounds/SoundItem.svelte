@@ -1,8 +1,9 @@
 <script lang="ts">
+  import type { Sound } from "$lib/api/types";
+
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import getBackendURL from "$lib/utils/url";
-  import type { Sound } from "$lib/api/types";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import { deleteSoundMutation } from "$lib/api/sounds";

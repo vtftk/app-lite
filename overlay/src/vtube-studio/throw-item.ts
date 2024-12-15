@@ -25,7 +25,7 @@ import {
  */
 export async function loadThrowableResources(
   imageConfig: ThrowableImageConfig,
-  soundConfig: Sound | null
+  soundConfig: Sound | null,
 ): Promise<{ image: HTMLImageElement | null; audio: HTMLAudioElement | null }> {
   // Load the image and audio if present
   const [imageResult, audioResult] = await Promise.allSettled([
@@ -61,7 +61,7 @@ export async function throwItem(
   modelParameters: ModelParameters,
   config: ItemWithImpactSoundIds,
   image: HTMLImageElement,
-  impactAudio: LoadedSoundData | null
+  impactAudio: LoadedSoundData | null,
 ) {
   const { modelID, modelPosition } = await requestCurrentModel(socket);
 
@@ -83,7 +83,7 @@ export async function throwItem(
 
   let angle = randomRange(
     throwables.throw_angle.min,
-    throwables.throw_angle.max
+    throwables.throw_angle.max,
   );
 
   // Flip the angle when coming from the right side
@@ -92,7 +92,7 @@ export async function throwItem(
   const itemScale = percentRange(
     modelScale,
     throwables.item_scale.min,
-    throwables.item_scale.max
+    throwables.item_scale.max,
   );
 
   const scaledImageWidth = image.width * config.image.scale * itemScale;
@@ -104,13 +104,13 @@ export async function throwItem(
     scaledImageWidth,
     scaledImageHeight,
     angle,
-    throwables.spin_speed
+    throwables.spin_speed,
   );
 
   const movement = createMovementContainer(
     leftSide,
     throwables.duration,
-    throwables.impact_delay
+    throwables.impact_delay,
   );
 
   const pivot = createPivotContainer(
@@ -119,7 +119,7 @@ export async function throwItem(
     modelPosition,
     modelData,
     modelScale,
-    angle
+    angle,
   );
 
   const root = createRootContainer(modelPosition);
@@ -143,7 +143,7 @@ export async function throwItem(
     config,
     impactAudio,
     angle,
-    leftSide
+    leftSide,
   );
 
   // Wait remaining duration before removing
@@ -191,7 +191,7 @@ function handleThrowableImpact(
   config: ItemWithImpactSoundIds,
   impactAudio: LoadedSoundData | null,
   angle: number,
-  leftSide: boolean
+  leftSide: boolean,
 ) {
   // Play the impact sound
   if (impactAudio !== null) {
@@ -253,7 +253,7 @@ function createThrownImage(
   scaledHeight: number,
 
   angle: number,
-  spinSpeed: MinMax
+  spinSpeed: MinMax,
 ): HTMLImageElement {
   const elm = image.cloneNode(true) as HTMLImageElement;
   elm.classList.add("animated");
@@ -298,7 +298,7 @@ function createPivotContainer(
   modelPosition: ModelPosition,
   modelData: ModelCalibration,
   modelScale: number,
-  angle: number
+  angle: number,
 ) {
   const elm = document.createElement("div");
   elm.classList.add("thrown");
@@ -337,7 +337,7 @@ function createPivotContainer(
 function createMovementContainer(
   leftSide: boolean,
   duration: number,
-  delayMs: number
+  delayMs: number,
 ) {
   const elm = document.createElement("div");
   elm.classList.add("animated");

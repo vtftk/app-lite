@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends { value: string, label: string }">
-  import { Select } from "bits-ui";
   import type { Snippet } from "svelte";
+
+  import { Select } from "bits-ui";
   import SolarAltArrowUpBold from "~icons/solar/alt-arrow-up-bold";
   import SolarAltArrowDownBold from "~icons/solar/alt-arrow-down-bold";
 
