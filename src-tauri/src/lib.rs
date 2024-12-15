@@ -176,9 +176,12 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         // Prevent default exit handling, app exiting is done
-        .run(|_app, event| {
+        .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
-                if code.is_none() {
+                let app_data = app.state::<AppDataStore>();
+                let app_data = &*tauri::async_runtime::block_on(app_data.read());
+
+                if code.is_none() && app_data.main_config.minimize_to_tray {
                     api.prevent_exit();
                 }
             }
