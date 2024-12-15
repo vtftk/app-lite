@@ -1,19 +1,19 @@
-import { loadAudio, LoadedSoundData, loadImage, sleep } from "../utils/async";
-import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
-import { percentRange, randomBool, randomRange } from "../utils/math";
-import {
-  AppData,
-  ThrowableImageConfig,
-  MinMax,
-  ModelCalibration,
-  ThrowDirection,
-  ItemWithImpactSoundIds,
-  Sound,
-  ModelId,
-} from "../vtftk/types";
 import { flinch } from "./flinch";
-import { ModelParameters, ModelPosition, requestCurrentModel } from "./model";
 import { VTubeStudioWebSocket } from "./socket";
+import { randomBool, randomRange, percentRange } from "../utils/math";
+import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
+import { sleep, loadAudio, loadImage, LoadedSoundData } from "../utils/async";
+import { ModelPosition, ModelParameters, requestCurrentModel } from "./model";
+import {
+  Sound,
+  MinMax,
+  AppData,
+  ModelId,
+  ThrowDirection,
+  ModelCalibration,
+  ThrowableImageConfig,
+  ItemWithImpactSoundIds,
+} from "../vtftk/types";
 
 /**
  * Loads the resources a throwable depends on such as

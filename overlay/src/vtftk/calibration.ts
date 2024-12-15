@@ -1,13 +1,14 @@
+import { ModelData } from "$shared/appData";
+
+import { notifyProgressCalibration } from "./api";
+import { VTubeStudioWebSocket } from "../vtube-studio/socket";
+import { LARGEST_MODEL_SIZE, SMALLEST_MODEL_SIZE } from "../constants";
+import { CalibrationStep, CalibrationPoint } from "./calibration-types";
 import {
   ModelPosition,
-  requestCurrentModel,
   requestMoveModel,
+  requestCurrentModel,
 } from "../vtube-studio/model";
-import { CalibrationPoint, CalibrationStep } from "./calibration-types";
-import { LARGEST_MODEL_SIZE, SMALLEST_MODEL_SIZE } from "../constants";
-import { VTubeStudioWebSocket } from "../vtube-studio/socket";
-import { notifyProgressCalibration } from "./api";
-import { ModelData } from "$shared/appData";
 
 const calibrationEl = document.getElementById("calibration");
 

@@ -1,5 +1,5 @@
-import { BACKEND_HTTP } from "../constants";
 import { AppData } from "./types";
+import { BACKEND_HTTP } from "../constants";
 
 let appData: AppData | undefined;
 

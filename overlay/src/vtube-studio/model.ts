@@ -1,6 +1,6 @@
-import { InvalidMessageTypeError } from "./error";
 import { createVTubeMessage } from "./message";
 import { VTubeStudioWebSocket } from "./socket";
+import { InvalidMessageTypeError } from "./error";
 
 export type RequestCurrentModelData = {
   hasPhysicsFile: boolean;

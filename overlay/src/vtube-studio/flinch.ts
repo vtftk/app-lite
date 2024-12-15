@@ -1,10 +1,10 @@
 import { EyesMode } from "../vtftk/types";
+import { VTubeStudioWebSocket } from "./socket";
 import {
+  ModelParameters,
   injectParameterData,
   InjectParameterValue,
-  ModelParameters,
 } from "./model";
-import { VTubeStudioWebSocket } from "./socket";
 
 type FlinchReturn = {
   cancel: VoidFunction;

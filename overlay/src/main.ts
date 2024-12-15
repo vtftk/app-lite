@@ -1,18 +1,17 @@
 import "./styles/app.css";
 import "./vtftk/events";
 import "./vtftk/calibration";
-
 import { getAppData } from "./vtftk/appData";
-import { VTubeStudioWebSocket } from "./vtube-studio/socket";
-import {
-  createModelParameters,
-  requestCurrentModel,
-  requestInputParameterList,
-} from "./vtube-studio/model";
-import { createEventSource, EventSourceData } from "./vtftk/events";
-import { getCalibrationData, updateRuntimeData } from "./vtftk/api";
 import { RuntimeAppData } from "./vtftk/types";
 import { attemptAuthorization } from "./vtube-studio/auth";
+import { VTubeStudioWebSocket } from "./vtube-studio/socket";
+import { EventSourceData, createEventSource } from "./vtftk/events";
+import { updateRuntimeData, getCalibrationData } from "./vtftk/api";
+import {
+  requestCurrentModel,
+  createModelParameters,
+  requestInputParameterList,
+} from "./vtube-studio/model";
 
 async function load() {
   // Tell the backend we aren't connected

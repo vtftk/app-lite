@@ -1,8 +1,8 @@
 import { getVTFTKLogo } from "../vtftk/api";
-import { pluginDeveloper, pluginName } from "./constants";
-import { InvalidMessageTypeError } from "./error";
 import { createVTubeMessage } from "./message";
 import { VTubeStudioWebSocket } from "./socket";
+import { InvalidMessageTypeError } from "./error";
+import { pluginName, pluginDeveloper } from "./constants";
 import { getPersistedAuthToken, setPersistedAuthToken } from "./token";
 
 let authToken: string | null = getPersistedAuthToken();

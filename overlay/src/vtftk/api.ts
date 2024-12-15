@@ -1,7 +1,7 @@
 import { BACKEND_HTTP } from "../constants";
 import { base64ArrayBuffer } from "../utils/base64";
-import { CalibrationStepData } from "./calibration-types";
 import { ModelData, RuntimeAppData } from "./types";
+import { CalibrationStepData } from "./calibration-types";
 
 export async function notifyProgressCalibration(body: CalibrationStepData) {
   const response = await fetch(new URL("/calibration", BACKEND_HTTP), {
