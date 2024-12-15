@@ -11,8 +11,10 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import DetectVTubeStudio from "$lib/components/DetectVTubeStudio.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import {
     type AppData,
     EYES_MODE_VALUES,
@@ -26,7 +28,6 @@
 
   import EyesModeSelect from "./EyesModeSelect.svelte";
   import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
-  import DetectVTubeStudio from "$lib/components/DetectVTubeStudio.svelte";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -62,6 +63,14 @@
     external: z.object({
       tts_monster_api_key: z.string(),
     }),
+
+    main: z.object({
+      minimize_to_tray: z.boolean(),
+      clean_logs: z.boolean(),
+      clean_logs_days: z.number(),
+      clean_executions: z.boolean(),
+      clean_executions_days: z.number(),
+    }),
   });
 
   type Schema = z.infer<typeof schema>;
@@ -73,6 +82,7 @@
       sounds_config,
       vtube_studio_config,
       externals_config,
+      main_config,
     } = appData;
 
     return {
@@ -98,6 +108,13 @@
       external: {
         tts_monster_api_key: externals_config.tts_monster_api_key ?? "",
       },
+      main: {
+        minimize_to_tray: main_config.minimize_to_tray,
+        clean_logs: main_config.clean_logs,
+        clean_logs_days: main_config.clean_logs_days,
+        clean_executions: main_config.clean_executions,
+        clean_executions_days: main_config.clean_executions_days,
+      },
     };
   }
 
@@ -121,7 +138,7 @@
   });
 
   async function save(values: Schema) {
-    const { throwables, model, sounds, vtube_studio, external } = values;
+    const { throwables, model, sounds, vtube_studio, external, main } = values;
 
     await $updateSettings({
       throwables_config: {
@@ -149,6 +166,13 @@
             ? null
             : external.tts_monster_api_key,
       },
+      main_config: {
+        minimize_to_tray: main.minimize_to_tray,
+        clean_logs: main.clean_logs,
+        clean_logs_days: main.clean_logs_days,
+        clean_executions: main.clean_executions,
+        clean_executions_days: main.clean_executions_days,
+      },
     });
   }
 </script>
@@ -166,6 +190,9 @@
     <div class="container">
       <Tabs.Root>
         <Tabs.List>
+          <Tabs.Trigger value="main">
+            <SolarSettingsBoldDuotone /> Main
+          </Tabs.Trigger>
           <Tabs.Trigger value="throwables">
             <SolarSettingsBoldDuotone /> Throwables
           </Tabs.Trigger>
@@ -182,6 +209,70 @@
             <SolarSettingsBoldDuotone /> External APIs
           </Tabs.Trigger>
         </Tabs.List>
+        <Tabs.Content value="main">
+          <FormSections>
+            <FormSection title="App">
+              <p class="helper">
+                Enabling "Minimize to tray" allows you to close the app when
+                you're not managing your throwables while streaming to greatly
+                reduce its resource usage. When minimized it can be re-opened or
+                quit fully from the tray icon.
+                <br />
+                <br />
+                Turn off this setting if you want the app to close fully when close
+                is pushed.
+              </p>
+
+              <FormBoundCheckbox
+                id="main.minimize_to_tray"
+                name="main.minimize_to_tray"
+                label="Minimize to tray"
+                description="Enable minimizing to tray on close instead of closing the app"
+              />
+            </FormSection>
+            <FormSection
+              title="Logging"
+              description="VTFTK keeps track of logging messages when running scripts and commands, you can automatically clear them after time has passed in order to save space"
+            >
+              <p class="helper">
+                You can view and delete logs for individual scripts manually
+                using the "Logs" tab when editing the script/command
+              </p>
+
+              <FormBoundCheckbox
+                id="main.clean_logs"
+                name="main.clean_logs"
+                label="Automatically clean logs"
+                description="Disable this to prevent automatic log clearing"
+              />
+
+              <FormNumberInput
+                id="main.clean_logs_days"
+                name="main.clean_logs_days"
+                label="Retain days"
+                description="Number of days logs will be retained for"
+              />
+            </FormSection>
+            <FormSection
+              title="Executions"
+              description="VTFTK keeps tracks executions of commands and events, this allows it to keep track of cooldown and show you who's triggered a command or event"
+            >
+              <FormBoundCheckbox
+                id="main.clean_executions"
+                name="main.clean_executions"
+                label="Automatically clean executions"
+                description="Disable this to prevent automatic log clearing"
+              />
+
+              <FormNumberInput
+                id="main.clean_executions_days"
+                name="main.clean_executions_days"
+                label="Retain days"
+                description="Number of days executions will be retained for"
+              />
+            </FormSection>
+          </FormSections>
+        </Tabs.Content>
         <Tabs.Content value="throwables">
           <FormSections>
             <FormSection title="Duration and delay">
@@ -361,6 +452,10 @@
 </form>
 
 <style>
+  .helper {
+    font-size: 0.8rem;
+  }
+
   .row {
     display: grid;
     grid-template-columns: 1fr 1fr;

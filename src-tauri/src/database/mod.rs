@@ -1,12 +1,20 @@
 use std::path::Path;
 
 use anyhow::Context;
+use chrono::Days;
+use chrono::Utc;
+use entity::CommandExecutionModel;
+use entity::CommandLogsModel;
+use entity::EventExecutionModel;
+use entity::ScriptLogsModel;
 use log::warn;
 use migration::Migrator;
 use sea_orm::Database;
 use sea_orm::DatabaseConnection;
 use sea_orm_migration::MigratorTrait;
 use tokio::fs::{create_dir_all, File};
+
+use crate::state::app_data::AppDataStore;
 
 pub mod entity;
 mod migration;
@@ -36,4 +44,33 @@ pub async fn connect_database(path: &Path) -> anyhow::Result<DatabaseConnection>
     }
 
     Ok(db)
+}
+
+pub async fn clean_old_data(db: DatabaseConnection, app_data: AppDataStore) -> anyhow::Result<()> {
+    let app_data = app_data.read().await;
+    let main_config = &app_data.main_config;
+
+    let now = Utc::now();
+
+    // Clean logs
+    if main_config.clean_logs {
+        let clean_logs_date = now
+            .checked_sub_days(Days::new(main_config.clean_logs_days))
+            .context("system time is incorrect")?;
+
+        ScriptLogsModel::delete_before(&db, clean_logs_date).await?;
+        CommandLogsModel::delete_before(&db, clean_logs_date).await?;
+    }
+
+    // Clean executions
+    if main_config.clean_executions {
+        let clean_executions_date = now
+            .checked_sub_days(Days::new(main_config.clean_executions_days))
+            .context("system time is incorrect")?;
+
+        CommandExecutionModel::delete_before(&db, clean_executions_date).await?;
+        EventExecutionModel::delete_before(&db, clean_executions_date).await?;
+    }
+
+    Ok(())
 }

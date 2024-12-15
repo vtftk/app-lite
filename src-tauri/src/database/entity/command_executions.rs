@@ -91,4 +91,15 @@ impl Model {
     {
         Entity::find().all(db).await
     }
+
+    pub async fn delete_before<C>(db: &C, start_date: DateTimeUtc) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::delete_many()
+            .filter(Column::CreatedAt.lt(start_date))
+            .exec(db)
+            .await?;
+        Ok(())
+    }
 }

@@ -1,4 +1,5 @@
 use anyhow::Context;
+use database::clean_old_data;
 use events::{create_event_channel, processing::process_twitch_events};
 use log::error;
 use script::{events::ScriptEventActor, runtime::create_script_executor};
@@ -49,6 +50,9 @@ pub fn run() {
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
             let script_handle = create_script_executor();
+
+            // Run background cleanup
+            tauri::async_runtime::spawn(clean_old_data(db.clone(), app_data.clone()));
 
             // Provide app data and runtime app data stores
             app.manage(app_data.clone());

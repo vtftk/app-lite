@@ -76,12 +76,40 @@ pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct AppData {
+    pub main_config: MainConfig,
     pub twitch_config: TwitchConfig,
     pub throwables_config: ThrowablesConfig,
     pub model_config: ModelConfig,
     pub sounds_config: SoundsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
     pub externals_config: ExternalsConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MainConfig {
+    /// Minimize to try instead of closing
+    pub minimize_to_tray: bool,
+    /// Clean old log data on startup
+    pub clean_logs: bool,
+    /// Number of days of logs to retain when cleaning logs
+    pub clean_logs_days: u64,
+    /// Clean old execution data on start
+    pub clean_executions: bool,
+    /// Number of days of execution data to retain when cleaning executions
+    pub clean_executions_days: u64,
+}
+
+impl Default for MainConfig {
+    fn default() -> Self {
+        Self {
+            minimize_to_tray: true,
+            clean_logs: true,
+            clean_logs_days: 30,
+            clean_executions: true,
+            clean_executions_days: 30,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

@@ -8,11 +8,20 @@ export type MinMax = {
 };
 
 export type AppData = {
+  main_config: MainConfig;
   throwables_config: ThrowablesConfig;
   sounds_config: SoundsConfig;
   model_config: ModelConfig;
   vtube_studio_config: VTubeStudioConfig;
   externals_config: ExternalsConfig;
+};
+
+export type MainConfig = {
+  minimize_to_tray: boolean;
+  clean_logs: boolean;
+  clean_logs_days: number;
+  clean_executions: boolean;
+  clean_executions_days: number;
 };
 
 export type ExternalsConfig = {
@@ -230,6 +239,7 @@ export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
   { type: T }
 >;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CustomReward = any;
 
 export enum CommandOutcomeType {

@@ -10,6 +10,7 @@ import {
 import type {
   AppData,
   ModelData,
+  MainConfig,
   ModelConfig,
   SoundsConfig,
   RuntimeAppData,
@@ -142,6 +143,7 @@ type UpdateSettingsMutation = {
   sounds_config: Partial<SoundsConfig>;
   vtube_studio_config: Partial<VTubeStudioConfig>;
   externals_config: Partial<ExternalsConfig>;
+  main_config: Partial<MainConfig>;
 };
 
 export function createUpdateSettingsMutation(
@@ -159,6 +161,7 @@ export function createUpdateSettingsMutation(
         sounds_config,
         vtube_studio_config,
         externals_config,
+        main_config,
       },
     ) => ({
       ...appData,
@@ -173,6 +176,10 @@ export function createUpdateSettingsMutation(
       externals_config: {
         ...appData.externals_config,
         ...externals_config,
+      },
+      main_config: {
+        ...appData.main_config,
+        ...main_config,
       },
     }),
   );
