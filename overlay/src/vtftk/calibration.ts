@@ -77,7 +77,7 @@ function unsubscribeCalibrate() {
 
 async function resetCalibration(
   socket: VTubeStudioWebSocket,
-  resetStep = true
+  resetStep = true,
 ) {
   if (resetStep) {
     currentStep = CalibrationStep.NotStarted;
@@ -105,7 +105,7 @@ const STEPS = [
 export async function beginCalibrationStep(
   socket: VTubeStudioWebSocket,
   step: CalibrationStep,
-  onCalibrationComplete: (data: ModelData) => void
+  onCalibrationComplete: (data: ModelData) => void,
 ) {
   const currentStepIndex = STEPS.indexOf(currentStep);
   const stepIndex = STEPS.indexOf(step);
@@ -123,7 +123,7 @@ export async function beginCalibrationStep(
 
   switch (step) {
     // Capture initial model position
-    case CalibrationStep.Smallest:
+    case CalibrationStep.Smallest: {
       subscribeCalibrate();
 
       const {
@@ -144,17 +144,19 @@ export async function beginCalibrationStep(
       await shrinkModel(socket);
       await notifyProgressCalibration({ step: CalibrationStep.Smallest });
       break;
+    }
 
     // Store smallest position and grow model
-    case CalibrationStep.Largest:
+    case CalibrationStep.Largest: {
       dragging = true;
       smallestPoint = await getModelGuidePosition(socket);
       await notifyProgressCalibration({ step: CalibrationStep.Largest });
       await growModel(socket);
       break;
+    }
 
     // Store largest position, report calibration results and reset model
-    case CalibrationStep.Complete:
+    case CalibrationStep.Complete: {
       if (
         smallestPoint === undefined ||
         modelId === undefined ||
@@ -176,6 +178,7 @@ export async function beginCalibrationStep(
       await resetCalibration(socket, false);
       onCalibrationComplete(model_data);
       break;
+    }
     default:
       break;
   }
@@ -217,7 +220,7 @@ function resetModel(socket: VTubeStudioWebSocket) {
  * to the guide
  */
 async function getModelGuidePosition(
-  socket: VTubeStudioWebSocket
+  socket: VTubeStudioWebSocket,
 ): Promise<CalibrationPoint> {
   if (calibrationPoint === undefined)
     throw new Error("calibration not currently active");

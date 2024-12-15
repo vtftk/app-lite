@@ -34,14 +34,14 @@ async function load() {
   // Load and store model calibration data
   const modelData = await getCalibrationData();
   modelData.forEach((modelData) =>
-    eventSourceData.modelCalibration.set(modelData.id, modelData.calibration)
+    eventSourceData.modelCalibration.set(modelData.id, modelData.calibration),
   );
 
   const eventSource = createEventSource(eventSourceData);
 
   const vtSocket = new VTubeStudioWebSocket(
     appData.vtube_studio_config.host,
-    appData.vtube_studio_config.port
+    appData.vtube_studio_config.port,
   );
 
   eventSourceData.vtSocket = vtSocket;
@@ -86,7 +86,7 @@ async function load() {
     // Only needs to be done on initial load, can be stored until next refresh
     const inputParameters = await requestInputParameterList(vtSocket);
     const modelParameters = createModelParameters(
-      inputParameters.defaultParameters
+      inputParameters.defaultParameters,
     );
 
     eventSourceData.modelParameters = modelParameters;
@@ -108,7 +108,7 @@ async function load() {
 }
 
 async function reportCurrentRuntimeData(vtSocket: VTubeStudioWebSocket) {
-  let runtimeData: Partial<RuntimeAppData> = {};
+  const runtimeData: Partial<RuntimeAppData> = {};
 
   if (vtSocket.isConnected()) {
     runtimeData.vtube_studio_connected = true;
@@ -118,7 +118,7 @@ async function reportCurrentRuntimeData(vtSocket: VTubeStudioWebSocket) {
       const { modelID } = await requestCurrentModel(vtSocket);
       runtimeData.model_id = modelID;
     } catch (e) {
-      console.error("failed to request current model");
+      console.error("failed to request current model", e);
     }
   }
 

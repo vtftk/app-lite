@@ -50,6 +50,7 @@ export function createEventSource(data: EventSourceData) {
   return eventSource;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function onMessage(data: EventSourceData, event: any) {
   switch (event.type) {
     case "SetCalibrationStep": {
@@ -66,7 +67,7 @@ async function onMessage(data: EventSourceData, event: any) {
           data.modelCalibration,
           data.modelParameters,
           event.config,
-          event.amount
+          event.amount,
         );
       }
 
@@ -83,7 +84,7 @@ async function onMessage(data: EventSourceData, event: any) {
           event.config,
           event.amount_per_throw,
           event.amount,
-          event.frequency
+          event.frequency,
         );
       }
       break;
@@ -175,7 +176,7 @@ async function onPlaySoundSeqEvent(appData: AppData, configs: Sound[]) {
 
 async function onTriggerHotkeyEvent(
   vtSocket: VTubeStudioWebSocket,
-  hotkeyID: string
+  hotkeyID: string,
 ) {
   const hotkeys = await triggerHotkey(vtSocket, hotkeyID);
 
@@ -185,7 +186,7 @@ async function onTriggerHotkeyEvent(
 async function onSetCalibrationStepEvent(
   data: EventSourceData,
   vtSocket: VTubeStudioWebSocket,
-  step: CalibrationStep
+  step: CalibrationStep,
 ) {
   beginCalibrationStep(vtSocket, step, (model_data) => {
     // Update the model data map to include the new model data
@@ -199,7 +200,7 @@ async function onThrowItemEvent(
   modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
   config: ThrowableConfig,
-  amount: number
+  amount: number,
 ) {
   const [loadedItems, loadedSounds] = await Promise.all([
     loadItems(config.items),
@@ -214,14 +215,14 @@ async function onThrowItemEvent(
     config.items,
     loadedItems,
     loadedSounds,
-    amount
+    amount,
   );
 }
 
 function pickRandomSound(
   item: ItemWithImpactSoundIds,
   sounds: LoadedSoundMap,
-  clone: boolean = false
+  clone: boolean = false,
 ) {
   if (item.impact_sound_ids.length > 0) {
     const randomSoundId = arrayRandom(item.impact_sound_ids);
@@ -241,7 +242,7 @@ function pickRandomSound(
 
 function pickRandomItem(
   items: ItemWithImpactSoundIds[],
-  images: LoadedItemMap
+  images: LoadedItemMap,
 ) {
   if (items.length === 1) {
     const item = items[0];
@@ -272,7 +273,7 @@ function throwRandomItem(
 
   items: ItemWithImpactSoundIds[],
   loadedItems: LoadedItemMap,
-  loadedSounds: LoadedSoundMap
+  loadedSounds: LoadedSoundMap,
 ): Promise<void> {
   const item = pickRandomItem(items, loadedItems);
 
@@ -289,7 +290,7 @@ function throwRandomItem(
     modelParameters,
     item.config,
     item.image,
-    impactAudio
+    impactAudio,
   );
 }
 
@@ -302,7 +303,7 @@ async function throwItemMany(
   items: ItemWithImpactSoundIds[],
   loadedItems: LoadedItemMap,
   loadedSounds: LoadedSoundMap,
-  amount: number
+  amount: number,
 ) {
   if (amount === 1) {
     return throwRandomItem(
@@ -312,7 +313,7 @@ async function throwItemMany(
       modelParameters,
       items,
       loadedItems,
-      loadedSounds
+      loadedSounds,
     );
   }
 
@@ -325,9 +326,9 @@ async function throwItemMany(
         modelParameters,
         items,
         loadedItems,
-        loadedSounds
-      )
-    )
+        loadedSounds,
+      ),
+    ),
   );
 }
 
@@ -339,7 +340,7 @@ async function onThrowItemBarrageEvent(
   config: ThrowableConfig,
   amountPerThrow: number,
   amount: number,
-  frequency: number
+  frequency: number,
 ) {
   const [loadedItems, loadedSounds] = await Promise.all([
     loadItems(config.items),
@@ -356,10 +357,10 @@ async function onThrowItemBarrageEvent(
         config.items,
         loadedItems,
         loadedSounds,
-        amountPerThrow
+        amountPerThrow,
       );
     },
     frequency,
-    amount
+    amount,
   );
 }

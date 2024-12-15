@@ -1,3 +1,6 @@
+/* eslint-disable */
+/* @ts-ignore */
+
 // Sourced from https://gist.github.com/jonleighton/958841
 export function base64ArrayBuffer(arrayBuffer: ArrayBuffer) {
   var base64 = "";

@@ -2,7 +2,9 @@ import { APIError } from "./error";
 import { VTubeMessage } from "./message";
 
 type PromiseExecutor = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resolve: (value: VTubeMessage<any>) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reject: (reason?: any) => void;
 };
 
@@ -61,7 +63,7 @@ export class VTubeStudioWebSocket {
         console.warn(
           "VTube studio WebSocket closed:",
           event.code,
-          event.reason
+          event.reason,
         );
 
         this.clearRequestHandlers();
@@ -83,6 +85,7 @@ export class VTubeStudioWebSocket {
   }
 
   handleSocketMessage(message: MessageEvent<string>) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response: VTubeMessage<any> = JSON.parse(message.data);
 
     // Response didn't belong to any handler
@@ -105,13 +108,14 @@ export class VTubeStudioWebSocket {
     if (response.messageType === "APIError") {
       // Handle API errors
       handler.reject(
-        new APIError(response.data.errorID, response.data.message)
+        new APIError(response.data.errorID, response.data.message),
       );
     } else {
       handler.resolve(response);
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   send(msg: VTubeMessage<any>): Promise<VTubeMessage<any>> {
     return new Promise((resolve, reject) => {
       if (
@@ -122,7 +126,7 @@ export class VTubeStudioWebSocket {
       }
 
       // Update request ID
-      let msgRequestID = this.requestID++;
+      const msgRequestID = this.requestID++;
       msg.requestID = "" + msgRequestID;
 
       const data = JSON.stringify(msg);

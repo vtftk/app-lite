@@ -16,13 +16,12 @@ export async function sleep(duration: number): Promise<void> {
 export async function executeInterval(
   action: VoidFunction,
   interval: number,
-  maxIterations: number
+  maxIterations: number,
 ): Promise<void> {
   return new Promise((resolve) => {
-    let intervalHandle: number;
     let iteration: number = 0;
 
-    intervalHandle = setInterval(() => {
+    const intervalHandle: number = setInterval(() => {
       action();
       iteration += 1;
 
@@ -65,7 +64,7 @@ export async function loadItems(items: Item[]): Promise<LoadedItemMap> {
     items.map(async (item) => ({
       id: item.id,
       image: await loadImage(item.image.src),
-    }))
+    })),
   );
 
   const output = new Map();
@@ -86,7 +85,7 @@ export async function loadSounds(sounds: Sound[]): Promise<LoadedSoundMap> {
     sounds.map(async (config) => ({
       sound: await loadAudio(config.src),
       config,
-    }))
+    })),
   );
 
   const output = new Map();

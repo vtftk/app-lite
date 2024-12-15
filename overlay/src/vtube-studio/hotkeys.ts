@@ -7,12 +7,12 @@ export type AvailableHotkey = {
   description: string;
   file: string;
   hotkeyID: string;
-  keyCombination: any[];
+  keyCombination: unknown[];
   onScreenButtonID: number | null;
 };
 
 export async function requestHotkeys(
-  socket: VTubeStudioWebSocket
+  socket: VTubeStudioWebSocket,
 ): Promise<AvailableHotkey[]> {
   const request = createVTubeMessage("HotkeysInCurrentModelRequest", {});
   const response = await socket.send(request);
@@ -26,7 +26,7 @@ export async function requestHotkeys(
 
 export async function triggerHotkey(
   socket: VTubeStudioWebSocket,
-  hotkeyID: string
+  hotkeyID: string,
 ): Promise<string> {
   const request = createVTubeMessage("HotkeyTriggerRequest", { hotkeyID });
   const response = await socket.send(request);
