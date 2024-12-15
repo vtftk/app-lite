@@ -1,12 +1,14 @@
 <script lang="ts">
   import { derived } from "svelte/store";
   import { createModelDataQuery } from "$lib/api/calibration";
+  import { createIsAuthenticatedQuery } from "$lib/api/oauth";
   import {
     getRuntimeAppData,
     createDeriveModelCalibrated,
   } from "$lib/api/runtimeAppData";
 
   const runtimeAppData = getRuntimeAppData();
+  const isAuthenticated = createIsAuthenticatedQuery();
 
   const modelDataQuery = createModelDataQuery();
   const modelData = derived(
@@ -43,14 +45,10 @@
     </div>
   </div>
   <div class="status-item">
-    <div>Model Calibration</div>
+    <div>Twitch</div>
     <div
       class="status-indicator"
-      data-status={$isModelCalibrated
-        ? "green"
-        : $runtimeAppData.vtube_studio_connected
-          ? "red"
-          : "orange"}
+      data-status={$isAuthenticated.data ? "green" : "red"}
     ></div>
   </div>
 </div>
