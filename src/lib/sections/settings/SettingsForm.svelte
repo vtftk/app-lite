@@ -251,6 +251,7 @@
                 name="main.clean_logs_days"
                 label="Retain days"
                 description="Number of days logs will be retained for"
+                min={0}
               />
             </FormSection>
             <FormSection
@@ -269,6 +270,7 @@
                 name="main.clean_executions_days"
                 label="Retain days"
                 description="Number of days executions will be retained for"
+                min={0}
               />
             </FormSection>
           </FormSections>
