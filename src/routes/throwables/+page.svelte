@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { flip } from "svelte/animate";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -15,17 +14,11 @@
     bulkAppendItemSoundsMutation,
     bulkDeleteItemsMutation,
     createItemsQuery,
-    updateItemMutation,
     updateItemOrder,
-    updateItemsMutation,
   } from "$lib/api/items";
   import type { Item, Sound } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
-  import {
-    dndzone,
-    SHADOW_ITEM_MARKER_PROPERTY_NAME,
-    type DndEvent,
-  } from "svelte-dnd-action";
+  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -34,12 +27,7 @@
   const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
   const bulkDeleteItems = bulkDeleteItemsMutation();
 
-  let items: Item[] = $state([]);
-
-  // Readable access to the items from the underlying items query
-  $effect(() => {
-    items = $itemsQuery.data ?? [];
-  });
+  const items = $derived($itemsQuery.data ?? []);
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
@@ -125,24 +113,15 @@
       error: toastErrorMessage("Failed to throw barrage"),
     });
   }
-
-  function handleDndConsider(e: CustomEvent<DndEvent<Item>>) {
-    items = e.detail.items;
-  }
-
-  async function handleDndFinalize(e: CustomEvent<DndEvent<Item>>) {
-    items = e.detail.items;
-    updateItemOrder(
-      items.map((item, index) => ({ id: item.id, order: index }))
-    );
-  }
 </script>
 
+<!-- Actions in the titlebar -->
 {#snippet actions()}
   <a class="btn" href="/throwables/create"> Create Throwable </a>
   <BulkThrowableImport />
 {/snippet}
 
+<!-- Section before the content -->
 {#snippet beforeContent()}
   <div class="selection">
     <Checkbox.Root
@@ -189,52 +168,25 @@
   </div>
 {/snippet}
 
+<!-- Snippet for rendering items within the grid -->
+{#snippet item(item: Item)}
+  <ThrowableItem
+    config={item}
+    selected={selected.includes(item.id)}
+    onToggleSelected={() => onToggleSelected(item)}
+  />
+{/snippet}
+
 <PageLayoutList
   title="Throwables"
   description="Items that can be thrown. Configure them below"
   {actions}
   {beforeContent}
 >
-  <div
-    class="grid"
-    use:dndzone={{ items }}
-    onconsider={handleDndConsider}
-    onfinalize={handleDndFinalize}
-  >
-    {#each items as item (item.id)}
-      <div class="item-wrapper">
-        <ThrowableItem
-          config={item}
-          selected={selected.includes(item.id)}
-          onToggleSelected={() => onToggleSelected(item)}
-        />
-
-        {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-          <div class="custom-shadow-item"></div>
-        {/if}
-      </div>
-    {/each}
-  </div>
+  <OrderableGrid {items} {item} onUpdateOrder={updateItemOrder} />
 </PageLayoutList>
 
 <style>
-  .item-wrapper {
-    position: relative;
-  }
-
-  .custom-shadow-item {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    visibility: visible;
-    border: 3px dashed #444;
-    background: #212121;
-    opacity: 0.5;
-    margin: 0;
-  }
-
   .selection {
     display: flex;
     align-items: center;
@@ -250,12 +202,5 @@
   .selection__actions {
     display: flex;
     gap: 1rem;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    width: 100%;
   }
 </style>
