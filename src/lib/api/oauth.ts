@@ -1,5 +1,5 @@
-import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
 import { invoke } from "@tauri-apps/api/core";
+import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
 
 export const IS_AUTHENTICATED_KEY = ["is-authenticated"];
 

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { derived } from "svelte/store";
   import { createScriptQuery } from "$lib/api/scripts";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import ScriptForm from "$lib/sections/scripts/ScriptForm.svelte";
-  import { derived } from "svelte/store";
 
   const id = derived(page, ($page) => $page.params.id);
   const scriptQuery = createScriptQuery(id);

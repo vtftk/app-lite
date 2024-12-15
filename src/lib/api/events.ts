@@ -1,8 +1,9 @@
 import { listen } from "@tauri-apps/api/event";
+
 import { queryClient } from "./utils";
-import { RUNTIME_APP_DATA_KEY } from "./runtimeAppData";
 import { type RuntimeAppData } from "./types";
 import { IS_AUTHENTICATED_KEY } from "./oauth";
+import { RUNTIME_APP_DATA_KEY } from "./runtimeAppData";
 
 // Handle authenticating
 listen("authenticated", () => {

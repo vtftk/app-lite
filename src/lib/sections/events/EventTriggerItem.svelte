@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Component, Snippet } from "svelte";
+  import type { Snippet, Component } from "svelte";
 
   type Props = {
     icon: Component;

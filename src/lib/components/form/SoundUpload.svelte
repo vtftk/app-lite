@@ -1,7 +1,8 @@
 <script lang="ts">
   import getBackendURL from "$lib/utils/url";
-  import SoundPreview from "../sounds/SoundPreview.svelte";
+
   import FormErrorLabel from "./FormErrorLabel.svelte";
+  import SoundPreview from "../sounds/SoundPreview.svelte";
 
   type Props = {
     id: string;

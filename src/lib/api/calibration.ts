@@ -1,8 +1,9 @@
-import type { ModelData } from "$shared/appData";
-import { createQuery } from "@tanstack/svelte-query";
+import { writable } from "svelte/store";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { writable } from "svelte/store";
+import type { ModelData } from "$shared/appData";
+import { createQuery } from "@tanstack/svelte-query";
+
 import { queryClient } from "./utils";
 
 export enum CalibrationStep {

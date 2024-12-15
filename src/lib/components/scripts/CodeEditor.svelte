@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import type * as Monaco from "monaco-editor/esm/vs/editor/editor.api";
 
   type Props = {
@@ -42,7 +42,7 @@
     const model = monaco.editor.createModel(
       value,
       "javascript",
-      monaco.Uri.parse("file:///main.js")
+      monaco.Uri.parse("file:///main.js"),
     );
     editor.setModel(model);
 

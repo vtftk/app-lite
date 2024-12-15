@@ -1,10 +1,6 @@
 <script lang="ts">
+  import { MinimumRequiredRole } from "$shared/appData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import {
-    EventTriggerType,
-    EyesMode,
-    MinimumRequiredRole,
-  } from "$shared/appData";
 
   type Props = {
     id: string;

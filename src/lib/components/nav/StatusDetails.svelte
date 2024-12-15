@@ -1,23 +1,23 @@
 <script lang="ts">
+  import { derived } from "svelte/store";
   import { createModelDataQuery } from "$lib/api/calibration";
   import {
-    createDeriveModelCalibrated,
     getRuntimeAppData,
+    createDeriveModelCalibrated,
   } from "$lib/api/runtimeAppData";
-  import { derived } from "svelte/store";
 
   const runtimeAppData = getRuntimeAppData();
 
   const modelDataQuery = createModelDataQuery();
   const modelData = derived(
     modelDataQuery,
-    ($modelDataQuery) => $modelDataQuery.data ?? []
+    ($modelDataQuery) => $modelDataQuery.data ?? [],
   );
 
   // Model needs to be calibrated if not available here
   const isModelCalibrated = createDeriveModelCalibrated(
     modelData,
-    runtimeAppData
+    runtimeAppData,
   );
 </script>
 

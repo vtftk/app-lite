@@ -1,7 +1,7 @@
 <script lang="ts">
+  import type { SoundId } from "$shared/dataV2";
   import { createSoundsQuery } from "$lib/api/sounds";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import type { SoundId } from "$shared/dataV2";
 
   type Props = {
     id: string;
@@ -22,7 +22,7 @@
     ($soundsQuery.data ?? []).map((sound) => ({
       value: sound.id,
       label: sound.name,
-    }))
+    })),
   );
 
   type Option = (typeof items)[0];

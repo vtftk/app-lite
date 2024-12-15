@@ -1,9 +1,10 @@
 <script lang="ts" generics="T extends { value: string, label: string }">
   import { Select } from "bits-ui";
-  import FormErrorLabel from "./FormErrorLabel.svelte";
   import type { Snippet } from "svelte";
-  import SolarAltArrowDownBold from "~icons/solar/alt-arrow-down-bold";
   import SolarAltArrowUpBold from "~icons/solar/alt-arrow-up-bold";
+  import SolarAltArrowDownBold from "~icons/solar/alt-arrow-down-bold";
+
+  import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props<T> = {
     id: string;
@@ -16,7 +17,9 @@
 
     multiple?: boolean;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     selected: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onChangeSelected: (value: any) => void;
   };
 
@@ -34,6 +37,7 @@
 
   let open = $state(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function getSelection(items: T[], multiple: boolean, selected: any): any {
     if (multiple) {
       return items

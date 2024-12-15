@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { derived } from "svelte/store";
   import { createCommandQuery } from "$lib/api/commands";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandForm from "$lib/sections/commands/CommandForm.svelte";
-  import { derived } from "svelte/store";
 
   const id = derived(page, ($page) => $page.params.id);
   const commandQuery = createCommandQuery(id);

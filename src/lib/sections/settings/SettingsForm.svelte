@@ -1,30 +1,31 @@
 <script lang="ts">
-  import { createForm } from "felte";
-  import { validator } from "@felte/validator-zod";
-  import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
+  import { Tabs } from "bits-ui";
+  import { createForm } from "felte";
+  import { toast } from "svelte-sonner";
+  import reporterDom from "@felte/reporter-dom";
+  import { minMax } from "$lib/utils/validation";
+  import { validator } from "@felte/validator-zod";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import {
+    type AppData,
     EYES_MODE_VALUES,
     THROW_DIRECTION_VALUES,
-    type AppData,
   } from "$lib/api/types";
   import {
+    getAppData,
     createAppDateMutation,
     createUpdateSettingsMutation,
-    getAppData,
   } from "$lib/api/runtimeAppData";
-  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import { Tabs } from "bits-ui";
-  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
-  import { minMax } from "$lib/utils/validation";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import { toast } from "svelte-sonner";
-  import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
+
   import EyesModeSelect from "./EyesModeSelect.svelte";
-  import FormSections from "$lib/components/form/FormSections.svelte";
-  import FormSection from "$lib/components/form/FormSection.svelte";
-  import { toastErrorMessage } from "$lib/utils/error";
+  import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();

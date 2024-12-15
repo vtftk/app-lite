@@ -1,12 +1,12 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import LogsTable from "$lib/components/LogsTable.svelte";
+  import { type LogId, type CommandId, type LogsQuery } from "$shared/dataV2";
   import {
-    bulkDeleteCommandLogsMutation,
     commandLogsQuery,
     invalidateCommandLogs,
+    bulkDeleteCommandLogsMutation,
   } from "$lib/api/commands";
-  import LogsTable from "$lib/components/LogsTable.svelte";
-  import { type CommandId, type LogId, type LogsQuery } from "$shared/dataV2";
-  import { onMount } from "svelte";
 
   type Props = {
     id: CommandId;

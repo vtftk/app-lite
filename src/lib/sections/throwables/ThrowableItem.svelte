@@ -1,14 +1,12 @@
 <script lang="ts">
-  import type { Item } from "$lib/api/types";
-
-  import SettingsIcon from "~icons/solar/settings-bold";
-  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-
   import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
+  import type { Item } from "$lib/api/types";
   import getBackendURL from "$lib/utils/url";
   import { deleteItemMutation } from "$lib/api/items";
-  import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
+  import SettingsIcon from "~icons/solar/settings-bold";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
 
   type Props = {
     config: Item;

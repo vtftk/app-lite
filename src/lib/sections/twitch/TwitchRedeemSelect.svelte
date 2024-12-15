@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { createGetRedeemsList, refreshRedeemsList } from "$lib/api/twitch";
-  import FormSelect from "$lib/components/form/FormSelect.svelte";
   import SolarRefreshBold from "~icons/solar/refresh-bold";
+  import FormSelect from "$lib/components/form/FormSelect.svelte";
+  import { refreshRedeemsList, createGetRedeemsList } from "$lib/api/twitch";
 
   type Props = {
     id: string;
@@ -9,7 +9,9 @@
     label: string;
     description?: string;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     selected: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onChangeSelected: (value: any) => void;
   };
 
@@ -23,10 +25,11 @@
       value: item.id,
       label: item.title,
       description: item.prompt,
-    }))
+    })),
   );
 </script>
 
+<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
 {#snippet twitchRedeemItem(item: any)}
   <div class="text-stack item">
     <p class="text-stack--top">{item.label}</p>

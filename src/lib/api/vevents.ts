@@ -1,15 +1,16 @@
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
   EventId,
-  VEvent as Event,
+  VEventData,
   UpdateEvent,
   CreateEvent,
-  VEventData,
   UpdateOrdering,
+  VEvent as Event,
 } from "$shared/dataV2";
-import { createMutation, createQuery } from "@tanstack/svelte-query";
-import { invoke } from "@tauri-apps/api/core";
+
 import { queryClient } from "./utils";
-import { derived, type Readable } from "svelte/store";
 
 const EVENTS_KEY = ["events"];
 

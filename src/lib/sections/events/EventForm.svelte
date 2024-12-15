@@ -1,62 +1,60 @@
 <script lang="ts">
-  import { createForm } from "felte";
-  import { validator } from "@felte/validator-zod";
-  import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-
+  import { Tabs } from "bits-ui";
+  import { createForm } from "felte";
+  import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
+  import reporterDom from "@felte/reporter-dom";
+  import { minMax } from "$lib/utils/validation";
+  import { validator } from "@felte/validator-zod";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
+  import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
+  import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
+  import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
+  import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
+  import ThrowablePicker from "$lib/components/throwable/ThrowablePicker.svelte";
+  import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
+  import SolarBoltCircleBoldDuotone from "~icons/solar/bolt-circle-bold-duotone";
+  import SolarTextSquareBoldDuotone from "~icons/solar/text-square-bold-duotone";
+  import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
+  import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
+  import {
+    type VEvent,
+    type VEventData,
+    SubscriptionTier,
+  } from "$shared/dataV2";
+  import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
+  import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
+  import {
+    testEvent,
+    createEventMutation,
+    updateEventMutation,
+  } from "$lib/api/vevents";
   import {
     BitsAmountType,
     EventOutcomeType,
     EventTriggerType,
-    MINIMUM_REQUIRED_ROLE_VALUES,
-    MinimumRequiredRole,
     ThrowableDataType,
+    MinimumRequiredRole,
+    MINIMUM_REQUIRED_ROLE_VALUES,
   } from "$shared/appData";
-  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
-  import HotkeySelect from "./HotkeySelect.svelte";
-  import { goto } from "$app/navigation";
-  import ThrowablePicker from "$lib/components/throwable/ThrowablePicker.svelte";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
-  import OutcomeTypeSelect from "./OutcomeTypeSelect.svelte";
-  import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
-  import FormSection from "$lib/components/form/FormSection.svelte";
-  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
-  import { toast } from "svelte-sonner";
+
   import SoundSelect from "./SoundSelect.svelte";
-  import {
-    createEventMutation,
-    testEvent,
-    updateEventMutation,
-  } from "$lib/api/vevents";
-  import {
-    SubscriptionTier,
-    type EventInputData,
-    type VEvent,
-    type VEventData,
-  } from "$shared/dataV2";
-  import { Tabs } from "bits-ui";
-  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
-  import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
-  import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
-  import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
-  import SolarBoltCircleBoldDuotone from "~icons/solar/bolt-circle-bold-duotone";
-  import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
-  import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
-  import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
-  import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
-  import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
-  import SolarTextSquareBoldDuotone from "~icons/solar/text-square-bold-duotone";
+  import HotkeySelect from "./HotkeySelect.svelte";
   import EventTriggerItem from "./EventTriggerItem.svelte";
   import EventOutcomeItem from "./EventOutcomeItem.svelte";
-  import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
-  import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
-  import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
-  import BallIcon from "~icons/solar/basketball-bold-duotone";
-  import { toastErrorMessage } from "$lib/utils/error";
-  import { minMax } from "$lib/utils/validation";
+  import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
+  import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
+  import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
 
   type Props = {
     existing?: VEvent;
@@ -222,7 +220,7 @@
               loading: "Creating event...",
               success: "Created event",
               error: toastErrorMessage("Failed to create event"),
-            }
+            },
       );
 
       if (!existing) {
@@ -350,7 +348,7 @@
   };
 
   const isEventTriggerWithInput = $derived(
-    EVENT_TRIGGERS_WITH_INPUT.includes($data.trigger.type)
+    EVENT_TRIGGERS_WITH_INPUT.includes($data.trigger.type),
   );
 
   function onChangeTriggerType(type: EventTriggerType) {
@@ -364,7 +362,7 @@
       setFields(
         "outcome",
         getOutcomeDefaults(EventOutcomeType.Throwable),
-        true
+        true,
       );
     }
 
@@ -394,7 +392,7 @@
   }
 
   function getThrowableDataDefaults(
-    type: ThrowableDataType
+    type: ThrowableDataType,
   ): ThrowableDataSchema {
     switch (type) {
       case ThrowableDataType.Throw:
@@ -567,6 +565,7 @@
               tier: SubscriptionTier.Tier1,
               is_gift: Math.random() < 0.5,
             };
+            break;
           case EventTriggerType.GiftedSubscription:
             eventData = {
               user: {
@@ -579,6 +578,7 @@
               anonymous: false,
               total: Math.floor(Math.random() * 100),
             };
+            break;
           case EventTriggerType.Bits:
             eventData = {
               user: {
@@ -590,6 +590,7 @@
               anonymous: false,
               message: "Test bits donation message",
             };
+            break;
           case EventTriggerType.Raid:
             eventData = {
               user: {
@@ -599,9 +600,11 @@
               },
               viewers: Math.floor(Math.random() * 10_000),
             };
+            break;
           default:
             break;
         }
+        break;
       }
       default:
         break;

@@ -1,19 +1,19 @@
 <script lang="ts">
-  import {
-    bulkDeleteEventMutation,
-    createEventsQuery,
-    updateEventOrder,
-  } from "$lib/api/vevents";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import EventItem from "$lib/sections/events/EventItem.svelte";
   import { toast } from "svelte-sonner";
-  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import type { EventId, VEvent } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
+  import type { VEvent, EventId } from "$shared/dataV2";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import Button from "$lib/components/input/Button.svelte";
+  import EventItem from "$lib/sections/events/EventItem.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
-  import Button from "$lib/components/input/Button.svelte";
+  import {
+    updateEventOrder,
+    createEventsQuery,
+    bulkDeleteEventMutation,
+  } from "$lib/api/vevents";
 
   const eventsQuery = createEventsQuery();
   const bulkDeleteEvent = bulkDeleteEventMutation();

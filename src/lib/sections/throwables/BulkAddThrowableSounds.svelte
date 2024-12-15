@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { createSoundsQuery } from "$lib/api/sounds";
-  import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
   import getBackendURL from "$lib/utils/url";
-  import { Checkbox, Dialog, Separator } from "bits-ui";
-  import { fade, scale } from "svelte/transition";
-  import SettingsIcon from "~icons/solar/settings-bold";
   import type { Sound } from "$shared/dataV2";
+  import { fade, scale } from "svelte/transition";
+  import { createSoundsQuery } from "$lib/api/sounds";
+  import { Dialog, Checkbox, Separator } from "bits-ui";
+  import SettingsIcon from "~icons/solar/settings-bold";
+  import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
 
   type Props = {
     onSubmit: (sounds: Sound[]) => void;

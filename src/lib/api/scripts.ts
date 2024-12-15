@@ -1,17 +1,18 @@
+import { invoke } from "@tauri-apps/api/core";
+import { derived, type Readable } from "svelte/store";
+import { createQuery, createMutation } from "@tanstack/svelte-query";
 import type {
-  ScriptId,
+  LogId,
   Script,
-  UpdateScript,
-  CreateScript,
+  ScriptId,
   LogsQuery,
   ScriptLog,
-  LogId,
+  UpdateScript,
+  CreateScript,
   UpdateOrdering,
 } from "$shared/dataV2";
-import { createMutation, createQuery } from "@tanstack/svelte-query";
-import { invoke } from "@tauri-apps/api/core";
+
 import { queryClient } from "./utils";
-import { derived, type Readable } from "svelte/store";
 
 const SCRIPTS_KEY = ["scripts"];
 

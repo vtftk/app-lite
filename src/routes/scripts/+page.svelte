@@ -1,20 +1,19 @@
 <script lang="ts">
-  import {
-    bulkDeleteScriptMutation,
-    createScriptsQuery,
-    updateScriptOrder,
-  } from "$lib/api/scripts";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import ScriptItem from "$lib/sections/scripts/ScriptItem.svelte";
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
-  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import type { Script, ScriptId } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
-  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
-  import SearchInput from "$lib/components/form/SearchInput.svelte";
-  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import type { Script, ScriptId } from "$shared/dataV2";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import ScriptItem from "$lib/sections/scripts/ScriptItem.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import {
+    updateScriptOrder,
+    createScriptsQuery,
+    bulkDeleteScriptMutation,
+  } from "$lib/api/scripts";
 
   const scriptsQuery = createScriptsQuery();
   const bulkDeleteScripts = bulkDeleteScriptMutation();

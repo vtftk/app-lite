@@ -1,16 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import SolarRefreshBold from "~icons/solar/refresh-bold";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import SolarRefreshBold from "~icons/solar/refresh-bold";
+
   type Props = {
     id: string;
     name: string;
     label: string;
     description?: string;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     selected: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onChangeSelected: (value: any) => void;
   };
 
@@ -31,7 +34,7 @@
     $runtimeAppData.hotkeys.map((item) => ({
       value: item.hotkey_id,
       label: item.name,
-    }))
+    })),
   );
 </script>
 

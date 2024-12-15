@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { createEventQuery } from "$lib/api/vevents";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import EventForm from "$lib/sections/events/EventForm.svelte";
   import { derived } from "svelte/store";
+  import { createEventQuery } from "$lib/api/vevents";
+  import EventForm from "$lib/sections/events/EventForm.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
 
   const id = derived(page, ($page) => $page.params.id);
   const eventQuery = createEventQuery(id);

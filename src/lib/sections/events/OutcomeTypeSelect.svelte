@@ -1,10 +1,6 @@
 <script lang="ts">
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import {
-    EventOutcomeType,
-    EventTriggerType,
-    EyesMode,
-  } from "$shared/appData";
+  import { EventOutcomeType, EventTriggerType } from "$shared/appData";
 
   type Props = {
     id: string;

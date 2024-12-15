@@ -1,5 +1,6 @@
 <script>
   import { createIsAuthenticatedQuery } from "$lib/api/oauth";
+
   import TwitchOAuth from "./TwitchOAuth.svelte";
 
   const isAuthenticated = createIsAuthenticatedQuery();

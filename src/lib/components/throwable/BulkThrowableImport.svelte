@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { uploadFile } from "$lib/api/data";
-  import { bulkCreateItemMutation } from "$lib/api/items";
-  import { FileType } from "$lib/api/types";
-  import { toastErrorMessage } from "$lib/utils/error";
-  import type { ThrowableImageConfig } from "$shared/appData";
-  import type { CreateItem } from "$shared/dataV2";
-  import { invoke } from "@tauri-apps/api/core";
   import { toast } from "svelte-sonner";
+  import { FileType } from "$lib/api/types";
+  import { uploadFile } from "$lib/api/data";
+  import type { CreateItem } from "$shared/dataV2";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import { bulkCreateItemMutation } from "$lib/api/items";
+  import type { ThrowableImageConfig } from "$shared/appData";
 
   const bulkCreateItem = bulkCreateItemMutation();
 
@@ -37,7 +36,7 @@
         };
 
         return createItem;
-      })
+      }),
     );
 
     const createPromise = $bulkCreateItem.mutateAsync(createItems);

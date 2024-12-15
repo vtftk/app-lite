@@ -1,19 +1,19 @@
 <script lang="ts">
-  import {
-    bulkDeleteCommandMutation,
-    createCommandsQuery,
-    updateCommandOrder,
-  } from "$lib/api/commands";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import CommandItem from "$lib/sections/commands/CommandItem.svelte";
   import { toast } from "svelte-sonner";
+  import { toastErrorMessage } from "$lib/utils/error";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { Command, CommandId } from "$shared/dataV2";
-  import { toastErrorMessage } from "$lib/utils/error";
-  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
-  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import Button from "$lib/components/input/Button.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import CommandItem from "$lib/sections/commands/CommandItem.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import {
+    updateCommandOrder,
+    createCommandsQuery,
+    bulkDeleteCommandMutation,
+  } from "$lib/api/commands";
 
   const commandsQuery = createCommandsQuery();
   const bulkDeleteCommand = bulkDeleteCommandMutation();
@@ -22,7 +22,7 @@
   let selected: string[] = $state([]);
 
   const commands = $derived(
-    filterItemsSearch($commandsQuery.data ?? [], search)
+    filterItemsSearch($commandsQuery.data ?? [], search),
   );
 
   function filterItemsSearch(options: Command[], search: string) {

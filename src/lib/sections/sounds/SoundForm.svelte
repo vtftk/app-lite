@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { createForm } from "felte";
-  import { validator } from "@felte/validator-zod";
-  import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import { FileType, type Sound } from "$lib/api/types";
-  import { goto } from "$app/navigation";
-  import SoundUpload from "$lib/components/form/SoundUpload.svelte";
-  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import FormSection from "$lib/components/form/FormSection.svelte";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import FormSections from "$lib/components/form/FormSections.svelte";
-  import { uploadFile } from "$lib/api/data";
+  import { createForm } from "felte";
   import { toast } from "svelte-sonner";
-  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
-  import { createSoundMutation, updateSoundMutation } from "$lib/api/sounds";
+  import { goto } from "$app/navigation";
+  import { uploadFile } from "$lib/api/data";
+  import reporterDom from "@felte/reporter-dom";
+  import { validator } from "@felte/validator-zod";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { FileType, type Sound } from "$lib/api/types";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import SoundUpload from "$lib/components/form/SoundUpload.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import { createSoundMutation, updateSoundMutation } from "$lib/api/sounds";
 
   type Props = {
     existing?: Sound;
@@ -81,7 +81,7 @@
                 loading: "Creating sound...",
                 success: "Created sound",
                 error: toastErrorMessage("Failed to create sound"),
-              }
+              },
         );
 
         // Go back to the list when creating rather than editing
@@ -89,7 +89,7 @@
           goto("/sounds");
         }
       },
-    }
+    },
   );
 
   function saveSound(sound: string | File) {

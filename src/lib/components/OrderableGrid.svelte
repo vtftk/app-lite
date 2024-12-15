@@ -1,10 +1,10 @@
 <script lang="ts" generics="T extends { id: string }">
-  import type { UpdateOrdering } from "$shared/dataV2";
   import type { Snippet } from "svelte";
+  import type { UpdateOrdering } from "$shared/dataV2";
   import {
     dndzone,
-    SHADOW_ITEM_MARKER_PROPERTY_NAME,
     type DndEvent,
+    SHADOW_ITEM_MARKER_PROPERTY_NAME,
   } from "svelte-dnd-action";
 
   type Props = {
@@ -56,6 +56,7 @@
     <div class="item-wrapper">
       {@render renderItem(item)}
 
+      <!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
       {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
         <div class="custom-shadow-item"></div>
       {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { CommandOutcomeType } from "$shared/appData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import { CommandOutcomeType, EyesMode } from "$shared/appData";
 
   type Props = {
     id: string;

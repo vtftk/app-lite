@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { tweened } from "svelte/motion";
   import PlayIcon from "~icons/solar/play-bold";
   import StopIcon from "~icons/solar/stop-bold";
 

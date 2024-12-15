@@ -1,19 +1,18 @@
 <script lang="ts">
+  import { toast } from "svelte-sonner";
+  import { derived } from "svelte/store";
+  import { invoke } from "@tauri-apps/api/core";
+  import { setClipboard } from "$lib/utils/browser";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import { createIsAuthenticatedQuery } from "$lib/api/oauth";
+  import { createModelDataQuery } from "$lib/api/calibration";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import {
-    createDeriveModelCalibrated,
+    getRuntimeAppData,
     createOverlayURLQuery,
     createTwitchOAuthURLQuery,
-    getRuntimeAppData,
+    createDeriveModelCalibrated,
   } from "$lib/api/runtimeAppData";
-  import { invoke } from "@tauri-apps/api/core";
-
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import { createIsAuthenticatedQuery } from "$lib/api/oauth";
-  import { toast } from "svelte-sonner";
-  import { setClipboard } from "$lib/utils/browser";
-  import { createModelDataQuery } from "$lib/api/calibration";
-  import { derived } from "svelte/store";
-  import { toastErrorMessage } from "$lib/utils/error";
 
   const runtimeAppData = getRuntimeAppData();
   const isAuthenticated = createIsAuthenticatedQuery();
@@ -27,13 +26,13 @@
   const modelDataQuery = createModelDataQuery();
   const modelData = derived(
     modelDataQuery,
-    ($modelDataQuery) => $modelDataQuery.data ?? []
+    ($modelDataQuery) => $modelDataQuery.data ?? [],
   );
 
   // Model needs to be calibrated if not available here
   const isModelCalibrated = createDeriveModelCalibrated(
     modelData,
-    runtimeAppData
+    runtimeAppData,
   );
 
   /**

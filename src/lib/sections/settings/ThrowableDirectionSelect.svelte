@@ -1,6 +1,6 @@
 <script lang="ts">
-  import FormSelect from "$lib/components/form/FormSelect.svelte";
   import { ThrowDirection } from "$shared/appData";
+  import FormSelect from "$lib/components/form/FormSelect.svelte";
 
   type Props = {
     id: string;

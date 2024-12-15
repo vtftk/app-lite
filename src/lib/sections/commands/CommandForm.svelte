@@ -1,36 +1,37 @@
 <script lang="ts">
-  import { createForm } from "felte";
-  import { validator } from "@felte/validator-zod";
-  import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import {
-    CommandOutcomeType,
-    MINIMUM_REQUIRED_ROLE_VALUES,
-    MinimumRequiredRole,
-    type Command,
-  } from "$lib/api/types";
-  import { goto } from "$app/navigation";
-  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
-  import exampleCode from "../../../../script/example_command.js?raw";
   import { Tabs } from "bits-ui";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
-  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import FormSections from "$lib/components/form/FormSections.svelte";
-  import FormSection from "$lib/components/form/FormSection.svelte";
-  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
-  import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
-  import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
-  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
+  import { createForm } from "felte";
   import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
+  import reporterDom from "@felte/reporter-dom";
+  import { validator } from "@felte/validator-zod";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import {
     createCommandMutation,
     updateCommandMutation,
   } from "$lib/api/commands";
+  import {
+    type Command,
+    CommandOutcomeType,
+    MinimumRequiredRole,
+    MINIMUM_REQUIRED_ROLE_VALUES,
+  } from "$lib/api/types";
+
   import CommandLogs from "./CommandLogs.svelte";
-  import { toastErrorMessage } from "$lib/utils/error";
+  import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
+  import exampleCode from "../../../../script/example_command.js?raw";
+  import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
 
   type Props = {
     existing?: Command;
@@ -118,7 +119,7 @@
             loading: "Creating command...",
             success: "Created command",
             error: toastErrorMessage("Failed to create command"),
-          }
+          },
     );
 
     return savePromise;

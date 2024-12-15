@@ -1,5 +1,4 @@
 import * as monaco from "monaco-editor";
-
 // Import the workers in a production-safe way.
 // This is different than in Monaco's documentation for Vite,
 // but avoids a weird error ("Unexpected usage") at runtime
@@ -13,7 +12,7 @@ import libraryDefinition from "../../script/api.d.ts?raw";
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(
   libraryDefinition,
-  "file:///global.d.ts"
+  "file:///global.d.ts",
 );
 
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({

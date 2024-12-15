@@ -1,14 +1,13 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+  import { scale } from "svelte/transition";
+  import type { HTMLButtonAttributes } from "svelte/elements";
   import {
     Popover,
-    type PopoverContentProps,
     type PopoverProps,
+    type PopoverContentProps,
     type PopoverTriggerProps,
   } from "bits-ui";
-  import type { Snippet } from "svelte";
-  import { cubicOut } from "svelte/easing";
-  import type { HTMLButtonAttributes } from "svelte/elements";
-  import { fade, fly, scale } from "svelte/transition";
 
   type Props = {
     children?: Snippet;

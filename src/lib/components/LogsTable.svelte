@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { formatDate, formatTime } from "$lib/utils/date";
-  import { LoggingLevelStr, type LogData, type LogId } from "$shared/dataV2";
   import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
-  import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
-  import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
-  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
   import { toastErrorMessage } from "$lib/utils/error";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { formatDate, formatTime } from "$lib/utils/date";
+  import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
+  import { type LogId, type LogData, LoggingLevelStr } from "$shared/dataV2";
+  import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
+  import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
   type Props = {
     logs: LogData[];
 

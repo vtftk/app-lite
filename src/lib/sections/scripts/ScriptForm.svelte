@@ -1,28 +1,27 @@
 <script lang="ts">
-  import { createForm } from "felte";
-  import { validator } from "@felte/validator-zod";
-  import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
-  import type { Script } from "$lib/api/types";
-  import { invoke } from "@tauri-apps/api/core";
-
-  import { goto } from "$app/navigation";
-  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import { Tabs } from "bits-ui";
-  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
-  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import { createForm } from "felte";
   import { toast } from "svelte-sonner";
-  import FormSections from "$lib/components/form/FormSections.svelte";
+  import { goto } from "$app/navigation";
+  import type { Script } from "$lib/api/types";
+  import reporterDom from "@felte/reporter-dom";
+  import { invoke } from "@tauri-apps/api/core";
+  import { validator } from "@felte/validator-zod";
+  import { toastErrorMessage } from "$lib/utils/error";
   import FormSection from "$lib/components/form/FormSection.svelte";
+  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
+  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import { createScriptMutation, updateScriptMutation } from "$lib/api/scripts";
+  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
 
+  import ScriptLogs from "./ScriptLogs.svelte";
   // Example code for the editor
   import exampleCode from "../../../../script/example.js?raw";
-  import { createScriptMutation, updateScriptMutation } from "$lib/api/scripts";
-  import ScriptLogs from "./ScriptLogs.svelte";
-  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
-  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     existing?: Script;
@@ -80,7 +79,7 @@
               loading: "Creating script...",
               success: "Created script",
               error: toastErrorMessage("Failed to create script"),
-            }
+            },
       );
 
       if (!existing) {

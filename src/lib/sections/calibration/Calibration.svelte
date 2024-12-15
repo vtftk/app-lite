@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { invoke } from "@tauri-apps/api/core";
   import {
     CalibrationStep,
     calibrationState as calibrationStep,
   } from "$lib/api/calibration";
-  import { invoke } from "@tauri-apps/api/core";
 
   async function setCalibrationStep(step: CalibrationStep) {
     await invoke("set_calibration_step", { step });

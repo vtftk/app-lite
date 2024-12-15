@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { uploadFile } from "$lib/api/data";
-  import { bulkCreateSoundMutation } from "$lib/api/sounds";
-  import { FileType } from "$lib/api/types";
-  import { toastErrorMessage } from "$lib/utils/error";
-  import type { CreateSound } from "$shared/dataV2";
   import { toast } from "svelte-sonner";
+  import { FileType } from "$lib/api/types";
+  import { uploadFile } from "$lib/api/data";
+  import type { CreateSound } from "$shared/dataV2";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import { bulkCreateSoundMutation } from "$lib/api/sounds";
 
   const bulkCreateSound = bulkCreateSoundMutation();
 

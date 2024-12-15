@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Checkbox } from "bits-ui";
+
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {

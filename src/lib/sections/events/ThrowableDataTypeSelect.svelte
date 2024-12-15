@@ -1,11 +1,6 @@
 <script lang="ts">
+  import { ThrowableDataType } from "$shared/appData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
-  import {
-    EventTriggerType,
-    EyesMode,
-    MinimumRequiredRole,
-    ThrowableDataType,
-  } from "$shared/appData";
 
   type Props = {
     id: string;

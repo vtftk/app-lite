@@ -1,36 +1,35 @@
 <script lang="ts">
-  import { createForm } from "felte";
-  import { validator } from "@felte/validator-zod";
-  import reporterDom from "@felte/reporter-dom";
   import { z } from "zod";
+  import { Tabs } from "bits-ui";
+  import { createForm } from "felte";
+  import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
+  import { derived } from "svelte/store";
+  import { uploadFile } from "$lib/api/data";
+  import reporterDom from "@felte/reporter-dom";
+  import { validator } from "@felte/validator-zod";
+  import { toastErrorMessage } from "$lib/utils/error";
+  import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import ImageUpload from "$lib/components/form/ImageUpload.svelte";
+  import { testThrow, testThrowBarrage } from "$lib/api/throwables";
+  import FormSection from "$lib/components/form/FormSection.svelte";
+  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
+  import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
+  import SolarAlbumBoldDuotone from "~icons/solar/album-bold-duotone";
+  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
+  import { createItemMutation, updateItemMutation } from "$lib/api/items";
+  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import SolarVolumeLoudBoldDuotone from "~icons/solar/volume-loud-bold-duotone";
   import {
     FileType,
     type ItemWithImpactSounds,
     type ThrowableImageConfig,
   } from "$lib/api/types";
-  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
-  import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
-  import { goto } from "$app/navigation";
-  import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
-  import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import ImageUpload from "$lib/components/form/ImageUpload.svelte";
-  import { uploadFile } from "$lib/api/data";
-  import { testThrow, testThrowBarrage } from "$lib/api/throwables";
-  import { toast } from "svelte-sonner";
-  import BallsIcon from "~icons/solar/balls-bold-duotone";
-  import BallIcon from "~icons/solar/basketball-bold-duotone";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import FormSection from "$lib/components/form/FormSection.svelte";
-  import FormSections from "$lib/components/form/FormSections.svelte";
-  import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
-  import { derived } from "svelte/store";
-  import { createItemMutation, updateItemMutation } from "$lib/api/items";
-  import { toastErrorMessage } from "$lib/utils/error";
-  import { Tabs } from "bits-ui";
-  import SolarAlbumBoldDuotone from "~icons/solar/album-bold-duotone";
-  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
-  import SolarVolumeLoudBoldDuotone from "~icons/solar/volume-loud-bold-duotone";
 
   type Props = {
     existing?: ItemWithImpactSounds;
@@ -48,7 +47,7 @@
     runtimeAppData,
     ($runtimeAppData) =>
       $runtimeAppData.active_overlay_count > 0 &&
-      $runtimeAppData.vtube_studio_connected
+      $runtimeAppData.vtube_studio_connected,
   );
 
   // When working with existing configs we allow the file to be a
@@ -114,7 +113,7 @@
               loading: "Creating item...",
               success: "Created item",
               error: toastErrorMessage("Failed to create item"),
-            }
+            },
       );
 
       // Go back to the list when creating rather than editing

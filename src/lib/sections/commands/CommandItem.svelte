@@ -1,12 +1,11 @@
 <script lang="ts">
+  import { Checkbox } from "bits-ui";
+  import { toast } from "svelte-sonner";
   import type { Command } from "$lib/api/types";
-
+  import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
-  import { Checkbox } from "bits-ui";
   import { deleteCommandMutation } from "$lib/api/commands";
-  import { toast } from "svelte-sonner";
-  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     config: Command;

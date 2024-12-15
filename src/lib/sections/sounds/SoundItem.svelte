@@ -1,13 +1,13 @@
 <script lang="ts">
-  import type { Sound } from "$lib/api/types";
-  import SettingsIcon from "~icons/solar/settings-bold";
-  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import { Checkbox } from "bits-ui";
-  import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
-  import getBackendURL from "$lib/utils/url";
-  import { deleteSoundMutation } from "$lib/api/sounds";
   import { toast } from "svelte-sonner";
+  import getBackendURL from "$lib/utils/url";
+  import type { Sound } from "$lib/api/types";
   import { toastErrorMessage } from "$lib/utils/error";
+  import SettingsIcon from "~icons/solar/settings-bold";
+  import { deleteSoundMutation } from "$lib/api/sounds";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
 
   type Props = {
     config: Sound;

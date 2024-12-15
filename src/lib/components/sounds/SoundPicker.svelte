@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { Checkbox, Dialog, Separator } from "bits-ui";
-  import { fade, scale } from "svelte/transition";
-  import SoundPreview from "./SoundPreview.svelte";
   import getBackendURL from "$lib/utils/url";
   import type { Sound } from "$shared/dataV2";
+  import { fade, scale } from "svelte/transition";
   import { createSoundsQuery } from "$lib/api/sounds";
+  import { Dialog, Checkbox, Separator } from "bits-ui";
+
+  import SoundPreview from "./SoundPreview.svelte";
   import SearchInput from "../form/SearchInput.svelte";
 
   type Props = {

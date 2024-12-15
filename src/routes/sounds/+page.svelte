@@ -1,20 +1,20 @@
 <script lang="ts">
-  import {
-    bulkDeleteSoundsMutation,
-    createSoundsQuery,
-    updateSoundOrder,
-  } from "$lib/api/sounds";
-  import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
-  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
   import { toast } from "svelte-sonner";
-  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import type { Sound } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
-  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
-  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
-  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
+  import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
+  import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import {
+    updateSoundOrder,
+    createSoundsQuery,
+    bulkDeleteSoundsMutation,
+  } from "$lib/api/sounds";
 
   const soundsQuery = createSoundsQuery();
   const bulkDeleteSounds = bulkDeleteSoundsMutation();
@@ -23,7 +23,7 @@
   let selected: string[] = $state([]);
 
   const sounds: Sound[] = $derived(
-    filterItemsSearch($soundsQuery.data ?? [], search)
+    filterItemsSearch($soundsQuery.data ?? [], search),
   );
 
   function filterItemsSearch(options: Sound[], search: string) {
