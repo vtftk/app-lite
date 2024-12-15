@@ -117,6 +117,7 @@ pub fn run() {
             commands::test::test_throw_barrage,
             commands::test::test_sound,
             commands::test::test_get_script_events,
+            commands::test::detect_vtube_studio,
             commands::data::get_app_data,
             commands::data::get_runtime_app_data,
             commands::data::set_app_data,

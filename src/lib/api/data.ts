@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { FileType } from "./types";
+import type { FileType, VTubeStudioBroadcast } from "./types";
 
 /**
  * Upload a file to the backend file API
@@ -21,4 +21,8 @@ export async function uploadFile(
     fileName,
     fileData,
   });
+}
+
+export function detectVTubeStudio() {
+  return invoke<VTubeStudioBroadcast>("detect_vtube_studio");
 }

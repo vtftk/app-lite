@@ -26,6 +26,7 @@
 
   import EyesModeSelect from "./EyesModeSelect.svelte";
   import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
+  import DetectVTubeStudio from "$lib/components/DetectVTubeStudio.svelte";
 
   const appData = getAppData();
   const appDataMutation = createAppDateMutation();
@@ -310,6 +311,10 @@
                 name="vtube_studio.port"
                 label="Port"
                 description="Port that the VTube Studio API is running on"
+              />
+
+              <DetectVTubeStudio
+                onChoosePort={(port) => setFields("vtube_studio.port", port)}
               />
             </FormSection>
           </FormSections>

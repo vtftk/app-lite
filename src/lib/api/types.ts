@@ -9,3 +9,17 @@ export enum FileType {
   ImpactImage = "ImpactImage",
   Sound = "Sound",
 }
+
+export type VTubeStudioBroadcast = {
+  apiName: string;
+  apiVersion: string;
+  timestamp: number;
+  messageType: string;
+  requestID: string;
+  data: {
+    active: boolean;
+    port: number;
+    instanceID: number;
+    windowTitle: string;
+  };
+};
