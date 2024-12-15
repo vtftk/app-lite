@@ -6,6 +6,7 @@ export default defineConfig(async () => ({
   plugins: [viteSingleFile()],
   resolve: {
     alias: {
+      // eslint-disable-next-line no-undef
       $shared: path.resolve(__dirname, "../types"),
     },
   },
