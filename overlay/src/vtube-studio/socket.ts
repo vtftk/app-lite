@@ -21,6 +21,7 @@ export class VTubeStudioWebSocket {
 
   onDisconnect: VoidFunction | undefined;
   onConnected: VoidFunction | undefined;
+  onModelLoaded: VoidFunction | undefined;
 
   constructor(host: string, port: number) {
     this.host = host;
@@ -87,6 +88,12 @@ export class VTubeStudioWebSocket {
   handleSocketMessage(message: MessageEvent<string>) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response: VTubeMessage<any> = JSON.parse(message.data);
+
+    // Handle model loading events
+    if (response.messageType === "ModelLoadedEvent") {
+      if (this.onModelLoaded) this.onModelLoaded();
+      return;
+    }
 
     // Response didn't belong to any handler
     if (!response.requestID) {

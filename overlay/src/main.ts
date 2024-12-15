@@ -3,6 +3,7 @@ import "./vtftk/events";
 import "./vtftk/calibration";
 import { getAppData } from "./vtftk/appData";
 import { RuntimeAppData } from "./vtftk/types";
+import { subscribeEvent } from "./vtube-studio/event";
 import { attemptAuthorization } from "./vtube-studio/auth";
 import { VTubeStudioWebSocket } from "./vtube-studio/socket";
 import { EventSourceData, createEventSource } from "./vtftk/events";
@@ -71,9 +72,19 @@ async function load() {
       vtube_studio_auth: true,
     });
 
-    console.debug("VTube studio authorization complete");
+    console.debug(
+      "VTube studio authorization complete, Connected to VTube studio",
+    );
 
-    console.debug("Connected to VTube studio");
+    onModelReady();
+
+    await subscribeEvent(vtSocket, "ModelLoadedEvent", true, {});
+  };
+
+  vtSocket.onModelLoaded = onModelReady;
+
+  async function onModelReady() {
+    console.log("Model ready, loading model data");
 
     const { modelID } = await requestCurrentModel(vtSocket);
 
@@ -89,7 +100,7 @@ async function load() {
     );
 
     eventSourceData.modelParameters = modelParameters;
-  };
+  }
 
   vtSocket.onDisconnect = () => {
     // Tell the backend we aren't connected
