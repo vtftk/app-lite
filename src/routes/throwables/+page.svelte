@@ -50,7 +50,7 @@
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
     $runtimeAppData.active_overlay_count > 0 &&
-      $runtimeAppData.vtube_studio_connected
+      $runtimeAppData.vtube_studio_connected,
   );
 
   function onToggleSelected(item: Item) {
@@ -90,7 +90,7 @@
   function onBulkAddSounds(sounds: Sound[]) {
     if (
       !confirm(
-        "Are you sure you want to add the selected impact sounds to the selected throwables?"
+        "Are you sure you want to add the selected impact sounds to the selected throwables?",
       )
     ) {
       return;
