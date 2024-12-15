@@ -1,5 +1,8 @@
 use crate::{
-    http::error::DynHttpError,
+    http::{
+        error::{DynHttpError, HttpResult},
+        models::{GetAuthTokenResponse, SetAuthTokenRequest},
+    },
     state::{
         app_data::{AppData, AppDataStore},
         runtime_app_data::{RuntimeAppData, RuntimeAppDataStore, UpdateRuntimeAppData},
@@ -156,4 +159,28 @@ pub async fn get_defaults_file(
         .header(CONTENT_TYPE, mime.first_or_octet_stream().essence_str())
         .body(file_bytes.into())
         .context("failed to make response")?)
+}
+
+/// POST /data/set-auth-token
+pub async fn handle_set_auth_token(
+    Extension(app_data): Extension<AppDataStore>,
+    Json(req): Json<SetAuthTokenRequest>,
+) -> HttpResult<()> {
+    app_data
+        .write(|app_data| {
+            app_data.vtube_studio_config.auth_token = req.auth_token;
+        })
+        .await
+        .context("saving app data")?;
+
+    Ok(Json(()))
+}
+
+/// GET /data/get-auth-token
+pub async fn handle_get_auth_token(
+    Extension(app_data): Extension<AppDataStore>,
+) -> HttpResult<GetAuthTokenResponse> {
+    let app_data = app_data.read().await;
+    let auth_token = app_data.vtube_studio_config.auth_token.clone();
+    Ok(Json(GetAuthTokenResponse { auth_token }))
 }

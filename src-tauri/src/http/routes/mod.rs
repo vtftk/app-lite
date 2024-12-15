@@ -30,4 +30,6 @@ pub fn router() -> Router {
         .route("/bits/:amount", get(data::get_bits_icon))
         .route("/overlay", get(overlay::page))
         .route("/overlay/icon", get(overlay::icon))
+        .route("/data/get-auth-token", get(data::handle_get_auth_token))
+        .route("/data/set-auth-token", post(data::handle_set_auth_token))
 }

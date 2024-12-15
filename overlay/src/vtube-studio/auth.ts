@@ -1,11 +1,12 @@
-import { getVTFTKLogo } from "../vtftk/api";
 import { createVTubeMessage } from "./message";
 import { VTubeStudioWebSocket } from "./socket";
 import { InvalidMessageTypeError } from "./error";
 import { pluginName, pluginDeveloper } from "./constants";
-import { getPersistedAuthToken, setPersistedAuthToken } from "./token";
-
-let authToken: string | null = getPersistedAuthToken();
+import {
+  getVTFTKLogo,
+  getPersistedAuthToken,
+  setPersistedAuthToken,
+} from "../vtftk/api";
 
 /**
  * Attempts to authorize with the VTube Studio socket
@@ -17,6 +18,8 @@ export async function attemptAuthorization(
   socket: VTubeStudioWebSocket,
   attempt: number = 1,
 ) {
+  let authToken = await getPersistedAuthToken();
+
   // Attempt to acquire a token if one is not available
   if (authToken === null) {
     authToken = await requestAuthenticationToken(socket);
@@ -26,7 +29,7 @@ export async function attemptAuthorization(
   const authenticated = await requestAuthentication(socket, authToken);
   if (!authenticated) {
     // Clear stored token before next attempt
-    setPersistedAuthToken(null);
+    await setPersistedAuthToken(null);
 
     // Attempt to retry failed authentication (Old auth token may be expired)
     if (attempt > 1) throw new Error("failed to complete authentication");
@@ -34,7 +37,7 @@ export async function attemptAuthorization(
   }
 
   // Persist successful auth token
-  setPersistedAuthToken(authToken);
+  await setPersistedAuthToken(authToken);
 }
 
 /**
