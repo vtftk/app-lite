@@ -48,6 +48,12 @@ pub use command_executions::{
     CommandExecutionActiveModel, CommandExecutionColumn, CommandExecutionEntity,
     CommandExecutionModel,
 };
+
+#[allow(unused)]
+pub use command_logs::{
+    CommandLogsActiveModel, CommandLogsColumn, CommandLogsEntity, CommandLogsModel,
+};
+
 #[allow(unused)]
 pub use event_executions::{
     EventExecutionActiveModel, EventExecutionColumn, EventExecutionEntity, EventExecutionModel,
@@ -55,3 +61,6 @@ pub use event_executions::{
 
 #[allow(unused)]
 pub use key_value::{KeyValueActiveModel, KeyValueColumn, KeyValueEntity, KeyValueModel};
+
+#[allow(unused)]
+pub use script_logs::{ScriptLogsActiveModel, ScriptLogsColumn, ScriptLogsEntity, ScriptLogsModel};

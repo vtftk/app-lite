@@ -2,15 +2,13 @@
 //!
 //! Commands for interacting with items from the frontend
 
-use std::str::FromStr;
-
 use crate::database::entity::{
     items::{CreateItem, ItemWithImpactSounds, UpdateItem, UpdateItemOrdering},
     ItemModel, SoundModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
-use tauri::{AppHandle, Manager, State, Url};
+use tauri::{AppHandle, State};
 use uuid::Uuid;
 
 use super::{data::delete_src_file, CmdResult};

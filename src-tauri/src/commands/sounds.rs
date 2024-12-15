@@ -2,15 +2,13 @@
 //!
 //! Commands for interacting with sounds from the frontend
 
-use std::{path::Path, str::FromStr};
-
 use crate::database::entity::{
-    sounds::{self, CreateSound, UpdateSound, UpdateSoundOrdering},
+    sounds::{CreateSound, UpdateSound, UpdateSoundOrdering},
     SoundModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
-use tauri::{AppHandle, Manager, State, Url};
+use tauri::{AppHandle, State};
 use uuid::Uuid;
 
 use super::{data::delete_src_file, CmdResult};
