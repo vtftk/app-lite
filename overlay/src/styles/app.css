@@ -24,15 +24,6 @@ body {
   border-radius: 8px;
 }
 
-@font-face {
-  font-family: "Noto Sans";
-  font-display: swap;
-  unicode-range: U+000-5FF;
-  src:
-    local("Noto Sans") format("ttf"),
-    url("NotoSans-Regular.ttf") format("ttf");
-}
-
 @-webkit-keyframes throwLeft {
   0% {
     transform: translate(-150vw, 0vh);
@@ -130,7 +121,7 @@ body {
 }
 
 body {
-  font-family: "Noto Sans", Verdana, Geneva, Tahoma, sans-serif;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
   color: white;
   -webkit-text-stroke: 3px black;
   font-weight: bold;
