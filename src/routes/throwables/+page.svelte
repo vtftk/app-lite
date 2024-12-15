@@ -19,6 +19,11 @@
   import type { Item, Sound } from "$shared/dataV2";
   import { toastErrorMessage } from "$lib/utils/error";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import Button from "$lib/components/input/Button.svelte";
+  import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
+  import PopoverCloseButton from "$lib/components/popover/PopoverCloseButton.svelte";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -27,7 +32,20 @@
   const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
   const bulkDeleteItems = bulkDeleteItemsMutation();
 
-  const items = $derived($itemsQuery.data ?? []);
+  let search = $state("");
+
+  const items = $derived(filterItemsSearch($itemsQuery.data ?? [], search));
+
+  function filterItemsSearch(options: Item[], search: string) {
+    search = search.trim().toLowerCase();
+
+    if (search.length < 1) return options;
+
+    return options.filter((option) => {
+      const name = option.name.trim().toLowerCase();
+      return name.startsWith(search) || name.includes(search);
+    });
+  }
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
@@ -121,19 +139,28 @@
   <BulkThrowableImport />
 {/snippet}
 
+<!-- Content for the "Test" button popover -->
+{#snippet testPopoverContent()}
+  <PopoverCloseButton onclick={onTestThrow}>
+    <BallIcon /> Test One
+  </PopoverCloseButton>
+
+  <PopoverCloseButton onclick={onTestBarrage}>
+    <BallsIcon /> Test Barrage
+  </PopoverCloseButton>
+{/snippet}
+
 <!-- Section before the content -->
 {#snippet beforeContent()}
   <div class="selection">
-    <Checkbox.Root
+    <ControlledCheckbox
       checked={selected.length > 0 && selected.length === items.length}
       onCheckedChange={onToggleAllSelected}
-    >
-      <Checkbox.Indicator let:isChecked>
-        {#if isChecked}
-          <span>&#10003;</span>
-        {/if}
-      </Checkbox.Indicator>
-    </Checkbox.Root>
+    />
+
+    <div class="search-wrapper">
+      <SearchInput bind:value={search} placeholder="Search..." />
+    </div>
 
     {#if selected.length > 0}
       <div class="selection__count">
@@ -141,28 +168,15 @@
       </div>
 
       <div class="selection__actions">
-        <button
-          type="button"
-          class="btn"
-          onclick={onTestThrow}
-          disabled={!testingEnabled}
-        >
+        <PopoverButton content={testPopoverContent} disabled={!testingEnabled}>
           <BallIcon /> Test
-        </button>
-        <button
-          type="button"
-          class="btn"
-          onclick={onTestBarrage}
-          disabled={!testingEnabled}
-        >
-          <BallsIcon /> Test Barrage
-        </button>
+        </PopoverButton>
 
         <BulkAddThrowableSounds onSubmit={onBulkAddSounds} />
 
-        <button class="btn" onclick={onBulkDelete}>
+        <Button onclick={onBulkDelete}>
           <DeleteIcon /> Delete
-        </button>
+        </Button>
       </div>
     {/if}
   </div>
@@ -183,7 +197,12 @@
   {actions}
   {beforeContent}
 >
-  <OrderableGrid {items} {item} onUpdateOrder={updateItemOrder} />
+  <OrderableGrid
+    {items}
+    {item}
+    onUpdateOrder={updateItemOrder}
+    disableOrdering={search.length > 0}
+  />
 </PageLayoutList>
 
 <style>
@@ -202,5 +221,14 @@
   .selection__actions {
     display: flex;
     gap: 1rem;
+    align-items: center;
+  }
+
+  .search-wrapper {
+    display: flex;
+    flex: auto;
+    flex-shrink: 1;
+    flex-grow: 0;
+    max-width: 20rem;
   }
 </style>

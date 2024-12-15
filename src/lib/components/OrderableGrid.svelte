@@ -8,15 +8,25 @@
   } from "svelte-dnd-action";
 
   type Props = {
+    // Available items for the grid
     items: T[];
 
+    // Snippet for rendering items
     item: Snippet<[T]>;
 
     // Called when the ordering of the list is due for an update
     onUpdateOrder: (ordering: UpdateOrdering[]) => Promise<void>;
+
+    // Optionally disable ordering when set
+    disableOrdering?: boolean;
   };
 
-  const { items: _items, item: renderItem, onUpdateOrder }: Props = $props();
+  const {
+    items: _items,
+    item: renderItem,
+    onUpdateOrder,
+    disableOrdering,
+  }: Props = $props();
 
   // Local state for list of items to allow reordering
   let items: T[] = $state([]);
@@ -38,7 +48,7 @@
 
 <div
   class="grid"
-  use:dndzone={{ items }}
+  use:dndzone={{ items, dragDisabled: disableOrdering }}
   onconsider={handleDndConsider}
   onfinalize={handleDndFinalize}
 >

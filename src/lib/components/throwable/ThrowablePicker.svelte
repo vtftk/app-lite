@@ -26,6 +26,7 @@
 
   function filterOptionsSearch(options: Item[], search: string) {
     search = search.trim().toLowerCase();
+    if (search.length < 1) return options;
 
     return options.filter((option) => {
       const name = option.name.trim().toLowerCase();
