@@ -4,11 +4,12 @@ import type {
   CommandId,
   LogsQuery,
   CommandLog,
+  ExecutionId,
   UpdateCommand,
   CreateCommand,
   UpdateOrdering,
+  ExecutionsQuery,
   CommandExecution,
-  ExecutionId,
 } from "$shared/dataV2";
 
 import { invoke } from "@tauri-apps/api/core";
@@ -232,21 +233,27 @@ export async function updateCommandOrder(update: UpdateOrdering[]) {
   queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
 }
 
-function createCommandExecutionsKey(id: CommandId, query?: LogsQuery) {
+function createCommandExecutionsKey(id: CommandId, query?: ExecutionsQuery) {
   if (query === undefined) {
     return ["command-executions", id] as const;
   }
   return ["command-executions", id, query] as const;
 }
 
-export function getCommandExecutions(commandId: CommandId, query: LogsQuery) {
+export function getCommandExecutions(
+  commandId: CommandId,
+  query: ExecutionsQuery,
+) {
   return invoke<CommandExecution[]>("get_command_executions", {
     commandId,
     query,
   });
 }
 
-export function commandExecutionsQuery(commandId: CommandId, query: LogsQuery) {
+export function commandExecutionsQuery(
+  commandId: CommandId,
+  query: ExecutionsQuery,
+) {
   return createQuery({
     queryKey: createCommandExecutionsKey(commandId, query),
     queryFn: () => getCommandExecutions(commandId, query),
@@ -255,7 +262,7 @@ export function commandExecutionsQuery(commandId: CommandId, query: LogsQuery) {
 
 export function invalidateCommandExecutions(
   commandId: CommandId,
-  query: LogsQuery,
+  query: ExecutionsQuery,
 ) {
   const queryKey = createCommandExecutionsKey(commandId, query);
   queryClient.invalidateQueries({ queryKey });
@@ -274,7 +281,7 @@ export function deleteCommandExecutionsMutation(commandId: CommandId) {
     mutationFn: (deleteLogs) =>
       deleteCommandExecutions(deleteLogs.executionIds),
     onMutate: (deleteLogs) => {
-      queryClient.setQueriesData<CommandLog[]>(
+      queryClient.setQueriesData<CommandExecution[]>(
         { queryKey: createCommandExecutionsKey(commandId) },
         (data) => {
           if (data === undefined) return undefined;

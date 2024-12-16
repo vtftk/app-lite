@@ -15,6 +15,7 @@
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
@@ -50,6 +51,7 @@
 
   import SoundSelect from "./SoundSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
+  import EventExecutions from "./EventExecutions.svelte";
   import EventTriggerItem from "./EventTriggerItem.svelte";
   import EventOutcomeItem from "./EventOutcomeItem.svelte";
   import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
@@ -885,7 +887,7 @@
     {actions}
   >
     <div class="content">
-      <Tabs.Root>
+      <Tabs.Root let:value>
         <Tabs.List>
           <Tabs.Trigger value="details">
             <SolarBookBoldDuotone />
@@ -904,6 +906,11 @@
             <SolarChecklistMinimalisticBoldDuotone />
             Requirements
           </Tabs.Trigger>
+          {#if existing !== undefined}
+            <Tabs.Trigger value="executions">
+              <SolarReorderBoldDuotone /> Executions
+            </Tabs.Trigger>
+          {/if}
         </Tabs.List>
         <Tabs.Content value="details">
           <!-- Base options -->
@@ -996,6 +1003,13 @@
             />
           </FormSection>
         </Tabs.Content>
+        {#if existing !== undefined}
+          <Tabs.Content value="executions">
+            {#if value === "executions"}
+              <EventExecutions id={existing.id} />
+            {/if}
+          </Tabs.Content>
+        {/if}
       </Tabs.Root>
     </div>
   </PageLayoutList>

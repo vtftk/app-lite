@@ -2,41 +2,41 @@
   import { onMount } from "svelte";
   import ExecutionsTable from "$lib/components/ExecutionsTable.svelte";
   import {
-    type CommandId,
+    type EventId,
     type ExecutionId,
     type ExecutionsQuery,
   } from "$shared/dataV2";
   import {
-    commandExecutionsQuery,
-    invalidateCommandExecutions,
-    deleteCommandExecutionsMutation,
-  } from "$lib/api/commands";
+    eventExecutionsQuery,
+    invalidateEventExecutions,
+    deleteEventExecutionsMutation,
+  } from "$lib/api/vevents";
 
   type Props = {
-    id: CommandId;
+    id: EventId;
   };
 
   const { id }: Props = $props();
 
   const query: ExecutionsQuery = $state({});
 
-  const executionsQuery = $derived(commandExecutionsQuery(id, query));
+  const executionsQuery = $derived(eventExecutionsQuery(id, query));
   const executions = $derived($executionsQuery.data ?? []);
 
-  const deleteCommandExecutions = deleteCommandExecutionsMutation(id);
+  const deleteEventExecutions = deleteEventExecutionsMutation(id);
 
   onMount(() => {
     onRefresh();
   });
 
   async function onBulkDelete(executionIds: ExecutionId[]) {
-    await $deleteCommandExecutions.mutateAsync({
+    await $deleteEventExecutions.mutateAsync({
       executionIds,
     });
   }
 
   function onRefresh() {
-    invalidateCommandExecutions(id, query);
+    invalidateEventExecutions(id, query);
   }
 </script>
 

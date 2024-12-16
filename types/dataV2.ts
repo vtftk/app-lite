@@ -1,10 +1,10 @@
 import type {
-  CommandOutcome,
+  Uuid,
   EventOutcome,
   EventTrigger,
+  CommandOutcome,
   MinimumRequiredRole,
   ThrowableImageConfig,
-  Uuid,
 } from "./appData";
 
 export type ItemId = Uuid;

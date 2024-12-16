@@ -3,8 +3,11 @@ import type {
   VEventData,
   UpdateEvent,
   CreateEvent,
+  ExecutionId,
   UpdateOrdering,
+  EventExecution,
   VEvent as Event,
+  ExecutionsQuery,
 } from "$shared/dataV2";
 
 import { invoke } from "@tauri-apps/api/core";
@@ -176,4 +179,66 @@ export function bulkDeleteEventMutation() {
 export async function updateEventOrder(update: UpdateOrdering[]) {
   await invoke("update_event_orderings", { update });
   queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
+}
+
+function createEventExecutionsKey(id: EventId, query?: ExecutionsQuery) {
+  if (query === undefined) {
+    return ["event-executions", id] as const;
+  }
+  return ["event-executions", id, query] as const;
+}
+
+export function getEventExecutions(eventId: EventId, query: ExecutionsQuery) {
+  return invoke<EventExecution[]>("get_event_executions", {
+    eventId,
+    query,
+  });
+}
+
+export function eventExecutionsQuery(eventId: EventId, query: ExecutionsQuery) {
+  return createQuery({
+    queryKey: createEventExecutionsKey(eventId, query),
+    queryFn: () => getEventExecutions(eventId, query),
+  });
+}
+
+export function invalidateEventExecutions(
+  eventId: EventId,
+  query: ExecutionsQuery,
+) {
+  const queryKey = createEventExecutionsKey(eventId, query);
+  queryClient.invalidateQueries({ queryKey });
+}
+
+export function deleteEventExecutions(executionIds: ExecutionId[]) {
+  return invoke<void>("delete_event_executions", { executionIds });
+}
+
+type BulkDeleteCommandExecutions = {
+  executionIds: ExecutionId[];
+};
+
+export function deleteEventExecutionsMutation(eventId: EventId) {
+  return createMutation<void, Error, BulkDeleteCommandExecutions>({
+    mutationFn: (deleteLogs) => deleteEventExecutions(deleteLogs.executionIds),
+    onMutate: (deleteLogs) => {
+      queryClient.setQueriesData<EventExecution[]>(
+        { queryKey: createEventExecutionsKey(eventId) },
+        (data) => {
+          if (data === undefined) return undefined;
+          return data.filter(
+            (log) => !deleteLogs.executionIds.includes(log.id),
+          );
+        },
+      );
+
+      return undefined;
+    },
+    onSettled: (_data, _err) => {
+      // Invalid the list of items
+      queryClient.invalidateQueries({
+        queryKey: createEventExecutionsKey(eventId),
+      });
+    },
+  });
 }
