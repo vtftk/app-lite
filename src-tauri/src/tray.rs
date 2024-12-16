@@ -5,6 +5,11 @@ use tauri::{
     App, AppHandle, Manager,
 };
 
+#[cfg(not(debug_assertions))]
+const TRAY_NAME: &str = "VTFTK - VTuber Fun Toolkit";
+#[cfg(debug_assertions)]
+const TRAY_NAME: &str = "VTFTK - VTuber Fun Toolkit (Dev)";
+
 /// Creates a tray menu for the app
 pub fn create_tray_menu(app: &mut App) -> anyhow::Result<()> {
     let icon = app
@@ -12,13 +17,7 @@ pub fn create_tray_menu(app: &mut App) -> anyhow::Result<()> {
         .context("failed to get app icon")?
         .clone();
 
-    let title_i = IconMenuItem::new(
-        app,
-        "VTFTK - VTuber Fun Toolkit",
-        false,
-        Some(icon.clone()),
-        None::<&str>,
-    )?;
+    let title_i = IconMenuItem::new(app, TRAY_NAME, false, Some(icon.clone()), None::<&str>)?;
     let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&title_i, &open_i, &quit_i])?;
