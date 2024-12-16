@@ -56,8 +56,7 @@
 <style>
   .content {
     z-index: 30;
-    width: 100%;
-    max-width: 328px;
+    min-width: 12rem;
     border-radius: 12px;
     border: 1px solid #333;
     padding: 0.5rem;

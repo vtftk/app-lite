@@ -1,12 +1,16 @@
 <script lang="ts">
   import type { Script } from "$lib/api/types";
 
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import { deleteScriptMutation } from "$lib/api/scripts";
+  import Button from "$lib/components/input/Button.svelte";
+  import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
   type Props = {
     config: Script;
@@ -34,29 +38,35 @@
   }
 </script>
 
+{#snippet popoverContent()}
+  <LinkButton href="/scripts/{config.id}">
+    <SettingsIcon /> View
+  </LinkButton>
+  <Button onclick={onDelete}><DeleteIcon /> Delete</Button>
+{/snippet}
+
 <div class="item">
-  <Checkbox.Root checked={selected} onCheckedChange={onToggleSelected}>
-    <Checkbox.Indicator let:isChecked>
-      {#if isChecked}
-        <span>&#10003;</span>
-      {/if}
-    </Checkbox.Indicator>
-  </Checkbox.Root>
+  <ControlledCheckbox checked={selected} onCheckedChange={onToggleSelected} />
 
-  <a class="name" href="/scripts/{config.id}">{config.name}</a>
+  <div class="item__text">
+    <a class="item__name" href="/scripts/{config.id}">{config.name}</a>
+  </div>
 
-  <div class="actions">
-    <a class="btn" href="/scripts/{config.id}">
-      <SettingsIcon />
-    </a>
-    <button class="btn" onclick={onDelete}> <DeleteIcon /> </button>
+  <div class="action">
+    <PopoverButton
+      content={popoverContent}
+      contentProps={{ align: "start", side: "left" }}
+    >
+      <SolarMenuDotsBold />
+    </PopoverButton>
   </div>
 </div>
 
 <style>
   .item {
-    background-color: #222;
-    border: 1px solid #333;
+    background-color: #1a1a1a;
+    border: 1px solid #2f2f2f;
+    border-radius: 5px;
 
     display: flex;
     justify-content: space-between;
@@ -64,20 +74,26 @@
 
     padding: 0.5rem;
     align-items: center;
+    overflow: hidden;
   }
 
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .name {
+  .item__name {
     flex: 1;
     color: #fff;
     font-weight: bold;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+  }
+
+  .item__text {
+    display: flex;
+    flex: auto;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .action {
+    flex-shrink: 0;
   }
 </style>

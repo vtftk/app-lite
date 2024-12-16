@@ -7,10 +7,12 @@
   type Props = {
     src: string;
 
+    showText?: boolean;
+
     button?: Snippet<[{ onClick: VoidFunction; isPlaying: boolean }]>;
   };
 
-  let { src, button }: Props = $props();
+  let { src, showText, button }: Props = $props();
 
   let audio: HTMLAudioElement | undefined = $state(undefined);
   let isPlaying = $state(false);
@@ -48,8 +50,16 @@
   >
     {#if isPlaying}
       <StopIcon />
+
+      {#if showText}
+        Stop
+      {/if}
     {:else}
       <PlayIcon />
+
+      {#if showText}
+        Play
+      {/if}
     {/if}
   </button>
 {/if}

@@ -16,6 +16,7 @@
   background-color: #333;
   transition: all 150ms ease-in-out;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 [data-checkbox-root][data-state="checked"] {

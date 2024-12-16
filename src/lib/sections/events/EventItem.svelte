@@ -1,12 +1,16 @@
 <script lang="ts">
   import type { VEvent } from "$lib/api/types";
 
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import { deleteEventMutation } from "$lib/api/vevents";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import Button from "$lib/components/input/Button.svelte";
+  import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
   type Props = {
     config: VEvent;
@@ -34,65 +38,64 @@
   }
 </script>
 
+{#snippet popoverContent()}
+  <LinkButton href="/events/{config.id}">
+    <SettingsIcon /> View
+  </LinkButton>
+  <Button onclick={onDelete}><DeleteIcon /> Delete</Button>
+{/snippet}
+
 <div class="event">
-  <Checkbox.Root checked={selected} onCheckedChange={onToggleSelected}>
-    <Checkbox.Indicator let:isChecked>
-      {#if isChecked}
-        <span>&#10003;</span>
-      {/if}
-    </Checkbox.Indicator>
-  </Checkbox.Root>
+  <ControlledCheckbox checked={selected} onCheckedChange={onToggleSelected} />
 
-  <a href="/events/{config.id}" class="event__name">{config.name}</a>
-
-  <div class="event__actions">
-    <a class="throw-button" href="/events/{config.id}">
-      <SettingsIcon />
+  <div class="event__content">
+    <a title={config.name} href="/events/{config.id}" class="event__name">
+      {config.name}
     </a>
-    <button class="throw-button" onclick={onDelete}> <DeleteIcon /> </button>
+  </div>
+
+  <div class="action">
+    <PopoverButton
+      content={popoverContent}
+      contentProps={{ align: "start", side: "left" }}
+    >
+      <SolarMenuDotsBold />
+    </PopoverButton>
   </div>
 </div>
 
 <style>
   .event {
-    background-color: #222;
-    border: 1px solid #333;
+    background-color: #1a1a1a;
+    border: 1px solid #2f2f2f;
+    border-radius: 5px;
 
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     gap: 1rem;
 
     padding: 0.5rem;
-  }
-
-  .event__actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
+    overflow: hidden;
   }
 
   .event__name {
     color: #fff;
     font-weight: bold;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .event__content {
     display: flex;
     flex: auto;
     align-items: center;
+    overflow: hidden;
   }
 
-  .throw-button {
-    padding: 0.5rem;
-    background-color: #333;
-    border: 1px solid #666;
-    color: #fff;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    align-items: center;
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .throw-button:hover {
-    background-color: #444;
+  .action {
+    flex-shrink: 0;
   }
 </style>

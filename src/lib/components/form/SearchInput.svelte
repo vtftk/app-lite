@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SolarMinimalisticMagniferLinear from "~icons/solar/minimalistic-magnifer-linear";
   type Props = {
     value: string;
     placeholder?: string;
@@ -9,26 +10,37 @@
   let { value = $bindable(), placeholder, type = "text" }: Props = $props();
 </script>
 
-<div class="form-input">
+<label class="form-input">
+  <div class="icon"><SolarMinimalisticMagniferLinear /></div>
   <input {type} bind:value {placeholder} aria-describedby="{name}-validation" />
-</div>
+</label>
 
 <style>
   .form-input {
     display: inline-flex;
-    flex-flow: column;
+    flex-flow: row;
     gap: 0.5rem;
     flex: auto;
+
+    background-color: #222;
+    border: 1px solid #333;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    border-radius: 0.5rem;
+  }
+
+  .icon {
+    position: absolute;
+    left: 0.5rem;
   }
 
   .form-input input {
     padding: 0.5rem;
-    background-color: #000;
-    border: 1px solid #666;
+    padding-left: 2.5rem;
     color: #fff;
     border-radius: 0.25rem;
-    align-items: center;
-    display: flex;
-    gap: 0.5rem;
+    background-color: transparent;
+    border: none;
   }
 </style>

@@ -1,14 +1,18 @@
 <script lang="ts">
   import type { Sound } from "$lib/api/types";
 
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import getBackendURL from "$lib/utils/url";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import { deleteSoundMutation } from "$lib/api/sounds";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import Button from "$lib/components/input/Button.svelte";
+  import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
   type Props = {
     config: Sound;
@@ -36,30 +40,36 @@
   }
 </script>
 
+{#snippet popoverContent()}
+  <SoundPlayButton showText src={getBackendURL(config.src)} />
+  <LinkButton href="/sounds/{config.id}">
+    <SettingsIcon /> View
+  </LinkButton>
+  <Button onclick={onDelete}><DeleteIcon /> Delete</Button>
+{/snippet}
+
 <div class="sound">
-  <Checkbox.Root checked={selected} onCheckedChange={onToggleSelected}>
-    <Checkbox.Indicator let:isChecked>
-      {#if isChecked}
-        <span>&#10003;</span>
-      {/if}
-    </Checkbox.Indicator>
-  </Checkbox.Root>
+  <ControlledCheckbox checked={selected} onCheckedChange={onToggleSelected} />
 
-  <a class="sound__name" href="/sounds/{config.id}">{config.name}</a>
+  <div class="sound__text">
+    <a class="sound__name" href="/sounds/{config.id}">{config.name}</a>
+  </div>
 
-  <div class="sound__actions">
-    <SoundPlayButton src={getBackendURL(config.src)} />
-    <a class="sound-button" href="/sounds/{config.id}">
-      <SettingsIcon />
-    </a>
-    <button class="sound-button" onclick={onDelete}> <DeleteIcon /> </button>
+  <div class="action">
+    <PopoverButton
+      content={popoverContent}
+      contentProps={{ align: "start", side: "left" }}
+    >
+      <SolarMenuDotsBold />
+    </PopoverButton>
   </div>
 </div>
 
 <style>
   .sound {
-    background-color: #222;
-    border: 1px solid #333;
+    background-color: #1a1a1a;
+    border: 1px solid #2f2f2f;
+    border-radius: 5px;
 
     display: flex;
     justify-content: space-between;
@@ -67,12 +77,7 @@
 
     padding: 0.5rem;
     align-items: center;
-  }
-
-  .sound__actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
+    overflow: hidden;
   }
 
   .sound__name {
@@ -84,19 +89,14 @@
     overflow: hidden;
   }
 
-  .sound-button {
-    padding: 0.5rem;
-    background-color: #333;
-    border: 1px solid #666;
-    color: #fff;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    align-items: center;
+  .sound__text {
     display: flex;
-    gap: 0.5rem;
+    flex: auto;
+    align-items: center;
+    overflow: hidden;
   }
 
-  .sound-button:hover {
-    background-color: #444;
+  .action {
+    flex-shrink: 0;
   }
 </style>

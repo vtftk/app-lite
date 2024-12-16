@@ -221,7 +221,10 @@
 
   .status-item {
     display: flex;
-    border: 1px solid #333;
+    background-color: #1a1a1a;
+    border: 1px solid #2f2f2f;
+    border-radius: 5px;
+
     justify-content: space-between;
     padding: 1rem;
     align-items: center;

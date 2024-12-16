@@ -32,13 +32,20 @@
   .button {
     display: block;
     padding: 0.5rem;
-    border: 1px solid #333;
+    border: 1px solid #2f2f2f;
     text-decoration: none;
     background-color: #222;
     border-radius: 0.5rem;
     display: flex;
     gap: 0.75rem;
     align-items: center;
+    transition:
+      background-color 0.25s ease,
+      transform 0.15s ease;
+  }
+
+  .button:active {
+    transform: scale(0.98);
   }
 
   .content {
