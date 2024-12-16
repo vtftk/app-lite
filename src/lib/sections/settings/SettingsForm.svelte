@@ -10,11 +10,15 @@
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
+  import SolarBallsBoldDuotone from "~icons/solar/balls-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import DetectVTubeStudio from "$lib/components/DetectVTubeStudio.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import SolarShareCircleBoldDuotone from "~icons/solar/share-circle-bold-duotone";
+  import SolarPeopleNearbyBoldDuotone from "~icons/solar/people-nearby-bold-duotone";
+  import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
   import {
     type AppData,
     EYES_MODE_VALUES,
@@ -194,19 +198,19 @@
             <SolarSettingsBoldDuotone /> Main
           </Tabs.Trigger>
           <Tabs.Trigger value="throwables">
-            <SolarSettingsBoldDuotone /> Throwables
+            <SolarBallsBoldDuotone /> Throwables
           </Tabs.Trigger>
           <Tabs.Trigger value="sounds">
-            <SolarSettingsBoldDuotone /> Sounds
+            <SolarHeadphonesRoundBoldDuotone /> Sounds
           </Tabs.Trigger>
           <Tabs.Trigger value="vtube_studio">
             <SolarSettingsBoldDuotone /> VTube Studio
           </Tabs.Trigger>
           <Tabs.Trigger value="model">
-            <SolarSettingsBoldDuotone /> VTuber Model
+            <SolarPeopleNearbyBoldDuotone /> VTuber Model
           </Tabs.Trigger>
           <Tabs.Trigger value="external">
-            <SolarSettingsBoldDuotone /> External APIs
+            <SolarShareCircleBoldDuotone /> External APIs
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="main">
