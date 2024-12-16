@@ -2,13 +2,13 @@ use anyhow::Context;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
     entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel, QueryOrder,
-    UpdateResult,
+    QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
 use super::{
     event_executions::{EventExecutionColumn, EventExecutionModel},
-    shared::{DbResult, MinMax, MinimumRequireRole},
+    shared::{DbResult, ExecutionsQuery, MinMax, MinimumRequireRole},
 };
 
 // Type alias helpers for the database entity types
@@ -391,5 +391,37 @@ impl Model {
             .await;
 
         Ok(())
+    }
+
+    pub async fn get_executions<C>(
+        &self,
+        db: &C,
+        query: ExecutionsQuery,
+    ) -> DbResult<Vec<EventExecutionModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut select = self.find_related(super::event_executions::Entity);
+
+        if let Some(start_date) = query.start_date {
+            select = select.filter(EventExecutionColumn::CreatedAt.gt(start_date))
+        }
+
+        if let Some(end_date) = query.end_date {
+            select = select.filter(EventExecutionColumn::CreatedAt.lt(end_date))
+        }
+
+        if let Some(offset) = query.offset {
+            select = select.offset(offset);
+        }
+
+        if let Some(limit) = query.limit {
+            select = select.limit(limit);
+        }
+
+        select
+            .order_by(EventExecutionColumn::CreatedAt, sea_orm::Order::Desc)
+            .all(db)
+            .await
     }
 }

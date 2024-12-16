@@ -5,8 +5,8 @@
 use crate::database::entity::{
     command_logs::CommandLogsModel,
     commands::{CreateCommand, UpdateCommand, UpdateCommandOrdering},
-    shared::LogsQuery,
-    CommandModel,
+    shared::{ExecutionsQuery, LogsQuery},
+    CommandExecutionModel, CommandModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
@@ -106,6 +106,33 @@ pub async fn update_command_orderings(
 ) -> CmdResult<()> {
     let db = db.inner();
     CommandModel::update_order(db, update).await?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_command_executions(
+    command_id: Uuid,
+    query: ExecutionsQuery,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<Vec<CommandExecutionModel>> {
+    let db = db.inner();
+    let command = CommandModel::get_by_id(db, command_id)
+        .await?
+        .context("command not found")?;
+    let executions = command.get_executions(db, query).await?;
+
+    Ok(executions)
+}
+
+#[tauri::command]
+pub async fn delete_command_executions(
+    execution_ids: Vec<Uuid>,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
+    let db = db.inner();
+
+    CommandExecutionModel::delete_many(db, &execution_ids).await?;
 
     Ok(())
 }

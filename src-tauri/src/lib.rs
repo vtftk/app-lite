@@ -164,6 +164,8 @@ pub fn run() {
             commands::commands::get_command_logs,
             commands::commands::delete_command_logs,
             commands::commands::update_command_orderings,
+            commands::commands::get_command_executions,
+            commands::commands::delete_command_executions,
             // Event commands
             commands::events::get_events,
             commands::events::get_event_by_id,
@@ -172,6 +174,8 @@ pub fn run() {
             commands::events::delete_event,
             commands::events::test_event_by_id,
             commands::events::update_event_orderings,
+            commands::events::get_event_executions,
+            commands::events::delete_event_executions,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

@@ -197,7 +197,7 @@ export type EventInputData =
   | EventInputDataChat
   | EventInputDataRaid;
 
-export type EventInputDataNone = {};
+export type EventInputDataNone = object;
 export type EventInputDataRedeem = {
   reward_id: string;
   reward_name: string;
@@ -236,6 +236,7 @@ export type EventInputDataReSubscription = {
 };
 export type EventInputDataChat = {
   message: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fragments: any[];
   cheer: number | null;
 };
@@ -281,4 +282,39 @@ export type LogsQuery = Partial<{
   end_date: string;
   offset: number;
   limit: number;
+}>;
+
+export type ExecutionsQuery = Partial<{
+  start_date: string;
+  end_date: string;
+  offset: number;
+  limit: number;
+}>;
+
+export type CommandExecution = {
+  command_id: string;
+} & ExecutionData;
+
+export type EventExecution = {
+  command_id: string;
+} & ExecutionData;
+
+export type ExecutionId = string;
+
+export type ExecutionData = {
+  id: ExecutionId;
+  // Metadata could be anything
+  metadata: UnstableExecutionMetadata;
+  created_at: string;
+};
+
+// Type is unstable, can change at any time all fields
+// must be checked and may not exist
+export type UnstableExecutionMetadata = Partial<{
+  user: {
+    id: string;
+    name: string;
+    display_name: string;
+  } | null;
+  input_data: Partial<EventInputData>;
 }>;

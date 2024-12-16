@@ -46,3 +46,11 @@ pub struct LogsQuery {
     pub offset: Option<u64>,
     pub limit: Option<u64>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExecutionsQuery {
+    pub start_date: Option<DateTimeUtc>,
+    pub end_date: Option<DateTimeUtc>,
+    pub offset: Option<u64>,
+    pub limit: Option<u64>,
+}

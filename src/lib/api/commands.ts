@@ -7,6 +7,8 @@ import type {
   UpdateCommand,
   CreateCommand,
   UpdateOrdering,
+  CommandExecution,
+  ExecutionId,
 } from "$shared/dataV2";
 
 import { invoke } from "@tauri-apps/api/core";
@@ -228,4 +230,67 @@ export function bulkDeleteCommandLogsMutation(commandId: CommandId) {
 export async function updateCommandOrder(update: UpdateOrdering[]) {
   await invoke("update_command_orderings", { update });
   queryClient.invalidateQueries({ queryKey: COMMANDS_KEY });
+}
+
+function createCommandExecutionsKey(id: CommandId, query?: LogsQuery) {
+  if (query === undefined) {
+    return ["command-executions", id] as const;
+  }
+  return ["command-executions", id, query] as const;
+}
+
+export function getCommandExecutions(commandId: CommandId, query: LogsQuery) {
+  return invoke<CommandExecution[]>("get_command_executions", {
+    commandId,
+    query,
+  });
+}
+
+export function commandExecutionsQuery(commandId: CommandId, query: LogsQuery) {
+  return createQuery({
+    queryKey: createCommandExecutionsKey(commandId, query),
+    queryFn: () => getCommandExecutions(commandId, query),
+  });
+}
+
+export function invalidateCommandExecutions(
+  commandId: CommandId,
+  query: LogsQuery,
+) {
+  const queryKey = createCommandExecutionsKey(commandId, query);
+  queryClient.invalidateQueries({ queryKey });
+}
+
+export function deleteCommandExecutions(executionIds: ExecutionId[]) {
+  return invoke<void>("delete_command_executions", { executionIds });
+}
+
+type BulkDeleteCommandExecutions = {
+  executionIds: ExecutionId[];
+};
+
+export function deleteCommandExecutionsMutation(commandId: CommandId) {
+  return createMutation<void, Error, BulkDeleteCommandExecutions>({
+    mutationFn: (deleteLogs) =>
+      deleteCommandExecutions(deleteLogs.executionIds),
+    onMutate: (deleteLogs) => {
+      queryClient.setQueriesData<CommandLog[]>(
+        { queryKey: createCommandExecutionsKey(commandId) },
+        (data) => {
+          if (data === undefined) return undefined;
+          return data.filter(
+            (log) => !deleteLogs.executionIds.includes(log.id),
+          );
+        },
+      );
+
+      return undefined;
+    },
+    onSettled: (_data, _err) => {
+      // Invalid the list of items
+      queryClient.invalidateQueries({
+        queryKey: createCommandExecutionsKey(commandId),
+      });
+    },
+  });
 }

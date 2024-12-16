@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use super::{
     command_executions::{CommandExecutionColumn, CommandExecutionModel},
     command_logs::{CommandLogsColumn, CommandLogsModel},
-    shared::{DbResult, LogsQuery, MinimumRequireRole},
+    shared::{DbResult, ExecutionsQuery, LogsQuery, MinimumRequireRole},
 };
 
 // Type alias helpers for the database entity types
@@ -224,6 +224,38 @@ impl Model {
 
         select
             .order_by(CommandLogsColumn::CreatedAt, sea_orm::Order::Desc)
+            .all(db)
+            .await
+    }
+
+    pub async fn get_executions<C>(
+        &self,
+        db: &C,
+        query: ExecutionsQuery,
+    ) -> DbResult<Vec<CommandExecutionModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut select = self.find_related(super::command_executions::Entity);
+
+        if let Some(start_date) = query.start_date {
+            select = select.filter(CommandExecutionColumn::CreatedAt.gt(start_date))
+        }
+
+        if let Some(end_date) = query.end_date {
+            select = select.filter(CommandExecutionColumn::CreatedAt.lt(end_date))
+        }
+
+        if let Some(offset) = query.offset {
+            select = select.offset(offset);
+        }
+
+        if let Some(limit) = query.limit {
+            select = select.limit(limit);
+        }
+
+        select
+            .order_by(CommandExecutionColumn::CreatedAt, sea_orm::Order::Desc)
             .all(db)
             .await
     }

@@ -29,6 +29,7 @@
   } from "$lib/api/types";
 
   import CommandLogs from "./CommandLogs.svelte";
+  import CommandExecutions from "./CommandExecutions.svelte";
   import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
   import exampleCode from "../../../../script/example_command.js?raw";
   import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
@@ -201,6 +202,9 @@
             <SolarCodeSquareBoldDuotone /> Code
           </Tabs.Trigger>
           {#if existing !== undefined}
+            <Tabs.Trigger value="executions">
+              <SolarReorderBoldDuotone /> Executions
+            </Tabs.Trigger>
             <Tabs.Trigger value="logs">
               <SolarReorderBoldDuotone /> Logs
             </Tabs.Trigger>
@@ -289,6 +293,11 @@
           <Tabs.Content value="logs">
             {#if value === "logs"}
               <CommandLogs id={existing.id} />
+            {/if}
+          </Tabs.Content>
+          <Tabs.Content value="executions">
+            {#if value === "executions"}
+              <CommandExecutions id={existing.id} />
             {/if}
           </Tabs.Content>
         {/if}

@@ -3,6 +3,8 @@
 //! Commands for interacting with events from the frontend
 
 use crate::database::entity::events::UpdateEventOrdering;
+use crate::database::entity::shared::ExecutionsQuery;
+use crate::database::entity::EventExecutionModel;
 use crate::events::outcome::produce_outcome_message;
 use crate::events::EventMessage;
 use crate::{
@@ -103,6 +105,33 @@ pub async fn update_event_orderings(
 ) -> CmdResult<()> {
     let db = db.inner();
     EventModel::update_order(db, update).await?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_event_executions(
+    event_id: Uuid,
+    query: ExecutionsQuery,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<Vec<EventExecutionModel>> {
+    let db = db.inner();
+    let event = EventModel::get_by_id(db, event_id)
+        .await?
+        .context("unknown event")?;
+    let executions = event.get_executions(db, query).await?;
+
+    Ok(executions)
+}
+
+#[tauri::command]
+pub async fn delete_event_executions(
+    execution_ids: Vec<Uuid>,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
+    let db = db.inner();
+
+    EventExecutionModel::delete_many(db, &execution_ids).await?;
 
     Ok(())
 }
