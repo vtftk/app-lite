@@ -86,6 +86,11 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    text-decoration: none;
+  }
+
+  .event__name:hover {
+    text-decoration: underline;
   }
 
   .event__content {

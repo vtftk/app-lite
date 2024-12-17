@@ -87,6 +87,11 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    text-decoration: none;
+  }
+
+  .sound__name:hover {
+    text-decoration: underline;
   }
 
   .sound__text {
