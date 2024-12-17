@@ -18,19 +18,34 @@ Still early stages and work in progress, but it does work and throwables / sound
 
 Aiming to be a tailored and improved version of [KBonk](https://github.com/typeou/karasubonk) more suited to my needs and wants.
 
-![Throwables](./docs/throwables.png)
+![Throwables](./docs/items.png)
 
 ## Events
 
 React to stream events such as channel point redeems, follows, subscriptions etc and perform actions such as throwing items, playing sounds, and triggering **VTube Studio** hotkeys
 
-![Event](./docs/event.png)
+![Event](./docs/events.png)
 
 ## Custom Commands
 
 Write custom commands using JavaScript powered by `deno_core`.  Build in editor running on [Monaco](https://microsoft.github.io/monaco-editor/) providing great editing experience and type hinting for the APIs.
 
+With built in APIs for tracking data data like counters and storing key-value pairs, Making HTTP requests, and Interacting with Twitch
+
+
 ![Commands](./docs/commands.png)
+
+Individual executions and logging for commands is also tracked, this information can be found under the "Logs" and "Executions" tabs
+
+<table>
+<tr>
+<td><img src="./docs/command-executions.png"  > Command Executions </td>
+<td><img src="./docs/command-logs.png"  > Command Logs</td>
+</tr><tr>
+<td><img src="./docs/command-metadata.png"  > Execution Metadata </td>
+<td><img src="./docs/commands.png"  > Custom Javascript Commands </td>
+</tr>
+</table>
 
 ## Sounds 
 
@@ -57,6 +72,8 @@ You can listen for events the events below and run code when they happen:
 ![Scripting](./docs/scripting.png)
 
 The [TTS Monster Integration](#tts-monster-integration) section shows some example code for generating TTS messages as the outcome of redeems
+
+
 
 ## TTS Monster Integration
 
@@ -87,4 +104,7 @@ Sounds sourced from [KBonk](https://github.com/typeou/karasubonk) which is origi
 [Game Audio GDC](https://sonniss.com/gameaudiogdc) from the [Hong Kong Action Kit Hit Kit 1](http://www.sonniss.com/sound-effects/hong-kong-action-kit-hit-kit-1/)
 
 
-![Builtins](./docs/builtins.png)
+![Builtins](./docs/items.png)
+
+
+
