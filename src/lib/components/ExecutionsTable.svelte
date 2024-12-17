@@ -7,6 +7,8 @@
   import { type ExecutionId, type ExecutionData } from "$shared/dataV2";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
 
+  import ExecutionMetadataDialog from "./ExecutionMetadataDialog.svelte";
+
   type Props = {
     executions: ExecutionData[];
 
@@ -96,8 +98,8 @@
               </Checkbox.Root>
             </div>
           </th>
-          <th class="column--msg">Metadata</th>
           <th class="column--msg">User</th>
+          <th class="column--msg">Metadata</th>
           <th class="column--date">Timestamp</th>
         </tr>
       </thead>
@@ -119,9 +121,6 @@
               </div>
             </td>
 
-            <td class="column--meta">
-              <span>{JSON.stringify(exec.metadata)}</span>
-            </td>
             <td class="column--user">
               {#if exec.metadata.user}
                 <a
@@ -132,6 +131,9 @@
                   {exec.metadata.user.display_name}
                 </a>
               {/if}
+            </td>
+            <td class="column--meta">
+              <ExecutionMetadataDialog metadata={exec.metadata} />
             </td>
             <td class="column--date">
               <span class="date-date">
