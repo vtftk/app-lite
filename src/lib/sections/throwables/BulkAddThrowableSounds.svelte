@@ -139,6 +139,11 @@
 </Dialog.Root>
 
 <style>
+  [data-dialog-actions] {
+    display: flex;
+    gap: 1rem;
+  }
+
   .sound-table-wrapper {
     padding: 1rem;
     max-height: 300px;
