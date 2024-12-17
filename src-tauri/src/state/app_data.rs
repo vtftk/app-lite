@@ -243,9 +243,10 @@ pub enum EyesMode {
     Closed,
 }
 
-/// Configuration for an individual throwable item
+/// Collection of items along with the resolved impact
+/// sounds for the items
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ThrowableConfig {
+pub struct ItemsWithSounds {
     /// All the referenced items
     pub items: Vec<ItemWithImpactSoundIds>,
     /// All the referenced sounds

@@ -43,10 +43,24 @@ export type UpdateItem = {
   }>;
 };
 
-export type ThrowableConfig = {
+export type ItemWithSounds = {
   items: ItemWithImpactSoundIds[];
   impact_sounds: Sound[];
 };
+
+export const enum ThrowItemConfigType {
+  Barrage = "Barrage",
+  All = "All",
+}
+
+export type ThrowItemConfig =
+  | { type: ThrowItemConfigType.All; amount: number }
+  | {
+      type: ThrowItemConfigType.Barrage;
+      amount_per_throw: number;
+      amount: number;
+      frequency: number;
+    };
 
 export type SoundId = Uuid;
 

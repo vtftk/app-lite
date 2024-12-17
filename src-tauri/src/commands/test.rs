@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     database::entity::{script_events::ScriptEvent, SoundModel},
-    events::{outcome::create_throwable_config, EventMessage},
+    events::{outcome::resolve_items, EventMessage, ThrowItemConfig, ThrowItemMessage},
     script::runtime::ScriptExecutorHandle,
 };
 use anyhow::Context;
@@ -27,12 +27,14 @@ pub async fn test_throw(
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
 ) -> CmdResult<()> {
     let db = db.inner();
-    let config = create_throwable_config(db, &item_ids).await?;
+    let items = resolve_items(db, &item_ids).await?;
 
-    event_sender.send(EventMessage::ThrowItem {
-        config,
-        amount: amount.unwrap_or_default(),
-    })?;
+    event_sender.send(EventMessage::ThrowItem(ThrowItemMessage {
+        items,
+        config: ThrowItemConfig::All {
+            amount: amount.unwrap_or(1),
+        },
+    }))?;
 
     Ok(())
 }
@@ -48,14 +50,16 @@ pub async fn test_throw_barrage(
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
 ) -> CmdResult<()> {
     let db = db.inner();
-    let config = create_throwable_config(db, &item_ids).await?;
+    let items = resolve_items(db, &item_ids).await?;
 
-    event_sender.send(EventMessage::ThrowItemBarrage {
-        config,
-        amount_per_throw,
-        amount,
-        frequency,
-    })?;
+    event_sender.send(EventMessage::ThrowItem(ThrowItemMessage {
+        items,
+        config: ThrowItemConfig::Barrage {
+            amount_per_throw,
+            amount,
+            frequency,
+        },
+    }))?;
 
     Ok(())
 }

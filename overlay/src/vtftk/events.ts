@@ -7,14 +7,6 @@ import { ModelParameters } from "../vtube-studio/model";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 import { triggerHotkey, requestHotkeys } from "../vtube-studio/hotkeys";
 import {
-  Sound,
-  AppData,
-  ModelId,
-  ThrowableConfig,
-  ModelCalibration,
-  ItemWithImpactSoundIds,
-} from "./types";
-import {
   loadAudio,
   loadItems,
   loadSounds,
@@ -23,6 +15,16 @@ import {
   LoadedSoundMap,
   executeInterval,
 } from "../utils";
+import {
+  Sound,
+  AppData,
+  ModelId,
+  ItemWithSounds,
+  ThrowItemConfig,
+  ModelCalibration,
+  ThrowItemConfigType,
+  ItemWithImpactSoundIds,
+} from "./types";
 
 export type EventSourceData = {
   appData: AppData;
@@ -66,27 +68,11 @@ async function onMessage(data: EventSourceData, event: any) {
           data.vtSocket,
           data.modelCalibration,
           data.modelParameters,
+          event.items,
           event.config,
-          event.amount,
         );
       }
 
-      break;
-    }
-
-    case "ThrowItemBarrage": {
-      if (data.vtSocket && data.modelParameters) {
-        onThrowItemBarrageEvent(
-          data.appData,
-          data.vtSocket,
-          data.modelCalibration,
-          data.modelParameters,
-          event.config,
-          event.amount_per_throw,
-          event.amount,
-          event.frequency,
-        );
-      }
       break;
     }
 
@@ -199,24 +185,43 @@ async function onThrowItemEvent(
   vtSocket: VTubeStudioWebSocket,
   modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
-  config: ThrowableConfig,
-  amount: number,
+  items: ItemWithSounds,
+  config: ThrowItemConfig,
 ) {
   const [loadedItems, loadedSounds] = await Promise.all([
-    loadItems(config.items),
-    loadSounds(config.impact_sounds),
+    loadItems(items.items),
+    loadSounds(items.impact_sounds),
   ]);
 
-  await throwItemMany(
-    vtSocket,
-    appData,
-    modelCalibration,
-    modelParameters,
-    config.items,
-    loadedItems,
-    loadedSounds,
-    amount,
-  );
+  if (config.type === ThrowItemConfigType.All) {
+    await throwItemMany(
+      vtSocket,
+      appData,
+      modelCalibration,
+      modelParameters,
+      items.items,
+      loadedItems,
+      loadedSounds,
+      config.amount,
+    );
+  } else if (config.type === ThrowItemConfigType.Barrage) {
+    await executeInterval(
+      async () => {
+        return throwItemMany(
+          vtSocket,
+          appData,
+          modelCalibration,
+          modelParameters,
+          items.items,
+          loadedItems,
+          loadedSounds,
+          config.amount_per_throw,
+        );
+      },
+      config.frequency,
+      config.amount,
+    );
+  }
 }
 
 function pickRandomSound(
@@ -329,38 +334,5 @@ async function throwItemMany(
         loadedSounds,
       ),
     ),
-  );
-}
-
-async function onThrowItemBarrageEvent(
-  appData: AppData,
-  vtSocket: VTubeStudioWebSocket,
-  modelCalibration: Map<ModelId, ModelCalibration>,
-  modelParameters: ModelParameters,
-  config: ThrowableConfig,
-  amountPerThrow: number,
-  amount: number,
-  frequency: number,
-) {
-  const [loadedItems, loadedSounds] = await Promise.all([
-    loadItems(config.items),
-    loadSounds(config.impact_sounds),
-  ]);
-
-  await executeInterval(
-    async () => {
-      return throwItemMany(
-        vtSocket,
-        appData,
-        modelCalibration,
-        modelParameters,
-        config.items,
-        loadedItems,
-        loadedSounds,
-        amountPerThrow,
-      );
-    },
-    frequency,
-    amount,
   );
 }

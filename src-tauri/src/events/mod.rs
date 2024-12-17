@@ -7,8 +7,29 @@ use tokio::sync::broadcast;
 
 use crate::{
     database::entity::SoundModel, http::models::calibration::CalibrationStep,
-    state::app_data::ThrowableConfig,
+    state::app_data::ItemsWithSounds,
 };
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ThrowItemMessage {
+    /// Items to throw
+    pub items: ItemsWithSounds,
+    /// Type of throw
+    pub config: ThrowItemConfig,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type")]
+pub enum ThrowItemConfig {
+    /// Throw all items at once
+    All { amount: i64 },
+    /// Throw items in a barrage at a specific frequency
+    Barrage {
+        amount_per_throw: u32,
+        amount: i64,
+        frequency: u32,
+    },
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
@@ -18,19 +39,8 @@ pub enum EventMessage {
         step: CalibrationStep,
     },
 
-    /// Throw a specific item
-    ThrowItem {
-        config: ThrowableConfig,
-        amount: i64,
-    },
-
-    /// Throw a barrage of many items
-    ThrowItemBarrage {
-        config: ThrowableConfig,
-        amount_per_throw: u32,
-        amount: i64,
-        frequency: u32,
-    },
+    /// Throw item
+    ThrowItem(ThrowItemMessage),
 
     /// Request the latest set of vtube studio hotkeys
     UpdateHotkeys,

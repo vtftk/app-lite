@@ -13,12 +13,12 @@ use crate::{
         items::ThrowableImageConfig,
         ItemModel, SoundModel,
     },
-    state::app_data::{ItemWithImpactSoundIds, ThrowableConfig},
+    state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
 };
 
 use super::{
     matching::{EventData, EventInputData},
-    EventMessage,
+    EventMessage, ThrowItemConfig, ThrowItemMessage,
 };
 
 /// Produce a message for an outcome
@@ -74,8 +74,8 @@ async fn throw_bits_outcome(
         }
     }
 
-    let throwable_config = match bit_icon {
-        Some(bit_icon) => create_throwable_config(db, &[bit_icon]).await?,
+    let items = match bit_icon {
+        Some(bit_icon) => resolve_items(db, &[bit_icon]).await?,
         None => create_default_bit_throwable(input),
     };
 
@@ -84,10 +84,10 @@ async fn throw_bits_outcome(
         BitsAmount::Fixed { amount } => amount,
     };
 
-    Ok(EventMessage::ThrowItem {
-        config: throwable_config,
-        amount,
-    })
+    Ok(EventMessage::ThrowItem(ThrowItemMessage {
+        items,
+        config: ThrowItemConfig::All { amount },
+    }))
 }
 
 // Produce a throwable message
@@ -117,7 +117,7 @@ async fn throwable_outcome(
             use_input_amount,
             input_amount_config,
         } => {
-            let throwable_config = create_throwable_config(db, &throwable_ids).await?;
+            let items = resolve_items(db, &throwable_ids).await?;
 
             let amount = if use_input_amount {
                 let input_amount = input_amount.unwrap_or(amount);
@@ -133,10 +133,10 @@ async fn throwable_outcome(
                 amount
             };
 
-            Ok(EventMessage::ThrowItem {
-                config: throwable_config,
-                amount,
-            })
+            Ok(EventMessage::ThrowItem(ThrowItemMessage {
+                items,
+                config: ThrowItemConfig::All { amount },
+            }))
         }
         ThrowableData::Barrage {
             throwable_ids,
@@ -146,7 +146,7 @@ async fn throwable_outcome(
             use_input_amount,
             input_amount_config,
         } => {
-            let throwable_config = create_throwable_config(db, &throwable_ids).await?;
+            let items = resolve_items(db, &throwable_ids).await?;
 
             let amount = if use_input_amount {
                 let input_amount = input_amount.unwrap_or(amount);
@@ -162,12 +162,14 @@ async fn throwable_outcome(
                 amount
             };
 
-            Ok(EventMessage::ThrowItemBarrage {
-                config: throwable_config,
-                amount,
-                frequency,
-                amount_per_throw,
-            })
+            Ok(EventMessage::ThrowItem(ThrowItemMessage {
+                items,
+                config: ThrowItemConfig::Barrage {
+                    amount_per_throw,
+                    amount,
+                    frequency,
+                },
+            }))
         }
     }
 }
@@ -191,10 +193,10 @@ async fn play_sound_outcome(
     Ok(EventMessage::PlaySound { config })
 }
 
-pub async fn create_throwable_config(
+pub async fn resolve_items(
     db: &DatabaseConnection,
     item_ids: &[Uuid],
-) -> anyhow::Result<ThrowableConfig> {
+) -> anyhow::Result<ItemsWithSounds> {
     let items: Vec<ItemWithImpactSoundIds> = ItemModel::get_by_ids_with_impact_sounds(db, item_ids)
         .await?
         .into_iter()
@@ -219,7 +221,7 @@ pub async fn create_throwable_config(
 
     let impact_sounds = SoundModel::get_by_ids(db, &impact_sound_ids).await?;
 
-    Ok(ThrowableConfig {
+    Ok(ItemsWithSounds {
         items,
         impact_sounds,
     })
@@ -239,7 +241,7 @@ const DEFAULT_SOUND_FILES: &[(&str, &str)] = &[
     ("Seq1.15 Hit #3 96 HK1", "Seq1_15_Hit_3_96_HK1.wav"),
 ];
 
-pub fn create_default_bit_throwable(amount: i64) -> ThrowableConfig {
+pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
     // Get the general bit category
     let bit_index: usize = match amount {
         1..=99 => 0,
@@ -292,7 +294,7 @@ pub fn create_default_bit_throwable(amount: i64) -> ThrowableConfig {
 
     let items = vec![item];
 
-    ThrowableConfig {
+    ItemsWithSounds {
         items,
         impact_sounds,
     }
