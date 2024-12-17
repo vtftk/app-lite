@@ -6,6 +6,7 @@
   import { createSoundsQuery } from "$lib/api/sounds";
   import { Dialog, Checkbox, Separator } from "bits-ui";
   import SettingsIcon from "~icons/solar/settings-bold";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
   import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
 
   type Props = {
@@ -14,12 +15,23 @@
 
   const { onSubmit }: Props = $props();
 
+  let search = $state("");
+  let selected: string[] = $state([]);
+
   const soundsQuery = createSoundsQuery();
 
   // Readable access to the items from the underlying sounds query
-  const sounds = $derived($soundsQuery.data ?? []);
+  const sounds = $derived(filterOptionsSearch($soundsQuery.data ?? [], search));
 
-  let selected: string[] = $state([]);
+  function filterOptionsSearch(options: Sound[], search: string) {
+    search = search.trim().toLowerCase();
+    if (search.length < 1) return options;
+
+    return options.filter((option) => {
+      const name = option.name.trim().toLowerCase();
+      return name.startsWith(search) || name.includes(search);
+    });
+  }
 
   const onSelectSound = (sound: Sound) => {
     if (selected.includes(sound.id)) {
@@ -57,6 +69,10 @@
       </Dialog.Description>
 
       <Separator.Root />
+
+      <div class="selection">
+        <SearchInput bind:value={search} placeholder="Search" />
+      </div>
 
       <div class="sound-table-wrapper">
         <table class="sound-table">
@@ -171,5 +187,14 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+  }
+
+  .selection {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
   }
 </style>

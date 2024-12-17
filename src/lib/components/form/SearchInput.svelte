@@ -42,5 +42,6 @@
     border-radius: 0.25rem;
     background-color: transparent;
     border: none;
+    flex: auto;
   }
 </style>
