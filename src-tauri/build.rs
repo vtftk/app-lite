@@ -4,14 +4,11 @@ use deno_core::extension;
 
 fn main() {
     tauri_build::build();
-
-    println!("cargo:rerun-if-changed=../overlay/index.html");
-
     create_runtime_snapshot();
 }
 
 /// Embed runtime script to rebuild snapshot on change
-static _RUNTIME: &[u8] = include_bytes!("../script/runtime.js");
+static _RUNTIME: &[u8] = include_bytes!("../script/runtime/runtime.js");
 
 /// Creates a snapshot of the runtime wrapper code
 ///
@@ -25,9 +22,12 @@ fn create_runtime_snapshot() {
         // extension name
         api_extension,
         // the entrypoint to our extension
-        esm_entry_point = "ext:api_extension/runtime.js",
+        esm_entry_point = "vtftk:runtime",
         // list of all JS files in the extension
-        esm = [dir "../script", "runtime.js"]
+        esm = [
+            dir "../script/runtime",
+            "vtftk:runtime" = "runtime.js"
+        ]
     );
 
     let out_dir: PathBuf = env::var_os("OUT_DIR").expect("missing out dir").into();

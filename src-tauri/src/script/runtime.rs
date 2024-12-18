@@ -199,7 +199,7 @@ fn spawn_script_promise(
     let resolve = js_runtime.resolve(global_promise);
     task::spawn_local(async move {
         let result = resolve.await;
-        _ = tx.send(result.map(|_| ()).context("failed to resolve value"));
+        _ = tx.send(result.map(|_| ()));
     });
 }
 
