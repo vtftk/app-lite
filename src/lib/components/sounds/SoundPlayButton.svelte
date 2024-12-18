@@ -6,13 +6,14 @@
 
   type Props = {
     src: string;
+    volume?: number;
 
     showText?: boolean;
 
     button?: Snippet<[{ onClick: VoidFunction; isPlaying: boolean }]>;
   };
 
-  let { src, showText, button }: Props = $props();
+  let { src, volume, showText, button }: Props = $props();
 
   let audio: HTMLAudioElement | undefined = $state(undefined);
   let isPlaying = $state(false);
@@ -24,6 +25,7 @@
       audio.pause();
       audio.currentTime = 0;
     } else {
+      audio.volume = volume ?? 1;
       audio.play();
     }
 
@@ -36,6 +38,10 @@
     // Still playing as long as we aren't at the end of the duration
     isPlaying = isPlaying && audio.currentTime < audio.duration;
   }
+
+  $effect(() => {
+    if (audio) audio.volume = volume ?? 1;
+  });
 </script>
 
 <!-- Play/Pause Button -->

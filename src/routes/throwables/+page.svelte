@@ -3,6 +3,7 @@
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
+  import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import Button from "$lib/components/input/Button.svelte";
@@ -12,12 +13,12 @@
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import PopoverCloseButton from "$lib/components/popover/PopoverCloseButton.svelte";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
-  import BulkAddThrowableSounds from "$lib/sections/throwables/BulkAddThrowableSounds.svelte";
   import {
     updateItemOrder,
     createItemsQuery,
@@ -149,6 +150,10 @@
   </PopoverCloseButton>
 {/snippet}
 
+{#snippet bulkAddSoundButton()}
+  <SettingsIcon />Add Impact Sounds
+{/snippet}
+
 <!-- Section before the content -->
 {#snippet beforeContent()}
   <div class="selection">
@@ -171,7 +176,12 @@
           <BallIcon /> Test
         </PopoverButton>
 
-        <BulkAddThrowableSounds onSubmit={onBulkAddSounds} />
+        <SoundPicker
+          buttonContent={bulkAddSoundButton}
+          description="Choose which impact sounds you'd like to add the the selected throwables."
+          selected={[]}
+          onChangeSelected={onBulkAddSounds}
+        />
 
         <Button onclick={onBulkDelete}>
           <DeleteIcon /> Delete

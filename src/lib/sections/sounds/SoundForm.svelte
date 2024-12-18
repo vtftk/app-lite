@@ -7,6 +7,7 @@
   import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { getAppData } from "$lib/api/runtimeAppData";
   import { FileType, type Sound } from "$lib/api/types";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
@@ -20,6 +21,8 @@
   type Props = {
     existing?: Sound;
   };
+
+  const appData = getAppData();
 
   const { existing }: Props = $props();
 
@@ -157,7 +160,7 @@
               setFields("name", file.name);
             }
           }}
-          volume={$data.volume}
+          volume={$data.volume * $appData.sounds_config.global_volume}
         />
         <FormErrorLabel name="sound" />
 

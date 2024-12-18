@@ -4,6 +4,7 @@
   import { toast } from "svelte-sonner";
   import getBackendURL from "$lib/utils/url";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { getAppData } from "$lib/api/runtimeAppData";
   import SettingsIcon from "~icons/solar/settings-bold";
   import { deleteSoundMutation } from "$lib/api/sounds";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
@@ -20,6 +21,8 @@
     selected: boolean;
     onToggleSelected: VoidFunction;
   };
+
+  const appData = getAppData();
 
   const { config, selected, onToggleSelected }: Props = $props();
 
@@ -41,7 +44,11 @@
 </script>
 
 {#snippet popoverContent()}
-  <SoundPlayButton showText src={getBackendURL(config.src)} />
+  <SoundPlayButton
+    showText
+    src={getBackendURL(config.src)}
+    volume={config.volume * $appData.sounds_config.global_volume}
+  />
   <LinkButton href="/sounds/{config.id}">
     <SettingsIcon /> View
   </LinkButton>

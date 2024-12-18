@@ -4,10 +4,10 @@
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
-  import { derived } from "svelte/store";
   import { uploadFile } from "$lib/api/data";
   import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
+  import { createSoundsQuery } from "$lib/api/sounds";
   import { toastErrorMessage } from "$lib/utils/error";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
@@ -27,6 +27,7 @@
   import SolarVolumeLoudBoldDuotone from "~icons/solar/volume-loud-bold-duotone";
   import {
     FileType,
+    type Sound,
     type ItemWithImpactSounds,
     type ThrowableImageConfig,
   } from "$lib/api/types";
@@ -38,15 +39,16 @@
   const { existing }: Props = $props();
 
   const runtimeAppData = getRuntimeAppData();
+  const soundsQuery = createSoundsQuery();
+
+  const sounds = $derived($soundsQuery.data ?? []);
 
   const updateItem = updateItemMutation();
   const createItem = createItemMutation();
 
   // Testing is only available when an overlay and vtube studio is connected
-  const testingEnabled = derived(
-    runtimeAppData,
-    ($runtimeAppData) =>
-      $runtimeAppData.active_overlay_count > 0 &&
+  const testingEnabled = $derived(
+    $runtimeAppData.active_overlay_count > 0 &&
       $runtimeAppData.vtube_studio_connected,
   );
 
@@ -91,7 +93,7 @@
     };
   }
 
-  const { form, data, touched } = createForm<Schema>({
+  const { form, data, touched, setFields } = createForm<Schema>({
     // Derive initial values
     initialValues: existing ? createFromExisting(existing) : createDefaults,
 
@@ -132,6 +134,14 @@
       $touched.impactSoundIds = true;
     }
   });
+
+  const selectedOptions = $derived(
+    filterOptionsSelected(sounds, $data.impactSoundIds),
+  );
+
+  function filterOptionsSelected(options: Sound[], selected: string[]) {
+    return options.filter((option) => selected.includes(option.id));
+  }
 
   function saveImage(image: string | File) {
     if (image instanceof File) {
@@ -201,7 +211,7 @@
       type="button"
       class="btn"
       onclick={onTestThrow}
-      disabled={!$testingEnabled}
+      disabled={!testingEnabled}
     >
       <BallIcon /> Test
     </button>
@@ -209,7 +219,7 @@
       type="button"
       class="btn"
       onclick={onTestBarrage}
-      disabled={!$testingEnabled}
+      disabled={!testingEnabled}
     >
       <BallsIcon /> Test Barrage
     </button>
@@ -292,8 +302,30 @@
             title="Impact Sounds"
             description="Choose selection of sounds that can play when the item impacts"
           >
-            <SoundPicker bind:selected={$data.impactSoundIds} />
+            <SoundPicker
+              description="Choose which sounds should play when this item impacts"
+              selected={$data.impactSoundIds}
+              onChangeSelected={(soundIds) => {
+                setFields(
+                  "impactSoundIds",
+                  soundIds.map((sound) => sound.id),
+                  true,
+                );
+              }}
+            />
             <FormErrorLabel name="impactSoundIds" />
+
+            <div class="sounds">
+              <p class="sounds__title">Selected Sounds</p>
+
+              <div class="sounds__grid">
+                {#each selectedOptions as option}
+                  <li class="sound-item">
+                    <p class="sound-item__name">{option.name}</p>
+                  </li>
+                {/each}
+              </div>
+            </div>
           </FormSection>
         </Tabs.Content>
       </Tabs.Root>
@@ -302,6 +334,38 @@
 </form>
 
 <style>
+  .sounds {
+    display: flex;
+    gap: 1rem;
+    flex-flow: column;
+    margin-top: 1rem;
+  }
+
+  .sounds__title {
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .sounds__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .sound-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .sound-item__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   form {
     height: 100%;
   }

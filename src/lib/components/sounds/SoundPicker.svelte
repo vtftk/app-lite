@@ -1,30 +1,47 @@
 <script lang="ts">
-  import type { Sound } from "$shared/dataV2";
+  import type { Snippet } from "svelte";
+  import type { Sound, SoundId } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
+  import { Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
   import { createSoundsQuery } from "$lib/api/sounds";
-  import { Dialog, Checkbox, Separator } from "bits-ui";
+  import { getAppData } from "$lib/api/runtimeAppData";
 
   import SoundPreview from "./SoundPreview.svelte";
   import SearchInput from "../form/SearchInput.svelte";
+  import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
 
   type Props = {
-    selected: string[];
+    buttonContent?: Snippet;
+    addButtonLabel?: string;
+
+    title?: string;
+    description: string;
+
+    selected: SoundId[];
+    onChangeSelected: (sounds: Sound[]) => void;
   };
 
-  let { selected = $bindable() }: Props = $props();
+  const {
+    buttonContent,
+    addButtonLabel = "Done",
+    title = "Select Sounds",
+    description,
+    selected: initialSelected,
+    onChangeSelected,
+  }: Props = $props();
 
   let search = $state("");
+  let selected: SoundId[] = $state([]);
 
+  $effect(() => {
+    selected = initialSelected;
+  });
+
+  const appData = getAppData();
   const soundsQuery = createSoundsQuery();
-
   const sounds = $derived(filterOptionsSearch($soundsQuery.data ?? [], search));
-  const selectedOptions = $derived(filterOptionsSelected(sounds, selected));
-
-  function filterOptionsSelected(options: Sound[], selected: string[]) {
-    return options.filter((option) => selected.includes(option.id));
-  }
 
   function filterOptionsSearch(options: Sound[], search: string) {
     search = search.trim().toLowerCase();
@@ -51,18 +68,27 @@
       selected = sounds.map((sound) => sound.id);
     }
   };
+
+  const onSave = () => {
+    onChangeSelected(sounds.filter((sound) => selected.includes(sound.id)));
+  };
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger>Select Sounds</Dialog.Trigger>
+  <Dialog.Trigger>
+    {#if buttonContent}
+      {@render buttonContent()}
+    {:else}
+      Select Sounds
+    {/if}
+  </Dialog.Trigger>
   <Dialog.Portal>
     <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />
     <Dialog.Content transition={scale}>
-      <Dialog.Title>Select Sounds</Dialog.Title>
+      <Dialog.Title>{title}</Dialog.Title>
 
-      <Dialog.Description class="text-sm text-foreground-alt">
-        Choose which sounds will be played on impact. Add sounds from the sounds
-        menu on the sidebar. You can do this after creating the throwable.
+      <Dialog.Description>
+        {description}
       </Dialog.Description>
 
       <Separator.Root />
@@ -76,19 +102,13 @@
           <thead>
             <tr>
               <th class="sound-column sound-column--checkbox">
-                <Checkbox.Root
+                <ControlledCheckbox
                   id="terms"
                   aria-labelledby="terms-label"
                   checked={sounds.length > 0 &&
                     selected.length === sounds.length}
                   onCheckedChange={onToggleAll}
-                >
-                  <Checkbox.Indicator let:isChecked>
-                    {#if isChecked}
-                      <span>&#10003;</span>
-                    {/if}
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
               </th>
               <th class="sound-column sound-column--name">Sound Name</th>
               <th class="sound-column sound-column--preview">Preview</th>
@@ -98,24 +118,21 @@
             {#each sounds as sound (sound.id)}
               <tr class="sound-row">
                 <td class="sound-column sound-column--checkbox">
-                  <Checkbox.Root
+                  <ControlledCheckbox
                     id="terms"
                     aria-labelledby="terms-label"
                     checked={selected.includes(sound.id)}
                     onCheckedChange={() => onSelectSound(sound)}
-                  >
-                    <Checkbox.Indicator let:isChecked>
-                      {#if isChecked}
-                        <span>&#10003;</span>
-                      {/if}
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
+                  />
                 </td>
 
                 <td class="sound-column sound-column--name"> {sound.name} </td>
 
                 <td class="sound-column sound-column--preview">
-                  <SoundPreview src={getBackendURL(sound.src)} />
+                  <SoundPreview
+                    volume={sound.volume * $appData.sounds_config.global_volume}
+                    src={getBackendURL(sound.src)}
+                  />
                 </td>
               </tr>
             {/each}
@@ -124,57 +141,19 @@
       </div>
 
       <div data-dialog-actions>
-        <Dialog.Close>
-          <span class="sr-only">Close</span>
+        <Dialog.Close>Close</Dialog.Close>
+        <Dialog.Close onclick={onSave}>
+          {addButtonLabel}
         </Dialog.Close>
       </div>
     </Dialog.Content>
   </Dialog.Portal>
 </Dialog.Root>
 
-<div class="selected">
-  <p class="selected__title">Selected Sounds</p>
-
-  <div class="grid">
-    {#each selectedOptions as option}
-      <li class="grid-item">
-        <p class="grid-item__name">{option.name}</p>
-      </li>
-    {/each}
-  </div>
-</div>
-
 <style>
-  .selected {
+  [data-dialog-actions] {
     display: flex;
     gap: 1rem;
-    flex-flow: column;
-    margin-top: 1rem;
-  }
-
-  .selected__title {
-    color: #fff;
-    font-weight: bold;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    overflow: hidden;
-  }
-
-  .grid-item {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .grid-item__name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .selection {
