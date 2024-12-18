@@ -79,7 +79,9 @@
     {#if buttonContent}
       {@render buttonContent()}
     {:else}
-      Select Sounds
+      {selected.length > 0
+        ? `${selected.length} Sounds selected`
+        : "Select Items"}
     {/if}
   </Dialog.Trigger>
   <Dialog.Portal>
