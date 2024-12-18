@@ -229,7 +229,7 @@ const api = {
     sendChatAnnouncement: (message, color) =>
       Deno.core.ops.op_twitch_send_chat_announcement(
         message,
-        color ?? "primary"
+        color ?? "primary",
       ),
     getUserByUsername: (username) =>
       Deno.core.ops.op_twitch_get_user_by_username(username),
@@ -267,7 +267,8 @@ const api = {
   vtftk: {
     ttsVoices: () => Deno.core.ops.op_vtftk_tts_get_voices(),
     ttsGenerate: (req) => Deno.core.ops.op_vtftk_tts_generate(req),
-    ttsGenerateParsed: (req) => Deno.core.ops.op_vtftk_tts_generate_parsed(req),
+    ttsGenerateParsed: (voice_id, message) =>
+      Deno.core.ops.op_vtftk_tts_generate_parsed(voice_id, message),
     playSound: (src, volume = 1) =>
       Deno.core.ops.op_vtftk_play_sound(src, volume),
     playSoundSeq: (sounds) => Deno.core.ops.op_vtftk_play_sound_seq(sounds),

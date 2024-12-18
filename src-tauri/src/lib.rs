@@ -13,10 +13,10 @@ mod constants;
 mod database;
 mod events;
 mod http;
+mod integrations;
 mod script;
 mod state;
 mod tray;
-mod tts;
 mod twitch;
 
 /// Prevent slow changes from macro by using a separate entrypoint

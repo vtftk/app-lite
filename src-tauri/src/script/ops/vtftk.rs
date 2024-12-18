@@ -1,9 +1,9 @@
 use crate::{
     database::entity::SoundModel,
+    integrations::tts_monster::TTSMonsterVoice,
     script::events::{
         global_script_event, PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices,
     },
-    tts::{GenerateRequest, GenerateResponse, Voice},
 };
 use anyhow::Context;
 use deno_core::op2;
@@ -63,18 +63,19 @@ pub async fn op_vtftk_tts_generate_parsed(
 
 #[op2(async)]
 #[serde]
-pub async fn op_vtftk_tts_get_voices() -> anyhow::Result<Vec<Voice>> {
+pub async fn op_vtftk_tts_get_voices() -> anyhow::Result<Vec<TTSMonsterVoice>> {
     global_script_event(TTSGetVoices)
         .await
         .context("failed to send event")?
 }
 
 #[op2(async)]
-#[serde]
+#[string]
 pub async fn op_vtftk_tts_generate(
-    #[serde] request: GenerateRequest,
-) -> anyhow::Result<GenerateResponse> {
-    global_script_event(TTSGenerate { request })
+    #[serde] voice_id: Uuid,
+    #[string] message: String,
+) -> anyhow::Result<String> {
+    global_script_event(TTSGenerate { voice_id, message })
         .await
         .context("failed to send event")?
 }

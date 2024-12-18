@@ -54,7 +54,7 @@ declare global {
 
     sendChatAnnouncement: (
       message: string,
-      color?: TwitchAnnouncementColor
+      color?: TwitchAnnouncementColor,
     ) => Promise<void>;
 
     getUserByUsername: (username: string) => Promise<TwitchUser>;
@@ -95,7 +95,7 @@ declare global {
      */
     getUsernameArg: (
       arg: string | undefined | null,
-      validate?: boolean
+      validate?: boolean,
     ) => string | null;
   }
 
@@ -175,17 +175,7 @@ declare global {
     amount: number;
   }
 
-  interface TtsGenerateRequest {
-    voice_id: string;
-    message: string;
-  }
-
-  interface TtsGenerateResponse {
-    status: number;
-    url: string;
-  }
-
-  interface TtsVoice {
+  interface TTSMonsterVoice {
     voice_id: string;
     name: string;
     sample: string;
@@ -197,9 +187,9 @@ declare global {
   }
 
   export interface VTFTKApi {
-    ttsVoices: () => Promise<TtsVoice[]>;
+    ttsVoices: () => Promise<TTSMonsterVoice[]>;
 
-    ttsGenerate: (request: TtsGenerateRequest) => Promise<TtsGenerateResponse>;
+    ttsGenerate: (voice_id: string, message: string) => Promise<string>;
     ttsGenerateParsed: (message: string) => Promise<string[]>;
 
     /**
@@ -316,6 +306,6 @@ declare global {
    */
   export function on<K extends keyof EventInputData>(
     key: K,
-    callback: (event: EventData & EventInputData[K]) => void
+    callback: (event: EventData & EventInputData[K]) => void,
   ): void;
 }

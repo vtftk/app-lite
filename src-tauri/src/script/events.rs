@@ -5,6 +5,7 @@ use sea_orm::{prelude::DateTimeUtc, DatabaseConnection, ModelTrait};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use twitch_api::types::UserId;
+use uuid::Uuid;
 
 use crate::{
     database::entity::{
@@ -15,11 +16,8 @@ use crate::{
         SoundModel,
     },
     events::EventMessage,
+    integrations::tts_monster::{TTSMonsterService, TTSMonsterVoice},
     state::app_data::AppDataStore,
-    tts::{
-        tts_monster_generate, tts_monster_generate_parsed, tts_monster_get_voices, GenerateRequest,
-        GenerateResponse, Voice,
-    },
     twitch::manager::{TwitchManager, TwitchUser},
 };
 
@@ -332,7 +330,7 @@ impl Handler<PlaySoundSeq> for ScriptEventActor {
 
 /// Message to get the list of available TTS voices
 #[derive(Message)]
-#[msg(rtype = "anyhow::Result<Vec<Voice>>")]
+#[msg(rtype = "anyhow::Result<Vec<TTSMonsterVoice>>")]
 pub struct TTSGetVoices;
 
 impl Handler<TTSGetVoices> for ScriptEventActor {
@@ -340,15 +338,28 @@ impl Handler<TTSGetVoices> for ScriptEventActor {
 
     fn handle(&mut self, _msg: TTSGetVoices, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let app_data: AppDataStore = self.app_data.clone();
-        Fr::new_box(tts_monster_get_voices(app_data))
+        Fr::new_box(async move {
+            let token = {
+                app_data
+                    .read()
+                    .await
+                    .externals_config
+                    .tts_monster_api_key
+                    .clone()
+                    .context("missing tts monster api key")?
+            };
+
+            TTSMonsterService::get_voices(&token).await
+        })
     }
 }
 
 /// Message to generate a TTS message
 #[derive(Message)]
-#[msg(rtype = "anyhow::Result<GenerateResponse>")]
+#[msg(rtype = "anyhow::Result<String>")]
 pub struct TTSGenerate {
-    pub request: GenerateRequest,
+    pub voice_id: Uuid,
+    pub message: String,
 }
 
 impl Handler<TTSGenerate> for ScriptEventActor {
@@ -356,7 +367,19 @@ impl Handler<TTSGenerate> for ScriptEventActor {
 
     fn handle(&mut self, msg: TTSGenerate, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let app_data: AppDataStore = self.app_data.clone();
-        Fr::new_box(tts_monster_generate(app_data, msg.request))
+        Fr::new_box(async move {
+            let token = {
+                app_data
+                    .read()
+                    .await
+                    .externals_config
+                    .tts_monster_api_key
+                    .clone()
+                    .context("missing tts monster api key")?
+            };
+
+            TTSMonsterService::generate(&token, msg.voice_id, msg.message).await
+        })
     }
 }
 
@@ -377,7 +400,19 @@ impl Handler<TTSGenerateParsed> for ScriptEventActor {
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
         let app_data: AppDataStore = self.app_data.clone();
-        Fr::new_box(tts_monster_generate_parsed(app_data, msg.message))
+        Fr::new_box(async move {
+            let token = {
+                app_data
+                    .read()
+                    .await
+                    .externals_config
+                    .tts_monster_api_key
+                    .clone()
+                    .context("missing tts monster api key")?
+            };
+
+            TTSMonsterService::generate_parsed(&token, msg.message).await
+        })
     }
 }
 #[derive(Message)]
