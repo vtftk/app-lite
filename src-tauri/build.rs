@@ -24,9 +24,9 @@ fn create_runtime_snapshot() {
     extension!(
         // extension name
         api_extension,
-        // list of all JS files in the extension
-        esm_entry_point = "ext:api_extension/runtime.js",
         // the entrypoint to our extension
+        esm_entry_point = "ext:api_extension/runtime.js",
+        // list of all JS files in the extension
         esm = [dir "../script", "runtime.js"]
     );
 
