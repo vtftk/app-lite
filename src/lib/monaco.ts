@@ -9,6 +9,21 @@ import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
 import libraryDefinition from "../../script/api.d.ts?raw";
+import builtinLibraryDefinition from "../../script/builtin.d.ts?raw";
+
+const compilerOptions =
+  monaco.languages.typescript.javascriptDefaults.getCompilerOptions();
+
+monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+  ...compilerOptions,
+  noLib: true,
+});
+
+// Built-in JS runtime library definitions (ES6 etc etc)
+monaco.languages.typescript.javascriptDefaults.addExtraLib(
+  builtinLibraryDefinition,
+  "file:///lib.d.ts",
+);
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(
   libraryDefinition,
