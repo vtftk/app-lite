@@ -50,11 +50,20 @@ pub enum Relation {
     /// Item can have many impact sounds
     #[sea_orm(has_many = "super::items_impact_sounds::Entity")]
     ImpactSounds,
+
+    #[sea_orm(has_many = "super::item_collection_items::Entity")]
+    ItemCollections,
 }
 
 impl Related<super::items_impact_sounds::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ImpactSounds.def()
+    }
+}
+
+impl Related<super::item_collection_items::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ItemCollections.def()
     }
 }
 

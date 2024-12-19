@@ -54,3 +54,9 @@ pub struct ExecutionsQuery {
     pub offset: Option<u64>,
     pub limit: Option<u64>,
 }
+
+#[derive(Default, Deserialize)]
+pub struct UpdateOrdering {
+    pub id: Uuid,
+    pub order: u32,
+}
