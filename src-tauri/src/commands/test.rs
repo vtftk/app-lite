@@ -77,16 +77,6 @@ pub fn test_sound(
     Ok(true)
 }
 
-/// Test execution of a script to obtain the script list of subscribed events
-#[tauri::command]
-pub async fn test_get_script_events(
-    script: String,
-    script_handle: tauri::State<'_, ScriptExecutorHandle>,
-) -> CmdResult<Vec<ScriptEvent>> {
-    let events = script_handle.get_events(script).await?;
-    Ok(events)
-}
-
 /// Attempts to detect a locally running VTube studio instance by using
 /// the "API Server Discovery (UDP)" protocol
 #[tauri::command]

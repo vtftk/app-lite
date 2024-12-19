@@ -111,24 +111,26 @@ pub fn run() {
         })
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
-            // Twitch auth commands
-            commands::auth::get_twitch_oauth_uri,
-            commands::auth::is_authenticated,
-            commands::auth::open_twitch_oauth_uri,
-            commands::auth::logout,
+            // Calibration commands
             commands::calibration::set_calibration_step,
             commands::calibration::get_calibration_data,
+            // Testing and running commands
             commands::test::test_throw,
             commands::test::test_throw_barrage,
             commands::test::test_sound,
-            commands::test::test_get_script_events,
             commands::test::detect_vtube_studio,
+            // Data manipulation comments
             commands::data::get_app_data,
             commands::data::get_runtime_app_data,
             commands::data::set_app_data,
             commands::data::upload_file,
             commands::data::update_hotkeys,
             commands::data::get_overlay_url,
+            // Twitch commands
+            commands::twitch::get_twitch_oauth_uri,
+            commands::twitch::is_authenticated,
+            commands::twitch::open_twitch_oauth_uri,
+            commands::twitch::logout,
             commands::twitch::get_redeems_list,
             commands::twitch::refresh_redeems_list,
             // Item manipulation commands
@@ -164,6 +166,7 @@ pub fn run() {
             commands::scripts::get_script_logs,
             commands::scripts::delete_script_logs,
             commands::scripts::update_script_orderings,
+            commands::scripts::get_script_events,
             // Command commands
             commands::commands::get_commands,
             commands::commands::get_command_by_id,

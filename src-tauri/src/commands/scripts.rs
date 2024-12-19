@@ -2,11 +2,15 @@
 //!
 //! Commands for interacting with scripts from the frontend
 
-use crate::database::entity::{
-    script_logs::ScriptLogsModel,
-    scripts::{CreateScript, UpdateScript, UpdateScriptOrdering},
-    shared::LogsQuery,
-    ScriptModel,
+use crate::{
+    database::entity::{
+        script_events::ScriptEvent,
+        script_logs::ScriptLogsModel,
+        scripts::{CreateScript, UpdateScript, UpdateScriptOrdering},
+        shared::LogsQuery,
+        ScriptModel,
+    },
+    script::runtime::ScriptExecutorHandle,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
@@ -108,4 +112,14 @@ pub async fn update_script_orderings(
     ScriptModel::update_order(db, update).await?;
 
     Ok(())
+}
+
+/// Execute a script to obtain the script list of subscribed events
+#[tauri::command]
+pub async fn get_script_events(
+    script: String,
+    script_handle: tauri::State<'_, ScriptExecutorHandle>,
+) -> CmdResult<Vec<ScriptEvent>> {
+    let events = script_handle.get_events(script).await?;
+    Ok(events)
 }
