@@ -13,6 +13,7 @@
   import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
 
   type Props = {
+    disabled: boolean;
     buttonContent?: Snippet;
     addButtonLabel?: string;
 
@@ -24,6 +25,7 @@
   };
 
   const {
+    disabled,
     buttonContent,
     addButtonLabel = "Done",
     title = "Select Sounds",
@@ -75,14 +77,16 @@
 </script>
 
 <Dialog.Root>
-  <Dialog.Trigger>
-    {#if buttonContent}
-      {@render buttonContent()}
-    {:else}
-      {selected.length > 0
-        ? `${selected.length} Sounds selected`
-        : "Select Items"}
-    {/if}
+  <Dialog.Trigger asChild let:builder>
+    <button use:builder.action {disabled} class="btn">
+      {#if buttonContent}
+        {@render buttonContent()}
+      {:else}
+        {selected.length > 0
+          ? `${selected.length} Sounds selected`
+          : "Select Items"}
+      {/if}
+    </button>
   </Dialog.Trigger>
   <Dialog.Portal>
     <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />

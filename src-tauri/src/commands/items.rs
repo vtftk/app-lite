@@ -4,7 +4,10 @@
 
 use crate::database::entity::{
     item_collection_items::ItemCollectionItemModel,
-    item_collections::{ItemCollectionModel, ItemCollectionWithItems},
+    item_collections::{
+        CreateItemCollection, ItemCollectionModel, ItemCollectionWithItemIds,
+        ItemCollectionWithItems,
+    },
     items::{CreateItem, ItemWithImpactSounds, UpdateItem, UpdateItemOrdering},
     shared::UpdateOrdering,
     ItemModel, SoundModel,
@@ -143,11 +146,26 @@ pub async fn delete_item(
     Ok(())
 }
 
+/// Create a new item collection
+#[tauri::command]
+pub async fn create_item_collection(
+    create: CreateItemCollection,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<ItemCollectionWithItemIds> {
+    let db = db.inner();
+    let collection = ItemCollectionModel::create(db, create).await?;
+
+    Ok(ItemCollectionWithItemIds {
+        collection,
+        items: vec![],
+    })
+}
+
 /// Get all item collections
 #[tauri::command]
 pub async fn get_item_collections(
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<Vec<ItemCollectionWithItems>> {
+) -> CmdResult<Vec<ItemCollectionWithItemIds>> {
     let db = db.inner();
     let collections = ItemCollectionModel::all_with_items(db).await?;
     Ok(collections)

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use super::{
     item_collection_items::{
         ItemCollectionItemActiveModel, ItemCollectionItemColumn, ItemCollectionItemEntity,
+        ItemCollectionItemModel,
     },
     links::ItemCollectionItems,
     shared::{DbResult, UpdateOrdering},
@@ -58,7 +59,15 @@ pub struct CreateItemCollection {
 }
 
 #[derive(Debug, Serialize)]
+pub struct ItemCollectionWithItemIds {
+    #[serde(flatten)]
+    pub collection: ItemCollectionModel,
+    pub items: Vec<ItemCollectionItemModel>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct ItemCollectionWithItems {
+    #[serde(flatten)]
     pub collection: ItemCollectionModel,
     pub items: Vec<ItemModel>,
 }
@@ -87,12 +96,12 @@ impl Model {
         Ok(model)
     }
 
-    pub async fn all_with_items<C>(db: &C) -> DbResult<Vec<ItemCollectionWithItems>>
+    pub async fn all_with_items<C>(db: &C) -> DbResult<Vec<ItemCollectionWithItemIds>>
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Ok(Entity::find()
-            .find_with_linked(ItemCollectionItems)
+        let mut collections: Vec<ItemCollectionWithItemIds> = Entity::find()
+            .find_with_related(super::item_collection_items::Entity)
             .order_by_asc(Column::Order)
             .all(db)
             .await?
@@ -100,9 +109,13 @@ impl Model {
             .map(|(collection, mut items)| {
                 // Order items
                 items.sort_by(|a, b| a.order.cmp(&b.order));
-                ItemCollectionWithItems { collection, items }
+                ItemCollectionWithItemIds { collection, items }
             })
-            .collect())
+            .collect();
+
+        collections.sort_by(|a, b| a.collection.order.cmp(&b.collection.order));
+
+        Ok(collections)
     }
 
     pub async fn get_by_id<C>(db: &C, id: Uuid) -> DbResult<Option<Self>>

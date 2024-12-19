@@ -19,7 +19,8 @@
 
   const itemsQuery = createItemsQuery();
 
-  const items = $derived(filterOptionsSearch($itemsQuery.data ?? [], search));
+  const items = $derived($itemsQuery.data ?? []);
+  const filteredItems = $derived(filterOptionsSearch(items, search));
   const selectedOptions = $derived(filterOptionsSelected(items, selected));
 
   function filterOptionsSelected(options: Item[], selected: string[]) {
@@ -93,7 +94,7 @@
 
       <div class="throwable-table-wrapper">
         <div class="items">
-          {#each items as item (item.id)}
+          {#each filteredItems as item (item.id)}
             <div class="item">
               <div class="item-column item-column--checkbox">
                 <Checkbox.Root

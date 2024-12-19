@@ -4,9 +4,8 @@ use std::{
 };
 
 use crate::{
-    database::entity::{script_events::ScriptEvent, SoundModel},
+    database::entity::SoundModel,
     events::{outcome::resolve_items, EventMessage, ThrowItemConfig, ThrowItemMessage},
-    script::runtime::ScriptExecutorHandle,
 };
 use anyhow::Context;
 use log::debug;

@@ -16,8 +16,8 @@
   type Props = {
     config: Item;
 
-    selected: boolean;
-    onToggleSelected: VoidFunction;
+    selected?: boolean;
+    onToggleSelected?: VoidFunction;
   };
 
   const { config, selected, onToggleSelected }: Props = $props();
@@ -49,8 +49,12 @@
 {/snippet}
 
 <div class="item">
-  <ControlledCheckbox checked={selected} onCheckedChange={onToggleSelected} />
-
+  {#if onToggleSelected}
+    <ControlledCheckbox
+      checked={selected ?? false}
+      onCheckedChange={onToggleSelected}
+    />
+  {/if}
   <div class="item__content">
     <div class="item__image-wrapper">
       <img
