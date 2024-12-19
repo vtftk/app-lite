@@ -14,8 +14,6 @@ mod m20241211_102725_seed_defaults;
 mod m20241212_114700_create_key_value_table;
 mod m20241214_080854_create_script_logs_table;
 mod m20241214_080902_create_command_logs_table;
-mod m20241219_090305_create_item_collections_table;
-mod m20241219_090529_create_item_collection_items_table;
 
 pub struct Migrator;
 
@@ -37,8 +35,6 @@ impl MigratorTrait for Migrator {
             Box::new(m20241212_114700_create_key_value_table::Migration),
             Box::new(m20241214_080854_create_script_logs_table::Migration),
             Box::new(m20241214_080902_create_command_logs_table::Migration),
-            Box::new(m20241219_090305_create_item_collections_table::Migration),
-            Box::new(m20241219_090529_create_item_collection_items_table::Migration),
         ]
     }
 }

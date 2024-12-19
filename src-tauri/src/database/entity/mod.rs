@@ -3,8 +3,6 @@ pub mod command_logs;
 pub mod commands;
 pub mod event_executions;
 pub mod events;
-pub mod item_collection_items;
-pub mod item_collections;
 pub mod items;
 pub mod items_impact_sounds;
 pub mod key_value;

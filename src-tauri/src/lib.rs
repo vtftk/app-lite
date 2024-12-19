@@ -142,15 +142,6 @@ pub fn run() {
             commands::items::update_item_orderings,
             commands::items::delete_item,
             commands::items::append_item_impact_sounds,
-            // Item collection commands
-            commands::items::create_item_collection,
-            commands::items::get_item_collections,
-            commands::items::get_item_collection,
-            commands::items::update_item_collection_orderings,
-            commands::items::update_item_collection_item_orderings,
-            commands::items::set_item_collection_items,
-            commands::items::append_item_collection_items,
-            commands::items::delete_item_collection,
             // Sound commands
             commands::sounds::get_sounds,
             commands::sounds::get_sound_by_id,

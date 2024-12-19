@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { Item, Sound, ItemCollectionWithItems } from "$shared/dataV2";
+  import type { Item, Sound } from "$shared/dataV2";
 
-  import { Tabs } from "bits-ui";
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
@@ -12,7 +11,6 @@
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
-  import OrderableList from "$lib/components/OrderableList.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
@@ -21,24 +19,16 @@
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import PopoverCloseButton from "$lib/components/popover/PopoverCloseButton.svelte";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
-  import ThrowableCollectionItem from "$lib/sections/throwables/ThrowableCollectionItem.svelte";
   import {
     updateItemOrder,
     createItemsQuery,
     bulkDeleteItemsMutation,
     bulkAppendItemSoundsMutation,
   } from "$lib/api/items";
-  import {
-    mergeItemCollectionItems,
-    createItemCollectionsQuery,
-    updateItemCollectionOrderings,
-  } from "$lib/api/itemCollections";
-  import CreateItemCollectionForm from "$lib/sections/throwables/CreateItemCollectionForm.svelte";
 
   const runtimeAppData = getRuntimeAppData();
 
   const itemsQuery = createItemsQuery();
-  const itemCollectionsQuery = createItemCollectionsQuery();
 
   const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
   const bulkDeleteItems = bulkDeleteItemsMutation();
@@ -47,13 +37,6 @@
   let selected: string[] = $state([]);
 
   const items = $derived(filterItemsSearch($itemsQuery.data ?? [], search));
-  const itemCollections = $derived($itemCollectionsQuery.data ?? []);
-
-  const itemCollectionsWithItems = $derived(
-    itemCollections.map((collection) =>
-      mergeItemCollectionItems(collection, items),
-    ),
-  );
 
   function filterItemsSearch(options: Item[], search: string) {
     search = search.trim().toLowerCase();
@@ -159,7 +142,6 @@
 {#snippet createPopoverContent()}
   <a class="btn" href="/throwables/create"> Create Throwable </a>
   <BulkThrowableImport />
-  <CreateItemCollectionForm />
 {/snippet}
 
 <!-- Content for the "Test" button popover -->
@@ -229,64 +211,21 @@
   />
 {/snippet}
 
-{#snippet itemCollection(item: ItemCollectionWithItems)}
-  <ThrowableCollectionItem collection={item} />
-{/snippet}
-
 <PageLayoutList
   title="Throwables"
   description="Items that can be thrown. Configure them below"
   {actions}
   {beforeContent}
 >
-  <div class="content">
-    <Tabs.Root>
-      <Tabs.List>
-        <Tabs.Trigger value="all">All</Tabs.Trigger>
-        <Tabs.Trigger value="collections">Collections</Tabs.Trigger>
-      </Tabs.List>
-      <Tabs.Content value="all">
-        <OrderableGrid
-          {items}
-          {item}
-          onUpdateOrder={updateItemOrder}
-          disableOrdering={search.length > 0}
-        />
-      </Tabs.Content>
-      <Tabs.Content value="collections">
-        <OrderableList
-          items={itemCollectionsWithItems}
-          item={itemCollection}
-          onUpdateOrder={updateItemCollectionOrderings}
-          disableOrdering={search.length > 0}
-        />
-      </Tabs.Content>
-    </Tabs.Root>
-  </div>
+  <OrderableGrid
+    {items}
+    {item}
+    onUpdateOrder={updateItemOrder}
+    disableOrdering={search.length > 0}
+  />
 </PageLayoutList>
 
 <style>
-  .content {
-    position: relative;
-    flex: auto;
-    overflow: hidden;
-    height: 100%;
-  }
-
-  .content :global([data-tabs-root]) {
-    height: 100%;
-    display: flex;
-    flex-flow: column;
-  }
-
-  .content :global([data-tabs-content]) {
-    position: relative;
-    flex: auto;
-    overflow: auto;
-    flex-flow: column;
-    border: 1px solid #333;
-  }
-
   .selection {
     display: flex;
     align-items: center;

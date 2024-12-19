@@ -3,13 +3,7 @@
 //! Commands for interacting with items from the frontend
 
 use crate::database::entity::{
-    item_collection_items::ItemCollectionItemModel,
-    item_collections::{
-        CreateItemCollection, ItemCollectionModel, ItemCollectionWithItemIds,
-        ItemCollectionWithItems,
-    },
     items::{CreateItem, ItemWithImpactSounds, UpdateItem, UpdateItemOrdering},
-    shared::UpdateOrdering,
     ItemModel, SoundModel,
 };
 use anyhow::Context;
@@ -142,114 +136,6 @@ pub async fn delete_item(
     item.delete(db).await?;
 
     delete_src_file(item_url, app_handle).await?;
-
-    Ok(())
-}
-
-/// Create a new item collection
-#[tauri::command]
-pub async fn create_item_collection(
-    create: CreateItemCollection,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<ItemCollectionWithItemIds> {
-    let db = db.inner();
-    let collection = ItemCollectionModel::create(db, create).await?;
-
-    Ok(ItemCollectionWithItemIds {
-        collection,
-        items: vec![],
-    })
-}
-
-/// Get all item collections
-#[tauri::command]
-pub async fn get_item_collections(
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<Vec<ItemCollectionWithItemIds>> {
-    let db = db.inner();
-    let collections = ItemCollectionModel::all_with_items(db).await?;
-    Ok(collections)
-}
-
-/// Get a specific item collection and its items
-#[tauri::command]
-pub async fn get_item_collection(
-    id: Uuid,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<ItemCollectionWithItems> {
-    let db = db.inner();
-    let collection = ItemCollectionModel::get_by_id(db, id)
-        .await?
-        .context("unknown collection")?;
-
-    let items = collection.get_items(db).await?;
-
-    Ok(ItemCollectionWithItems { collection, items })
-}
-
-/// Update ordering of item collections
-#[tauri::command]
-pub async fn update_item_collection_orderings(
-    update: Vec<UpdateOrdering>,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<()> {
-    let db = db.inner();
-    ItemCollectionModel::update_order(db, update).await?;
-
-    Ok(())
-}
-
-/// Update ordering of items within an item collection
-#[tauri::command]
-pub async fn update_item_collection_item_orderings(
-    id: Uuid,
-    update: Vec<UpdateOrdering>,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<()> {
-    let db = db.inner();
-    ItemCollectionItemModel::update_order(db, id, update).await?;
-    Ok(())
-}
-
-/// Set the items within an item collection
-#[tauri::command]
-pub async fn set_item_collection_items(
-    id: Uuid,
-    items: Vec<Uuid>,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<()> {
-    let db = db.inner();
-    let collection = ItemCollectionModel::get_by_id(db, id)
-        .await?
-        .context("item not found")?;
-    collection.set_items(db, &items).await?;
-    Ok(())
-}
-
-/// Adds items to an item collection
-#[tauri::command]
-pub async fn append_item_collection_items(
-    id: Uuid,
-    items: Vec<Uuid>,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<()> {
-    let db = db.inner();
-    let collection = ItemCollectionModel::get_by_id(db, id)
-        .await?
-        .context("item not found")?;
-    collection.append_items(db, &items).await?;
-    Ok(())
-}
-
-/// Delete an item collection
-#[tauri::command]
-pub async fn delete_item_collection(id: Uuid, db: State<'_, DatabaseConnection>) -> CmdResult<()> {
-    let db = db.inner();
-    let collection = ItemCollectionModel::get_by_id(db, id)
-        .await?
-        .context("item not found")?;
-
-    collection.delete(db).await?;
 
     Ok(())
 }
