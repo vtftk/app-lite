@@ -4,6 +4,7 @@ import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
 import type { CustomReward } from "./types";
 
 import { queryClient } from "./utils";
+import { listen } from "@tauri-apps/api/event";
 
 export const GET_REDEEMS_LIST_KEY = ["get-redeems-list"];
 
@@ -26,3 +27,30 @@ export async function refreshRedeemsList() {
   queryClient.cancelQueries({ queryKey: GET_REDEEMS_LIST_KEY });
   queryClient.invalidateQueries({ queryKey: GET_REDEEMS_LIST_KEY });
 }
+
+export const IS_AUTHENTICATED_KEY = ["is-authenticated"];
+
+/**
+ * Create a query to fetch the runtime app data
+ */
+export function createIsAuthenticatedQuery(): CreateQueryResult<
+  boolean,
+  Error
+> {
+  return createQuery({
+    queryKey: IS_AUTHENTICATED_KEY,
+    queryFn: () => invoke<boolean>("is_authenticated"),
+  });
+}
+
+// Handle authenticating
+listen("authenticated", () => {
+  queryClient.cancelQueries({ queryKey: IS_AUTHENTICATED_KEY });
+  queryClient.setQueryData(IS_AUTHENTICATED_KEY, true);
+});
+
+// Handle logout
+listen("logout", () => {
+  queryClient.cancelQueries({ queryKey: IS_AUTHENTICATED_KEY });
+  queryClient.setQueryData(IS_AUTHENTICATED_KEY, false);
+});

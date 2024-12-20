@@ -1,7 +1,7 @@
 <script lang="ts">
   import { derived } from "svelte/store";
   import { createModelDataQuery } from "$lib/api/calibration";
-  import { createIsAuthenticatedQuery } from "$lib/api/oauth";
+  import { createIsAuthenticatedQuery } from "$lib/api/twitch";
   import {
     getRuntimeAppData,
     createDeriveModelCalibrated,

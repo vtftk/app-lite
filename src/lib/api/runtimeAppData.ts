@@ -1,5 +1,6 @@
 import { getContext } from "svelte";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { get, derived, type Readable } from "svelte/store";
 import {
   createQuery,
@@ -26,6 +27,12 @@ export const RUNTIME_APP_DATA_CONTEXT = Symbol("runtime-app-data");
 
 export const APP_DATA_KEY = ["app-data"];
 export const APP_DATA_CONTEXT = Symbol("app-data");
+
+// Update the runtime app data when the change event is received
+listen<RuntimeAppData>("runtime_app_data_changed", ({ payload }) => {
+  queryClient.cancelQueries({ queryKey: RUNTIME_APP_DATA_KEY });
+  queryClient.setQueryData(RUNTIME_APP_DATA_KEY, payload);
+});
 
 export function getRuntimeAppData(): Readable<RuntimeAppData> {
   return getContext(RUNTIME_APP_DATA_CONTEXT);

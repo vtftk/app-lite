@@ -4,8 +4,8 @@
   import { invoke } from "@tauri-apps/api/core";
   import { setClipboard } from "$lib/utils/browser";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { createIsAuthenticatedQuery } from "$lib/api/oauth";
   import { createModelDataQuery } from "$lib/api/calibration";
+  import { createIsAuthenticatedQuery } from "$lib/api/twitch";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import {
     getRuntimeAppData,
