@@ -10,6 +10,7 @@
   import { createSoundsQuery } from "$lib/api/sounds";
   import { toastErrorMessage } from "$lib/utils/error";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import { createItem, updateItem } from "$lib/api/items";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -21,7 +22,6 @@
   import SolarAlbumBoldDuotone from "~icons/solar/album-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
-  import { createItemMutation, updateItemMutation } from "$lib/api/items";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarVolumeLoudBoldDuotone from "~icons/solar/volume-loud-bold-duotone";
@@ -42,9 +42,6 @@
   const soundsQuery = createSoundsQuery();
 
   const sounds = $derived($soundsQuery.data ?? []);
-
-  const updateItem = updateItemMutation();
-  const createItem = createItemMutation();
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
@@ -163,7 +160,7 @@
     };
 
     if (existing) {
-      await $updateItem.mutateAsync({
+      await updateItem({
         itemId: existing.id,
         update: {
           name: values.name,
@@ -172,7 +169,7 @@
         },
       });
     } else {
-      await $createItem.mutateAsync({
+      await createItem({
         name: values.name,
         image: imageConfig,
         impact_sounds: values.impactSoundIds,

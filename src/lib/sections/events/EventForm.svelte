@@ -15,6 +15,7 @@
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
@@ -35,11 +36,6 @@
   } from "$shared/dataV2";
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
-  import {
-    testEvent,
-    createEventMutation,
-    updateEventMutation,
-  } from "$lib/api/vevents";
   import {
     BitsAmountType,
     EventOutcomeType,
@@ -63,9 +59,6 @@
   };
 
   const { existing }: Props = $props();
-
-  const updateEvent = updateEventMutation();
-  const createEvent = createEventMutation();
 
   const triggerSchema = z.discriminatedUnion("type", [
     z.object({
@@ -233,7 +226,7 @@
 
   async function save(values: Schema) {
     if (existing) {
-      await $updateEvent.mutateAsync({
+      await updateEvent({
         eventId: existing.id,
         update: {
           name: values.name,
@@ -246,7 +239,7 @@
         },
       });
     } else {
-      await $createEvent.mutateAsync({
+      await createEvent({
         name: values.name,
         enabled: values.enabled,
         trigger: values.trigger,

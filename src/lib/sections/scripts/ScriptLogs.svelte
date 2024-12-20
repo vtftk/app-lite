@@ -4,8 +4,8 @@
   import { type LogId, type ScriptId, type LogsQuery } from "$shared/dataV2";
   import {
     scriptLogsQuery,
+    deleteScriptLogs,
     invalidateScriptLogs,
-    bulkDeleteScriptLogsMutation,
   } from "$lib/api/scripts";
 
   type Props = {
@@ -19,16 +19,12 @@
   const logsQuery = $derived(scriptLogsQuery(id, query));
   const logs = $derived($logsQuery.data ?? []);
 
-  const bulkDeleteScriptLogs = bulkDeleteScriptLogsMutation(id);
-
   onMount(() => {
     onRefresh();
   });
 
   async function onBulkDelete(logIds: LogId[]) {
-    await $bulkDeleteScriptLogs.mutateAsync({
-      logIds,
-    });
+    await deleteScriptLogs(id, logIds);
   }
 
   function onRefresh() {

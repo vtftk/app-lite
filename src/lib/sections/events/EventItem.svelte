@@ -2,9 +2,9 @@
   import type { VEvent } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
+  import { deleteEvent } from "$lib/api/vevents";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
-  import { deleteEventMutation } from "$lib/api/vevents";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
@@ -21,14 +21,12 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const deleteEvent = deleteEventMutation();
-
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this event item?")) {
       return;
     }
 
-    const deletePromise = $deleteEvent.mutateAsync(config.id);
+    const deletePromise = deleteEvent(config.id);
 
     toast.promise(deletePromise, {
       loading: "Deleting event...",

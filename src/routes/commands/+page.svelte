@@ -13,11 +13,10 @@
   import {
     updateCommandOrder,
     createCommandsQuery,
-    bulkDeleteCommandMutation,
+    bulkDeleteCommands,
   } from "$lib/api/commands";
 
   const commandsQuery = createCommandsQuery();
-  const bulkDeleteCommand = bulkDeleteCommandMutation();
 
   let search = $state("");
   let selected: string[] = $state([]);
@@ -58,9 +57,7 @@
       return;
     }
 
-    const deletePromise = $bulkDeleteCommand.mutateAsync({
-      commandIds: selected,
-    });
+    const deletePromise = bulkDeleteCommands(selected);
 
     toast.promise(deletePromise, {
       loading: "Deleting commands...",

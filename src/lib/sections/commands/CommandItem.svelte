@@ -2,11 +2,11 @@
   import type { Command } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
+  import { deleteCommand } from "$lib/api/commands";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
-  import { deleteCommandMutation } from "$lib/api/commands";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
@@ -21,14 +21,12 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const deleteCommand = deleteCommandMutation();
-
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this command?")) {
       return;
     }
 
-    const deletePromise = $deleteCommand.mutateAsync(config.id);
+    const deletePromise = deleteCommand(config.id);
 
     toast.promise(deletePromise, {
       loading: "Deleting command...",

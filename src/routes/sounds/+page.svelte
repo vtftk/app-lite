@@ -12,13 +12,12 @@
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
+    deleteSounds,
     updateSoundOrder,
     createSoundsQuery,
-    bulkDeleteSoundsMutation,
   } from "$lib/api/sounds";
 
   const soundsQuery = createSoundsQuery();
-  const bulkDeleteSounds = bulkDeleteSoundsMutation();
 
   let search = $state("");
   let selected: string[] = $state([]);
@@ -59,9 +58,7 @@
       return;
     }
 
-    const deletePromise = $bulkDeleteSounds.mutateAsync({
-      soundIds: selected,
-    });
+    const deletePromise = deleteSounds(selected);
 
     toast.promise(deletePromise, {
       loading: "Deleting sounds...",

@@ -4,10 +4,8 @@
   import { toast } from "svelte-sonner";
   import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
+  import { createSounds } from "$lib/api/sounds";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { bulkCreateSoundMutation } from "$lib/api/sounds";
-
-  const bulkCreateSound = bulkCreateSoundMutation();
 
   let inputElm: HTMLInputElement | undefined = $state();
 
@@ -19,7 +17,7 @@
 
     const sounds = Array.from(files);
 
-    const createSounds = await Promise.all(
+    const creates = await Promise.all(
       sounds.map(async (sound) => {
         const soundURL = await uploadFile(FileType.Sound, sound);
         const createSound: CreateSound = {
@@ -32,7 +30,7 @@
       }),
     );
 
-    const createPromise = $bulkCreateSound.mutateAsync(createSounds);
+    const createPromise = createSounds(creates);
 
     toast.promise(createPromise, {
       loading: "Creating sounds...",

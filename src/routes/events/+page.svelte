@@ -11,13 +11,12 @@
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
+    deleteEvents,
     updateEventOrder,
     createEventsQuery,
-    bulkDeleteEventMutation,
   } from "$lib/api/vevents";
 
   const eventsQuery = createEventsQuery();
-  const bulkDeleteEvent = bulkDeleteEventMutation();
 
   let search = $state("");
   let selected: string[] = $state([]);
@@ -56,7 +55,7 @@
       return;
     }
 
-    const deletePromise = $bulkDeleteEvent.mutateAsync({ eventIds: selected });
+    const deletePromise = deleteEvents(selected);
 
     toast.promise(deletePromise, {
       loading: "Deleting events...",

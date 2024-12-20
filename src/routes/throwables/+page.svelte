@@ -21,17 +21,14 @@
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import {
     updateItemOrder,
+    bulkDeleteItems,
     createItemsQuery,
-    bulkDeleteItemsMutation,
-    bulkAppendItemSoundsMutation,
+    bulkAppendItemSounds,
   } from "$lib/api/items";
 
   const runtimeAppData = getRuntimeAppData();
 
   const itemsQuery = createItemsQuery();
-
-  const bulkAppendItemSounds = bulkAppendItemSoundsMutation();
-  const bulkDeleteItems = bulkDeleteItemsMutation();
 
   let search = $state("");
   let selected: string[] = $state([]);
@@ -76,9 +73,7 @@
       return;
     }
 
-    const deletePromise = $bulkDeleteItems.mutateAsync({
-      itemIds: selected,
-    });
+    const deletePromise = bulkDeleteItems(selected);
 
     toast.promise(deletePromise, {
       loading: "Deleting items...",
@@ -100,10 +95,7 @@
 
     const impactSoundIds = sounds.map((sound) => sound.id);
 
-    const addPromise = $bulkAppendItemSounds.mutateAsync({
-      itemIds: selected,
-      soundIds: impactSoundIds,
-    });
+    const addPromise = bulkAppendItemSounds(selected, impactSoundIds);
 
     toast.promise(addPromise, {
       loading: "Adding impact sounds...",

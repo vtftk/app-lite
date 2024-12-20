@@ -10,6 +10,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { validator } from "@felte/validator-zod";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { createScript, updateScript } from "$lib/api/scripts";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
@@ -17,7 +18,6 @@
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
-  import { createScriptMutation, updateScriptMutation } from "$lib/api/scripts";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
 
   import ScriptLogs from "./ScriptLogs.svelte";
@@ -29,9 +29,6 @@
   };
 
   const { existing }: Props = $props();
-
-  const updateScript = updateScriptMutation();
-  const createScript = createScriptMutation();
 
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
@@ -96,7 +93,7 @@
     });
 
     if (existing !== undefined) {
-      await $updateScript.mutateAsync({
+      await updateScript({
         scriptId: existing.id,
         update: {
           enabled: values.enabled,
@@ -106,7 +103,7 @@
         },
       });
     } else {
-      await $createScript.mutateAsync({
+      await createScript({
         enabled: values.enabled,
         name: values.name,
         script: values.script,

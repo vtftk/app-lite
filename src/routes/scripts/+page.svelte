@@ -12,12 +12,11 @@
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
     updateScriptOrder,
+    bulkDeleteScripts,
     createScriptsQuery,
-    bulkDeleteScriptMutation,
   } from "$lib/api/scripts";
 
   const scriptsQuery = createScriptsQuery();
-  const bulkDeleteScripts = bulkDeleteScriptMutation();
 
   let search = $state("");
   let selected: string[] = $state([]);
@@ -56,9 +55,7 @@
       return;
     }
 
-    const deletePromise = $bulkDeleteScripts.mutateAsync({
-      scriptIds: selected,
-    });
+    const deletePromise = bulkDeleteScripts(selected);
 
     toast.promise(deletePromise, {
       loading: "Deleting scripts...",

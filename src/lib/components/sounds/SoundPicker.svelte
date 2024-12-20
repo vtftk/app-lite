@@ -13,7 +13,7 @@
   import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
 
   type Props = {
-    disabled: boolean;
+    disabled?: boolean;
     buttonContent?: Snippet;
     addButtonLabel?: string;
 

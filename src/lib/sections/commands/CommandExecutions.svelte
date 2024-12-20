@@ -8,8 +8,8 @@
   } from "$shared/dataV2";
   import {
     commandExecutionsQuery,
+    deleteCommandExecutions,
     invalidateCommandExecutions,
-    deleteCommandExecutionsMutation,
   } from "$lib/api/commands";
 
   type Props = {
@@ -23,16 +23,12 @@
   const executionsQuery = $derived(commandExecutionsQuery(id, query));
   const executions = $derived($executionsQuery.data ?? []);
 
-  const deleteCommandExecutions = deleteCommandExecutionsMutation(id);
-
   onMount(() => {
     onRefresh();
   });
 
   async function onBulkDelete(executionIds: ExecutionId[]) {
-    await $deleteCommandExecutions.mutateAsync({
-      executionIds,
-    });
+    await deleteCommandExecutions(id, executionIds);
   }
 
   function onRefresh() {

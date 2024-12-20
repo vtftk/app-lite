@@ -8,8 +8,8 @@
   } from "$shared/dataV2";
   import {
     eventExecutionsQuery,
+    deleteEventExecutions,
     invalidateEventExecutions,
-    deleteEventExecutionsMutation,
   } from "$lib/api/vevents";
 
   type Props = {
@@ -23,16 +23,12 @@
   const executionsQuery = $derived(eventExecutionsQuery(id, query));
   const executions = $derived($executionsQuery.data ?? []);
 
-  const deleteEventExecutions = deleteEventExecutionsMutation(id);
-
   onMount(() => {
     onRefresh();
   });
 
   async function onBulkDelete(executionIds: ExecutionId[]) {
-    await $deleteEventExecutions.mutateAsync({
-      executionIds,
-    });
+    await deleteEventExecutions(id, executionIds);
   }
 
   function onRefresh() {

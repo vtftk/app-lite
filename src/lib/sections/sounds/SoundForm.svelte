@@ -9,6 +9,7 @@
   import { toastErrorMessage } from "$lib/utils/error";
   import { getAppData } from "$lib/api/runtimeAppData";
   import { FileType, type Sound } from "$lib/api/types";
+  import { createSound, updateSound } from "$lib/api/sounds";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
@@ -16,7 +17,6 @@
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
-  import { createSoundMutation, updateSoundMutation } from "$lib/api/sounds";
 
   type Props = {
     existing?: Sound;
@@ -25,9 +25,6 @@
   const appData = getAppData();
 
   const { existing }: Props = $props();
-
-  const updateSound = updateSoundMutation();
-  const createSound = createSoundMutation();
 
   // When working with existing configs we allow the file to be a
   // string to account for already uploaded file URLs
@@ -109,7 +106,7 @@
     const soundURL: string = await saveSound(values.sound);
 
     if (existing !== undefined) {
-      await $updateSound.mutateAsync({
+      await updateSound({
         soundId: existing.id,
         update: {
           src: soundURL,
@@ -118,7 +115,7 @@
         },
       });
     } else {
-      await $createSound.mutateAsync({
+      await createSound({
         src: soundURL,
         volume: values.volume,
         name: values.name,

@@ -5,7 +5,7 @@
   import {
     commandLogsQuery,
     invalidateCommandLogs,
-    bulkDeleteCommandLogsMutation,
+    bulkDeleteCommandLogs,
   } from "$lib/api/commands";
 
   type Props = {
@@ -19,16 +19,12 @@
   const logsQuery = $derived(commandLogsQuery(id, query));
   const logs = $derived($logsQuery.data ?? []);
 
-  const bulkDeleteCommandLogs = bulkDeleteCommandLogsMutation(id);
-
   onMount(() => {
     onRefresh();
   });
 
   async function onBulkDelete(logIds: LogId[]) {
-    await $bulkDeleteCommandLogs.mutateAsync({
-      logIds,
-    });
+    await bulkDeleteCommandLogs(id, logIds);
   }
 
   function onRefresh() {

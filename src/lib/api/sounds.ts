@@ -7,12 +7,76 @@ import type {
 } from "$shared/dataV2";
 
 import { invoke } from "@tauri-apps/api/core";
-import { derived, type Readable } from "svelte/store";
-import { createQuery, createMutation } from "@tanstack/svelte-query";
+import { createQuery } from "@tanstack/svelte-query";
 
 import { queryClient } from "./utils";
 
 const SOUNDS_KEY = ["sounds"];
+
+function invalidateSoundsList() {
+  // Invalid the list of sounds
+  queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
+}
+
+function createSoundKey(id: SoundId) {
+  return ["sound", id] as const;
+}
+
+export function getSoundById(soundId: SoundId) {
+  return invoke<Sound | null>("get_sound_by_id", { soundId });
+}
+
+export async function createSound(create: CreateSound, invalidateList = true) {
+  const sound = await invoke<Sound>("create_sound", { create });
+
+  // Invalidate the specific sound query
+  const soundKey = createSoundKey(sound.id);
+  queryClient.setQueryData(soundKey, sound);
+
+  if (invalidateList) invalidateSoundsList();
+
+  return sound;
+}
+
+export async function createSounds(creates: CreateSound[]) {
+  await Promise.all(creates.map((create) => createSound(create, false)));
+
+  invalidateSoundsList();
+}
+
+export async function updateSound(update: UpdateSound, invalidateList = true) {
+  const sound = await invoke<Sound>("update_sound", update);
+  // Invalidate the specific item query
+  const itemKey = createSoundKey(sound.id);
+  queryClient.setQueryData(itemKey, sound);
+
+  if (invalidateList) invalidateSoundsList();
+}
+
+export async function deleteSound(soundId: SoundId, invalidateList = true) {
+  await invoke<void>("delete_sound", { soundId });
+
+  const soundKey = createSoundKey(soundId);
+
+  // Cancel any queries for the item and clear the current item data
+  queryClient.cancelQueries({ queryKey: soundKey });
+  queryClient.setQueryData(soundKey, undefined);
+
+  if (invalidateList) invalidateSoundsList();
+}
+
+export async function deleteSounds(soundIds: SoundId[]) {
+  await Promise.all(soundIds.map((soundId) => deleteSound(soundId, false)));
+  invalidateSoundsList();
+}
+
+export async function updateSoundOrder(update: UpdateOrdering[]) {
+  await invoke("update_sound_orderings", { update });
+
+  invalidateSoundsList();
+}
+
+// -----------------------------------------------------
 
 export function createSoundsQuery() {
   return createQuery({
@@ -21,150 +85,9 @@ export function createSoundsQuery() {
   });
 }
 
-function createSoundKey(id: SoundId) {
-  return ["sound", id] as const;
-}
-
-export function createSoundQuery(id: SoundId | Readable<SoundId>) {
-  if (typeof id === "string") {
-    return createQuery({
-      queryKey: createSoundKey(id),
-      queryFn: () => getSoundById(id),
-    });
-  }
-
-  // Create query derived from ID store
-  return createQuery(
-    derived(id, (id) => ({
-      queryKey: createSoundKey(id),
-      queryFn: () => getSoundById(id),
-    })),
-  );
-}
-
-export function getSoundById(soundId: SoundId) {
-  return invoke<Sound | null>("get_sound_by_id", { soundId });
-}
-
-function createSound(create: CreateSound) {
-  return invoke<Sound>("create_sound", { create });
-}
-
-export function createSoundMutation() {
-  return createMutation<Sound, Error, CreateSound>({
-    mutationFn: (createItem) => createSound(createItem),
-
-    onSuccess: (data) => {
-      // Invalidate the specific sound query
-      const soundKey = createSoundKey(data.id);
-      queryClient.setQueryData(soundKey, data);
-    },
-    onSettled: (_data, _err, _createItem) => {
-      // Invalid the list of sounds
-      queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-    },
+export function createSoundQuery(id: SoundId) {
+  return createQuery({
+    queryKey: createSoundKey(id),
+    queryFn: () => getSoundById(id),
   });
-}
-
-export function bulkCreateSoundMutation() {
-  return createMutation<Sound[], Error, CreateSound[]>({
-    mutationFn: (createItems) => Promise.all(createItems.map(createSound)),
-    onSuccess: (sounds) => {
-      for (const sound of sounds) {
-        // Invalidate the specific sound query
-        const soundKey = createSoundKey(sound.id);
-        queryClient.setQueryData(soundKey, sound);
-      }
-    },
-    onSettled: (_data, _err, _createSound) => {
-      // Invalid the list of sounds
-      queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-    },
-  });
-}
-
-function updateSound(soundId: SoundId, update: UpdateSound["update"]) {
-  return invoke<Sound>("update_sound", { soundId, update });
-}
-
-export function updateSoundMutation() {
-  return createMutation<Sound, Error, UpdateSound>({
-    mutationFn: (update) => updateSound(update.soundId, update.update),
-    onSuccess: (data) => {
-      // Invalidate the specific item query
-      const itemKey = createSoundKey(data.id);
-      queryClient.setQueryData(itemKey, data);
-    },
-    onSettled: (_data, _err, _updateItem) => {
-      // Invalid the list of items
-      queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-    },
-  });
-}
-
-function deleteSound(soundId: SoundId) {
-  return invoke<void>("delete_sound", { soundId });
-}
-
-export function deleteSoundMutation() {
-  return createMutation<void, Error, SoundId>({
-    mutationFn: (soundId) => deleteSound(soundId),
-    onMutate: (soundId) => {
-      const soundKey = createSoundKey(soundId);
-
-      // Cancel any queries for the item and clear the current item data
-      queryClient.cancelQueries({ queryKey: soundKey });
-      queryClient.setQueryData(soundKey, undefined);
-
-      return undefined;
-    },
-    onSettled: (_data, _err, itemId) => {
-      // Invalidate the specific item query
-      const soundKey = createSoundKey(itemId);
-      queryClient.invalidateQueries({ queryKey: soundKey });
-
-      // Invalid the list of items
-      queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-    },
-  });
-}
-
-type BulkDeleteSounds = {
-  soundIds: SoundId[];
-};
-
-export function bulkDeleteSoundsMutation() {
-  return createMutation<void[], Error, BulkDeleteSounds>({
-    mutationFn: (deleteSounds) =>
-      Promise.all(deleteSounds.soundIds.map(deleteSound)),
-    onMutate: (deleteSounds) => {
-      for (const soundId of deleteSounds.soundIds) {
-        const soundKey = createSoundKey(soundId);
-
-        // Cancel any queries for the item and clear the current item data
-        queryClient.cancelQueries({ queryKey: soundKey });
-        queryClient.setQueryData(soundKey, undefined);
-      }
-
-      return undefined;
-    },
-    onSettled: (_data, _err, deleteItems) => {
-      for (const soundId of deleteItems.soundIds) {
-        // Invalidate the specific item query
-        const soundKey = createSoundKey(soundId);
-        queryClient.invalidateQueries({ queryKey: soundKey });
-
-        // Invalid the list of items
-        queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-      }
-
-      // Invalid the list of items
-      queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-    },
-  });
-}
-
-export async function updateSoundOrder(update: UpdateOrdering[]) {
-  await invoke("update_sound_orderings", { update });
-  queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
 }

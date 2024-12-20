@@ -3,10 +3,10 @@
 
   import { toast } from "svelte-sonner";
   import getBackendURL from "$lib/utils/url";
+  import { deleteSound } from "$lib/api/sounds";
   import { toastErrorMessage } from "$lib/utils/error";
   import { getAppData } from "$lib/api/runtimeAppData";
   import SettingsIcon from "~icons/solar/settings-bold";
-  import { deleteSoundMutation } from "$lib/api/sounds";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
@@ -26,14 +26,12 @@
 
   const { config, selected, onToggleSelected }: Props = $props();
 
-  const deleteSound = deleteSoundMutation();
-
   async function onDelete() {
     if (!confirm("Are you sure you want to delete this sound item?")) {
       return;
     }
 
-    const deletePromise = $deleteSound.mutateAsync(config.id);
+    const deletePromise = deleteSound(config.id);
 
     toast.promise(deletePromise, {
       loading: "Deleting sound...",

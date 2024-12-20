@@ -5,10 +5,8 @@
   import { toast } from "svelte-sonner";
   import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
+  import { bulkCreateItem } from "$lib/api/items";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { bulkCreateItemMutation } from "$lib/api/items";
-
-  const bulkCreateItem = bulkCreateItemMutation();
 
   let inputElm: HTMLInputElement | undefined = $state();
 
@@ -40,7 +38,7 @@
       }),
     );
 
-    const createPromise = $bulkCreateItem.mutateAsync(createItems);
+    const createPromise = bulkCreateItem(createItems);
 
     toast.promise(createPromise, {
       loading: "Creating items...",

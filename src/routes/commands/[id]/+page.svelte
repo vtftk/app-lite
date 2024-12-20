@@ -1,12 +1,11 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { derived } from "svelte/store";
   import { createCommandQuery } from "$lib/api/commands";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandForm from "$lib/sections/commands/CommandForm.svelte";
 
-  const id = derived(page, ($page) => $page.params.id);
-  const commandQuery = createCommandQuery(id);
+  const id = $derived($page.params.id);
+  const commandQuery = $derived(createCommandQuery(id));
 </script>
 
 {#if $commandQuery.isLoading}

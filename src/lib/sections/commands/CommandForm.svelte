@@ -8,6 +8,7 @@
   import { validator } from "@felte/validator-zod";
   import { toastErrorMessage } from "$lib/utils/error";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import { createCommand, updateCommand } from "$lib/api/commands";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
@@ -17,10 +18,6 @@
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
-  import {
-    createCommandMutation,
-    updateCommandMutation,
-  } from "$lib/api/commands";
   import {
     type Command,
     CommandOutcomeType,
@@ -39,9 +36,6 @@
   };
 
   const { existing }: Props = $props();
-
-  const updateCommand = updateCommandMutation();
-  const createCommand = createCommandMutation();
 
   const outcomeSchema = z.discriminatedUnion("type", [
     z.object({
@@ -130,7 +124,7 @@
     const command = values.command.toLowerCase().trim();
 
     if (existing !== undefined) {
-      await $updateCommand.mutateAsync({
+      await updateCommand({
         commandId: existing.id,
         update: {
           enabled: values.enabled,
@@ -143,7 +137,7 @@
         },
       });
     } else {
-      await $createCommand.mutateAsync({
+      await createCommand({
         enabled: values.enabled,
         name: values.name,
         command,
