@@ -1,3 +1,8 @@
+use super::{
+    command_executions::{CommandExecutionColumn, CommandExecutionModel},
+    command_logs::{CommandLogsColumn, CommandLogsModel},
+    shared::{DbResult, ExecutionsQuery, LogsQuery, MinimumRequireRole, UpdateOrdering},
+};
 use anyhow::Context;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
@@ -5,12 +10,6 @@ use sea_orm::{
     QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
-
-use super::{
-    command_executions::{CommandExecutionColumn, CommandExecutionModel},
-    command_logs::{CommandLogsColumn, CommandLogsModel},
-    shared::{DbResult, ExecutionsQuery, LogsQuery, MinimumRequireRole},
-};
 
 // Type alias helpers for the database entity types
 pub type CommandModel = Model;
@@ -39,12 +38,6 @@ pub struct Model {
     /// Minimum required role to trigger the command
     pub require_role: MinimumRequireRole,
     /// Ordering
-    pub order: u32,
-}
-
-#[derive(Default, Deserialize)]
-pub struct UpdateCommandOrdering {
-    pub id: Uuid,
     pub order: u32,
 }
 
@@ -260,7 +253,7 @@ impl Model {
             .await
     }
 
-    pub async fn update_order<C>(db: &C, data: Vec<UpdateCommandOrdering>) -> DbResult<()>
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateOrdering>) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {

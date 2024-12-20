@@ -6,8 +6,8 @@ use crate::{
     database::entity::{
         script_events::ScriptEvent,
         script_logs::ScriptLogsModel,
-        scripts::{CreateScript, UpdateScript, UpdateScriptOrdering},
-        shared::LogsQuery,
+        scripts::{CreateScript, UpdateScript},
+        shared::{LogsQuery, UpdateOrdering},
         ScriptModel,
     },
     script::runtime::ScriptExecutorHandle,
@@ -105,7 +105,7 @@ pub async fn delete_script_logs(
 
 #[tauri::command]
 pub async fn update_script_orderings(
-    update: Vec<UpdateScriptOrdering>,
+    update: Vec<UpdateOrdering>,
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();

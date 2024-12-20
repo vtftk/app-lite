@@ -2,8 +2,7 @@
 //!
 //! Commands for interacting with events from the frontend
 
-use crate::database::entity::events::UpdateEventOrdering;
-use crate::database::entity::shared::ExecutionsQuery;
+use crate::database::entity::shared::{ExecutionsQuery, UpdateOrdering};
 use crate::database::entity::EventExecutionModel;
 use crate::events::outcome::produce_outcome_message;
 use crate::events::EventMessage;
@@ -100,7 +99,7 @@ pub async fn test_event_by_id(
 
 #[tauri::command]
 pub async fn update_event_orderings(
-    update: Vec<UpdateEventOrdering>,
+    update: Vec<UpdateOrdering>,
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();

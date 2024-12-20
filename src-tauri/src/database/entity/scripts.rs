@@ -1,15 +1,14 @@
+use super::{
+    script_events::{ScriptEvent, ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity},
+    script_logs::{ScriptLogsColumn, ScriptLogsModel},
+    shared::{DbResult, LogsQuery, UpdateOrdering},
+};
 use anyhow::Context;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
     entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
-
-use super::{
-    script_events::{ScriptEvent, ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity},
-    script_logs::{ScriptLogsColumn, ScriptLogsModel},
-    shared::{DbResult, LogsQuery},
-};
 
 // Type alias helpers for the database entity types
 pub type ScriptModel = Model;
@@ -30,12 +29,6 @@ pub struct Model {
     /// The actual script contents
     pub script: String,
     /// Ordering
-    pub order: u32,
-}
-
-#[derive(Default, Deserialize)]
-pub struct UpdateScriptOrdering {
-    pub id: Uuid,
     pub order: u32,
 }
 
@@ -260,7 +253,7 @@ impl Model {
             .await
     }
 
-    pub async fn update_order<C>(db: &C, data: Vec<UpdateScriptOrdering>) -> DbResult<()>
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateOrdering>) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {

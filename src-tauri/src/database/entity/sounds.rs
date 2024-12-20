@@ -1,9 +1,8 @@
+use super::shared::{DbResult, UpdateOrdering};
 use anyhow::Context;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, UpdateResult};
 use serde::{Deserialize, Serialize};
-
-use super::shared::DbResult;
 
 // Type alias helpers for the database entity types
 pub type SoundModel = Model;
@@ -24,12 +23,6 @@ pub struct Model {
     /// Volume of the sound 0-1
     pub volume: f32,
     /// Ordering
-    pub order: u32,
-}
-
-#[derive(Default, Deserialize)]
-pub struct UpdateSoundOrdering {
-    pub id: Uuid,
     pub order: u32,
 }
 
@@ -139,7 +132,7 @@ impl Model {
         Ok(this)
     }
 
-    pub async fn update_order<C>(db: &C, data: Vec<UpdateSoundOrdering>) -> DbResult<()>
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateOrdering>) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {

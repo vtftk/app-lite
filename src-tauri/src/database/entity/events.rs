@@ -1,3 +1,7 @@
+use super::{
+    event_executions::{EventExecutionColumn, EventExecutionModel},
+    shared::{DbResult, ExecutionsQuery, MinMax, MinimumRequireRole, UpdateOrdering},
+};
 use anyhow::Context;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
@@ -5,11 +9,6 @@ use sea_orm::{
     QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
-
-use super::{
-    event_executions::{EventExecutionColumn, EventExecutionModel},
-    shared::{DbResult, ExecutionsQuery, MinMax, MinimumRequireRole},
-};
 
 // Type alias helpers for the database entity types
 pub type EventModel = Model;
@@ -42,12 +41,6 @@ pub struct Model {
     /// Delay before executing the outcome
     pub outcome_delay: u32,
     /// Ordering
-    pub order: u32,
-}
-
-#[derive(Default, Deserialize)]
-pub struct UpdateEventOrdering {
-    pub id: Uuid,
     pub order: u32,
 }
 
@@ -372,7 +365,7 @@ impl Model {
         Ok(this)
     }
 
-    pub async fn update_order<C>(db: &C, data: Vec<UpdateEventOrdering>) -> DbResult<()>
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateOrdering>) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {

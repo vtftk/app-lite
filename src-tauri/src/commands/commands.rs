@@ -4,8 +4,8 @@
 
 use crate::database::entity::{
     command_logs::CommandLogsModel,
-    commands::{CreateCommand, UpdateCommand, UpdateCommandOrdering},
-    shared::{ExecutionsQuery, LogsQuery},
+    commands::{CreateCommand, UpdateCommand},
+    shared::{ExecutionsQuery, LogsQuery, UpdateOrdering},
     CommandExecutionModel, CommandModel,
 };
 use anyhow::Context;
@@ -101,7 +101,7 @@ pub async fn delete_command_logs(
 
 #[tauri::command]
 pub async fn update_command_orderings(
-    update: Vec<UpdateCommandOrdering>,
+    update: Vec<UpdateOrdering>,
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();

@@ -3,7 +3,8 @@
 //! Commands for interacting with items from the frontend
 
 use crate::database::entity::{
-    items::{CreateItem, ItemWithImpactSounds, UpdateItem, UpdateItemOrdering},
+    items::{CreateItem, ItemWithImpactSounds, UpdateItem},
+    shared::UpdateOrdering,
     ItemModel, SoundModel,
 };
 use anyhow::Context;
@@ -95,7 +96,7 @@ pub async fn update_item(
 
 #[tauri::command]
 pub async fn update_item_orderings(
-    update: Vec<UpdateItemOrdering>,
+    update: Vec<UpdateOrdering>,
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();

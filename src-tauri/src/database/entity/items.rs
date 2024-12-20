@@ -7,8 +7,9 @@ use sea_orm::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    links::ItemImpactSounds, shared::DbResult, ItemImpactSoundsActiveModel, ItemImpactSoundsColumn,
-    ItemImpactSoundsEntity, SoundModel,
+    links::ItemImpactSounds,
+    shared::{DbResult, UpdateOrdering},
+    ItemImpactSoundsActiveModel, ItemImpactSoundsColumn, ItemImpactSoundsEntity, SoundModel,
 };
 
 // Type alias helpers for the database entity types
@@ -67,12 +68,6 @@ pub struct UpdateItem {
     pub image: Option<ThrowableImageConfig>,
     pub impact_sounds: Option<Vec<Uuid>>,
     pub order: Option<u32>,
-}
-
-#[derive(Default, Deserialize)]
-pub struct UpdateItemOrdering {
-    pub id: Uuid,
-    pub order: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -187,7 +182,7 @@ impl Model {
         Ok(this)
     }
 
-    pub async fn update_order<C>(db: &C, data: Vec<UpdateItemOrdering>) -> DbResult<()>
+    pub async fn update_order<C>(db: &C, data: Vec<UpdateOrdering>) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {

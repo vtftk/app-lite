@@ -4,7 +4,6 @@ pub mod calibration;
 #[allow(clippy::module_inception)]
 pub mod commands;
 pub mod data;
-pub mod edit;
 pub mod events;
 pub mod items;
 pub mod scripts;
