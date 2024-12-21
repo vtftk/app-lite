@@ -21,6 +21,7 @@ impl MigrationTrait for Migration {
                     .col(string(Events::RequireRole))
                     .col(integer(Events::OutcomeDelay))
                     .col(integer(Events::Order))
+                    .col(date_time(Events::CreatedAt))
                     .to_owned(),
             )
             .await
@@ -46,4 +47,5 @@ pub enum Events {
     RequireRole,
     OutcomeDelay,
     Order,
+    CreatedAt,
 }

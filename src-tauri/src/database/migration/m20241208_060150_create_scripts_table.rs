@@ -16,6 +16,7 @@ impl MigrationTrait for Migration {
                     .col(string(Scripts::Name))
                     .col(text(Scripts::Script))
                     .col(integer(Scripts::Order))
+                    .col(date_time(Scripts::CreatedAt))
                     .to_owned(),
             )
             .await
@@ -36,4 +37,5 @@ pub enum Scripts {
     Name,
     Script,
     Order,
+    CreatedAt,
 }

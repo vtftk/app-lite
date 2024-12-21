@@ -6,6 +6,7 @@ use crate::{
     },
 };
 use anyhow::Context;
+use chrono::Utc;
 use deno_core::op2;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -19,6 +20,7 @@ pub async fn op_vtftk_play_sound(#[string] src: String, volume: f32) -> anyhow::
         src,
         volume,
         order: 0,
+        created_at: Utc::now(),
     };
 
     global_script_event(PlaySound { config })
@@ -43,6 +45,7 @@ pub async fn op_vtftk_play_sound_seq(#[serde] seq: Vec<SoundSeq>) -> anyhow::Res
             src: seq.src,
             volume: seq.volume,
             order: 0,
+            created_at: Utc::now(),
         })
         .collect();
 

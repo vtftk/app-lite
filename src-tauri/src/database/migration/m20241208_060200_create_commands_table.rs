@@ -20,6 +20,7 @@ impl MigrationTrait for Migration {
                     .col(integer(Commands::Cooldown))
                     .col(string(Commands::RequireRole))
                     .col(integer(Commands::Order))
+                    .col(date_time(Commands::CreatedAt))
                     .to_owned(),
             )
             .await
@@ -44,4 +45,5 @@ pub enum Commands {
     Cooldown,
     RequireRole,
     Order,
+    CreatedAt,
 }

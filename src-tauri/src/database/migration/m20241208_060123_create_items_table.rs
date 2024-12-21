@@ -20,6 +20,7 @@ impl MigrationTrait for Migration {
                     .col(string(Items::Name))
                     .col(json(Items::Image))
                     .col(integer(Items::Order))
+                    .col(date_time(Items::CreatedAt))
                     .to_owned(),
             )
             .await
@@ -39,4 +40,5 @@ pub enum Items {
     Name,
     Image,
     Order,
+    CreatedAt,
 }

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::{anyhow, Context};
+use chrono::Utc;
 use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
@@ -270,6 +271,7 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
             src: format!("backend://defaults/sounds/{file_name}"),
             volume: 1.,
             order: 0,
+            created_at: Utc::now(),
         })
         .collect();
 
@@ -285,6 +287,7 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
             weight: 1.0,
         },
         order: 0,
+        created_at: Utc::now(),
     };
 
     let item = ItemWithImpactSoundIds {

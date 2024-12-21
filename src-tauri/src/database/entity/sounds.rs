@@ -1,5 +1,6 @@
 use super::shared::{DbResult, UpdateOrdering};
 use anyhow::Context;
+use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, UpdateResult};
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,8 @@ pub struct Model {
     pub volume: f32,
     /// Ordering
     pub order: u32,
+    // Date time of creation
+    pub created_at: DateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -69,6 +72,7 @@ impl Model {
             src: Set(create.src),
             volume: Set(create.volume),
             order: Set(0),
+            created_at: Set(Utc::now()),
         };
 
         Entity::insert(active_model)
@@ -105,7 +109,11 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().order_by_asc(Column::Order).all(db).await
+        Entity::find()
+            .order_by_asc(Column::Order)
+            .order_by_desc(Column::CreatedAt)
+            .all(db)
+            .await
     }
 
     /// Update the current sound

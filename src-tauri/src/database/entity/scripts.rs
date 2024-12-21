@@ -4,6 +4,7 @@ use super::{
     shared::{DbResult, LogsQuery, UpdateOrdering},
 };
 use anyhow::Context;
+use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
     entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, QuerySelect, UpdateResult,
@@ -30,6 +31,8 @@ pub struct Model {
     pub script: String,
     /// Ordering
     pub order: u32,
+    // Date time of creation
+    pub created_at: DateTimeUtc,
 }
 
 pub struct ScriptWithEvent {
@@ -91,6 +94,7 @@ impl Model {
             name: Set(create.name),
             script: Set(create.script),
             order: Set(0),
+            created_at: Set(Utc::now()),
         };
 
         Entity::insert(active_model)
@@ -146,7 +150,11 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        Entity::find().order_by_asc(Column::Order).all(db).await
+        Entity::find()
+            .order_by_asc(Column::Order)
+            .order_by_desc(Column::CreatedAt)
+            .all(db)
+            .await
     }
 
     /// Update the current script
