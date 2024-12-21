@@ -12,8 +12,8 @@
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
     updateCommandOrder,
-    createCommandsQuery,
     bulkDeleteCommands,
+    createCommandsQuery,
   } from "$lib/api/commands";
 
   const commandsQuery = createCommandsQuery();
@@ -88,11 +88,15 @@
       <div class="selection__count">
         {selected.length} Selected
       </div>
-
-      <div class="selection__actions">
-        <Button onclick={onBulkDelete}><DeleteIcon /> Delete</Button>
-      </div>
     {/if}
+
+    <div class="selection__gap"></div>
+
+    <div class="selection__actions">
+      <Button onclick={onBulkDelete} disabled={selected.length < 1}>
+        <DeleteIcon /> Delete
+      </Button>
+    </div>
   </div>
 {/snippet}
 
@@ -128,7 +132,7 @@
     flex-shrink: 0;
   }
 
-  .selection__count {
+  .selection__gap {
     flex: auto;
   }
 

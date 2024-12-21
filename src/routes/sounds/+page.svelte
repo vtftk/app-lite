@@ -9,6 +9,7 @@
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
@@ -71,6 +72,10 @@
 </script>
 
 {#snippet actions()}
+  <PopoverButton content={createPopoverContent}>Create</PopoverButton>
+{/snippet}
+
+{#snippet createPopoverContent()}
   <a class="btn" href="/sounds/create"> Create Sound </a>
   <BulkSoundImport />
 {/snippet}
@@ -90,11 +95,15 @@
       <div class="selection__count">
         {selected.length} Selected
       </div>
-
-      <div class="selection__actions">
-        <Button onclick={onBulkDelete}><DeleteIcon /> Delete</Button>
-      </div>
     {/if}
+
+    <div class="selection__gap"></div>
+
+    <div class="selection__actions">
+      <Button onclick={onBulkDelete} disabled={selected.length < 1}>
+        <DeleteIcon /> Delete
+      </Button>
+    </div>
   </div>
 {/snippet}
 
@@ -130,7 +139,7 @@
     flex-shrink: 0;
   }
 
-  .selection__count {
+  .selection__gap {
     flex: auto;
   }
 
