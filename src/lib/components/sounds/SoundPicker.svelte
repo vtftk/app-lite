@@ -78,7 +78,7 @@
 
 <Dialog.Root>
   <Dialog.Trigger asChild let:builder>
-    <button use:builder.action {disabled} class="btn">
+    <button use:builder.action {disabled} class="btn" type="button">
       {#if buttonContent}
         {@render buttonContent()}
       {:else}

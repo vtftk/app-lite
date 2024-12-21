@@ -60,11 +60,13 @@
 {/if}
 
 <Dialog.Root>
-  <Dialog.Trigger type="button"
-    >{selectedOptions.length > 0
-      ? `${selectedOptions.length} Items selected`
-      : "Select Items"}</Dialog.Trigger
-  >
+  <Dialog.Trigger asChild let:builder>
+    <button use:builder.action class="btn" type="button">
+      {selectedOptions.length > 0
+        ? `${selectedOptions.length} Items selected`
+        : "Select Items"}
+    </button>
+  </Dialog.Trigger>
   <Dialog.Portal>
     <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />
     <Dialog.Content transition={scale}>
@@ -113,7 +115,7 @@
       </div>
 
       <div data-dialog-actions>
-        <Dialog.Close>
+        <Dialog.Close type="button">
           <span class="sr-only">Close</span>
         </Dialog.Close>
       </div>
