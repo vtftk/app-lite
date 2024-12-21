@@ -1,8 +1,6 @@
 <script lang="ts">
   // Apply global styling
   import "$lib/styles/global.scss";
-  // Listen to events over IPC
-  import "$lib/api/events";
   // Font family for code editor
   import "@fontsource/jetbrains-mono";
   import { queryClient } from "$lib/api/utils";
