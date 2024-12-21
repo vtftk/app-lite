@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
@@ -7,6 +6,7 @@
   import { type ExecutionId, type ExecutionData } from "$shared/dataV2";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
 
+  import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
   import ExecutionMetadataDialog from "./ExecutionMetadataDialog.svelte";
 
   type Props = {
@@ -85,17 +85,11 @@
         <tr>
           <th class="column--select">
             <div class="select-actions">
-              <Checkbox.Root
+              <ControlledCheckbox
                 checked={executions.length > 0 &&
                   selected.length === executions.length}
                 onCheckedChange={() => onToggleAllSelected()}
-              >
-                <Checkbox.Indicator let:isChecked>
-                  {#if isChecked}
-                    <span>&#10003;</span>
-                  {/if}
-                </Checkbox.Indicator>
-              </Checkbox.Root>
+              />
             </div>
           </th>
           <th class="column--msg">User</th>
@@ -108,16 +102,10 @@
           <tr>
             <td class="column--select">
               <div class="select-actions">
-                <Checkbox.Root
+                <ControlledCheckbox
                   checked={selected.includes(exec.id)}
                   onCheckedChange={() => onToggleSelected(exec.id)}
-                >
-                  <Checkbox.Indicator let:isChecked>
-                    {#if isChecked}
-                      <span>&#10003;</span>
-                    {/if}
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
               </div>
             </td>
 

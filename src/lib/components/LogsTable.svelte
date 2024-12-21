@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Checkbox } from "bits-ui";
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
@@ -8,6 +7,8 @@
   import { type LogId, type LogData, LoggingLevelStr } from "$shared/dataV2";
   import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
   import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
+
+  import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
   type Props = {
     logs: LogData[];
 
@@ -80,16 +81,10 @@
         <tr>
           <th class="column--select">
             <div class="select-actions">
-              <Checkbox.Root
+              <ControlledCheckbox
                 checked={logs.length > 0 && selected.length === logs.length}
                 onCheckedChange={() => onToggleAllSelected()}
-              >
-                <Checkbox.Indicator let:isChecked>
-                  {#if isChecked}
-                    <span>&#10003;</span>
-                  {/if}
-                </Checkbox.Indicator>
-              </Checkbox.Root>
+              />
             </div>
           </th>
           <th class="column--level">Level</th>
@@ -102,16 +97,10 @@
           <tr>
             <td class="column--select">
               <div class="select-actions">
-                <Checkbox.Root
+                <ControlledCheckbox
                   checked={selected.includes(log.id)}
                   onCheckedChange={() => onToggleSelected(log.id)}
-                >
-                  <Checkbox.Indicator let:isChecked>
-                    {#if isChecked}
-                      <span>&#10003;</span>
-                    {/if}
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
               </div>
             </td>
             <td class="column--level" data-level={log.level} title={log.level}>

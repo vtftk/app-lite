@@ -2,11 +2,12 @@
   import type { Item } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
+  import { Dialog, Separator } from "bits-ui";
   import { fade, scale } from "svelte/transition";
   import { createItemsQuery } from "$lib/api/items";
-  import { Dialog, Checkbox, Separator } from "bits-ui";
 
   import SearchInput from "../form/SearchInput.svelte";
+  import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
 
   type Props = {
     selected: string[];
@@ -76,18 +77,10 @@
       <Separator.Root />
 
       <div class="selection">
-        <Checkbox.Root
-          id="terms"
-          aria-labelledby="terms-label"
+        <ControlledCheckbox
           checked={items.length > 0 && selected.length === items.length}
           onCheckedChange={onToggleAll}
-        >
-          <Checkbox.Indicator let:isChecked>
-            {#if isChecked}
-              <span>&#10003;</span>
-            {/if}
-          </Checkbox.Indicator>
-        </Checkbox.Root>
+        />
 
         <SearchInput bind:value={search} placeholder="Search" />
       </div>
@@ -97,18 +90,10 @@
           {#each filteredItems as item (item.id)}
             <div class="item">
               <div class="item-column item-column--checkbox">
-                <Checkbox.Root
-                  id="terms"
-                  aria-labelledby="terms-label"
+                <ControlledCheckbox
                   checked={selected.includes(item.id)}
                   onCheckedChange={() => onSelectItem(item)}
-                >
-                  <Checkbox.Indicator let:isChecked>
-                    {#if isChecked}
-                      <span>&#10003;</span>
-                    {/if}
-                  </Checkbox.Indicator>
-                </Checkbox.Root>
+                />
               </div>
 
               <div class="item-column item-column--preview">
