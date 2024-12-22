@@ -62,6 +62,7 @@
   >
 
   <input
+    data-felte-keep-on-remove
     bind:this={inputElm}
     hidden
     style="display: none;"

@@ -238,7 +238,7 @@
         id="image"
         name="image"
         label="Image"
-        existing={existing?.image?.src}
+        value={$data.image ?? existing?.image?.src}
         scale={$data.scale}
         pixelated={$data.pixelate}
       />

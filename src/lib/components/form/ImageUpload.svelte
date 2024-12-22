@@ -11,13 +11,15 @@
     pixelated?: boolean;
 
     // Existing source URL
-    existing?: string;
+    value?: File | string;
   };
 
-  const { id, name, label, existing, pixelated, scale }: Props = $props();
+  const { id, name, label, value, pixelated, scale }: Props = $props();
 
   let inputElm: HTMLInputElement | undefined = $state();
-  let currentImage = $state(existing);
+  let currentImage = $state(
+    value instanceof File ? URL.createObjectURL(value) : value,
+  );
 
   /**
    * Handle updates to the current image to
@@ -59,10 +61,11 @@
     type="button"
     onclick={() => {
       inputElm?.click();
-    }}>{existing ? "Replace" : "Select"} Image</button
+    }}>{value ? "Replace" : "Select"} Image</button
   >
 
   <input
+    data-felte-keep-on-remove
     bind:this={inputElm}
     hidden
     style="display: none;"
