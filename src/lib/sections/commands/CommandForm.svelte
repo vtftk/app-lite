@@ -196,20 +196,19 @@
 {#snippet settingsTabContent()}
   <FormSections>
     <FormSection title="Details" description="Basic details about the command">
-      <div class="row">
-        <FormTextInput
-          id="name"
-          name="name"
-          label="Name"
-          description="Name for the command"
-        />
-        <FormTextInput
-          id="command"
-          name="command"
-          label="Command"
-          description="Message that will trigger this command"
-        />
-      </div>
+      <FormTextInput
+        id="name"
+        name="name"
+        label="Name"
+        description="Name for the command"
+        placeholder="Test Command"
+      />
+      <FormTextInput
+        id="command"
+        name="command"
+        label="Command"
+        description="Message that will trigger this command"
+      />
 
       <FormBoundCheckbox
         id="enabled"
@@ -418,12 +417,6 @@
     height: 100%;
     display: flex;
     flex-flow: column;
-  }
-
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
   }
 
   .hints {

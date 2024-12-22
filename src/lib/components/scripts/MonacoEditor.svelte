@@ -57,6 +57,9 @@
       fontLigatures: true,
       fontFamily: "JetBrains Mono",
       readOnly,
+      minimap: {
+        enabled: false,
+      },
       hover: {
         above: false,
       },
