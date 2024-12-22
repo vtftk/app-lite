@@ -75,6 +75,15 @@
       clean_executions: z.boolean(),
       clean_executions_days: z.number(),
     }),
+
+    physics: z.object({
+      enabled: z.boolean(),
+      fps: z.number(),
+      reverse_gravity: z.boolean(),
+      gravity_multiplier: z.number(),
+      horizontal_multiplier: z.number(),
+      vertical_multiplier: z.number(),
+    }),
   });
 
   type Schema = z.infer<typeof schema>;
@@ -87,6 +96,7 @@
       vtube_studio_config,
       externals_config,
       main_config,
+      physics_config,
     } = appData;
 
     return {
@@ -119,6 +129,14 @@
         clean_executions: main_config.clean_executions,
         clean_executions_days: main_config.clean_executions_days,
       },
+      physics: {
+        enabled: physics_config.enabled,
+        fps: physics_config.fps,
+        reverse_gravity: physics_config.reverse_gravity,
+        gravity_multiplier: physics_config.gravity_multiplier,
+        horizontal_multiplier: physics_config.horizontal_multiplier,
+        vertical_multiplier: physics_config.vertical_multiplier,
+      },
     };
   }
 
@@ -142,7 +160,8 @@
   });
 
   async function save(values: Schema) {
-    const { throwables, model, sounds, vtube_studio, external, main } = values;
+    const { throwables, model, sounds, vtube_studio, external, main, physics } =
+      values;
 
     await $updateSettings({
       throwables_config: {
@@ -176,6 +195,14 @@
         clean_logs_days: main.clean_logs_days,
         clean_executions: main.clean_executions,
         clean_executions_days: main.clean_executions_days,
+      },
+      physics_config: {
+        enabled: physics.enabled,
+        fps: physics.fps,
+        reverse_gravity: physics.reverse_gravity,
+        gravity_multiplier: physics.gravity_multiplier,
+        horizontal_multiplier: physics.horizontal_multiplier,
+        vertical_multiplier: physics.vertical_multiplier,
       },
     });
   }
@@ -329,6 +356,52 @@
           name="throwables.item_scale.max"
           label="Maximum Scale"
           description="Maximum scale applied to an item"
+        />
+      </div>
+    </FormSection>
+
+    <FormSection title="Physics">
+      <FormBoundCheckbox
+        id="physics.enabled"
+        name="physics.enabled"
+        label="Enabled"
+        description="Whether physics are enabled"
+      />
+
+      <FormNumberInput
+        id="physics.fps"
+        name="physics.fps"
+        label="FPS"
+        description="Frame rate to run the animation at"
+      />
+
+      <FormBoundCheckbox
+        id="physics.reverse_gravity"
+        name="physics.reverse_gravity"
+        label="Reverse Gravity"
+        description="Whether to reverse the direction of gravity"
+      />
+
+      <FormNumberInput
+        id="physics.gravity_multiplier"
+        name="physics.gravity_multiplier"
+        label="Gravity Multiplier"
+        description=""
+      />
+
+      <div class="row">
+        <FormNumberInput
+          id="physics.horizontal_multiplier"
+          name="physics.horizontal_multiplier"
+          label="Horizontal Multiplier"
+          description=""
+        />
+
+        <FormNumberInput
+          id="physics.vertical_multiplier"
+          name="physics.vertical_multiplier"
+          label="Vertical Multiplier"
+          description=""
         />
       </div>
     </FormSection>

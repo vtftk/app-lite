@@ -14,6 +14,7 @@ import type {
   MainConfig,
   ModelConfig,
   SoundsConfig,
+  PhysicsConfig,
   RuntimeAppData,
   ExternalsConfig,
   ThrowablesConfig,
@@ -151,6 +152,7 @@ type UpdateSettingsMutation = {
   vtube_studio_config: Partial<VTubeStudioConfig>;
   externals_config: Partial<ExternalsConfig>;
   main_config: Partial<MainConfig>;
+  physics_config: Partial<PhysicsConfig>;
 };
 
 export function createUpdateSettingsMutation(
@@ -169,6 +171,7 @@ export function createUpdateSettingsMutation(
         vtube_studio_config,
         externals_config,
         main_config,
+        physics_config,
       },
     ) => ({
       ...appData,
@@ -187,6 +190,10 @@ export function createUpdateSettingsMutation(
       main_config: {
         ...appData.main_config,
         ...main_config,
+      },
+      physics_config: {
+        ...appData.physics_config,
+        ...physics_config,
       },
     }),
   );
