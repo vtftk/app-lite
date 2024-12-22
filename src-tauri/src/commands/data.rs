@@ -46,10 +46,15 @@ pub async fn get_runtime_app_data(
 pub async fn set_app_data(
     app_data: AppData,
     app_data_store: tauri::State<'_, AppDataStore>,
+    event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
 ) -> Result<bool, ()> {
     _ = app_data_store
-        .write(|old_app_data| *old_app_data = app_data)
+        .write(|old_app_data| *old_app_data = app_data.clone())
         .await;
+
+    _ = event_sender.send(EventMessage::AppDataUpdated {
+        app_data: Box::new(app_data),
+    });
 
     Ok(true)
 }

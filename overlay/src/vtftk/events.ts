@@ -2,10 +2,10 @@ import { updateRuntimeData } from "./api";
 import { BACKEND_HTTP } from "../constants";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
-import { throwItem } from "../vtube-studio/throw-item";
 import { ModelParameters } from "../vtube-studio/model";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 import { triggerHotkey, requestHotkeys } from "../vtube-studio/hotkeys";
+import { throwItem, setPhysicsEngineConfig } from "../vtube-studio/throw-item";
 import {
   loadAudio,
   loadItems,
@@ -107,7 +107,24 @@ async function onMessage(data: EventSourceData, event: any) {
 
       break;
     }
+
+    case "AppDataUpdated": {
+      onAppDataUpdatedEvent(data, event.app_data);
+      break;
+    }
   }
+}
+
+function onAppDataUpdatedEvent(data: EventSourceData, appData: AppData) {
+  data.appData = appData;
+
+  // Recreate the physics engine
+  const { fps, reverse_gravity, gravity_multiplier } = appData.physics_config;
+  setPhysicsEngineConfig({
+    fps: fps,
+    reverseGravity: reverse_gravity,
+    gravityMultiplier: gravity_multiplier,
+  });
 }
 
 async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {

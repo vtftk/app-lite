@@ -6,8 +6,9 @@ use serde::Serialize;
 use tokio::sync::broadcast;
 
 use crate::{
-    database::entity::SoundModel, http::models::calibration::CalibrationStep,
-    state::app_data::ItemsWithSounds,
+    database::entity::SoundModel,
+    http::models::calibration::CalibrationStep,
+    state::app_data::{AppData, ItemsWithSounds},
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -58,6 +59,12 @@ pub enum EventMessage {
     /// Play a sequence of sounds one after the other
     PlaySoundSeq {
         configs: Vec<SoundModel>,
+    },
+
+    /// Tell the overlay to reload the app data as it
+    /// has changed
+    AppDataUpdated {
+        app_data: Box<AppData>,
     },
 }
 
