@@ -429,54 +429,62 @@
   <button type="submit" class="btn">Save</button>
 {/snippet}
 
-<PageLayoutList
-  title="Settings"
-  description="Configuration for the entire app"
-  {actions}
->
-  <HTabs
-    tabs={[
-      {
-        value: "main",
-        icon: SolarSettingsBoldDuotone,
-        label: "Main",
-        content: mainTabContent,
-      },
-      {
-        value: "throwables",
-        icon: SolarBallsBoldDuotone,
-        label: "Throwables",
-        content: throwablesTabContent,
-      },
-      {
-        value: "sounds",
-        icon: SolarHeadphonesRoundBoldDuotone,
-        label: "Sounds",
-        content: soundsTabContent,
-      },
-      {
-        value: "vtube_studio",
-        icon: SolarSettingsBoldDuotone,
-        label: "VTube Studio",
-        content: vtubeStudioTabContent,
-      },
-      {
-        value: "vtube_model",
-        icon: SolarPeopleNearbyBoldDuotone,
-        label: "VTuber Model",
-        content: vtubeModelTabContent,
-      },
-      {
-        value: "external",
-        icon: SolarShareCircleBoldDuotone,
-        label: "External APIs",
-        content: externalsTabContent,
-      },
-    ]}
-  />
-</PageLayoutList>
+<form use:form class="container">
+  <PageLayoutList
+    title="Settings"
+    description="Configuration for the entire app"
+    {actions}
+  >
+    <HTabs
+      tabs={[
+        {
+          value: "main",
+          icon: SolarSettingsBoldDuotone,
+          label: "Main",
+          content: mainTabContent,
+        },
+        {
+          value: "throwables",
+          icon: SolarBallsBoldDuotone,
+          label: "Throwables",
+          content: throwablesTabContent,
+        },
+        {
+          value: "sounds",
+          icon: SolarHeadphonesRoundBoldDuotone,
+          label: "Sounds",
+          content: soundsTabContent,
+        },
+        {
+          value: "vtube_studio",
+          icon: SolarSettingsBoldDuotone,
+          label: "VTube Studio",
+          content: vtubeStudioTabContent,
+        },
+        {
+          value: "vtube_model",
+          icon: SolarPeopleNearbyBoldDuotone,
+          label: "VTuber Model",
+          content: vtubeModelTabContent,
+        },
+        {
+          value: "external",
+          icon: SolarShareCircleBoldDuotone,
+          label: "External APIs",
+          content: externalsTabContent,
+        },
+      ]}
+    />
+  </PageLayoutList>
+</form>
 
 <style>
+  .container {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+  }
+
   .helper {
     font-size: 0.8rem;
   }
