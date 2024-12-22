@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from "svelte";
 
   type Props = {
-    language?: "javascript" | "json";
+    language?: "javascript" | "json" | "commandTemplateFormat";
 
     readOnly?: boolean;
 
@@ -12,6 +12,8 @@
     onChange: (value: string) => void;
 
     onUserSave?: VoidFunction;
+
+    options?: Monaco.editor.IStandaloneDiffEditorConstructionOptions;
   };
 
   const {
@@ -20,6 +22,7 @@
     value,
     onChange,
     onUserSave,
+    options,
   }: Props = $props();
 
   type IMonaco = typeof Monaco;
@@ -57,6 +60,7 @@
       hover: {
         above: false,
       },
+      ...options,
     });
   }
 

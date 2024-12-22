@@ -13,11 +13,13 @@
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
+  import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
   import {
     type Command,
     CommandOutcomeType,
@@ -81,9 +83,7 @@
     };
   }
 
-  const { form, data, setFields, isDirty, setIsDirty } = createForm<
-    z.infer<typeof schema>
-  >({
+  const { form, data, setFields, isDirty, setIsDirty } = createForm<Schema>({
     // Derive initial values
     initialValues: existing ? createFromExisting(existing) : createDefaults,
 
@@ -156,7 +156,7 @@
       case CommandOutcomeType.Template:
         return {
           type: CommandOutcomeType.Template,
-          message: "",
+          message: "Hey $(user), this is the test command response",
         };
 
       case CommandOutcomeType.Script:
@@ -208,23 +208,6 @@
         }}
       />
     </FormSection>
-
-    <!-- Cooldown and role requirements -->
-    <FormSection
-      title="Cooldown, and requirements"
-      description="Configure any cooldown, or requirements on this command trigger"
-    >
-      <RequiredRoleSelect
-        id="require_role"
-        name="require_role"
-        label="Minimum Required Role"
-        selected={$data.require_role}
-        onChangeSelected={(selected) =>
-          setFields("require_role", selected, true)}
-      />
-
-      <FormNumberInput id="cooldown" name="cooldown" label="Cooldown" />
-    </FormSection>
   </FormSections>
 {/snippet}
 
@@ -243,12 +226,68 @@
       />
     </section>
   {:else if $data.outcome.type === CommandOutcomeType.Template}
-    <textarea
-      id="outcome.script"
-      name="outcome.script"
-      style="width: 100%;height:100%"
-    ></textarea>
+    <div class="template-split">
+      <section class="editor">
+        <MonacoEditor
+          language="commandTemplateFormat"
+          value={$data.outcome.message}
+          onChange={(value) => {
+            setFields("outcome.message", value, true);
+            setIsDirty(true);
+          }}
+          onUserSave={() => {
+            if (existing) saveWithToast($data);
+          }}
+          options={{
+            wordWrap: "on",
+          }}
+        />
+      </section>
+
+      <div class="hints">
+        <p>
+          If your response message is longer than 500 characters it will be
+          split into multiple messages and sent separately
+        </p>
+        <p>Templating</p>
+        <ul>
+          <li>
+            $(user) - Replaced with the name of the user using the command
+          </li>
+          <li>
+            $(touser) - Replaced with the name of the user this command is
+            targeting (First provided twitch username)
+          </li>
+        </ul>
+      </div>
+    </div>
   {/if}
+{/snippet}
+
+{#snippet requirementsTabContent()}
+  <!-- Cooldown and role requirements -->
+  <FormSection
+    title="Cooldown, and requirements"
+    description="Configure any cooldown, or requirements on this command trigger"
+  >
+    <RequiredRoleSelect
+      id="require_role"
+      name="require_role"
+      label="Minimum Required Role"
+      selected={$data.require_role}
+      onChangeSelected={(selected) => setFields("require_role", selected, true)}
+      description="Minimum required role the user triggering the event must have in order for the event to trigger"
+    />
+
+    <FormNumberInput
+      id="cooldown"
+      name="cooldown"
+      label="Cooldown"
+      description="Cooldown before this event can be triggered again (ms)"
+      min={0}
+      step={100}
+    />
+  </FormSection>
 {/snippet}
 
 {#snippet executionsTabContent()}
@@ -285,9 +324,18 @@
           content: settingsTabContent,
         },
         {
+          value: "requirements",
+          icon: SolarChecklistMinimalisticBoldDuotone,
+          label: "Requirements",
+          content: requirementsTabContent,
+        },
+        {
           value: "code",
           icon: SolarCodeSquareBoldDuotone,
-          label: "Code",
+          label:
+            $data.outcome.type === CommandOutcomeType.Template
+              ? "Response"
+              : "Code",
           content: codeTabContent,
           disablePadding: true,
         },
@@ -321,6 +369,16 @@
     height: 100%;
   }
 
+  .template-split {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+  }
+
+  .template-split .editor {
+    flex: auto;
+  }
+
   form {
     height: 100%;
     display: flex;
@@ -331,5 +389,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+  }
+
+  .hints {
+    max-width: 14rem;
   }
 </style>

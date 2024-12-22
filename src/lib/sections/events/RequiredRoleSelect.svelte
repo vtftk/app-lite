@@ -19,22 +19,22 @@
     {
       value: MinimumRequiredRole.None,
       label: "None",
-      description: "Anyone can redeem",
+      description: "Anyone can use",
     },
     {
       value: MinimumRequiredRole.Vip,
       label: "VIP",
-      description: "Must be VIP, Moderator, or the streamer to redeem",
+      description: "Must be VIP, Moderator, or the streamer to use",
     },
     {
       value: MinimumRequiredRole.Mod,
       label: "Moderator",
-      description: "Must be moderator or the streamer to redeem",
+      description: "Must be moderator or the streamer to use",
     },
     {
       value: MinimumRequiredRole.Broadcaster,
       label: "Broadcaster",
-      description: "Must be the streamer to redeem",
+      description: "Must be the streamer to use",
     },
   ];
 
