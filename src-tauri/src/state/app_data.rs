@@ -83,6 +83,7 @@ pub struct AppData {
     pub sounds_config: SoundsConfig,
     pub vtube_studio_config: VTubeStudioConfig,
     pub externals_config: ExternalsConfig,
+    pub physics_config: PhysicsConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -258,4 +259,28 @@ pub struct ItemWithImpactSoundIds {
     #[serde(flatten)]
     pub item: ItemModel,
     pub impact_sound_ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PhysicsConfig {
+    pub enabled: bool,
+    pub fps: u16,
+    pub reverse_gravity: bool,
+    pub gravity_multiplier: f32,
+    pub horizontal_multiplier: f32,
+    pub vertical_multiplier: f32,
+}
+
+impl Default for PhysicsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            fps: 30,
+            reverse_gravity: false,
+            gravity_multiplier: 1.,
+            horizontal_multiplier: 1.,
+            vertical_multiplier: 1.,
+        }
+    }
 }

@@ -14,6 +14,16 @@ export type AppData = {
   model_config: ModelConfig;
   vtube_studio_config: VTubeStudioConfig;
   externals_config: ExternalsConfig;
+  physics_config: PhysicsConfig;
+};
+
+export type PhysicsConfig = {
+  enabled: boolean;
+  fps: number;
+  reverse_gravity: boolean;
+  gravity_multiplier: number;
+  horizontal_multiplier: number;
+  vertical_multiplier: number;
 };
 
 export type MainConfig = {

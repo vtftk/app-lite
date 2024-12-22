@@ -5,6 +5,11 @@ import { LARGEST_MODEL_SIZE, TOTAL_MODEL_SIZE_RANGE } from "../constants";
 import { sleep, loadAudio, loadImage, LoadedSoundData } from "../utils/async";
 import { ModelPosition, ModelParameters, requestCurrentModel } from "./model";
 import {
+  PhysicsEngine,
+  PhysicsEngineConfig,
+  createPhysicsEngine,
+} from "./physics";
+import {
   Sound,
   MinMax,
   AppData,
@@ -14,6 +19,18 @@ import {
   ThrowableImageConfig,
   ItemWithImpactSoundIds,
 } from "../vtftk/types";
+
+const HORIZONTAL_PHYSICS_SCALE = 3;
+const VERTICAL_PHYSICS_SCALE = 10;
+
+let physicsEngine: PhysicsEngine | null = null;
+
+export function setPhysicsEngineConfig(config: PhysicsEngineConfig) {
+  if (physicsEngine !== null) {
+    physicsEngine.stop();
+    physicsEngine = createPhysicsEngine(config);
+  }
+}
 
 /**
  * Loads the resources a throwable depends on such as
@@ -146,11 +163,63 @@ export async function throwItem(
     leftSide,
   );
 
-  // Wait remaining duration before removing
-  await sleep(throwables.duration / 2);
+  // No physics to apply
+  if (!appData.physics_config.enabled) {
+    // Wait remaining duration before removing
+    await sleep(throwables.duration / 2);
+    // Remove after complete
+    document.body.removeChild(root);
 
-  // Remove after complete
-  document.body.removeChild(root);
+    return;
+  }
+
+  // Initialize the physics engine
+  if (physicsEngine === null) {
+    const { fps, reverse_gravity, gravity_multiplier } = appData.physics_config;
+
+    physicsEngine = createPhysicsEngine({
+      fps: fps,
+      reverseGravity: reverse_gravity,
+      gravityMultiplier: gravity_multiplier,
+    });
+  }
+
+  // Strip animations and transforms before applying physics
+  movement.style.animationName = "";
+  pivot.style.transform = "";
+  thrown.style.transform = "";
+
+  const { horizontal_multiplier, vertical_multiplier } = appData.physics_config;
+
+  const randomVelocity = Math.random();
+
+  const velocityX =
+    // Apply random velocity
+    randomVelocity *
+    // Apply world gravity multiplier
+    HORIZONTAL_PHYSICS_SCALE *
+    // Apply direction velocity
+    (leftSide ? -1 : 1) *
+    // Apply global velocity multiplier
+    horizontal_multiplier;
+  const velocityY =
+    // Apply random velocity
+    (1 - randomVelocity) *
+    // Apply world gravity multiplier
+    VERTICAL_PHYSICS_SCALE *
+    // Apply direction velocity (Up or down)
+    (angle < 0 ? -1 : 0.5) *
+    // Apply global velocity multiplier
+    vertical_multiplier;
+
+  physicsEngine.pushObject({
+    x: 0,
+    y: 0,
+    velocityX,
+    velocityY,
+    root,
+    movement,
+  });
 }
 
 /**
