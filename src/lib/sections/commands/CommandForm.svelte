@@ -17,6 +17,7 @@
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
@@ -28,8 +29,8 @@
   } from "$lib/api/types";
 
   import CommandLogs from "./CommandLogs.svelte";
+  import CommandTypeItem from "./CommandTypeItem.svelte";
   import CommandExecutions from "./CommandExecutions.svelte";
-  import CommandOutcomeSelect from "./CommandOutcomeSelect.svelte";
   import exampleCode from "../../../../script/example_command.js?raw";
   import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
 
@@ -67,7 +68,7 @@
     name: "",
     command: "!test",
     enabled: true,
-    outcome: getOutcomeDefaults(CommandOutcomeType.Script),
+    outcome: getOutcomeDefaults(CommandOutcomeType.Template),
     require_role: MinimumRequiredRole.None,
     cooldown: 1000,
   };
@@ -171,6 +172,25 @@
     const defaults = getOutcomeDefaults(type);
     setFields("outcome", defaults, true);
   }
+
+  const commandTypeOption = [
+    {
+      icon: SolarCodeSquareBoldDuotone,
+      color: "red",
+      value: CommandOutcomeType.Template,
+      label: "Template",
+      description:
+        "Create a simple text response with some basic templating. Simple commands with static responses",
+    },
+    {
+      icon: SolarCodeSquareBoldDuotone,
+      color: "purple",
+      value: CommandOutcomeType.Script,
+      label: "Script",
+      description:
+        "Create a command using scripting with JavaScript code. For powerful interactive messages",
+    },
+  ];
 </script>
 
 {#snippet settingsTabContent()}
@@ -197,18 +217,26 @@
         label="Enabled"
         description="Whether this command can be used"
       />
-
-      <CommandOutcomeSelect
-        id="outcome.type"
-        name="outcome.type"
-        label="Command Type"
-        selected={$data.outcome.type}
-        onChangeSelected={(selected) => {
-          onChangeOutcomeType(selected);
-        }}
-      />
     </FormSection>
   </FormSections>
+{/snippet}
+
+{#snippet typeTabContent()}
+  <div class="event-trigger-grid">
+    {#each commandTypeOption as option (option.value)}
+      <CommandTypeItem
+        icon={option.icon}
+        color={option.color}
+        label={option.label}
+        description={option.description}
+        selected={$data.outcome.type === option.value}
+        onClick={() =>
+          $data.outcome.type !== option.value &&
+          onChangeOutcomeType(option.value)}
+        contentVisible={$data.outcome.type === option.value}
+      />
+    {/each}
+  </div>
 {/snippet}
 
 {#snippet codeTabContent()}
@@ -318,26 +346,33 @@
     <HTabs
       tabs={[
         {
-          value: "settings",
+          value: "details",
           icon: SolarSettingsBoldDuotone,
-          label: "Settings",
+          label: "Details",
           content: settingsTabContent,
+        },
+        {
+          value: "type",
+          icon: SolarCardSendBoldDuotone,
+          label: "Type",
+          content: typeTabContent,
+        },
+
+        {
+          value: "code",
+          icon: SolarCodeSquareBoldDuotone,
+          label:
+            $data.outcome.type === CommandOutcomeType.Template
+              ? "Template"
+              : "Code",
+          content: codeTabContent,
+          disablePadding: true,
         },
         {
           value: "requirements",
           icon: SolarChecklistMinimalisticBoldDuotone,
           label: "Requirements",
           content: requirementsTabContent,
-        },
-        {
-          value: "code",
-          icon: SolarCodeSquareBoldDuotone,
-          label:
-            $data.outcome.type === CommandOutcomeType.Template
-              ? "Response"
-              : "Code",
-          content: codeTabContent,
-          disablePadding: true,
         },
         ...(existing !== undefined
           ? [
@@ -393,5 +428,12 @@
 
   .hints {
     max-width: 14rem;
+  }
+
+  .event-trigger-grid {
+    display: grid;
+
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 </style>
