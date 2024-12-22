@@ -1,12 +1,12 @@
 <script lang="ts">
   import { z } from "zod";
-  import { Tabs } from "bits-ui";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import reporterDom from "@felte/reporter-dom";
   import { minMax } from "$lib/utils/validation";
   import { validator } from "@felte/validator-zod";
+  import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -847,6 +847,7 @@
     />
   {/if}
 {/snippet}
+
 {#snippet playSoundOutcomeContent()}
   {#if $data.outcome.type === EventOutcomeType.PlaySound}
     <SoundSelect
@@ -857,6 +858,102 @@
       onChangeSelected={(selected) =>
         setFields("outcome.sound_id", selected, true)}
     />
+  {/if}
+{/snippet}
+
+{#snippet detailsTabContent()}
+  <!-- Base options -->
+  <FormSection title="Details" description="Basic details about the event">
+    <FormTextInput
+      id="name"
+      name="name"
+      label="Name"
+      placeholder="Example Event"
+    />
+    <FormBoundCheckbox
+      id="enabled"
+      name="enabled"
+      label="Enabled"
+      description="Whether this event will be triggered"
+    />
+  </FormSection>
+{/snippet}
+
+{#snippet triggerTabContent()}
+  <div class="event-trigger-grid">
+    {#each eventTriggerOptions as option (option.value)}
+      <EventTriggerItem
+        icon={option.icon}
+        color={option.color}
+        label={option.label}
+        description={option.description}
+        selected={$data.trigger.type === option.value}
+        onClick={() =>
+          $data.trigger.type !== option.value &&
+          onChangeTriggerType(option.value)}
+        content={option.content}
+        contentVisible={$data.trigger.type === option.value}
+      />
+    {/each}
+  </div>
+{/snippet}
+
+{#snippet outcomeTabContent()}
+  <div class="event-trigger-grid">
+    {#each outcomeOptions as option (option.value)}
+      <EventOutcomeItem
+        icon={option.icon}
+        color={option.color}
+        label={option.label}
+        description={option.description}
+        selected={$data.outcome.type === option.value}
+        onClick={() =>
+          $data.outcome.type !== option.value &&
+          onChangeOutcomeType(option.value)}
+        content={option.content}
+        contentVisible={$data.outcome.type === option.value}
+      />
+    {/each}
+  </div>
+{/snippet}
+
+{#snippet requirementsTabContent()}
+  <!-- Cooldown and role requirements -->
+  <FormSection
+    title="Delays, cooldown, and requirements"
+    description="Configure any delays, cooldown, or requirements on this events trigger"
+  >
+    <RequiredRoleSelect
+      id="require_role"
+      name="require_role"
+      label="Minimum Required Role"
+      selected={$data.require_role}
+      onChangeSelected={(selected) => setFields("require_role", selected, true)}
+      description="Minimum required role the user triggering the event must have in order for the event to trigger"
+    />
+
+    <FormNumberInput
+      id="cooldown"
+      name="cooldown"
+      label="Cooldown"
+      description="Cooldown before this event can be triggered again (ms)"
+      min={0}
+      step={100}
+    />
+    <FormNumberInput
+      id="outcome_delay"
+      name="outcome_delay"
+      label="Outcome Delay"
+      description="Delay before this event will be triggered (ms)"
+      min={0}
+      step={100}
+    />
+  </FormSection>
+{/snippet}
+
+{#snippet executionsTabContent()}
+  {#if existing !== undefined}
+    <EventExecutions id={existing.id} />
   {/if}
 {/snippet}
 
@@ -879,132 +976,44 @@
       : "Create an event that will trigger some outcome"}
     {actions}
   >
-    <div class="content">
-      <Tabs.Root let:value>
-        <Tabs.List>
-          <Tabs.Trigger value="details">
-            <SolarBookBoldDuotone />
-            Details
-          </Tabs.Trigger>
-          <Tabs.Trigger value="trigger">
-            <SolarCardReciveBoldDuotone />
-            Trigger
-          </Tabs.Trigger>
-
-          <Tabs.Trigger value="outcome">
-            <SolarCardSendBoldDuotone />
-            Outcome
-          </Tabs.Trigger>
-          <Tabs.Trigger value="cooldown">
-            <SolarChecklistMinimalisticBoldDuotone />
-            Requirements
-          </Tabs.Trigger>
-          {#if existing !== undefined}
-            <Tabs.Trigger value="executions">
-              <SolarReorderBoldDuotone /> Executions
-            </Tabs.Trigger>
-          {/if}
-        </Tabs.List>
-        <Tabs.Content value="details">
-          <!-- Base options -->
-          <FormSection
-            title="Details"
-            description="Basic details about the event"
-          >
-            <FormTextInput
-              id="name"
-              name="name"
-              label="Name"
-              placeholder="Example Event"
-            />
-            <FormBoundCheckbox
-              id="enabled"
-              name="enabled"
-              label="Enabled"
-              description="Whether this event will be triggered"
-            />
-          </FormSection>
-        </Tabs.Content>
-        <Tabs.Content value="trigger">
-          <div class="event-trigger-grid">
-            {#each eventTriggerOptions as option (option.value)}
-              <EventTriggerItem
-                icon={option.icon}
-                color={option.color}
-                label={option.label}
-                description={option.description}
-                selected={$data.trigger.type === option.value}
-                onClick={() =>
-                  $data.trigger.type !== option.value &&
-                  onChangeTriggerType(option.value)}
-                content={option.content}
-                contentVisible={$data.trigger.type === option.value}
-              />
-            {/each}
-          </div>
-        </Tabs.Content>
-
-        <Tabs.Content value="outcome">
-          <div class="event-trigger-grid">
-            {#each outcomeOptions as option (option.value)}
-              <EventOutcomeItem
-                icon={option.icon}
-                color={option.color}
-                label={option.label}
-                description={option.description}
-                selected={$data.outcome.type === option.value}
-                onClick={() =>
-                  $data.outcome.type !== option.value &&
-                  onChangeOutcomeType(option.value)}
-                content={option.content}
-                contentVisible={$data.outcome.type === option.value}
-              />
-            {/each}
-          </div>
-        </Tabs.Content>
-        <Tabs.Content value="cooldown">
-          <!-- Cooldown and role requirements -->
-          <FormSection
-            title="Delays, cooldown, and requirements"
-            description="Configure any delays, cooldown, or requirements on this events trigger"
-          >
-            <RequiredRoleSelect
-              id="require_role"
-              name="require_role"
-              label="Minimum Required Role"
-              selected={$data.require_role}
-              onChangeSelected={(selected) =>
-                setFields("require_role", selected, true)}
-              description="Minimum required role the user triggering the event must have in order for the event to trigger"
-            />
-
-            <FormNumberInput
-              id="cooldown"
-              name="cooldown"
-              label="Cooldown"
-              description="Cooldown before this event can be triggered again (ms)"
-              min={0}
-              step={100}
-            />
-            <FormNumberInput
-              id="outcome_delay"
-              name="outcome_delay"
-              label="Outcome Delay"
-              description="Delay before this event will be triggered (ms)"
-              min={0}
-              step={100}
-            />
-          </FormSection>
-        </Tabs.Content>
-        {#if existing !== undefined}
-          <Tabs.Content value="executions">
-            {#if value === "executions"}
-              <EventExecutions id={existing.id} />
-            {/if}
-          </Tabs.Content>
-        {/if}
-      </Tabs.Root>
-    </div>
+    <HTabs
+      tabs={[
+        {
+          value: "details",
+          icon: SolarBookBoldDuotone,
+          label: "Details",
+          content: detailsTabContent,
+        },
+        {
+          value: "trigger",
+          icon: SolarCardReciveBoldDuotone,
+          label: "Trigger",
+          content: triggerTabContent,
+        },
+        {
+          value: "outcome",
+          icon: SolarCardSendBoldDuotone,
+          label: "Outcome",
+          content: outcomeTabContent,
+        },
+        {
+          value: "requirements",
+          icon: SolarChecklistMinimalisticBoldDuotone,
+          label: "Requirements",
+          content: requirementsTabContent,
+        },
+        ...(existing !== undefined
+          ? [
+              {
+                value: "executions",
+                icon: SolarReorderBoldDuotone,
+                label: "Executions",
+                content: executionsTabContent,
+              },
+            ]
+          : []),
+      ]}
+    />
   </PageLayoutList>
 </form>
 
@@ -1017,28 +1026,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
-  }
-
-  .content {
-    position: relative;
-    flex: auto;
-    overflow: hidden;
-    height: 100%;
-  }
-
-  .content :global([data-tabs-root]) {
-    height: 100%;
-    display: flex;
-    flex-flow: column;
-  }
-
-  .content :global([data-tabs-content]) {
-    position: relative;
-    flex: auto;
-    overflow: auto;
-    flex-flow: column;
-    border: 1px solid #333;
-    padding: 1rem;
   }
 
   .event-trigger-grid {

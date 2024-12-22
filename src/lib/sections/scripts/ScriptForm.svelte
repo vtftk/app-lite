@@ -2,13 +2,13 @@
   import type { Script } from "$lib/api/types";
 
   import { z } from "zod";
-  import { Tabs } from "bits-ui";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import reporterDom from "@felte/reporter-dom";
   import { invoke } from "@tauri-apps/api/core";
   import { validator } from "@felte/validator-zod";
+  import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import { createScript, updateScript } from "$lib/api/scripts";
   import FormSection from "$lib/components/form/FormSection.svelte";
@@ -116,6 +116,37 @@
   }
 </script>
 
+{#snippet settingsTabContent()}
+  <FormSections>
+    <FormSection title="Details" description="Basic details about the script">
+      <FormTextInput id="name" name="name" label="Name" />
+
+      <FormBoundCheckbox id="enabled" name="enabled" label="Enabled" />
+    </FormSection>
+  </FormSections>
+{/snippet}
+
+{#snippet codeTabContent()}
+  <section class="editor">
+    <CodeEditor
+      value={$data.script}
+      onChange={(value) => {
+        setFields("script", value, true);
+        setIsDirty(true);
+      }}
+      onUserSave={() => {
+        if (existing) save($data);
+      }}
+    />
+  </section>
+{/snippet}
+
+{#snippet logsTabContent()}
+  {#if existing !== undefined}
+    <ScriptLogs id={existing.id} />
+  {/if}
+{/snippet}
+
 <form use:form class="container">
   <div class="title-area">
     <div>
@@ -134,56 +165,34 @@
     </div>
   </div>
 
-  <div class="content">
-    <Tabs.Root let:value>
-      <Tabs.List>
-        <Tabs.Trigger value="settings">
-          <SolarSettingsBoldDuotone /> Settings
-        </Tabs.Trigger>
-        <Tabs.Trigger value="code">
-          <SolarCodeSquareBoldDuotone /> Code
-        </Tabs.Trigger>
-        {#if existing !== undefined}
-          <Tabs.Trigger value="logs">
-            <SolarReorderBoldDuotone /> Logs
-          </Tabs.Trigger>
-        {/if}
-      </Tabs.List>
-      <Tabs.Content value="code">
-        <section class="editor">
-          <CodeEditor
-            value={$data.script}
-            onChange={(value) => {
-              setFields("script", value, true);
-              setIsDirty(true);
-            }}
-            onUserSave={() => {
-              if (existing) save($data);
-            }}
-          />
-        </section>
-      </Tabs.Content>
-      <Tabs.Content value="settings">
-        <FormSections>
-          <FormSection
-            title="Details"
-            description="Basic details about the script"
-          >
-            <FormTextInput id="name" name="name" label="Name" />
-
-            <FormBoundCheckbox id="enabled" name="enabled" label="Enabled" />
-          </FormSection>
-        </FormSections>
-      </Tabs.Content>
-      {#if existing !== undefined}
-        <Tabs.Content value="logs">
-          {#if value === "logs"}
-            <ScriptLogs id={existing.id} />
-          {/if}
-        </Tabs.Content>
-      {/if}
-    </Tabs.Root>
-  </div>
+  <HTabs
+    tabs={[
+      {
+        value: "settings",
+        icon: SolarSettingsBoldDuotone,
+        label: "Settings",
+        content: settingsTabContent,
+      },
+      {
+        value: "code",
+        icon: SolarCodeSquareBoldDuotone,
+        label: "Code",
+        content: codeTabContent,
+        disablePadding: true,
+      },
+      ...(existing !== undefined
+        ? [
+            {
+              value: "logs",
+              icon: SolarReorderBoldDuotone,
+              label: "Logs",
+              content: logsTabContent,
+              disablePadding: true,
+            },
+          ]
+        : []),
+    ]}
+  />
 </form>
 
 <style>
@@ -191,31 +200,6 @@
     position: relative;
     overflow: hidden;
     height: 100%;
-  }
-
-  .content {
-    position: relative;
-    flex: auto;
-    overflow: hidden;
-  }
-
-  .content :global([data-tabs-root]) {
-    height: 100%;
-    display: flex;
-    flex-flow: column;
-  }
-
-  .content :global([data-tabs-content]) {
-    position: relative;
-    flex: auto;
-    overflow: auto;
-    flex-flow: column;
-    border: 1px solid #333;
-  }
-
-  /* Padded outline for the settings tab */
-  .content :global([data-tabs-content]:nth-child(3)) {
-    padding: 1rem;
   }
 
   .container {

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { z } from "zod";
-  import { Tabs } from "bits-ui";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import reporterDom from "@felte/reporter-dom";
   import { minMax } from "$lib/utils/validation";
   import { validator } from "@felte/validator-zod";
+  import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
@@ -181,6 +181,250 @@
   }
 </script>
 
+{#snippet mainTabContent()}
+  <FormSections>
+    <FormSection title="App">
+      <p class="helper">
+        Enabling "Minimize to tray" allows you to close the app when you're not
+        managing your throwables while streaming to greatly reduce its resource
+        usage. When minimized it can be re-opened or quit fully from the tray
+        icon.
+        <br />
+        <br />
+        Turn off this setting if you want the app to close fully when close is pushed.
+      </p>
+
+      <FormBoundCheckbox
+        id="main.minimize_to_tray"
+        name="main.minimize_to_tray"
+        label="Minimize to tray"
+        description="Enable minimizing to tray on close instead of closing the app"
+      />
+    </FormSection>
+    <FormSection
+      title="Logging"
+      description="VTFTK keeps track of logging messages when running scripts and commands, you can automatically clear them after time has passed in order to save space"
+    >
+      <p class="helper">
+        You can view and delete logs for individual scripts manually using the
+        "Logs" tab when editing the script/command
+      </p>
+
+      <FormBoundCheckbox
+        id="main.clean_logs"
+        name="main.clean_logs"
+        label="Automatically clean logs"
+        description="Disable this to prevent automatic log clearing"
+      />
+
+      <FormNumberInput
+        id="main.clean_logs_days"
+        name="main.clean_logs_days"
+        label="Retain days"
+        description="Number of days logs will be retained for"
+        min={0}
+      />
+    </FormSection>
+    <FormSection
+      title="Executions"
+      description="VTFTK keeps tracks executions of commands and events, this allows it to keep track of cooldown and show you who's triggered a command or event"
+    >
+      <FormBoundCheckbox
+        id="main.clean_executions"
+        name="main.clean_executions"
+        label="Automatically clean executions"
+        description="Disable this to prevent automatic log clearing"
+      />
+
+      <FormNumberInput
+        id="main.clean_executions_days"
+        name="main.clean_executions_days"
+        label="Retain days"
+        description="Number of days executions will be retained for"
+        min={0}
+      />
+    </FormSection>
+  </FormSections>
+{/snippet}
+
+{#snippet throwablesTabContent()}
+  <FormSections>
+    <FormSection title="Duration and delay">
+      <FormNumberInput
+        id="throwables.duration"
+        name="throwables.duration"
+        label="Duration"
+        description=" Total time that it should take for a thrown item to hit the target"
+      />
+
+      <FormNumberInput
+        id="throwables.impact_delay"
+        name="throwables.impact_delay"
+        label="Impact Delay"
+        description="Delay before the impact is registered"
+      />
+    </FormSection>
+
+    <!-- Spin speed -->
+    <FormSection title="Spin speed">
+      <div class="row">
+        <FormNumberInput
+          id="throwables.spin_speed.min"
+          name="throwables.spin_speed.min"
+          label="Minimum Spin Speed"
+          description="Minimum speed an item can spin at"
+        />
+
+        <FormNumberInput
+          id="throwables.spin_speed.max"
+          name="throwables.spin_speed.max"
+          label="Maximum Spin Speed"
+          description="Maximum speed an item can spin at"
+        />
+      </div>
+    </FormSection>
+
+    <FormSection title="Angle and direction">
+      <ThrowableDirectionSelect
+        id="throwables.direction"
+        name="throwables.direction"
+        label="Direction"
+        description="Which directions the items should come from"
+        selected={$data.throwables.direction}
+        onChangeSelected={(selected) => {
+          setFields("throwables.direction", selected);
+        }}
+      />
+
+      <!-- Throw angle -->
+      <div class="row">
+        <FormNumberInput
+          id="throwables.throw_angle.min"
+          name="throwables.throw_angle.min"
+          label="Minimum Throw Angle"
+          description="Minimum angle an item will be throw at"
+        />
+
+        <FormNumberInput
+          id="throwables.throw_angle.max"
+          name="throwables.throw_angle.max"
+          label="Maximum Throw Angle"
+          description="Maximum angle an item will be throw at"
+        />
+      </div>
+    </FormSection>
+
+    <FormSection title="Scale">
+      <!-- Item scale -->
+      <div class="row">
+        <FormNumberInput
+          id="throwables.item_scale.min"
+          name="throwables.item_scale.min"
+          label="Minimum Scale"
+          description="Minimum scale applied to an item"
+        />
+
+        <FormNumberInput
+          id="throwables.item_scale.max"
+          name="throwables.item_scale.max"
+          label="Maximum Scale"
+          description="Maximum scale applied to an item"
+        />
+      </div>
+    </FormSection>
+  </FormSections>
+{/snippet}
+
+{#snippet soundsTabContent()}
+  <FormSections>
+    <FormSection title="Volume">
+      <FormNumberInput
+        id="sounds.global_volume"
+        name="sounds.global_volume"
+        label="Global Volume"
+        description="Overall volume of all sounds, including impact sounds"
+      />
+
+      <!-- TODO: Sound alerts volume, impact sound volume -->
+    </FormSection>
+  </FormSections>
+{/snippet}
+
+{#snippet vtubeStudioTabContent()}
+  <FormSections>
+    <FormSection
+      title="API Settings"
+      description="Details for the VTube Studio API"
+    >
+      <div class="row row-ll">
+        <FormTextInput
+          id="vtube_studio.host"
+          name="vtube_studio.host"
+          label="Host"
+          description="Host to use when connecting to VTube Studio"
+        />
+
+        <button
+          type="button"
+          class="btn"
+          onclick={() => {
+            setFields("vtube_studio.host", "localhost");
+          }}>Default</button
+        >
+      </div>
+
+      <FormNumberInput
+        id="vtube_studio.port"
+        name="vtube_studio.port"
+        label="Port"
+        description="Port that the VTube Studio API is running on"
+      />
+
+      <DetectVTubeStudio
+        onChoosePort={(port) => setFields("vtube_studio.port", port)}
+      />
+    </FormSection>
+  </FormSections>
+{/snippet}
+
+{#snippet vtubeModelTabContent()}
+  <FormSections>
+    <FormSection title="Model Settings">
+      <FormNumberInput
+        id="model.model_return_time"
+        name="model.model_return_time"
+        label="Return Time"
+        description="Time it takes for the model to return to its original position after being hit"
+      />
+
+      <EyesModeSelect
+        id="model.eyes_on_hit"
+        name="model.eyes_on_hit"
+        label="Eyes On Hit"
+        description="How the model eyes should react to being hit"
+        selected={$data.model.eyes_on_hit}
+        onChangeSelected={(selected) => {
+          setFields("model.eyes_on_hit", selected);
+        }}
+      />
+    </FormSection>
+  </FormSections>
+{/snippet}
+
+{#snippet externalsTabContent()}
+  <FormSections>
+    <FormSection title="TTS Monster API Key">
+      <FormTextInput
+        id="external.tts_monster_api_key"
+        name="external.tts_monster_api_key"
+        label="TTS Monster API Key"
+        description="API Key to use TTS monster TTS voice generation"
+        type="password"
+      />
+    </FormSection>
+  </FormSections>
+{/snippet}
+
 <form use:form class="container">
   {#snippet actions()}
     <button type="submit" class="btn">Save</button>
@@ -191,269 +435,46 @@
     description="Configuration for the entire app"
     {actions}
   >
-    <div class="container">
-      <Tabs.Root>
-        <Tabs.List>
-          <Tabs.Trigger value="main">
-            <SolarSettingsBoldDuotone /> Main
-          </Tabs.Trigger>
-          <Tabs.Trigger value="throwables">
-            <SolarBallsBoldDuotone /> Throwables
-          </Tabs.Trigger>
-          <Tabs.Trigger value="sounds">
-            <SolarHeadphonesRoundBoldDuotone /> Sounds
-          </Tabs.Trigger>
-          <Tabs.Trigger value="vtube_studio">
-            <SolarSettingsBoldDuotone /> VTube Studio
-          </Tabs.Trigger>
-          <Tabs.Trigger value="model">
-            <SolarPeopleNearbyBoldDuotone /> VTuber Model
-          </Tabs.Trigger>
-          <Tabs.Trigger value="external">
-            <SolarShareCircleBoldDuotone /> External APIs
-          </Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="main">
-          <FormSections>
-            <FormSection title="App">
-              <p class="helper">
-                Enabling "Minimize to tray" allows you to close the app when
-                you're not managing your throwables while streaming to greatly
-                reduce its resource usage. When minimized it can be re-opened or
-                quit fully from the tray icon.
-                <br />
-                <br />
-                Turn off this setting if you want the app to close fully when close
-                is pushed.
-              </p>
-
-              <FormBoundCheckbox
-                id="main.minimize_to_tray"
-                name="main.minimize_to_tray"
-                label="Minimize to tray"
-                description="Enable minimizing to tray on close instead of closing the app"
-              />
-            </FormSection>
-            <FormSection
-              title="Logging"
-              description="VTFTK keeps track of logging messages when running scripts and commands, you can automatically clear them after time has passed in order to save space"
-            >
-              <p class="helper">
-                You can view and delete logs for individual scripts manually
-                using the "Logs" tab when editing the script/command
-              </p>
-
-              <FormBoundCheckbox
-                id="main.clean_logs"
-                name="main.clean_logs"
-                label="Automatically clean logs"
-                description="Disable this to prevent automatic log clearing"
-              />
-
-              <FormNumberInput
-                id="main.clean_logs_days"
-                name="main.clean_logs_days"
-                label="Retain days"
-                description="Number of days logs will be retained for"
-                min={0}
-              />
-            </FormSection>
-            <FormSection
-              title="Executions"
-              description="VTFTK keeps tracks executions of commands and events, this allows it to keep track of cooldown and show you who's triggered a command or event"
-            >
-              <FormBoundCheckbox
-                id="main.clean_executions"
-                name="main.clean_executions"
-                label="Automatically clean executions"
-                description="Disable this to prevent automatic log clearing"
-              />
-
-              <FormNumberInput
-                id="main.clean_executions_days"
-                name="main.clean_executions_days"
-                label="Retain days"
-                description="Number of days executions will be retained for"
-                min={0}
-              />
-            </FormSection>
-          </FormSections>
-        </Tabs.Content>
-        <Tabs.Content value="throwables">
-          <FormSections>
-            <FormSection title="Duration and delay">
-              <FormNumberInput
-                id="throwables.duration"
-                name="throwables.duration"
-                label="Duration"
-                description=" Total time that it should take for a thrown item to hit the target"
-              />
-
-              <FormNumberInput
-                id="throwables.impact_delay"
-                name="throwables.impact_delay"
-                label="Impact Delay"
-                description="Delay before the impact is registered"
-              />
-            </FormSection>
-
-            <!-- Spin speed -->
-            <FormSection title="Spin speed">
-              <div class="row">
-                <FormNumberInput
-                  id="throwables.spin_speed.min"
-                  name="throwables.spin_speed.min"
-                  label="Minimum Spin Speed"
-                  description="Minimum speed an item can spin at"
-                />
-
-                <FormNumberInput
-                  id="throwables.spin_speed.max"
-                  name="throwables.spin_speed.max"
-                  label="Maximum Spin Speed"
-                  description="Maximum speed an item can spin at"
-                />
-              </div>
-            </FormSection>
-
-            <FormSection title="Angle and direction">
-              <ThrowableDirectionSelect
-                id="throwables.direction"
-                name="throwables.direction"
-                label="Direction"
-                description="Which directions the items should come from"
-                selected={$data.throwables.direction}
-                onChangeSelected={(selected) => {
-                  setFields("throwables.direction", selected);
-                }}
-              />
-
-              <!-- Throw angle -->
-              <div class="row">
-                <FormNumberInput
-                  id="throwables.throw_angle.min"
-                  name="throwables.throw_angle.min"
-                  label="Minimum Throw Angle"
-                  description="Minimum angle an item will be throw at"
-                />
-
-                <FormNumberInput
-                  id="throwables.throw_angle.max"
-                  name="throwables.throw_angle.max"
-                  label="Maximum Throw Angle"
-                  description="Maximum angle an item will be throw at"
-                />
-              </div>
-            </FormSection>
-
-            <FormSection title="Scale">
-              <!-- Item scale -->
-              <div class="row">
-                <FormNumberInput
-                  id="throwables.item_scale.min"
-                  name="throwables.item_scale.min"
-                  label="Minimum Scale"
-                  description="Minimum scale applied to an item"
-                />
-
-                <FormNumberInput
-                  id="throwables.item_scale.max"
-                  name="throwables.item_scale.max"
-                  label="Maximum Scale"
-                  description="Maximum scale applied to an item"
-                />
-              </div>
-            </FormSection>
-          </FormSections>
-        </Tabs.Content>
-        <Tabs.Content value="sounds">
-          <FormSections>
-            <FormSection title="Volume">
-              <FormNumberInput
-                id="sounds.global_volume"
-                name="sounds.global_volume"
-                label="Global Volume"
-                description="Overall volume of all sounds, including impact sounds"
-              />
-
-              <!-- TODO: Sound alerts volume, impact sound volume -->
-            </FormSection>
-          </FormSections>
-        </Tabs.Content>
-        <Tabs.Content value="vtube_studio">
-          <FormSections>
-            <FormSection
-              title="API Settings"
-              description="Details for the VTube Studio API"
-            >
-              <div class="row row-ll">
-                <FormTextInput
-                  id="vtube_studio.host"
-                  name="vtube_studio.host"
-                  label="Host"
-                  description="Host to use when connecting to VTube Studio"
-                />
-
-                <button
-                  type="button"
-                  class="btn"
-                  onclick={() => {
-                    setFields("vtube_studio.host", "localhost");
-                  }}>Default</button
-                >
-              </div>
-
-              <FormNumberInput
-                id="vtube_studio.port"
-                name="vtube_studio.port"
-                label="Port"
-                description="Port that the VTube Studio API is running on"
-              />
-
-              <DetectVTubeStudio
-                onChoosePort={(port) => setFields("vtube_studio.port", port)}
-              />
-            </FormSection>
-          </FormSections>
-        </Tabs.Content>
-        <Tabs.Content value="model">
-          <FormSections>
-            <FormSection title="Model Settings">
-              <FormNumberInput
-                id="model.model_return_time"
-                name="model.model_return_time"
-                label="Return Time"
-                description="Time it takes for the model to return to its original position after being hit"
-              />
-
-              <EyesModeSelect
-                id="model.eyes_on_hit"
-                name="model.eyes_on_hit"
-                label="Eyes On Hit"
-                description="How the model eyes should react to being hit"
-                selected={$data.model.eyes_on_hit}
-                onChangeSelected={(selected) => {
-                  setFields("model.eyes_on_hit", selected);
-                }}
-              />
-            </FormSection>
-          </FormSections>
-        </Tabs.Content>
-        <Tabs.Content value="external">
-          <FormSections>
-            <FormSection title="TTS Monster API Key">
-              <FormTextInput
-                id="external.tts_monster_api_key"
-                name="external.tts_monster_api_key"
-                label="TTS Monster API Key"
-                description="API Key to use TTS monster TTS voice generation"
-                type="password"
-              />
-            </FormSection>
-          </FormSections>
-        </Tabs.Content>
-      </Tabs.Root>
-    </div>
+    <HTabs
+      tabs={[
+        {
+          value: "main",
+          icon: SolarSettingsBoldDuotone,
+          label: "Main",
+          content: mainTabContent,
+        },
+        {
+          value: "throwables",
+          icon: SolarBallsBoldDuotone,
+          label: "Throwables",
+          content: throwablesTabContent,
+        },
+        {
+          value: "sounds",
+          icon: SolarHeadphonesRoundBoldDuotone,
+          label: "Sounds",
+          content: soundsTabContent,
+        },
+        {
+          value: "vtube_studio",
+          icon: SolarSettingsBoldDuotone,
+          label: "VTube Studio",
+          content: vtubeStudioTabContent,
+        },
+        {
+          value: "vtube_model",
+          icon: SolarPeopleNearbyBoldDuotone,
+          label: "VTuber Model",
+          content: vtubeModelTabContent,
+        },
+        {
+          value: "external",
+          icon: SolarShareCircleBoldDuotone,
+          label: "External APIs",
+          content: externalsTabContent,
+        },
+      ]}
+    />
   </PageLayoutList>
 </form>
 
@@ -472,32 +493,5 @@
 
   .row-ll {
     grid-template-columns: 3fr 1fr;
-  }
-
-  .container {
-    position: relative;
-    flex: auto;
-    overflow: hidden;
-
-    display: flex;
-    flex-flow: column;
-    gap: 0.5rem;
-
-    height: 100%;
-  }
-
-  .container :global([data-tabs-root]) {
-    height: 100%;
-    display: flex;
-    flex-flow: column;
-  }
-
-  .container :global([data-tabs-content]) {
-    position: relative;
-    flex: auto;
-    overflow: auto;
-    flex-flow: column;
-    border: 1px solid #333;
-    padding: 1rem;
   }
 </style>
