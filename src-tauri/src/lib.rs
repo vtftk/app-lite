@@ -105,8 +105,6 @@ pub fn run() {
 
             tray::create_tray_menu(app)?;
 
-            // TODO: Start server and block until a channel reports back that the server started?
-            // store server task in a state variable to allow attempting restart within app
             Ok(())
         })
         .plugin(tauri_plugin_shell::init())
