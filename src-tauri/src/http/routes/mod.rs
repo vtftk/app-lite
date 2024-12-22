@@ -27,7 +27,6 @@ pub fn router() -> Router {
         .route("/runtime-app-data", put(data::update_runtime_data))
         .route("/content/:folder/:name", get(data::get_content_file))
         .route("/defaults/:folder/:name", get(data::get_defaults_file))
-        .route("/bits/:amount", get(data::get_bits_icon))
         .route("/overlay", get(overlay::page))
         .route("/overlay/icon", get(overlay::icon))
         .route("/data/get-auth-token", get(data::handle_get_auth_token))
