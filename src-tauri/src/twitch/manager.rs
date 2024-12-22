@@ -110,7 +110,7 @@ impl TwitchManager {
 
     pub async fn send_chat_message(
         &self,
-        message: String,
+        message: &str,
     ) -> anyhow::Result<SendChatMessageResponse> {
         // Obtain twitch access token
         let token = self.get_user_token().await.context("not authenticated")?;

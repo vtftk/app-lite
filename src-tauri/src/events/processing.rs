@@ -209,16 +209,38 @@ pub async fn execute_command(
     let metadata =
         serde_json::to_value(&event_data).context("failed to serialize event metadata")?;
 
+    let user = match event_data.user {
+        Some(value) => value,
+        None => return Err(anyhow!("failed to get twitch user")),
+    };
+
     match command.command.outcome {
-        CommandOutcome::Template { message: _message } => {
-            // TODO: Not implemented yet
+        CommandOutcome::Template { message } => {
+            let to_usr = command
+                .args
+                .first()
+                .map(|value| value.as_str())
+                .unwrap_or_default();
+            let message = message
+                .replace("$(user)", user.name.as_str())
+                .replace("$(touser)", to_usr);
+
+            if message.len() < 500 {
+                twitch_manager.send_chat_message(&message).await?;
+            } else {
+                let mut chars = message.chars();
+
+                loop {
+                    let message = chars.by_ref().take(500).collect::<String>();
+                    if message.is_empty() {
+                        break;
+                    }
+
+                    twitch_manager.send_chat_message(&message).await?;
+                }
+            }
         }
         CommandOutcome::Script { script } => {
-            let user = match event_data.user {
-                Some(value) => value,
-                None => return Err(anyhow!("failed to get twitch user")),
-            };
-
             let user = CommandContextUser {
                 id: user.id,
                 name: user.name,

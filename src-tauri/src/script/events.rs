@@ -98,7 +98,7 @@ impl Handler<TwitchSendChat> for ScriptEventActor {
     fn handle(&mut self, msg: TwitchSendChat, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let twitch_manager = self.twitch_manager.clone();
         Fr::new_box(async move {
-            _ = twitch_manager.send_chat_message(msg.message).await?;
+            _ = twitch_manager.send_chat_message(&msg.message).await?;
             Ok(())
         })
     }
