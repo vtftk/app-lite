@@ -33,7 +33,6 @@ pub fn run() {
                 .expect("no main window")
                 .set_focus();
         }))
-        .plugin(tauri_plugin_shell::init())
         .setup(move |app| {
             let handle = app.handle().clone();
 
@@ -114,7 +113,6 @@ pub fn run() {
 
             Ok(())
         })
-        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             // Calibration commands
             commands::calibration::set_calibration_step,
@@ -134,7 +132,6 @@ pub fn run() {
             // Twitch commands
             commands::twitch::get_twitch_oauth_uri,
             commands::twitch::is_authenticated,
-            commands::twitch::open_twitch_oauth_uri,
             commands::twitch::logout,
             commands::twitch::get_redeems_list,
             commands::twitch::refresh_redeems_list,

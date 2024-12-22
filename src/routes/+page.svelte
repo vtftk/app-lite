@@ -52,20 +52,6 @@
   }
 
   /**
-   * Handler for clicking the "Open In Browser" button to open the
-   * Twitch OAuth link in browser
-   */
-  function onOpenTwitchURL() {
-    const openPromise = invoke<boolean>("open_twitch_oauth_uri");
-
-    toast.promise(openPromise, {
-      loading: "Opening Twitch login...",
-      success: "Opened in default browser",
-      error: toastErrorMessage("Failed to open in default browser"),
-    });
-  }
-
-  /**
    * Handle logging out from Twitch
    */
   function onLogoutTwitch() {
@@ -182,11 +168,10 @@
             </p>
 
             <div class="actions">
-              <button class="btn" onclick={onOpenTwitchURL}>
-                Open in browser
-              </button>
-
               {#if $twitchOAuthURLQuery.data}
+                <a class="btn" href={$twitchOAuthURLQuery.data} target="_blank">
+                  Open in browser
+                </a>
                 <input
                   class="url"
                   type="text"

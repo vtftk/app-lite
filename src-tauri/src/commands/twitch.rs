@@ -4,9 +4,7 @@ use anyhow::Context;
 use log::debug;
 use reqwest::Url;
 use std::sync::Arc;
-use tauri::AppHandle;
 use tauri::State;
-use tauri_plugin_shell::ShellExt;
 use twitch_api::helix::points::CustomReward;
 use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
 
@@ -46,19 +44,6 @@ pub fn get_twitch_oauth_uri() -> String {
     .generate_url();
 
     url.to_string()
-}
-
-/// Open the users default browser to a twitch OAuth URI
-#[tauri::command]
-pub fn open_twitch_oauth_uri(app_handle: AppHandle) -> CmdResult<()> {
-    let uri = get_twitch_oauth_uri();
-
-    app_handle
-        .shell()
-        .open(uri, None)
-        .context("failed to open window")?;
-
-    Ok(())
 }
 
 #[tauri::command]

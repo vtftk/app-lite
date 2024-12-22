@@ -22,7 +22,6 @@ deno_core = "0.323.0"
 [dependencies]
 # Tauri for frontend UI
 tauri = { version = "2", features = ["tray-icon"] }
-tauri-plugin-shell = "2"
 
 # Twitch API for working with twitch
 twitch_api = { version = "0.7.0-rc.8", features = [
@@ -75,6 +74,7 @@ deno_core = "0.323.0"
 interlink = "0.1.6"
 chrono = { version = "0.4.39", features = ["serde"] }
 
+
 # App database
 [dependencies.sea-orm]
 version = "1.1.0"
@@ -105,5 +105,6 @@ opt-level = "s"   # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort"   # Higher performance by disabling panic handlers.
 strip = true      # Ensures debug symbols are removed.
 
+# Prevent multiple instances
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = "2.2.0"
