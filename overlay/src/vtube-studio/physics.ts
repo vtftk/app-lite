@@ -34,17 +34,6 @@ export type PhysicsEngineConfig = {
   gravityMultiplier: number;
 };
 
-export function isPhysicConfigDifferent(
-  a: PhysicsEngineConfig,
-  b: PhysicsEngineConfig,
-) {
-  return (
-    a.fps !== b.fps ||
-    a.reverseGravity !== b.reverseGravity ||
-    a.gravityMultiplier !== b.gravityMultiplier
-  );
-}
-
 export function createPhysicsEngine(config: PhysicsEngineConfig) {
   const { fps, gravityMultiplier, reverseGravity } = config;
 
