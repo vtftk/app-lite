@@ -67,6 +67,75 @@
 
 <PageLayoutList title="Home" description="Details about your current setup">
   <div class="status">
+    {#if $isAuthenticated.isLoading}
+      <div class="status-item">
+        <div class="status-text">
+          <h2>Twitch</h2>
+          <p>Checking twitch login status....</p>
+        </div>
+        <div class="status-indicator" data-status="yellow"></div>
+      </div>
+    {:else}
+      <div
+        class="status-item"
+        data-status={$isAuthenticated.data ? "green" : "red"}
+      >
+        <div class="status-text">
+          <h2>Twitch</h2>
+
+          {#if $isAuthenticated.data}
+            <p>Connected to your Twitch account.</p>
+
+            <div class="actions">
+              <button class="btn" onclick={onLogoutTwitch}>Logout</button>
+            </div>
+          {:else}
+            <p>
+              You are not currently connected to <b>Twitch</b>, please visit the
+              link below to allow access. Click "Open in browser" to open the
+              link in your default browser.
+            </p>
+
+            <div class="actions">
+              {#if $twitchOAuthURLQuery.data}
+                <a class="btn" href={$twitchOAuthURLQuery.data} target="_blank">
+                  Open in browser
+                </a>
+                <input
+                  class="url"
+                  type="text"
+                  readonly
+                  value={$twitchOAuthURLQuery.data}
+                />
+              {/if}
+            </div>
+          {/if}
+        </div>
+        <div
+          class="status-indicator"
+          data-status={$isAuthenticated.data ? "green" : "red"}
+        ></div>
+      </div>
+    {/if}
+    <div class="status-item">
+      <div class="status-text">
+        <h2>Active Overlay</h2>
+        <p>Connected OBS overlays</p>
+
+        {#if $overlayURLQuery.data}
+          <div class="actions">
+            <button class="btn" onclick={onCopyOverlay}>Copy Link</button>
+            <p class="url">{$overlayURLQuery.data}</p>
+          </div>
+        {/if}
+      </div>
+      <div
+        class="status-indicator"
+        data-status={$runtimeAppData.active_overlay_count > 0 ? "green" : "red"}
+      >
+        {$runtimeAppData.active_overlay_count}
+      </div>
+    </div>
     <div class="status-item">
       <div class="status-text">
         <h2>VTube Studio</h2>
@@ -119,75 +188,6 @@
           : "red"}
       ></div>
     </div>
-    <div class="status-item">
-      <div class="status-text">
-        <h2>Active Overlay</h2>
-        <p>Connected OBS overlays</p>
-
-        {#if $overlayURLQuery.data}
-          <div class="actions">
-            <button class="btn" onclick={onCopyOverlay}>Copy Link</button>
-            <p class="url">{$overlayURLQuery.data}</p>
-          </div>
-        {/if}
-      </div>
-      <div
-        class="status-indicator"
-        data-status={$runtimeAppData.active_overlay_count > 0 ? "green" : "red"}
-      >
-        {$runtimeAppData.active_overlay_count}
-      </div>
-    </div>
-    {#if $isAuthenticated.isLoading}
-      <div class="status-item">
-        <div class="status-text">
-          <h2>Twitch</h2>
-          <p>Checking twitch login status....</p>
-        </div>
-        <div class="status-indicator" data-status="yellow"></div>
-      </div>
-    {:else}
-      <div
-        class="status-item"
-        data-status={$isAuthenticated.data ? "green" : "red"}
-      >
-        <div class="status-text">
-          <h2>Twitch</h2>
-
-          {#if $isAuthenticated.data}
-            <p>Connected to your Twitch account.</p>
-
-            <div class="actions">
-              <button class="btn" onclick={onLogoutTwitch}>Logout</button>
-            </div>
-          {:else}
-            <p>
-              You are not currently connected to <b>Twitch</b>, please visit the
-              link below to allow access. Click "Open in browser" to open the
-              link in your default browser.
-            </p>
-
-            <div class="actions">
-              {#if $twitchOAuthURLQuery.data}
-                <a class="btn" href={$twitchOAuthURLQuery.data} target="_blank">
-                  Open in browser
-                </a>
-                <input
-                  class="url"
-                  type="text"
-                  readonly
-                  value={$twitchOAuthURLQuery.data}
-                />
-              {/if}
-            </div>
-          {/if}
-        </div>
-        <div
-          class="status-indicator"
-          data-status={$isAuthenticated.data ? "green" : "red"}
-        ></div>
-      </div>
-    {/if}
   </div>
 </PageLayoutList>
 

@@ -44,6 +44,14 @@
 <div class="form-input">
   <label for={id}>{label}</label>
 
+  <button
+    class="btn"
+    type="button"
+    onclick={() => {
+      inputElm?.click();
+    }}>{value ? "Replace" : "Select"} Image</button
+  >
+
   <div class="image-preview-wrapper">
     {#if currentImage !== undefined}
       <img
@@ -55,14 +63,6 @@
       />
     {/if}
   </div>
-
-  <button
-    class="btn"
-    type="button"
-    onclick={() => {
-      inputElm?.click();
-    }}>{value ? "Replace" : "Select"} Image</button
-  >
 
   <input
     data-felte-keep-on-remove

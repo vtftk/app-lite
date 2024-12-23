@@ -205,7 +205,7 @@
 
 <PageLayoutList
   title="Throwables"
-  description="Items that can be thrown. Configure them below"
+  description="Items that can be thrown."
   {actions}
   {beforeContent}
 >

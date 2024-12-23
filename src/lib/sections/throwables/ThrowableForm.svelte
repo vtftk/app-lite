@@ -243,7 +243,7 @@
         pixelated={$data.pixelate}
       />
 
-      <div class="row-group">
+      <div class="column">
         <FormNumberInput
           id="scale"
           name="scale"
@@ -262,7 +262,12 @@
           step={0.1}
         />
 
-        <FormBoundCheckbox id="pixelate" name="pixelate" label="Pixelate" />
+        <FormBoundCheckbox
+          id="pixelate"
+          name="pixelate"
+          label="Pixelate"
+          description="Use this option if your image is pixel art"
+        />
       </div>
     </div>
   </FormSection>
@@ -350,6 +355,12 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     overflow: hidden;
+  }
+
+  .column {
+    display: grid;
+    grid-template-columns: 1fr;
+    flex: auto;
   }
 
   .sound-item {
