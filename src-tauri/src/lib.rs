@@ -26,6 +26,7 @@ pub fn run() {
     env_logger::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         // Don't allow creation of multiple windows, instead focus the existing window
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app

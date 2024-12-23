@@ -73,6 +73,7 @@ env_logger = "0.11"
 deno_core = "0.323.0"
 interlink = "0.1.6"
 chrono = { version = "0.4.39", features = ["serde"] }
+tauri-plugin-shell = "2.2.0"
 
 
 # App database
