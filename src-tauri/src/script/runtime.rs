@@ -1,9 +1,20 @@
-use std::{
-    future::{poll_fn, Future},
-    pin::Pin,
-    task::Poll,
+use crate::{
+    database::entity::script_events::ScriptEvent,
+    events::matching::{EventData, EventInputData},
+    script::ops::{
+        http::op_http_get,
+        kv::{op_kv_get, op_kv_remove, op_kv_set},
+        logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
+        twitch::{
+            op_twitch_get_user_by_username, op_twitch_is_mod, op_twitch_is_vip,
+            op_twitch_send_chat, op_twitch_send_chat_announcement, op_twitch_send_shoutout,
+        },
+        vtftk::{
+            op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
+            op_vtftk_tts_generate_parsed, op_vtftk_tts_get_voices,
+        },
+    },
 };
-
 use anyhow::Context;
 use deno_core::{
     serde_v8::{from_v8, to_v8},
@@ -11,31 +22,17 @@ use deno_core::{
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
 use serde::{Deserialize, Serialize};
+use std::{
+    future::{poll_fn, Future},
+    pin::Pin,
+    task::Poll,
+};
 use tokio::{
     sync::{mpsc, oneshot},
     task::{self, LocalSet},
 };
 use twitch_api::types::{DisplayName, UserId, UserName};
 use uuid::Uuid;
-
-use crate::{
-    database::entity::script_events::ScriptEvent,
-    events::matching::{EventData, EventInputData},
-};
-
-use super::ops::{
-    http::op_http_get,
-    kv::{op_kv_get, op_kv_remove, op_kv_set},
-    logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
-    twitch::{
-        op_twitch_get_user_by_username, op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat,
-        op_twitch_send_chat_announcement, op_twitch_send_shoutout,
-    },
-    vtftk::{
-        op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
-        op_vtftk_tts_generate_parsed, op_vtftk_tts_get_voices,
-    },
-};
 
 /// Snapshot of the script engine runtime, see [build.rs](../../build.rs)
 static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =

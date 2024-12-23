@@ -1,3 +1,7 @@
+use super::manager::{
+    TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
+    TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
+};
 use anyhow::Context;
 use axum::async_trait;
 use futures::{
@@ -11,6 +15,10 @@ use tokio_tungstenite::{
     tungstenite::{self, protocol::WebSocketConfig},
     MaybeTlsStream, WebSocketStream,
 };
+use tungstenite::{
+    error::ProtocolError as WebsocketProtocolError, Error as TWebsocketError,
+    Message as WebsocketMessage,
+};
 use twitch_api::{
     eventsub::{
         self,
@@ -20,16 +28,6 @@ use twitch_api::{
     },
     twitch_oauth2::{TwitchToken, UserToken},
     HelixClient,
-};
-
-use tungstenite::{
-    error::ProtocolError as WebsocketProtocolError, Error as TWebsocketError,
-    Message as WebsocketMessage,
-};
-
-use super::manager::{
-    TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
-    TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
 };
 
 #[derive(Debug, Error)]

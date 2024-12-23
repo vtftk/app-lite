@@ -1,9 +1,9 @@
-use std::sync::Arc;
-
+use super::websocket::WebsocketClient;
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
 use log::error;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 use tokio::{
     join,
@@ -33,8 +33,6 @@ use twitch_api::{
     types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
     HelixClient,
 };
-
-use super::websocket::WebsocketClient;
 
 pub struct TwitchManager {
     pub helix_client: HelixClient<'static, reqwest::Client>,
