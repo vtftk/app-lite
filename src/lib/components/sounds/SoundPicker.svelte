@@ -84,7 +84,7 @@
       {:else}
         {selected.length > 0
           ? `${selected.length} Sounds selected`
-          : "Select Items"}
+          : "Select Sounds"}
       {/if}
     </button>
   </Dialog.Trigger>
