@@ -88,7 +88,7 @@
 
   async function save(values: Schema) {
     // Determine what events the script handles
-    const events = await invoke<string[]>("test_get_script_events", {
+    const events = await invoke<string[]>("get_script_events", {
       script: values.script,
     });
 
