@@ -6,8 +6,6 @@ api.twitch.sendChat("Loading available voices.....");
 // Get list of voices
 const voices = await api.vtftk.ttsVoices(message);
 
-const voicesMsg = voices.map((voice) => voice.name).join(", ");
-
 await api.twitch.sendChat("Available voices: ");
 
 let voicesMessage = "";

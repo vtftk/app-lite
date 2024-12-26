@@ -1,7 +1,4 @@
-const { user, args } = ctx;
-
-const inputUser = user.name;
-const targetUser = api.twitch.getUsernameArg(args[0]);
+const { targetUser } = ctx;
 
 let twitchUser;
 

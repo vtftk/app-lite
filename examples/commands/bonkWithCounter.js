@@ -1,5 +1,4 @@
-const { user, args } = ctx;
-const targetUser = api.twitch.getUsernameArg(args[0]);
+const { user, targetUser } = ctx;
 
 // Cannot hug nobody
 if (targetUser === null) {
