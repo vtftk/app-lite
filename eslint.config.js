@@ -10,7 +10,7 @@ import unusedImports from "eslint-plugin-unused-imports";
 import * as typescriptParser from "@typescript-eslint/parser";
 
 export default tseslint.config(
-  { ignores: ["script/**/*"] },
+  { ignores: ["src-tauri/src/script/**/*", "script/**/*"] },
   eslint.configs.recommended,
   tseslint.configs.recommended,
   ...eslintPluginSvelte.configs["flat/recommended"],

@@ -256,8 +256,8 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
     ScriptExecutorHandle { tx }
 }
 
-static JS_CALL_WRAPPER: &str = include_str!("../../../script/wrapper_call.js");
-static JS_COMMAND_WRAPPER: &str = include_str!("../../../script/wrapper_command.js");
+static JS_CALL_WRAPPER: &str = include_str!("./esm/wrapper_call.js");
+static JS_COMMAND_WRAPPER: &str = include_str!("./esm/wrapper_command.js");
 
 #[derive(Debug, Serialize)]
 #[serde(rename = "camelCase")]
