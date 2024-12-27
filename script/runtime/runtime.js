@@ -347,18 +347,26 @@ const vtftk = {
 };
 
 // API functions provided to the runtime
-globalThis.api = {
-  twitch,
-  kv,
-  http,
-  logging,
-  vtftk,
-};
+Object.defineProperty(globalThis, "api", {
+  value: {
+    twitch,
+    kv,
+    http,
+    logging,
+    vtftk,
+  },
+  writable: false,
+  configurable: false,
+});
 
 // Copy the logging functions to the commonly known console functions
-globalThis.console = {
-  log: logging.info,
-  info: logging.info,
-  error: logging.error,
-  debug: logging.debug,
-};
+Object.defineProperty(globalThis, "console", {
+  value: {
+    log: logging.info,
+    info: logging.info,
+    error: logging.error,
+    debug: logging.debug,
+  },
+  writable: false,
+  configurable: false,
+});
