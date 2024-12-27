@@ -33,6 +33,9 @@ function stringifyValue(data) {
   if (data === undefined) return "undefined";
   if (data === null) return "null";
   if (typeof data === "string") return data;
+  if (data instanceof Error) {
+    return JSON.stringify(data, Object.getOwnPropertyNames(data));
+  }
 
   const seen = [];
   const keys = [];
