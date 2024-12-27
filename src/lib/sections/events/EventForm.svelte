@@ -1012,7 +1012,7 @@
   <PageLayoutList
     title={existing ? "Edit Event" : "Create Event"}
     description={existing
-      ? "Editing Event"
+      ? `Editing "${existing.name}"`
       : "Create an event that will trigger some outcome"}
     {actions}
   >

@@ -309,7 +309,7 @@
   <PageLayoutList
     title={existing ? "Edit Throwable" : "Create Throwable"}
     description={existing
-      ? "Editing a throwable"
+      ? `Editing "${existing.name}"`
       : "Create a new item that can be thrown"}
     {actions}
   >

@@ -136,7 +136,7 @@
   <PageLayoutList
     title={existing ? "Edit Sound" : "Create Sound"}
     description={existing
-      ? "Editing a sound"
+      ? `Editing "${existing.name}"`
       : "Create a sound that can be triggered"}
     {actions}
   >

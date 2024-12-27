@@ -331,6 +331,10 @@
 
 <form use:form>
   {#snippet actions()}
+    {#if existing && $isDirty}
+      Unsaved changes...
+    {/if}
+
     <button type="submit" class="btn">
       {existing ? "Save" : "Create"}
     </button>
@@ -339,7 +343,9 @@
 
   <PageLayoutList
     title={existing ? "Edit Command" : "Create Command"}
-    description={existing && $isDirty ? "Unsaved changes..." : "..."}
+    description={existing
+      ? `Editing "${existing.name}"`
+      : "Create an event that will trigger some outcome"}
     {actions}
   >
     <HTabs
