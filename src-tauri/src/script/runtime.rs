@@ -2,7 +2,7 @@ use crate::{
     database::entity::script_events::ScriptEvent,
     events::matching::{EventData, EventInputData},
     script::ops::{
-        http::op_http_get,
+        http::op_http_request,
         kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
         twitch::{
@@ -41,7 +41,7 @@ static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
 deno_core::extension!(
     api_extension,
     ops = [
-        op_http_get,
+        op_http_request,
         op_twitch_send_chat,
         op_log_debug,
         op_log_info,

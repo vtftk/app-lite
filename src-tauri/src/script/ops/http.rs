@@ -2,37 +2,141 @@
 //!
 //! API for performing HTTP requests from within the JS runtime
 
-use anyhow::Context;
 use deno_core::*;
-use log::debug;
-use serde::Serialize;
+use reqwest::Method;
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr, DurationMilliSeconds, Map};
+use std::time::Duration;
 
-#[derive(Debug, Serialize)]
-pub struct JsHttpResponse {
-    ok: bool,
+/// Request structure from JS to perform an HTTP request
+#[serde_as]
+#[derive(Default, Deserialize)]
+#[serde(default)]
+pub struct HttpRequest {
+    /// URL for the HTTP request
+    url: String,
+    /// Method for the HTTP request
+    #[serde_as(as = "DisplayFromStr")]
+    method: Method,
+    /// Body for the HTTP request
+    body: Option<HttpRequestBody>,
+    /// Headers for the HTTP request
+    #[serde_as(as = "Option<Map<_, _>>")]
+    headers: Option<Vec<(String, String)>>,
+    /// Optional request timeout
+    #[serde_as(as = "Option<DurationMilliSeconds>")]
+    timeout: Option<Duration>,
+    /// Requested format of the response
+    response_format: ResponseFormat,
+}
+
+#[serde_as]
+#[derive(Serialize)]
+pub struct HttpResponse {
+    /// HTTP response status code
     status: u16,
-    response: String,
+
+    /// Response headers
+    #[serde_as(as = "serde_with::Map<_, _>")]
+    headers: Vec<(String, String)>,
+
+    /// Body of the response
+    body: HttpResponseBody,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ResponseFormat {
+    Json,
+    Raw,
+    #[default]
+    Text,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type", content = "value")]
+#[serde(rename_all = "snake_case")]
+pub enum HttpRequestBody {
+    // Raw binary data from JS
+    Raw(Vec<u8>),
+    // Text body content
+    Text(String),
+    // JSON body content
+    Json(serde_json::Value),
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum HttpResponseBody {
+    Json(serde_json::Value),
+    Raw(Vec<u8>),
+    Text(String),
 }
 
 /// Operation for performing a GET request to a specific URL from JS
 #[op2(async)]
 #[serde]
-pub async fn op_http_get(#[string] url: String) -> anyhow::Result<JsHttpResponse> {
-    debug!("performing http get request: {}", url);
+pub async fn op_http_request(#[serde] req: HttpRequest) -> anyhow::Result<HttpResponse> {
+    // Get or create HTTP client
+    let client = reqwest::Client::new();
 
-    let response = reqwest::get(url)
-        .await
-        .context("failed to perform get request")?;
+    let mut builder = client.request(req.method, req.url);
 
-    let status = response.status();
-    let body = response.text().await?;
-    let ok = status.is_success();
+    // Append request body
+    if let Some(body) = req.body {
+        match body {
+            HttpRequestBody::Raw(vec) => {
+                builder = builder.body(vec);
+            }
+            HttpRequestBody::Text(text) => builder = builder.body(text),
+            HttpRequestBody::Json(value) => builder = builder.json(&value),
+        }
+    }
 
-    debug!("http response: {:?}", body);
+    // Append request headers
+    if let Some(headers) = req.headers {
+        for (name, value) in headers {
+            builder = builder.header(name, value);
+        }
+    }
 
-    Ok(JsHttpResponse {
-        ok,
-        status: status.as_u16(),
-        response: body,
+    // Set request timeout
+    if let Some(timeout) = req.timeout {
+        builder = builder.timeout(timeout);
+    }
+
+    let response = builder.send().await?;
+
+    let status = response.status().as_u16();
+    let headers: Vec<(String, String)> = response
+        .headers()
+        .into_iter()
+        .map(|(key, value)| {
+            let key = key.to_string();
+            let value = value.to_str()?;
+            anyhow::Ok((key, value.to_string()))
+        })
+        .filter_map(|value| value.ok())
+        .collect();
+
+    let body = match req.response_format {
+        ResponseFormat::Json => {
+            let value: serde_json::Value = response.json().await?;
+            HttpResponseBody::Json(value)
+        }
+        ResponseFormat::Raw => {
+            let value = response.bytes().await?;
+            HttpResponseBody::Raw(value.into())
+        }
+        ResponseFormat::Text => {
+            let value = response.text().await?;
+            HttpResponseBody::Text(value)
+        }
+    };
+
+    Ok(HttpResponse {
+        status,
+        body,
+        headers,
     })
 }

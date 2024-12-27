@@ -99,14 +99,86 @@ declare global {
     ) => string | null;
   }
 
+  type HttpMethod =
+    | "GET"
+    | "POST"
+    | "PUT"
+    | "DELETE"
+    | "PATCH"
+    | "OPTIONS"
+    | "HEAD"
+    | "TRACE"
+    | "CONNECT";
+
+  type ResponseTypeMap = {
+    json: object;
+    text: string;
+  };
+
+  type HttpResponseFormat = keyof ResponseTypeMap;
+
+  type HttpBody = object | string;
+
+  type HttpOptions = Partial<{
+    url: string;
+
+    /// HTTP request method
+    method: HttpMethod;
+
+    // Response type format expected
+    responseFormat: HttpResponseFormat;
+
+    body: HttpBody;
+
+    /// Optional request timeout in milliseconds
+    timeout: number;
+  }>;
+
+  type HttpResponse<O extends HttpOptions> = {
+    // Response status code
+    status: number;
+
+    // Response headers
+    headers: Partial<Record<string, string>>;
+
+    // Helper to check if the response is a 2xx response code
+    get ok(): boolean;
+
+    // Response body
+    body: ResponseTypeMap[O["responseFormat"]];
+  };
+
   export interface RuntimeHttpApi {
-    /**
-     * Perform an HTTP get request
-     *
-     * @param url The URL to request
-     * @returns The response text content
-     */
-    get: (url: string) => Promise<HttpResponse>;
+    request<O extends HttpOptions>(options: O): Promise<HttpResponse<O>>;
+
+    get<O extends Omit<HttpOptions, "body">>(
+      url: string,
+      options?: O,
+    ): Promise<HttpResponse<O>>;
+
+    post<O extends HttpOptions>(
+      url: string,
+      body?: HttpBody,
+      options?: O,
+    ): Promise<HttpResponse<O>>;
+
+    put<O extends HttpOptions>(
+      url: string,
+      body?: HttpBody,
+      options?: O,
+    ): Promise<HttpResponse<O>>;
+
+    patch<O extends HttpOptions>(
+      url: string,
+      body?: HttpBody,
+      options?: O,
+    ): Promise<HttpResponse<O>>;
+
+    delete<O extends HttpOptions>(
+      url: string,
+      body?: HttpBody,
+      options?: O,
+    ): Promise<HttpResponse<O>>;
   }
 
   export interface KvStoreApi {

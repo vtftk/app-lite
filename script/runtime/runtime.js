@@ -25,15 +25,44 @@ function stringifyValues(...args) {
 /**
  * Converts the provided value into a string
  *
- * @param {*} value Value to print
+ * @param {*} data Value to print
  * @returns The string version of the value
  */
-function stringifyValue(value) {
-  if (value === undefined) return "undefined";
-  if (value === null) return "null";
-  if (typeof value === "string") return value;
+function stringifyValue(data) {
+  // Handle special cases
+  if (data === undefined) return "undefined";
+  if (data === null) return "null";
+  if (typeof data === "string") return value;
 
-  return JSON.stringify(value, Object.getOwnPropertyNames(value));
+  const seen = [];
+  const keys = [];
+
+  function stringify(key, value) {
+    if (typeof value === "object" && value) {
+      let index = seen.indexOf(value);
+
+      if (index !== -1) {
+        let topkey = keys[index];
+        const path = [topkey];
+
+        for (index--; index > 0; index--) {
+          if (seen[index][topkey] === value) {
+            value = seen[index];
+            path.unshift((topkey = keys[index]));
+          }
+        }
+
+        return "<ref:" + path.join(".") + ">";
+      }
+
+      seen.push(value);
+      keys.push(key);
+    }
+
+    return value;
+  }
+
+  return JSON.stringify(data, stringify, 2);
 }
 
 const logging = {
@@ -256,8 +285,51 @@ const twitch = {
   },
 };
 
+async function createHttpRequest(options) {
+  // URL must be defined and a string
+  if (options.url === undefined || typeof options.url !== "string") {
+    throw new Error("url must be a present and a string");
+  }
+
+  let requestBody = undefined;
+  const body = options.body;
+  if (typeof body === "string") {
+    requestBody = { type: "text", value: body };
+  } else if (typeof body === "object") {
+    requestBody = { type: "json", value: body };
+  }
+
+  let responseFormat = (options.responseFormat ?? "text").toLowerCase();
+
+  const response = await Deno.core.ops.op_http_request({
+    url: options.url,
+    method: options.method,
+    body: requestBody,
+    headers: options.headers,
+    timeout: options.timeout,
+    response_format: responseFormat,
+  });
+
+  return {
+    ...response,
+
+    get ok() {
+      return Math.floor(response.status / 100) == 2;
+    },
+  };
+}
+
 const http = {
-  get: (url) => Deno.core.ops.op_http_get(url),
+  request: (options) => createHttpRequest(options),
+  get: (url, options) => createHttpRequest({ ...options, url, method: "GET" }),
+  post: (url, body, options) =>
+    createHttpRequest({ ...options, url, method: "POST", body }),
+  put: (url, body, options) =>
+    createHttpRequest({ ...options, url, method: "PUT", body }),
+  patch: (url, body, options) =>
+    createHttpRequest({ ...options, url, method: "PATCH", body }),
+  delete: (url, body, options) =>
+    createHttpRequest({ ...options, url, method: "DELETE", body }),
 };
 
 const vtftk = {
