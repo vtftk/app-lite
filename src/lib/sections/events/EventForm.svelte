@@ -3,12 +3,14 @@
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
+  import { type VEvent } from "$shared/dataV2";
   import reporterDom from "@felte/reporter-dom";
   import { minMax } from "$lib/utils/validation";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import { getEventTestingData } from "$lib/utils/eventTestData";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
@@ -33,11 +35,6 @@
   import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
   import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
   import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
-  import {
-    type VEvent,
-    type VEventData,
-    SubscriptionTier,
-  } from "$shared/dataV2";
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
   import {
@@ -571,85 +568,7 @@
   function onTest() {
     if (existing === undefined) return;
 
-    let eventData: VEventData = {
-      user: {
-        id: "test_user",
-        name: "test_user",
-        display_name: "TestTwitchUser",
-      },
-    };
-
-    switch ($data.outcome.type) {
-      case EventOutcomeType.ThrowBits: {
-        eventData = {
-          user: {
-            id: "test_user",
-            name: "test_user",
-            display_name: "TestTwitchUser",
-          },
-          bits: Math.floor(Math.random() * 10_000),
-          anonymous: false,
-          message: "Wooo bits!",
-        };
-        break;
-      }
-      case EventOutcomeType.Throwable: {
-        switch ($data.trigger.type) {
-          case EventTriggerType.Subscription:
-            eventData = {
-              user: {
-                id: "test_user",
-                name: "test_user",
-                display_name: "TestTwitcwhUser",
-              },
-              tier: SubscriptionTier.Tier1,
-              is_gift: Math.random() < 0.5,
-            };
-            break;
-          case EventTriggerType.GiftedSubscription:
-            eventData = {
-              user: {
-                id: "test_user",
-                name: "test_user",
-                display_name: "TestTwitchUser",
-              },
-              tier: SubscriptionTier.Tier1,
-              cumulative_total: Math.floor(Math.random() * 12),
-              anonymous: false,
-              total: Math.floor(Math.random() * 100),
-            };
-            break;
-          case EventTriggerType.Bits:
-            eventData = {
-              user: {
-                id: "test_user",
-                name: "test_user",
-                display_name: "TestTwitchUser",
-              },
-              bits: Math.floor(Math.random() * 30_000),
-              anonymous: false,
-              message: "Test bits donation message",
-            };
-            break;
-          case EventTriggerType.Raid:
-            eventData = {
-              user: {
-                id: "test_user",
-                name: "test_user",
-                display_name: "TestTwitchUser",
-              },
-              viewers: Math.floor(Math.random() * 10_000),
-            };
-            break;
-          default:
-            break;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-
+    const eventData = getEventTestingData($data.trigger.type);
     const throwPromise = testEvent(existing.id, eventData);
 
     toast.promise(throwPromise, {
