@@ -32,7 +32,7 @@ function stringifyValue(data) {
   // Handle special cases
   if (data === undefined) return "undefined";
   if (data === null) return "null";
-  if (typeof data === "string") return value;
+  if (typeof data === "string") return data;
 
   const seen = [];
   const keys = [];
