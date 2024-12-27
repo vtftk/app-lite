@@ -6,11 +6,14 @@
 <h1>VTuber Fun ToolKit (VTFTK)</h1>
 <p><b>WIP</b> App for VTubers to create interactive experiences with their viewers
 </p>
+<a href="https://vtftk.pages.dev/" target="_blank">Website</a>
 </td>
 </tr>
 </table>
 
 ## 
+
+Checkout the [Website](https://vtftk.pages.dev/) for guides and setup instructions
 
 Create items that can be thrown at you, sounds that can be played, and trigger VTube studio. All using events from twitch such as redeems, commands, subscriptions, follows, raids, bits
 
