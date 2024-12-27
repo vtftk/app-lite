@@ -319,13 +319,13 @@
 
 {#snippet executionsTabContent()}
   {#if existing !== undefined}
-    <CommandLogs id={existing.id} />
+    <CommandExecutions id={existing.id} />
   {/if}
 {/snippet}
 
 {#snippet logsTabContent()}
   {#if existing !== undefined}
-    <CommandExecutions id={existing.id} />
+    <CommandLogs id={existing.id} />
   {/if}
 {/snippet}
 
