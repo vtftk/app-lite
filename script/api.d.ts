@@ -110,12 +110,12 @@ declare global {
     | "TRACE"
     | "CONNECT";
 
-  type ResponseTypeMap = {
+  type HttpResponseFormatMap = {
     json: object;
     text: string;
   };
 
-  type HttpResponseFormat = keyof ResponseTypeMap;
+  type HttpResponseFormat = keyof HttpResponseFormatMap;
 
   type HttpBody = object | string;
 
@@ -145,7 +145,9 @@ declare global {
     get ok(): boolean;
 
     // Response body
-    body: ResponseTypeMap[O["responseFormat"]];
+    body: O extends { responseFormat: keyof HttpResponseFormatMap }
+      ? HttpResponseFormatMap[O["responseFormat"]]
+      : HttpResponseFormatMap["text"];
   };
 
   export interface RuntimeHttpApi {
@@ -273,15 +275,6 @@ declare global {
      */
     playSound: (src: string, volume?: number) => Promise<void>;
     playSoundSeq: (sounds: SoundSeq) => Promise<void>;
-  }
-
-  export interface HttpResponse {
-    // Whether the status code is a 2xx status code
-    ok: boolean;
-    // HTTP status code
-    status: number;
-    // HTTP response text
-    response: string;
   }
 
   export interface TwitchEventUser {
