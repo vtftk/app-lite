@@ -17,6 +17,7 @@
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
+  import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
@@ -212,29 +213,35 @@
     // Validation and error reporting
     extend: [validator({ schema }), reporterDom()],
 
-    onSubmit(values) {
-      const savePromise = save(values);
-
-      toast.promise(
-        savePromise,
-        existing
-          ? {
-              loading: "Saving event...",
-              success: "Saved event",
-              error: toastErrorMessage("Failed to save event"),
-            }
-          : {
-              loading: "Creating event...",
-              success: "Created event",
-              error: toastErrorMessage("Failed to create event"),
-            },
-      );
+    async onSubmit(values) {
+      await saveWithToast(values);
 
       if (!existing) {
         goto("/events");
       }
     },
   });
+
+  function saveWithToast(values: Schema) {
+    const savePromise = save(values);
+
+    toast.promise(
+      savePromise,
+      existing
+        ? {
+            loading: "Saving event...",
+            success: "Saved event",
+            error: toastErrorMessage("Failed to save event"),
+          }
+        : {
+            loading: "Creating event...",
+            success: "Created event",
+            error: toastErrorMessage("Failed to create event"),
+          },
+    );
+
+    return savePromise;
+  }
 
   async function save(values: Schema) {
     if (existing) {
@@ -549,7 +556,6 @@
       value: EventOutcomeType.SendChatMessage,
       label: "Send chat message",
       description: "Send a message template to chat",
-      content: playSoundOutcomeContent,
     },
     {
       icon: SolarCodeSquareBoldDuotone,
@@ -998,10 +1004,59 @@
           setIsDirty(true);
         }}
         onUserSave={() => {
-          if (existing) save($data);
+          if (existing) saveWithToast($data);
         }}
       />
     </section>
+  {:else if $data.outcome.type === EventOutcomeType.SendChatMessage}
+    <div class="template-split">
+      <section class="editor">
+        <MonacoEditor
+          language="commandTemplateFormat"
+          value={$data.outcome.template}
+          onChange={(value) => {
+            setFields("outcome.template", value, true);
+            setIsDirty(true);
+          }}
+          onUserSave={() => {
+            if (existing) saveWithToast($data);
+          }}
+          options={{
+            wordWrap: "on",
+          }}
+        />
+      </section>
+
+      <div class="hints">
+        <p>
+          If your response message is longer than 500 characters it will be
+          split into multiple messages and sent separately
+        </p>
+        <p>Templating</p>
+
+        <ul>
+          <li>
+            $(user) - Replaced with the name of the user who triggered the
+            event. Replaced with "Anonymous" when no username is available
+          </li>
+
+          {#if $data.trigger.type === EventTriggerType.Redeem}
+            <li>
+              $(userInput) - Replaced with the redeem message for redeems that
+              allow user input
+            </li>
+            <li>$(rewardName) - Replaced with the name of the redeemable</li>
+            <li>
+              $(rewardCost) - Replaced with the channel points cost of the
+              redeem
+            </li>
+          {:else if $data.trigger.type === EventTriggerType.Bits}
+            <li>$(userInput) - Replaced with the bits gift message</li>
+            <li>$(bits) - Replaced with the number of bits gifted</li>
+          {/if}
+        </ul>
+      </div>
+    </div>
   {/if}
 {/snippet}
 
@@ -1061,12 +1116,16 @@
           content: outcomeTabContent,
         },
 
-        ...($data.outcome.type === EventOutcomeType.Script
+        ...($data.outcome.type === EventOutcomeType.SendChatMessage ||
+        $data.outcome.type === EventOutcomeType.Script
           ? [
               {
                 value: "code",
                 icon: SolarCodeSquareBoldDuotone,
-                label: "Code",
+                label:
+                  $data.outcome.type === EventOutcomeType.SendChatMessage
+                    ? "Template"
+                    : "Code",
                 content: codeTabContent,
                 disablePadding: true,
               },
@@ -1124,5 +1183,20 @@
     position: relative;
     overflow: hidden;
     height: 100%;
+  }
+
+  .template-split {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+  }
+
+  .template-split .editor {
+    flex: auto;
+    height: 100%;
+  }
+
+  .hints {
+    max-width: 14rem;
   }
 </style>

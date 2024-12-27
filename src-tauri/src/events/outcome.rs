@@ -73,9 +73,12 @@ async fn send_chat_message(
 ) -> anyhow::Result<()> {
     let mut message = data.template;
 
-    if let Some(user) = event_data.user {
-        message = message.replace("$(user)", user.name.as_str());
-    }
+    let user_name = event_data
+        .user
+        .map(|user| user.name.to_string())
+        .unwrap_or_else(|| "Anonymous".to_string());
+
+    message = message.replace("$(user)", user_name.as_str());
 
     match event_data.input_data {
         EventInputData::Redeem {
