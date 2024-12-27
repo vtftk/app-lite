@@ -5,8 +5,9 @@ use crate::{
         kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
         twitch::{
-            op_twitch_get_user_by_username, op_twitch_is_mod, op_twitch_is_vip,
-            op_twitch_send_chat, op_twitch_send_chat_announcement, op_twitch_send_shoutout,
+            op_twitch_get_follower, op_twitch_get_user_by_username, op_twitch_is_mod,
+            op_twitch_is_vip, op_twitch_send_chat, op_twitch_send_chat_announcement,
+            op_twitch_send_shoutout,
         },
         vtftk::{
             op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
@@ -49,6 +50,7 @@ deno_core::extension!(
         op_twitch_is_mod,
         op_twitch_is_vip,
         op_twitch_get_user_by_username,
+        op_twitch_get_follower,
         op_twitch_send_chat_announcement,
         op_twitch_send_shoutout,
         op_kv_get,

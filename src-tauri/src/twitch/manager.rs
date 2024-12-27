@@ -19,7 +19,7 @@ use twitch_api::{
         },
     },
     helix::{
-        channels::Vip,
+        channels::{Follower, GetChannelFollowersRequest, Vip},
         chat::{
             SendAShoutoutRequest, SendAShoutoutResponse, SendChatAnnouncementBody,
             SendChatAnnouncementRequest, SendChatAnnouncementResponse, SendChatMessageBody,
@@ -171,6 +171,22 @@ impl TwitchManager {
             display_name: user.display_name,
             profile_image_url: user.profile_image_url,
         }))
+    }
+
+    pub async fn get_follower_by_id(&self, user_id: UserId) -> anyhow::Result<Option<Follower>> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let broadcaster_id = token.user_id.clone();
+
+        // Create chat message request
+        let request = GetChannelFollowersRequest::broadcaster_id(broadcaster_id).user_id(user_id);
+
+        // Send request and get response
+        let mut response: Vec<Follower> = self.helix_client.req_get(request, &token).await?.data;
+
+        Ok(response.pop())
     }
 
     pub async fn send_shoutout(

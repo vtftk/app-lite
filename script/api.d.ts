@@ -77,6 +77,8 @@ declare global {
      */
     isModerator: (userId: UserId) => Promise<boolean>;
 
+    getFollower: (userId: UserId) => Promise<TwitchFollower | null>;
+
     /**
      * Validates a Twitch username, strict checks ensuring the name
      * meets the required length and allowed characters
@@ -98,6 +100,13 @@ declare global {
       validate?: boolean,
     ) => string | null;
   }
+
+  export type TwitchFollower = {
+    followed_at: string;
+    user_id: string;
+    user_login: string;
+    user_name: string;
+  };
 
   type HttpMethod =
     | "GET"

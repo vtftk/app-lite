@@ -1,14 +1,14 @@
 use crate::{
     script::events::{
-        global_script_event, TwitchGetUserByUsername, TwitchIsMod, TwitchIsVip, TwitchSendChat,
-        TwitchSendChatAnnouncement, TwitchSendShoutout,
+        global_script_event, TwitchGetFollower, TwitchGetUserByUsername, TwitchIsMod, TwitchIsVip,
+        TwitchSendChat, TwitchSendChatAnnouncement, TwitchSendShoutout,
     },
     twitch::manager::TwitchUser,
 };
 use anyhow::Context;
 use deno_core::*;
 use log::debug;
-use twitch_api::types::UserId;
+use twitch_api::{helix::channels::Follower, types::UserId};
 
 /// Operation for sending a chat message from JS
 #[op2(async)]
@@ -44,6 +44,16 @@ pub async fn op_twitch_get_user_by_username(
     global_script_event(TwitchGetUserByUsername { username })
         .await
         .context("failed to send event")?
+}
+
+#[op2(async)]
+#[serde]
+pub async fn op_twitch_get_follower(#[string] user_id: String) -> anyhow::Result<Option<Follower>> {
+    global_script_event(TwitchGetFollower {
+        user_id: UserId::new(user_id),
+    })
+    .await
+    .context("failed to send event")?
 }
 
 #[op2(async)]

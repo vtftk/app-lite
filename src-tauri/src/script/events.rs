@@ -4,7 +4,7 @@ use log::error;
 use sea_orm::{prelude::DateTimeUtc, DatabaseConnection, ModelTrait};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
-use twitch_api::types::UserId;
+use twitch_api::{helix::channels::Follower, types::UserId};
 use uuid::Uuid;
 
 use crate::{
@@ -186,6 +186,28 @@ impl Handler<TwitchGetUserByUsername> for ScriptEventActor {
         let twitch_manager = self.twitch_manager.clone();
         Fr::new_box(async move {
             let user = twitch_manager.get_user_by_username(&msg.username).await?;
+            Ok(user)
+        })
+    }
+}
+/// Message to get a twitch user using their username
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<Option<Follower>>")]
+pub struct TwitchGetFollower {
+    pub user_id: UserId,
+}
+
+impl Handler<TwitchGetFollower> for ScriptEventActor {
+    type Response = Fr<TwitchGetFollower>;
+
+    fn handle(
+        &mut self,
+        msg: TwitchGetFollower,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            let user = twitch_manager.get_follower_by_id(msg.user_id).await?;
             Ok(user)
         })
     }

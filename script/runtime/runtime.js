@@ -236,6 +236,7 @@ const twitch = {
     Deno.core.ops.op_twitch_send_shoutout(targetUserId),
   isModerator: (userId) => Deno.core.ops.op_twitch_is_mod(userId),
   isVip: (userId) => Deno.core.ops.op_twitch_is_vip(userId),
+  getFollower: (userId) => Deno.core.ops.op_twitch_get_follower(userId),
   getUsernameArg: (arg, validate = false) => {
     // Arg not provided
     if (arg === undefined || arg === null || typeof arg !== "string")
