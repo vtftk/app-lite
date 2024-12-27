@@ -268,6 +268,8 @@
         outcome_delay: values.outcome_delay,
       });
     }
+
+    setIsDirty(false);
   }
 
   function getTriggerDefaults(type: EventTriggerType): TriggerSchema {
@@ -1145,6 +1147,7 @@
                 icon: SolarReorderBoldDuotone,
                 label: "Executions",
                 content: executionsTabContent,
+                disablePadding: true,
               },
 
               {
