@@ -10,8 +10,8 @@ use uuid::Uuid;
 use crate::{
     database::entity::{
         command_logs::{CommandLogsModel, CreateCommandLog},
+        event_logs::{CreateEventLog, EventLogsModel},
         key_value::{CreateKeyValue, KeyValueModel, KeyValueType},
-        script_logs::{CreateScriptLog, ScriptLogsModel},
         shared::LoggingLevelDb,
         SoundModel,
     },
@@ -431,11 +431,11 @@ impl Handler<LogPersistEvent> for ScriptEventActor {
         let db = self.db.clone();
         Fr::new_box(async move {
             match msg.ctx {
-                RuntimeExecutionContext::Script { script_id } => {
-                    if let Err(err) = ScriptLogsModel::create(
+                RuntimeExecutionContext::Event { event_id } => {
+                    if let Err(err) = EventLogsModel::create(
                         &db,
-                        CreateScriptLog {
-                            script_id,
+                        CreateEventLog {
+                            event_id,
                             level: msg.level,
                             message: msg.message,
                             created_at: msg.created_at,

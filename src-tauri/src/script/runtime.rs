@@ -1,5 +1,4 @@
 use crate::{
-    database::entity::script_events::ScriptEvent,
     events::matching::{EventData, EventInputData},
     script::ops::{
         http::op_http_request,
@@ -17,7 +16,7 @@ use crate::{
 };
 use anyhow::Context;
 use deno_core::{
-    serde_v8::{from_v8, to_v8},
+    serde_v8::to_v8,
     v8::{self, Global, Local},
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
@@ -68,8 +67,8 @@ deno_core::extension!(
 /// across async calls for handling logging sources
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum RuntimeExecutionContext {
-    /// Runtime execution started from a script
-    Script { script_id: Uuid },
+    /// Runtime execution started from a event
+    Event { event_id: Uuid },
     /// Runtime execution started from a command
     Command { command_id: Uuid },
 }
@@ -83,8 +82,6 @@ pub enum ScriptExecutorMessage {
         ctx: RuntimeExecutionContext,
         /// The script code to run
         script: String,
-        /// The event to trigger within the code
-        event: ScriptEvent,
         /// Data for the event
         data: EventData,
         /// Channel to send back the result
@@ -103,15 +100,6 @@ pub enum ScriptExecutorMessage {
         /// Channel to send back the result
         tx: oneshot::Sender<anyhow::Result<()>>,
     },
-
-    /// Tells the executor to run the provided scripts and report the
-    /// names of the events that the script subscribes to
-    EventsList {
-        /// The script code to run
-        script: String,
-        /// Channel to send back the result
-        tx: oneshot::Sender<anyhow::Result<Vec<ScriptEvent>>>,
-    },
 }
 
 /// Handle for accessing the script executor
@@ -128,7 +116,6 @@ impl ScriptExecutorHandle {
         &self,
         ctx: RuntimeExecutionContext,
         script: String,
-        event: ScriptEvent,
         data: EventData,
     ) -> anyhow::Result<()> {
         let (tx, rx) = oneshot::channel();
@@ -137,7 +124,6 @@ impl ScriptExecutorHandle {
             .send(ScriptExecutorMessage::EventScript {
                 ctx,
                 script,
-                event,
                 data,
                 tx,
             })
@@ -162,17 +148,6 @@ impl ScriptExecutorHandle {
                 cmd_ctx,
                 tx,
             })
-            .await
-            .context("executor is not running")?;
-
-        rx.await.context("executor closed without response")?
-    }
-
-    pub async fn get_events(&self, script: String) -> anyhow::Result<Vec<ScriptEvent>> {
-        let (tx, rx) = oneshot::channel();
-
-        self.tx
-            .send(ScriptExecutorMessage::EventsList { script, tx })
             .await
             .context("executor is not running")?;
 
@@ -248,11 +223,10 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
                     ScriptExecutorMessage::EventScript {
                         ctx,
                         script,
-                        event,
                         data,
                         tx,
                     } => {
-                        let result = execute_script(&mut js_runtime, ctx, script, event, data);
+                        let result = execute_script(&mut js_runtime, ctx, script, data);
                         spawn_script_promise(&mut js_runtime, result, tx)
                     }
                     ScriptExecutorMessage::CommandScript {
@@ -263,10 +237,6 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
                     } => {
                         let result = execute_command(&mut js_runtime, ctx, script, cmd_ctx);
                         spawn_script_promise(&mut js_runtime, result, tx)
-                    }
-                    ScriptExecutorMessage::EventsList { script, tx } => {
-                        let result = get_script_events(&mut js_runtime, script);
-                        _ = tx.send(result);
                     }
                 }
 
@@ -285,7 +255,6 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
 }
 
 static JS_CALL_WRAPPER: &str = include_str!("../../../script/wrapper_call.js");
-static JS_EVENTS_WRAPPER: &str = include_str!("../../../script/wrapper_events.js");
 static JS_COMMAND_WRAPPER: &str = include_str!("../../../script/wrapper_command.js");
 
 #[derive(Debug, Serialize)]
@@ -351,7 +320,6 @@ fn execute_script(
     runtime: &mut JsRuntime,
     ctx: RuntimeExecutionContext,
     script: String,
-    event: ScriptEvent,
     data: EventData,
 ) -> anyhow::Result<v8::Global<v8::Value>> {
     let script = JS_CALL_WRAPPER.replace("USER_CODE;", &script);
@@ -372,37 +340,14 @@ fn execute_script(
             .context("wrapper didn't produce function")?;
 
         let ctx_value = to_v8(scope, ctx)?;
-        let event_value = to_v8(scope, event)?;
         let data_value = to_v8(scope, data)?;
 
         let result = local_fn
-            .call(scope, global, &[ctx_value, event_value, data_value])
+            .call(scope, global, &[ctx_value, data_value])
             .context("function provided no return value")?;
+
         Global::new(scope, result)
     };
 
     Ok(global_promise)
-}
-
-/// Executes a script, uses the wrapper code to determine which events the user
-/// has subscribed to
-fn get_script_events(runtime: &mut JsRuntime, script: String) -> anyhow::Result<Vec<ScriptEvent>> {
-    let script = JS_EVENTS_WRAPPER.replace("USER_CODE;", &script);
-
-    // Execute script
-    let output = runtime.execute_script("<anon>", script)?;
-
-    let names: Vec<String> = {
-        let mut scope = runtime.handle_scope();
-        let local = Local::new(&mut scope, output);
-        from_v8(&mut scope, local).context("invalid events output")?
-    };
-
-    let events = names
-        .into_iter()
-        // Parse event names
-        .filter_map(|name| serde_json::from_str::<ScriptEvent>(&format!("\"{name}\"")).ok())
-        .collect();
-
-    Ok(events)
 }

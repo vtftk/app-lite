@@ -6,7 +6,7 @@ use chrono::Utc;
 use entity::CommandExecutionModel;
 use entity::CommandLogsModel;
 use entity::EventExecutionModel;
-use entity::ScriptLogsModel;
+use entity::EventLogsModel;
 use log::warn;
 use migration::Migrator;
 use sea_orm::Database;
@@ -58,7 +58,7 @@ pub async fn clean_old_data(db: DatabaseConnection, app_data: AppDataStore) -> a
             .checked_sub_days(Days::new(main_config.clean_logs_days))
             .context("system time is incorrect")?;
 
-        ScriptLogsModel::delete_before(&db, clean_logs_date).await?;
+        EventLogsModel::delete_before(&db, clean_logs_date).await?;
         CommandLogsModel::delete_before(&db, clean_logs_date).await?;
     }
 

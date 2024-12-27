@@ -2,15 +2,13 @@ pub mod command_executions;
 pub mod command_logs;
 pub mod commands;
 pub mod event_executions;
+pub mod event_logs;
 pub mod events;
 pub mod items;
 pub mod items_impact_sounds;
 pub mod key_value;
 pub mod links;
 pub mod model_data;
-pub mod script_events;
-pub mod script_logs;
-pub mod scripts;
 pub mod shared;
 pub mod sounds;
 
@@ -36,14 +34,6 @@ pub use events::{EventActiveModel, EventColumn, EventEntity, EventModel};
 pub use model_data::{ModelDataActiveModel, ModelDataColumn, ModelDataEntity, ModelDataModel};
 
 #[allow(unused)]
-pub use scripts::{ScriptActiveModel, ScriptColumn, ScriptEntity, ScriptModel};
-
-#[allow(unused)]
-pub use script_events::{
-    ScriptEventsActiveModel, ScriptEventsColumn, ScriptEventsEntity, ScriptEventsModel,
-};
-
-#[allow(unused)]
 pub use command_executions::{
     CommandExecutionActiveModel, CommandExecutionColumn, CommandExecutionEntity,
     CommandExecutionModel,
@@ -63,4 +53,4 @@ pub use event_executions::{
 pub use key_value::{KeyValueActiveModel, KeyValueColumn, KeyValueEntity, KeyValueModel};
 
 #[allow(unused)]
-pub use script_logs::{ScriptLogsActiveModel, ScriptLogsColumn, ScriptLogsEntity, ScriptLogsModel};
+pub use event_logs::{EventLogsActiveModel, EventLogsColumn, EventLogsEntity, EventLogsModel};

@@ -1,5 +1,8 @@
 import type {
+  LogId,
   EventId,
+  EventLog,
+  LogsQuery,
   VEventData,
   UpdateEvent,
   CreateEvent,
@@ -124,6 +127,40 @@ export async function deleteEventExecutions(
   });
 }
 
+function createEventLogsKey(id: EventId, query?: LogsQuery) {
+  if (query === undefined) {
+    return ["event-logs", id] as const;
+  }
+
+  return ["event-logs", id, query] as const;
+}
+
+export function getEventLogs(eventId: EventId, query: LogsQuery) {
+  return invoke<EventLog[]>("get_event_logs", { eventId, query });
+}
+
+export function invalidateEventLogs(eventId: EventId, query: LogsQuery) {
+  const queryKey = createEventLogsKey(eventId, query);
+  queryClient.invalidateQueries({ queryKey });
+}
+
+export async function deleteEventLogs(eventId: EventId, logIds: LogId[]) {
+  await invoke<void>("delete_event_logs", { logIds });
+
+  queryClient.setQueriesData<EventLog[]>(
+    { queryKey: createEventLogsKey(eventId) },
+    (data) => {
+      if (data === undefined) return undefined;
+      return data.filter((log) => !logIds.includes(log.id));
+    },
+  );
+
+  // Invalid the list of items
+  queryClient.invalidateQueries({
+    queryKey: createEventLogsKey(eventId),
+  });
+}
+
 // -----------------------------------------------------
 
 export function eventExecutionsQuery(eventId: EventId, query: ExecutionsQuery) {
@@ -144,5 +181,12 @@ export function createEventQuery(id: EventId) {
   return createQuery({
     queryKey: createEventKey(id),
     queryFn: () => getEventById(id),
+  });
+}
+
+export function eventLogsQuery(eventId: EventId, query: LogsQuery) {
+  return createQuery({
+    queryKey: createEventLogsKey(eventId, query),
+    queryFn: () => getEventLogs(eventId, query),
   });
 }

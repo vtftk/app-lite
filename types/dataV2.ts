@@ -88,35 +88,6 @@ export type UpdateSound = {
   }>;
 };
 
-export type ScriptId = Uuid;
-
-export type Script = {
-  id: ScriptId;
-  enabled: boolean;
-  name: string;
-  script: string;
-  events: string[];
-  order: number;
-};
-
-export type CreateScript = {
-  enabled: boolean;
-  name: string;
-  script: string;
-  events: string[];
-};
-
-export type UpdateScript = {
-  scriptId: ScriptId;
-  update: Partial<{
-    enabled: boolean;
-    name: string;
-    script: string;
-    events: string[];
-    order: number;
-  }>;
-};
-
 export type CommandId = Uuid;
 
 export type Command = {
@@ -259,8 +230,8 @@ export type EventInputDataRaid = {
   viewers: number;
 };
 
-export type ScriptLog = {
-  script_id: string;
+export type EventLog = {
+  event_id: string;
 } & LogData;
 
 export type CommandLog = {

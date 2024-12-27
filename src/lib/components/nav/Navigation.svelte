@@ -3,7 +3,6 @@
   import SolarBellBoldDuotone from "~icons/solar/bell-bold-duotone";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
-  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
 
@@ -50,14 +49,6 @@
         href="/commands"
         title="Commands"
         text="Custom commands"
-      />
-    </li>
-    <li>
-      <NavButton
-        icon={SolarCodeSquareBoldDuotone}
-        href="/scripts"
-        title="Scripts"
-        text="Custom code scripts to run"
       />
     </li>
     <li>

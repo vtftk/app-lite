@@ -328,6 +328,8 @@ declare global {
     };
   };
 
+  export type EventInputValue = EventInputData[keyof EventInputData];
+
   export interface CommandContext {
     // Full original message
     fullMessage: string;
@@ -379,6 +381,11 @@ declare global {
   const ctx: CommandContext;
 
   /**
+   * Event data, only available within the context of a event outcome script
+   */
+  const event: EventData & EventInputValue;
+
+  /**
    * Get the target user of the command within the context of a command
    * only available within command scripts
    *
@@ -388,15 +395,4 @@ declare global {
    * @return The twitch name or null if its invalid or missing
    */
   export function getTargetUser(validate: boolean): string | null;
-
-  /**
-   * Subscribes to an event
-   *
-   * @param key Name of the event to subscript to
-   * @param callback Callback to run when the event is triggered
-   */
-  export function on<K extends keyof EventInputData>(
-    key: K,
-    callback: (event: EventData & EventInputData[K]) => void,
-  ): void;
 }

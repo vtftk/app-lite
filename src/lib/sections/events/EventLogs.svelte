@@ -3,10 +3,10 @@
   import LogsTable from "$lib/components/LogsTable.svelte";
   import { type LogId, type ScriptId, type LogsQuery } from "$shared/dataV2";
   import {
-    scriptLogsQuery,
-    deleteScriptLogs,
-    invalidateScriptLogs,
-  } from "$lib/api/scripts";
+    eventLogsQuery,
+    deleteEventLogs,
+    invalidateEventLogs,
+  } from "$lib/api/vevents";
 
   type Props = {
     id: ScriptId;
@@ -16,7 +16,7 @@
 
   const query: LogsQuery = $state({});
 
-  const logsQuery = $derived(scriptLogsQuery(id, query));
+  const logsQuery = $derived(eventLogsQuery(id, query));
   const logs = $derived($logsQuery.data ?? []);
 
   onMount(() => {
@@ -24,11 +24,11 @@
   });
 
   async function onBulkDelete(logIds: LogId[]) {
-    await deleteScriptLogs(id, logIds);
+    await deleteEventLogs(id, logIds);
   }
 
   function onRefresh() {
-    invalidateScriptLogs(id, query);
+    invalidateEventLogs(id, query);
   }
 </script>
 

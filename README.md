@@ -22,7 +22,7 @@ Aiming to be a tailored and improved version of [KBonk](https://github.com/typeo
 
 ## Events
 
-React to stream events such as channel point redeems, follows, subscriptions etc and perform actions such as throwing items, playing sounds, and triggering **VTube Studio** hotkeys
+React to stream events such as channel point redeems, follows, subscriptions etc and perform actions such as throwing items, playing sounds, triggering **VTube Studio** hotkeys, sending chat messages, and running code
 
 ![Event](./docs/events.png)
 
@@ -53,27 +53,6 @@ Sounds, play custom sounds when events occur. Can be used to create sound alerts
 play the sound upon impact
 
 ![alt text](./docs/sounds.png)
-
-## Scripting 
-
-Subscribe and react to various events using the same JavaScript code powered by the same editor as Custom Commands.
-
-You can listen for events the events below and run code when they happen:
-
-- chat
-- cheering bits
-- follows
-- gifted subscriptions
-- resubscription
-- redeems
-- subscriptions
-- raid
-
-![Scripting](./docs/scripting.png)
-
-The [TTS Monster Integration](#tts-monster-integration) section shows some example code for generating TTS messages as the outcome of redeems
-
-
 
 ## TTS Monster Integration
 

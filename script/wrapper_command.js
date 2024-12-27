@@ -1,13 +1,13 @@
+const userFunction = async (ctx) => {
+  try {
+    USER_CODE;
+  } catch (err) {
+    console.error("error running user command code", err);
+  }
+};
+
 async (ctx, cmd_ctx) => {
   api.logging.runWithContext(ctx, async () => {
-    const userFunction = async (ctx) => {
-      try {
-        USER_CODE;
-      } catch (err) {
-        console.error("error running user command code", err);
-      }
-    };
-
     const commandCtx = {
       ...cmd_ctx,
 

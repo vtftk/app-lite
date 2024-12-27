@@ -4,10 +4,11 @@
 
 use std::sync::Arc;
 
-use crate::database::entity::shared::{ExecutionsQuery, UpdateOrdering};
-use crate::database::entity::EventExecutionModel;
+use crate::database::entity::shared::{ExecutionsQuery, LogsQuery, UpdateOrdering};
+use crate::database::entity::{EventExecutionModel, EventLogsModel};
 use crate::events::outcome::produce_outcome_message;
 use crate::events::EventMessage;
+use crate::script::runtime::ScriptExecutorHandle;
 use crate::twitch::manager::TwitchManager;
 use crate::{
     database::entity::{
@@ -89,6 +90,7 @@ pub async fn test_event_by_id(
     db: State<'_, DatabaseConnection>,
     event_sender: State<'_, broadcast::Sender<EventMessage>>,
     twitch_manager: State<'_, Arc<TwitchManager>>,
+    script_handle: State<'_, ScriptExecutorHandle>,
 ) -> CmdResult<()> {
     let db = db.inner();
     let event = EventModel::get_by_id(db, event_id)
@@ -96,7 +98,7 @@ pub async fn test_event_by_id(
         .context("unknown event")?;
 
     if let Some(msg) =
-        produce_outcome_message(db, &twitch_manager, event_data, event.outcome).await?
+        produce_outcome_message(db, &twitch_manager, &script_handle, event, event_data).await?
     {
         _ = event_sender.send(msg);
     }
@@ -138,6 +140,34 @@ pub async fn delete_event_executions(
     let db = db.inner();
 
     EventExecutionModel::delete_many(db, &execution_ids).await?;
+
+    Ok(())
+}
+
+/// Get logs of a script
+#[tauri::command]
+pub async fn get_event_logs(
+    event_id: Uuid,
+    query: LogsQuery,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<Vec<EventLogsModel>> {
+    let db = db.inner();
+    let event = EventModel::get_by_id(db, event_id)
+        .await?
+        .context("event not found")?;
+    let logs = event.get_logs(db, query).await?;
+
+    Ok(logs)
+}
+
+#[tauri::command]
+pub async fn delete_event_logs(
+    log_ids: Vec<Uuid>,
+    db: State<'_, DatabaseConnection>,
+) -> CmdResult<()> {
+    let db = db.inner();
+
+    EventLogsModel::delete_many(db, &log_ids).await?;
 
     Ok(())
 }

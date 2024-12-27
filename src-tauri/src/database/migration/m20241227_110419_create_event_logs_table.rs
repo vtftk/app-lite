@@ -1,6 +1,6 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
-use super::m20241208_060150_create_scripts_table::Scripts;
+use super::m20241208_060138_create_events_table::Events;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -11,19 +11,19 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(ScriptLogs::Table)
+                    .table(EventLogs::Table)
                     .if_not_exists()
-                    .col(pk_uuid(ScriptLogs::Id))
-                    .col(uuid(ScriptLogs::ScriptId))
-                    .col(integer(ScriptLogs::Level))
-                    .col(string(ScriptLogs::Message))
-                    .col(date_time(ScriptLogs::CreatedAt))
+                    .col(pk_uuid(EventLogs::Id))
+                    .col(uuid(EventLogs::EventId))
+                    .col(integer(EventLogs::Level))
+                    .col(string(EventLogs::Message))
+                    .col(date_time(EventLogs::CreatedAt))
                     // Connect to scripts table
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk_script_logs_script_id")
-                            .from(ScriptLogs::Table, ScriptLogs::ScriptId)
-                            .to(Scripts::Table, Scripts::Id)
+                            .name("fk_event_logs_event_id")
+                            .from(EventLogs::Table, EventLogs::EventId)
+                            .to(Events::Table, Events::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
                     )
@@ -34,16 +34,16 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(ScriptLogs::Table).to_owned())
+            .drop_table(Table::drop().table(EventLogs::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum ScriptLogs {
+enum EventLogs {
     Table,
     Id,
-    ScriptId,
+    EventId,
     Level,
     Message,
     CreatedAt,

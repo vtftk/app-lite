@@ -8,12 +8,13 @@ use uuid::Uuid;
 use crate::{
     database::entity::{
         events::{
-            BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound,
+            BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound, EventOutcomeScript,
             EventOutcomeSendChat, EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
         },
         items::ThrowableImageConfig,
-        ItemModel, SoundModel,
+        EventModel, ItemModel, SoundModel,
     },
+    script::runtime::{RuntimeExecutionContext, ScriptExecutorHandle},
     state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
     twitch::manager::TwitchManager,
 };
@@ -27,11 +28,12 @@ use super::{
 pub async fn produce_outcome_message(
     db: &DatabaseConnection,
     twitch_manager: &Arc<TwitchManager>,
+    script_handle: &ScriptExecutorHandle,
 
+    event: EventModel,
     event_data: EventData,
-    outcome: EventOutcome,
 ) -> anyhow::Result<Option<EventMessage>> {
-    match outcome {
+    match event.outcome {
         EventOutcome::ThrowBits(data) => throw_bits_outcome(db, event_data, data).await.map(Some),
         EventOutcome::Throwable(data) => throwable_outcome(db, event_data, data).await.map(Some),
         EventOutcome::TriggerHotkey(data) => trigger_hotkey_outcome(data).map(Some),
@@ -40,7 +42,28 @@ pub async fn produce_outcome_message(
             send_chat_message(twitch_manager, event_data, data).await?;
             Ok(None)
         }
+        EventOutcome::Script(data) => {
+            execute_script(script_handle, event.id, event_data, data).await?;
+            Ok(None)
+        }
     }
+}
+
+pub async fn execute_script(
+    script_handle: &ScriptExecutorHandle,
+    event_id: Uuid,
+    event_data: EventData,
+    data: EventOutcomeScript,
+) -> anyhow::Result<()> {
+    script_handle
+        .execute(
+            RuntimeExecutionContext::Event { event_id },
+            data.script,
+            event_data,
+        )
+        .await?;
+
+    Ok(())
 }
 
 async fn send_chat_message(

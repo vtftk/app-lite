@@ -4,19 +4,19 @@ use serde::{Deserialize, Serialize};
 use super::shared::{DbResult, LoggingLevelDb};
 
 // Type alias helpers for the database entity types
-pub type ScriptLogsModel = Model;
-pub type ScriptLogsEntity = Entity;
-pub type ScriptLogsActiveModel = ActiveModel;
-pub type ScriptLogsColumn = Column;
+pub type EventLogsModel = Model;
+pub type EventLogsEntity = Entity;
+pub type EventLogsActiveModel = ActiveModel;
+pub type EventLogsColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "script_logs")]
+#[sea_orm(table_name = "event_logs")]
 pub struct Model {
     /// Unique ID of the log
     #[sea_orm(primary_key)]
     pub id: Uuid,
-    /// ID of the script
-    pub script_id: Uuid,
+    /// ID of the event
+    pub event_id: Uuid,
     /// Level of the log
     pub level: LoggingLevelDb,
     /// Logging message
@@ -27,26 +27,26 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    /// Relationship to the script
+    /// Relationship to the event
     #[sea_orm(
-        belongs_to = "super::scripts::Entity",
-        from = "Column::ScriptId",
-        to = "super::scripts::Column::Id"
+        belongs_to = "super::events::Entity",
+        from = "Column::EventId",
+        to = "super::events::Column::Id"
     )]
-    Script,
+    Event,
 }
 
-impl Related<super::scripts::Entity> for Entity {
+impl Related<super::events::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Script.def()
+        Relation::Event.def()
     }
 }
 
 impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(Debug)]
-pub struct CreateScriptLog {
-    pub script_id: Uuid,
+pub struct CreateEventLog {
+    pub event_id: Uuid,
     pub level: LoggingLevelDb,
     pub message: String,
     pub created_at: DateTimeUtc,
@@ -54,14 +54,14 @@ pub struct CreateScriptLog {
 
 impl Model {
     /// Create a new script
-    pub async fn create<C>(db: &C, create: CreateScriptLog) -> DbResult<()>
+    pub async fn create<C>(db: &C, create: CreateEventLog) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {
         let id = Uuid::new_v4();
         let active_model = ActiveModel {
             id: Set(id),
-            script_id: Set(create.script_id),
+            event_id: Set(create.event_id),
             level: Set(create.level),
             message: Set(create.message),
             created_at: Set(create.created_at),

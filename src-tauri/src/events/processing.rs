@@ -13,7 +13,6 @@ use crate::{
         command_executions::{CommandExecutionModel, CreateCommandExecution},
         commands::CommandOutcome,
         event_executions::{CreateEventExecution, EventExecutionModel},
-        scripts::ScriptWithEvent,
         shared::MinimumRequireRole,
         EventModel,
     },
@@ -119,18 +118,6 @@ async fn process_twitch_event(
                 ))
             });
 
-    let script_futures =
-        match_data
-            .scripts
-            .into_iter()
-            .map(|script| -> BoxFuture<'_, anyhow::Result<()>> {
-                Box::pin(execute_script(
-                    &script_handle,
-                    script,
-                    match_data.event_data.clone(),
-                ))
-            });
-
     let event_futures =
         match_data
             .events
@@ -139,6 +126,7 @@ async fn process_twitch_event(
                 Box::pin(execute_event(
                     &db,
                     &twitch_manager,
+                    &script_handle,
                     &event_sender,
                     event,
                     match_data.event_data.clone(),
@@ -146,7 +134,6 @@ async fn process_twitch_event(
             });
 
     let mut futures = command_futures
-        .chain(script_futures)
         .chain(event_futures)
         .collect::<FuturesUnordered<BoxFuture<'_, anyhow::Result<()>>>>();
 
@@ -282,27 +269,11 @@ pub async fn execute_command(
     Ok(())
 }
 
-pub async fn execute_script(
-    script_handle: &ScriptExecutorHandle,
-    script: ScriptWithEvent,
-    event_data: EventData,
-) -> anyhow::Result<()> {
-    script_handle
-        .execute(
-            RuntimeExecutionContext::Script {
-                script_id: script.script.id,
-            },
-            script.script.script,
-            script.event,
-            event_data,
-        )
-        .await?;
-    Ok(())
-}
-
 pub async fn execute_event(
     db: &DatabaseConnection,
     twitch_manager: &Arc<TwitchManager>,
+    script_handle: &ScriptExecutorHandle,
+
     event_sender: &broadcast::Sender<EventMessage>,
     event: EventModel,
     event_data: EventData,
@@ -346,9 +317,11 @@ pub async fn execute_event(
     // Wait for outcome delay
     tokio::time::sleep(Duration::from_millis(event.outcome_delay as u64)).await;
 
+    let event_id = event.id;
+
     // Produce outcome message and send it
     if let Some(msg) =
-        produce_outcome_message(db, twitch_manager, event_data, event.outcome).await?
+        produce_outcome_message(db, twitch_manager, script_handle, event, event_data).await?
     {
         _ = event_sender.send(msg);
     }
@@ -357,7 +330,7 @@ pub async fn execute_event(
     EventExecutionModel::create(
         db,
         CreateEventExecution {
-            event_id: event.id,
+            event_id,
             created_at: current_time,
             metadata,
         },

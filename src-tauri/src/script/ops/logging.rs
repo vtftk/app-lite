@@ -16,7 +16,7 @@ use crate::{
 fn exec_prefix(ctx: Option<&RuntimeExecutionContext>) -> String {
     match ctx {
         Some(ctx) => match ctx {
-            RuntimeExecutionContext::Script { script_id } => format!("[script:{script_id}]"),
+            RuntimeExecutionContext::Event { event_id } => format!("[event:{event_id}]"),
             RuntimeExecutionContext::Command { command_id } => format!("[command:{command_id}]"),
         },
         None => "[unknown]".to_string(),

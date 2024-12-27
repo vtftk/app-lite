@@ -13,6 +13,7 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
+  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
@@ -27,7 +28,9 @@
   import SolarCardReciveBoldDuotone from "~icons/solar/card-recive-bold-duotone";
   import SolarBoltCircleBoldDuotone from "~icons/solar/bolt-circle-bold-duotone";
   import SolarTextSquareBoldDuotone from "~icons/solar/text-square-bold-duotone";
+  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
+  import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
   import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
   import {
     type VEvent,
@@ -45,6 +48,7 @@
     MINIMUM_REQUIRED_ROLE_VALUES,
   } from "$shared/appData";
 
+  import EventLogs from "./EventLogs.svelte";
   import SoundSelect from "./SoundSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
   import EventExecutions from "./EventExecutions.svelte";
@@ -144,6 +148,14 @@
       type: z.literal(EventOutcomeType.PlaySound),
       sound_id: z.string(),
     }),
+    z.object({
+      type: z.literal(EventOutcomeType.SendChatMessage),
+      template: z.string(),
+    }),
+    z.object({
+      type: z.literal(EventOutcomeType.Script),
+      script: z.string(),
+    }),
   ]);
 
   type OutcomeSchema = z.infer<typeof outcomeSchema>;
@@ -193,7 +205,7 @@
     };
   }
 
-  const { form, data, setFields } = createForm<Schema>({
+  const { form, data, setFields, isDirty, setIsDirty } = createForm<Schema>({
     // Derive initial values
     initialValues: existing ? createFromExisting(existing) : createDefaults,
 
@@ -308,6 +320,16 @@
         return {
           type: EventOutcomeType.PlaySound,
           sound_id: "",
+        };
+      case EventOutcomeType.SendChatMessage:
+        return {
+          type: EventOutcomeType.SendChatMessage,
+          template: "",
+        };
+      case EventOutcomeType.Script:
+        return {
+          type: EventOutcomeType.Script,
+          script: "",
         };
     }
   }
@@ -520,6 +542,21 @@
       label: "Play Sound",
       description: "Play a sound from the available sounds",
       content: playSoundOutcomeContent,
+    },
+    {
+      icon: SolarChatSquareCodeBoldDuotone,
+      color: "green",
+      value: EventOutcomeType.SendChatMessage,
+      label: "Send chat message",
+      description: "Send a message template to chat",
+      content: playSoundOutcomeContent,
+    },
+    {
+      icon: SolarCodeSquareBoldDuotone,
+      color: "purple",
+      value: EventOutcomeType.Script,
+      label: "Run script",
+      description: "Execute JavaScript code",
     },
   ]);
 
@@ -951,14 +988,41 @@
   </FormSection>
 {/snippet}
 
+{#snippet codeTabContent()}
+  {#if $data.outcome.type === EventOutcomeType.Script}
+    <section class="editor">
+      <CodeEditor
+        value={$data.outcome.script}
+        onChange={(value) => {
+          setFields("outcome.script", value, true);
+          setIsDirty(true);
+        }}
+        onUserSave={() => {
+          if (existing) save($data);
+        }}
+      />
+    </section>
+  {/if}
+{/snippet}
+
 {#snippet executionsTabContent()}
   {#if existing !== undefined}
     <EventExecutions id={existing.id} />
   {/if}
 {/snippet}
 
+{#snippet logsTabContent()}
+  {#if existing !== undefined}
+    <EventLogs id={existing.id} />
+  {/if}
+{/snippet}
+
 <form use:form>
   {#snippet actions()}
+    {#if existing && $isDirty}
+      Unsaved changes...
+    {/if}
+
     {#if existing}
       <button type="button" class="btn" onclick={onTest}>
         <BallIcon /> Test
@@ -996,6 +1060,19 @@
           label: "Outcome",
           content: outcomeTabContent,
         },
+
+        ...($data.outcome.type === EventOutcomeType.Script
+          ? [
+              {
+                value: "code",
+                icon: SolarCodeSquareBoldDuotone,
+                label: "Code",
+                content: codeTabContent,
+                disablePadding: true,
+              },
+            ]
+          : []),
+
         {
           value: "requirements",
           icon: SolarChecklistMinimalisticBoldDuotone,
@@ -1009,6 +1086,14 @@
                 icon: SolarReorderBoldDuotone,
                 label: "Executions",
                 content: executionsTabContent,
+              },
+
+              {
+                value: "logs",
+                icon: SolarReorderBoldDuotone,
+                label: "Logs",
+                content: logsTabContent,
+                disablePadding: true,
               },
             ]
           : []),
@@ -1033,5 +1118,11 @@
 
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  .editor {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
   }
 </style>
