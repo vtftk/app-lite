@@ -48,10 +48,12 @@ jobs:
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
       - name: install overlay dependencies
-        run: cd overlay && npm install
+        run: npm install
+        working-directory: overlay
 
       - name: build overlay
-        run: cd overlay && npm run build
+        run: npm run build
+        working-directory: overlay
 
       - name: install frontend dependencies
         run: npm install
