@@ -2,10 +2,13 @@
 //!
 //! Commands for interacting with events from the frontend
 
+use std::sync::Arc;
+
 use crate::database::entity::shared::{ExecutionsQuery, UpdateOrdering};
 use crate::database::entity::EventExecutionModel;
 use crate::events::outcome::produce_outcome_message;
 use crate::events::EventMessage;
+use crate::twitch::manager::TwitchManager;
 use crate::{
     database::entity::{
         events::{CreateEvent, UpdateEvent},
@@ -85,14 +88,18 @@ pub async fn test_event_by_id(
 
     db: State<'_, DatabaseConnection>,
     event_sender: State<'_, broadcast::Sender<EventMessage>>,
+    twitch_manager: State<'_, Arc<TwitchManager>>,
 ) -> CmdResult<()> {
     let db = db.inner();
     let event = EventModel::get_by_id(db, event_id)
         .await?
         .context("unknown event")?;
 
-    let msg = produce_outcome_message(db, event_data, event.outcome).await?;
-    _ = event_sender.send(msg);
+    if let Some(msg) =
+        produce_outcome_message(db, &twitch_manager, event_data, event.outcome).await?
+    {
+        _ = event_sender.send(msg);
+    }
 
     Ok(())
 }

@@ -347,8 +347,11 @@ pub async fn execute_event(
     tokio::time::sleep(Duration::from_millis(event.outcome_delay as u64)).await;
 
     // Produce outcome message and send it
-    let msg = produce_outcome_message(db, event_data, event.outcome).await?;
-    _ = event_sender.send(msg);
+    if let Some(msg) =
+        produce_outcome_message(db, twitch_manager, event_data, event.outcome).await?
+    {
+        _ = event_sender.send(msg);
+    }
 
     // Store event execution
     EventExecutionModel::create(

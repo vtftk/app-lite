@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::Arc};
 
 use anyhow::{anyhow, Context};
 use chrono::Utc;
@@ -9,12 +9,13 @@ use crate::{
     database::entity::{
         events::{
             BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound,
-            EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
+            EventOutcomeSendChat, EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
         },
         items::ThrowableImageConfig,
         ItemModel, SoundModel,
     },
     state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
+    twitch::manager::TwitchManager,
 };
 
 use super::{
@@ -25,15 +26,72 @@ use super::{
 /// Produce a message for an outcome
 pub async fn produce_outcome_message(
     db: &DatabaseConnection,
+    twitch_manager: &Arc<TwitchManager>,
+
     event_data: EventData,
     outcome: EventOutcome,
-) -> anyhow::Result<EventMessage> {
+) -> anyhow::Result<Option<EventMessage>> {
     match outcome {
-        EventOutcome::ThrowBits(data) => throw_bits_outcome(db, event_data, data).await,
-        EventOutcome::Throwable(data) => throwable_outcome(db, event_data, data).await,
-        EventOutcome::TriggerHotkey(data) => trigger_hotkey_outcome(data),
-        EventOutcome::PlaySound(data) => play_sound_outcome(db, data).await,
+        EventOutcome::ThrowBits(data) => throw_bits_outcome(db, event_data, data).await.map(Some),
+        EventOutcome::Throwable(data) => throwable_outcome(db, event_data, data).await.map(Some),
+        EventOutcome::TriggerHotkey(data) => trigger_hotkey_outcome(data).map(Some),
+        EventOutcome::PlaySound(data) => play_sound_outcome(db, data).await.map(Some),
+        EventOutcome::SendChatMessage(data) => {
+            send_chat_message(twitch_manager, event_data, data).await?;
+            Ok(None)
+        }
     }
+}
+
+async fn send_chat_message(
+    twitch_manager: &Arc<TwitchManager>,
+    event_data: EventData,
+    data: EventOutcomeSendChat,
+) -> anyhow::Result<()> {
+    let mut message = data.template;
+
+    if let Some(user) = event_data.user {
+        message = message.replace("$(user)", user.name.as_str());
+    }
+
+    match event_data.input_data {
+        EventInputData::Redeem {
+            reward_name,
+            cost,
+            user_input,
+            ..
+        } => {
+            message = message.replace("$(userInput)", user_input.as_str());
+            message = message.replace("$(rewardName)", reward_name.as_str());
+            message = message.replace("$(rewardCost)", cost.to_string().as_str());
+        }
+        EventInputData::Bits {
+            bits,
+            message: user_input,
+            ..
+        } => {
+            message = message.replace("$(userInput)", user_input.to_string().as_str());
+            message = message.replace("$(bits)", bits.to_string().as_str());
+        }
+        _ => {}
+    }
+
+    if message.len() < 500 {
+        twitch_manager.send_chat_message(&message).await?;
+    } else {
+        let mut chars = message.chars();
+
+        loop {
+            let message = chars.by_ref().take(500).collect::<String>();
+            if message.is_empty() {
+                break;
+            }
+
+            twitch_manager.send_chat_message(&message).await?;
+        }
+    }
+
+    Ok(())
 }
 
 /// Produce a bits throwing outcome message

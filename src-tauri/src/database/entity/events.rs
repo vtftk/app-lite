@@ -214,6 +214,11 @@ pub struct EventOutcomePlaySound {
     pub sound_id: Uuid,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EventOutcomeSendChat {
+    pub template: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, FromJsonQueryResult)]
 #[serde(tag = "type")]
 pub enum EventOutcome {
@@ -225,6 +230,8 @@ pub enum EventOutcome {
     TriggerHotkey(EventOutcomeTriggerHotkey),
     /// Trigger a sound
     PlaySound(EventOutcomePlaySound),
+    /// Send a chat message
+    SendChatMessage(EventOutcomeSendChat),
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
