@@ -1,4 +1,7 @@
-<script lang="ts" generics="T extends { value: string, label: string }">
+<script
+  lang="ts"
+  generics="V extends string, T extends { value: V, label: string }"
+>
   import type { Snippet } from "svelte";
 
   import { Select } from "bits-ui";
@@ -16,9 +19,9 @@
     items: T[];
     item: Snippet<[T]>;
 
-    selected: string | undefined;
+    selected: V | undefined;
 
-    onChangeSelected: (value: string | undefined) => void;
+    onChangeSelected: (value: V) => void;
   };
 
   const {
