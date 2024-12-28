@@ -1,35 +1,36 @@
 <script lang="ts">
   import type { Snippet, Component } from "svelte";
+  import type { HTMLButtonAttributes } from "svelte/elements";
 
   type Props = {
     icon: Component;
-    color: string;
+    color?: string;
     label: string;
-    description: string;
-    selected: boolean;
-    onClick: VoidFunction;
+    description?: string;
+    selected?: boolean;
 
     content?: Snippet;
     contentVisible?: boolean;
-  };
+  } & HTMLButtonAttributes;
 
   const {
     icon: Icon,
     color,
     label,
     description,
-    selected,
-    onClick,
+    selected = false,
     content,
     contentVisible,
+    ...buttonProps
   }: Props = $props();
 </script>
 
 <button
+  {...buttonProps}
   type="button"
-  class="item item--{color}"
+  class="item"
+  data-item-color={color}
   class:item--selected={selected}
-  onclick={onClick}
 >
   <div class="item-top">
     <div class="item__icon">
@@ -37,7 +38,10 @@
     </div>
     <div class="item__content">
       <h3 class="item__title">{label}</h3>
-      <p class="item__text">{description}</p>
+
+      {#if description}
+        <p class="item__text">{description}</p>
+      {/if}
     </div>
   </div>
 
@@ -81,48 +85,48 @@
     gap: 1rem;
   }
 
-  .item--selected.item--purple {
+  .item--selected[data-item-color="purple"] {
     border-color: #dd82f0;
     background-color: #3c1b42;
   }
 
-  .item--purple .item__icon {
+  .item[data-item-color="purple"] .item__icon {
     color: #dd82f0;
   }
 
-  .item--selected.item--red {
+  .item--selected[data-item-color="red"] {
     border-color: #f08282;
     background-color: #421b1b;
   }
 
-  .item--red .item__icon {
+  .item[data-item-color="red"] .item__icon {
     color: #f08282;
   }
 
-  .item--selected.item--yellow {
+  .item--selected[data-item-color="yellow"] {
     border-color: #eef082;
     background-color: #423f1b;
   }
 
-  .item--yellow .item__icon {
+  .item[data-item-color="yellow"] .item__icon {
     color: #f0ee82;
   }
 
-  .item--selected.item--green {
+  .item--selected[data-item-color="green"] {
     border-color: #a1f082;
     background-color: #1b421b;
   }
 
-  .item--green .item__icon {
+  .item[data-item-color="green"] .item__icon {
     color: #a1f082;
   }
 
-  .item--selected.item--blue {
+  .item--selected[data-item-color="blue"] {
     border-color: #82bbf0;
     background-color: #1b2f42;
   }
 
-  .item--blue .item__icon {
+  .item[data-item-color="blue"] .item__icon {
     color: #82bbf0;
   }
 

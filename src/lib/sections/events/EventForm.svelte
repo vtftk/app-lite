@@ -9,6 +9,7 @@
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
+  import CardButton from "$lib/components/CardButton.svelte";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { getEventTestingData } from "$lib/utils/eventTestData";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -50,8 +51,6 @@
   import SoundSelect from "./SoundSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
   import EventExecutions from "./EventExecutions.svelte";
-  import EventTriggerItem from "./EventTriggerItem.svelte";
-  import EventOutcomeItem from "./EventOutcomeItem.svelte";
   import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
@@ -846,13 +845,13 @@
 {#snippet triggerTabContent()}
   <div class="event-trigger-grid">
     {#each eventTriggerOptions as option (option.value)}
-      <EventTriggerItem
+      <CardButton
         icon={option.icon}
         color={option.color}
         label={option.label}
         description={option.description}
         selected={$data.trigger.type === option.value}
-        onClick={() =>
+        onclick={() =>
           $data.trigger.type !== option.value &&
           onChangeTriggerType(option.value)}
         content={option.content}
@@ -865,13 +864,13 @@
 {#snippet outcomeTabContent()}
   <div class="event-trigger-grid">
     {#each outcomeOptions as option (option.value)}
-      <EventOutcomeItem
+      <CardButton
         icon={option.icon}
         color={option.color}
         label={option.label}
         description={option.description}
         selected={$data.outcome.type === option.value}
-        onClick={() =>
+        onclick={() =>
           $data.outcome.type !== option.value &&
           onChangeOutcomeType(option.value)}
         content={option.content}

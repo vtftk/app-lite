@@ -7,6 +7,7 @@
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
+  import CardButton from "$lib/components/CardButton.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import { createCommand, updateCommand } from "$lib/api/commands";
   import FormSection from "$lib/components/form/FormSection.svelte";
@@ -29,7 +30,6 @@
   } from "$lib/api/types";
 
   import CommandLogs from "./CommandLogs.svelte";
-  import CommandTypeItem from "./CommandTypeItem.svelte";
   import CommandExecutions from "./CommandExecutions.svelte";
   import exampleCode from "../../../../script/example_command.js?raw";
   import RequiredRoleSelect from "../events/RequiredRoleSelect.svelte";
@@ -223,13 +223,13 @@
 {#snippet typeTabContent()}
   <div class="event-trigger-grid">
     {#each commandTypeOption as option (option.value)}
-      <CommandTypeItem
+      <CardButton
         icon={option.icon}
         color={option.color}
         label={option.label}
         description={option.description}
         selected={$data.outcome.type === option.value}
-        onClick={() =>
+        onclick={() =>
           $data.outcome.type !== option.value &&
           onChangeOutcomeType(option.value)}
         contentVisible={$data.outcome.type === option.value}
