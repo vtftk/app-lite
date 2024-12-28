@@ -7,6 +7,7 @@
   import { getAppData } from "$lib/api/runtimeAppData";
 
   import Dialog from "../Dialog.svelte";
+  import Button from "../input/Button.svelte";
   import SoundPreview from "./SoundPreview.svelte";
   import SearchInput from "../form/SearchInput.svelte";
   import DialogCloseButton from "../DialogCloseButton.svelte";
@@ -78,7 +79,7 @@
 
 <Dialog>
   {#snippet button({ props })}
-    <button {...props} {disabled} class="btn" type="button">
+    <Button {...props} {disabled} type="button">
       {#if buttonContent}
         {@render buttonContent()}
       {:else}
@@ -86,7 +87,7 @@
           ? `${selected.length} Sounds selected`
           : "Select Sounds"}
       {/if}
-    </button>
+    </Button>
   {/snippet}
 
   {#snippet title()}

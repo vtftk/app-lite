@@ -7,6 +7,7 @@
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
+  import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
@@ -437,13 +438,14 @@
           description="Host to use when connecting to VTube Studio"
         />
 
-        <button
+        <Button
           type="button"
-          class="btn"
           onclick={() => {
             setFields("vtube_studio.host", "localhost");
-          }}>Default</button
+          }}
         >
+          Default
+        </Button>
       </div>
 
       <FormNumberInput
@@ -499,7 +501,7 @@
 {/snippet}
 
 {#snippet actions()}
-  <button type="submit" class="btn">Save</button>
+  <Button type="submit">Save</Button>
 {/snippet}
 
 <form use:form class="container">

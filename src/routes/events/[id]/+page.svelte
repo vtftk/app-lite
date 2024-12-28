@@ -3,6 +3,7 @@
   import { createEventQuery } from "$lib/api/vevents";
   import EventForm from "$lib/sections/events/EventForm.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
 
   const id = $derived($page.params.id);
   const eventQuery = $derived(createEventQuery(id));
@@ -14,9 +15,12 @@
   <EventForm existing={$eventQuery.data} />
 {:else}
   {#snippet actions()}
-    <a type="button" class="btn" href="/events">Back</a>
+    <LinkButton href="/events">Back</LinkButton>
   {/snippet}
 
-  <PageLayoutList title="Event Not Found" description="Unknown event" {actions}
-  ></PageLayoutList>
+  <PageLayoutList
+    title="Event Not Found"
+    description="Unknown event"
+    {actions}
+  />
 {/if}

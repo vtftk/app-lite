@@ -8,6 +8,7 @@
   import SolarAltArrowUpBold from "~icons/solar/alt-arrow-up-bold";
   import SolarAltArrowDownBold from "~icons/solar/alt-arrow-down-bold";
 
+  import Button from "../input/Button.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props<T> = {
@@ -52,18 +53,7 @@
   const selection = $derived(getSelection(items, selectedValues));
 
   const selectedLabel = $derived.by(() => {
-    if (Array.isArray(selection)) {
-      const labels = selection.map((value) => value.label);
-
-      if (labels.length < 1) {
-        return undefined;
-      }
-
-      return labels.join(", ");
-    }
-
     if (selection === undefined) return undefined;
-
     return selection.label;
   });
 </script>
@@ -78,27 +68,46 @@
       open = value;
     }}
     value={selectedValues}
-    onValueChange={(selection: any) => {
-      onChangeSelected(selection);
-    }}
+    onValueChange={(selection: any) => onChangeSelected(selection)}
   >
-    <Select.Trigger class="btn">
-      {#if open}
-        <SolarAltArrowUpBold />
-      {:else}
-        <SolarAltArrowDownBold />
-      {/if}
+    <Select.Trigger>
+      {#snippet child({ props })}
+        <Button {...props}>
+          {#if open}
+            <SolarAltArrowUpBold />
+          {:else}
+            <SolarAltArrowDownBold />
+          {/if}
 
-      {selectedLabel}
+          {selectedLabel}
+        </Button>
+      {/snippet}
     </Select.Trigger>
 
     <Select.Portal>
       <Select.Content sideOffset={8}>
-        {#each items as value}
-          <Select.Item value={value.value} label={value.label}>
-            {@render item(value)}
-          </Select.Item>
-        {/each}
+        {#snippet child({ props, open, wrapperProps })}
+          <div {...wrapperProps} class="content-wrapper">
+            {#if open}
+              <div {...props} class="content">
+                {#each items as value}
+                  <Select.Item value={value.value} label={value.label}>
+                    {#snippet child({ props, selected, highlighted })}
+                      <div
+                        {...props}
+                        class="item"
+                        class:item--selected={selected}
+                        class:item--highlighted={highlighted}
+                      >
+                        {@render item(value)}
+                      </div>
+                    {/snippet}
+                  </Select.Item>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/snippet}
       </Select.Content>
     </Select.Portal>
   </Select.Root>
@@ -111,6 +120,16 @@
 </div>
 
 <style>
+  .content {
+    border-radius: 0.5rem;
+    border: 0.125rem solid #888;
+    background-color: #444;
+    padding: 0.25rem;
+    max-height: 40vh;
+    overflow: auto;
+    box-shadow: 2px 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
   .form-input {
     display: inline-flex;
     flex-flow: column;
@@ -136,5 +155,24 @@
     font-size: 0.8rem;
     color: #999;
     margin-top: 0.5rem;
+  }
+
+  .item {
+    cursor: pointer;
+    display: flex;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .item:hover {
+    background-color: #777;
+  }
+
+  .item--selected {
+    background-color: #888;
+  }
+
+  .item--highlighted {
+    outline: 1px solid white;
   }
 </style>

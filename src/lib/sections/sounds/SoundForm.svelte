@@ -9,8 +9,10 @@
   import { toastErrorMessage } from "$lib/utils/error";
   import { getAppData } from "$lib/api/runtimeAppData";
   import { FileType, type Sound } from "$lib/api/types";
+  import Button from "$lib/components/input/Button.svelte";
   import { createSound, updateSound } from "$lib/api/sounds";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
@@ -126,11 +128,11 @@
 
 <form use:form>
   {#snippet actions()}
-    <button type="submit" class="btn" disabled={!$isValid}>
+    <Button type="submit" disabled={!$isValid}>
       {existing ? "Save" : "Create"}
-    </button>
+    </Button>
 
-    <a class="btn" href="/sounds">Back</a>
+    <LinkButton href="/sounds">Back</LinkButton>
   {/snippet}
 
   <PageLayoutList

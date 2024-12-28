@@ -32,14 +32,26 @@
   {#snippet child({ props })}
     <div {...props} class="root">
       <Tabs.List>
-        {#each tabs as tab (tab.value)}
-          <Tabs.Trigger value={tab.value}>
-            {#if tab.icon}
-              <tab.icon />
-            {/if}
-            {tab.label}
-          </Tabs.Trigger>
-        {/each}
+        {#snippet child({ props })}
+          <div {...props} class="tabs-list">
+            {#each tabs as tab (tab.value)}
+              <Tabs.Trigger value={tab.value}>
+                {#snippet child({ props })}
+                  <button
+                    {...props}
+                    class="tab-button"
+                    class:tab-button--active={value === tab.value}
+                  >
+                    {#if tab.icon}
+                      <tab.icon />
+                    {/if}
+                    {tab.label}
+                  </button>
+                {/snippet}
+              </Tabs.Trigger>
+            {/each}
+          </div>
+        {/snippet}
       </Tabs.List>
       {#each tabs as tab (tab.value)}
         <Tabs.Content value={tab.value}>
@@ -62,9 +74,15 @@
 
 <style>
   .root {
+    display: contents;
     height: 100%;
     display: flex;
     flex-flow: column;
+  }
+
+  .tabs-list {
+    display: flex;
+    flex-flow: row;
   }
 
   .content {
@@ -78,5 +96,32 @@
 
   .content--disable-padding {
     padding: 0;
+  }
+
+  .tab-button {
+    padding: 0.5rem 0.75rem;
+    background-color: #333;
+    border: none;
+    border-bottom: 1px solid #666;
+    color: #fff;
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none;
+  }
+
+  .tab-button:first-of-type {
+    border-top-left-radius: 0.25rem;
+  }
+
+  .tab-button:last-of-type {
+    border-top-right-radius: 0.25rem;
+  }
+
+  .tab-button--active {
+    background-color: #555;
+    border-bottom-color: #888;
   }
 </style>

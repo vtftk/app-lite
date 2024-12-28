@@ -8,6 +8,8 @@
   import { bulkCreateItem } from "$lib/api/items";
   import { toastErrorMessage } from "$lib/utils/error";
 
+  import Button from "../input/Button.svelte";
+
   let inputElm: HTMLInputElement | undefined = $state();
 
   async function onChangeImage() {
@@ -48,15 +50,14 @@
   }
 </script>
 
-<button
-  class="btn"
+<Button
   type="button"
   onclick={() => {
     inputElm?.click();
   }}
 >
   Bulk Create Throwables
-</button>
+</Button>
 
 <input
   bind:this={inputElm}

@@ -4,9 +4,11 @@
   import { invoke } from "@tauri-apps/api/core";
   import { setClipboard } from "$lib/utils/browser";
   import { toastErrorMessage } from "$lib/utils/error";
+  import Button from "$lib/components/input/Button.svelte";
   import { createModelDataQuery } from "$lib/api/calibration";
   import { createIsAuthenticatedQuery } from "$lib/api/twitch";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import {
     getRuntimeAppData,
     createOverlayURLQuery,
@@ -87,7 +89,7 @@
             <p>Connected to your Twitch account.</p>
 
             <div class="actions">
-              <button class="btn" onclick={onLogoutTwitch}>Logout</button>
+              <Button onclick={onLogoutTwitch}>Logout</Button>
             </div>
           {:else}
             <p>
@@ -98,9 +100,9 @@
 
             <div class="actions">
               {#if $twitchOAuthURLQuery.data}
-                <a class="btn" href={$twitchOAuthURLQuery.data} target="_blank">
+                <LinkButton href={$twitchOAuthURLQuery.data} target="_blank">
                   Open in browser
-                </a>
+                </LinkButton>
                 <input
                   class="url"
                   type="text"
@@ -124,7 +126,7 @@
 
         {#if $overlayURLQuery.data}
           <div class="actions">
-            <button class="btn" onclick={onCopyOverlay}>Copy Link</button>
+            <Button onclick={onCopyOverlay}>Copy Link</Button>
             <p class="url">{$overlayURLQuery.data}</p>
           </div>
         {/if}
@@ -153,7 +155,7 @@
               </p>
 
               <div class="actions">
-                <a class="btn" href="/calibration">Recalibrate Model</a>
+                <LinkButton href="/calibration">Recalibrate Model</LinkButton>
               </div>
             {:else}
               <span class="warning">
@@ -162,7 +164,7 @@
               </span>
 
               <div class="actions">
-                <a class="btn" href="/calibration">Calibrate Model</a>
+                <LinkButton href="/calibration">Calibrate Model</LinkButton>
               </div>
             {/if}
           {:else}

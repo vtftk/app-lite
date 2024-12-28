@@ -8,6 +8,7 @@
   import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
   import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
 
+  import Button from "./input/Button.svelte";
   import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
   type Props = {
     logs: LogData[];
@@ -64,14 +65,14 @@
 
     <div class="selection__actions">
       {#if selected.length > 0}
-        <button type="button" class="btn" onclick={onBulkDelete}>
+        <Button type="button" onclick={onBulkDelete}>
           <DeleteIcon /> Delete
-        </button>
+        </Button>
       {/if}
 
-      <button type="button" class="btn" onclick={onRefresh}>
+      <Button type="button" onclick={onRefresh}>
         <SolarRefreshBoldDuotone /> Refresh
-      </button>
+      </Button>
     </div>
   </div>
 

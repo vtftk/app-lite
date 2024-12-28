@@ -6,6 +6,7 @@
   import { type ExecutionId, type ExecutionData } from "$shared/dataV2";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
 
+  import Button from "./input/Button.svelte";
   import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
   import ExecutionMetadataDialog from "./ExecutionMetadataDialog.svelte";
 
@@ -68,14 +69,14 @@
 
     <div class="selection__actions">
       {#if selected.length > 0}
-        <button type="button" class="btn" onclick={onBulkDelete}>
+        <Button type="button" onclick={onBulkDelete}>
           <DeleteIcon /> Delete
-        </button>
+        </Button>
       {/if}
 
-      <button type="button" class="btn" onclick={onRefresh}>
+      <Button type="button" onclick={onRefresh}>
         <SolarRefreshBoldDuotone /> Refresh
-      </button>
+      </Button>
     </div>
   </div>
 

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
   import SolarRefreshBold from "~icons/solar/refresh-bold";
+  import Button from "$lib/components/input/Button.svelte";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
 
@@ -56,9 +57,9 @@
       {onChangeSelected}
     />
 
-    <button type="button" class="btn" onclick={updateHotkeys}>
+    <Button type="button" onclick={updateHotkeys}>
       <SolarRefreshBold /> Refresh Hotkeys
-    </button>
+    </Button>
   </div>
 
   {#if description}

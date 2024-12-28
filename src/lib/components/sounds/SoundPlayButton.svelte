@@ -4,6 +4,8 @@
   import PlayIcon from "~icons/solar/play-bold";
   import StopIcon from "~icons/solar/stop-bold";
 
+  import Button from "../input/Button.svelte";
+
   type Props = {
     src: string;
     volume?: number;
@@ -48,8 +50,7 @@
 {#if button}
   {@render button({ onClick: togglePlay, isPlaying })}
 {:else}
-  <button
-    class="btn"
+  <Button
     onclick={togglePlay}
     aria-pressed={isPlaying ? "true" : "false"}
     aria-label={isPlaying ? "Pause audio" : "Play audio"}
@@ -67,7 +68,7 @@
         Play
       {/if}
     {/if}
-  </button>
+  </Button>
 {/if}
 
 <audio

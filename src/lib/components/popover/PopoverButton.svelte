@@ -10,6 +10,8 @@
     type PopoverTriggerProps,
   } from "bits-ui";
 
+  import Button from "../input/Button.svelte";
+
   type Props = {
     children?: Snippet;
     content?: Snippet;
@@ -32,9 +34,9 @@
 <Popover.Root {...rootProps}>
   <Popover.Trigger {...triggerProps}>
     {#snippet child({ props })}
-      <button {...props} {...buttonProps} type="button" class="trigger btn">
+      <Button {...props} {...buttonProps} type="button">
         {@render children?.()}
-      </button>
+      </Button>
     {/snippet}
   </Popover.Trigger>
   <Popover.Content sideOffset={8} {...contentProps}>

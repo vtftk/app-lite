@@ -11,6 +11,7 @@
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
@@ -132,7 +133,7 @@
 
 <!-- Content for the "Test" button popover -->
 {#snippet createPopoverContent()}
-  <a class="btn" href="/throwables/create"> Create Throwable </a>
+  <LinkButton href="/throwables/create">Create Throwable</LinkButton>
   <BulkThrowableImport />
 {/snippet}
 

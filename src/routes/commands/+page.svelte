@@ -7,6 +7,7 @@
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import CommandItem from "$lib/sections/commands/CommandItem.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
@@ -70,7 +71,7 @@
 </script>
 
 {#snippet actions()}
-  <a class="btn" href="/commands/create"> Create Command </a>
+  <LinkButton href="/commands/create">Create Command</LinkButton>
 {/snippet}
 
 {#snippet beforeContent()}

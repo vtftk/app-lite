@@ -11,9 +11,11 @@
   import { toastErrorMessage } from "$lib/utils/error";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import { createItem, updateItem } from "$lib/api/items";
+  import Button from "$lib/components/input/Button.svelte";
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import ImageUpload from "$lib/components/form/ImageUpload.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import FormSection from "$lib/components/form/FormSection.svelte";
@@ -204,25 +206,15 @@
 
 {#snippet actions()}
   {#if existing}
-    <button
-      type="button"
-      class="btn"
-      onclick={onTestThrow}
-      disabled={!testingEnabled}
-    >
+    <Button type="button" onclick={onTestThrow} disabled={!testingEnabled}>
       <BallIcon /> Test
-    </button>
-    <button
-      type="button"
-      class="btn"
-      onclick={onTestBarrage}
-      disabled={!testingEnabled}
-    >
+    </Button>
+    <Button type="button" onclick={onTestBarrage} disabled={!testingEnabled}>
       <BallsIcon /> Test Barrage
-    </button>
+    </Button>
   {/if}
-  <button type="submit" class="btn"> {existing ? "Save" : "Create"}</button>
-  <a class="btn" href="/throwables">Back</a>
+  <Button type="submit">{existing ? "Save" : "Create"}</Button>
+  <LinkButton href="/throwables">Back</LinkButton>
 {/snippet}
 
 {#snippet detailsTabContent()}

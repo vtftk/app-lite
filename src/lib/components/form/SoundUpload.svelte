@@ -1,6 +1,7 @@
 <script lang="ts">
   import getBackendURL from "$lib/utils/url";
 
+  import Button from "../input/Button.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
   import SoundPreview from "../sounds/SoundPreview.svelte";
 
@@ -53,13 +54,13 @@
     {/if}
   </div>
 
-  <button
-    class="btn"
+  <Button
     type="button"
     onclick={() => {
       inputElm?.click();
-    }}>{currentSound ? "Replace" : "Select"} Sound</button
-  >
+    }}
+    >{currentSound ? "Replace" : "Select"} Sound
+  </Button>
 
   <input
     data-felte-keep-on-remove
@@ -92,7 +93,7 @@
     font-size: 1rem;
   }
 
-  .btn {
+  .form-input :global(.btn) {
     width: 100%;
   }
 </style>

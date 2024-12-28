@@ -8,6 +8,7 @@
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
@@ -76,7 +77,7 @@
 {/snippet}
 
 {#snippet createPopoverContent()}
-  <a class="btn" href="/sounds/create"> Create Sound </a>
+  <LinkButton href="/sounds/create">Create Sound</LinkButton>
   <BulkSoundImport />
 {/snippet}
 

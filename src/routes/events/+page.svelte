@@ -8,6 +8,7 @@
   import EventItem from "$lib/sections/events/EventItem.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
@@ -69,7 +70,7 @@
 </script>
 
 {#snippet actions()}
-  <a class="btn" href="/events/create"> Create Event </a>
+  <LinkButton href="/events/create">Create Event</LinkButton>
 {/snippet}
 
 {#snippet beforeContent()}

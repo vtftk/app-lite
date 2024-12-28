@@ -1,6 +1,7 @@
 <script lang="ts">
   import getBackendURL from "$lib/utils/url";
 
+  import Button from "../input/Button.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {
@@ -44,12 +45,11 @@
 <div class="form-input">
   <label for={id}>{label}</label>
 
-  <button
-    class="btn"
+  <Button
     type="button"
     onclick={() => {
       inputElm?.click();
-    }}>{value ? "Replace" : "Select"} Image</button
+    }}>{value ? "Replace" : "Select"} Image</Button
   >
 
   <div class="image-preview-wrapper">

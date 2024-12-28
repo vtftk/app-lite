@@ -2,6 +2,7 @@
   import { page } from "$app/stores";
   import { createItemQuery } from "$lib/api/items";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import ThrowableForm from "$lib/sections/throwables/ThrowableForm.svelte";
 
   const id = $derived($page.params.id);
@@ -14,7 +15,7 @@
   <ThrowableForm existing={$itemQuery.data} />
 {:else}
   {#snippet actions()}
-    <a class="btn" href="/throwables">Back</a>
+    <LinkButton href="/throwables">Back</LinkButton>
   {/snippet}
 
   <PageLayoutList

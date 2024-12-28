@@ -7,9 +7,11 @@
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
+  import Button from "$lib/components/input/Button.svelte";
   import CardButton from "$lib/components/CardButton.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import { createCommand, updateCommand } from "$lib/api/commands";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
@@ -335,10 +337,10 @@
       Unsaved changes...
     {/if}
 
-    <button type="submit" class="btn">
+    <Button type="submit">
       {existing ? "Save" : "Create"}
-    </button>
-    <a class="btn" href="/commands">Back</a>
+    </Button>
+    <LinkButton href="/commands">Back</LinkButton>
   {/snippet}
 
   <PageLayoutList

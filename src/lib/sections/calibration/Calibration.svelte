@@ -1,5 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import Button from "$lib/components/input/Button.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import {
     CalibrationStep,
     calibrationState as calibrationStep,
@@ -17,13 +19,10 @@
       Press the <b>"Start"</b> button to begin calibrating the current model
     </p>
     <div class="row">
-      <button
-        class="btn"
-        onclick={() => setCalibrationStep(CalibrationStep.Smallest)}
-      >
+      <Button onclick={() => setCalibrationStep(CalibrationStep.Smallest)}>
         Start
-      </button>
-      <a class="btn" href="/">Cancel</a>
+      </Button>
+      <LinkButton href="/">Cancel</LinkButton>
     </div>
   {:else if $calibrationStep == CalibrationStep.Smallest}
     <h1>Smallest size</h1>
@@ -52,12 +51,9 @@
       <img alt="OBS Interact" src="/help/obs-interact.jpg" />
     </div>
 
-    <button
-      class="btn"
-      onclick={() => setCalibrationStep(CalibrationStep.Largest)}
-    >
+    <Button onclick={() => setCalibrationStep(CalibrationStep.Largest)}>
       Done
-    </button>
+    </Button>
   {:else if $calibrationStep == CalibrationStep.Largest}
     <h1>Largest size</h1>
     <p>Your model has been grown to its largest.</p>
@@ -86,16 +82,13 @@
       <img alt="OBS Interact" src="/help/obs-interact.jpg" />
     </div>
 
-    <button
-      class="btn"
-      onclick={() => setCalibrationStep(CalibrationStep.Complete)}
-    >
+    <Button onclick={() => setCalibrationStep(CalibrationStep.Complete)}>
       Done
-    </button>
+    </Button>
   {:else if $calibrationStep == CalibrationStep.Complete}
     <h1>Complete</h1>
     <p>Calibration complete</p>
-    <a class="btn" href="/">Close</a>
+    <LinkButton href="/">Close</LinkButton>
   {/if}
 </div>
 

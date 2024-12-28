@@ -9,10 +9,12 @@
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
+  import Button from "$lib/components/input/Button.svelte";
   import CardButton from "$lib/components/CardButton.svelte";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { getEventTestingData } from "$lib/utils/eventTestData";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import LinkButton from "$lib/components/input/LinkButton.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
@@ -999,13 +1001,13 @@
     {/if}
 
     {#if existing}
-      <button type="button" class="btn" onclick={onTest}>
+      <Button type="button" onclick={onTest}>
         <BallIcon /> Test
-      </button>
+      </Button>
     {/if}
 
-    <button type="submit" class="btn">{existing ? "Save" : "Create"}</button>
-    <a type="button" class="btn" href="/events">Back</a>
+    <Button type="submit">{existing ? "Save" : "Create"}</Button>
+    <LinkButton href="/events">Back</LinkButton>
   {/snippet}
 
   <PageLayoutList

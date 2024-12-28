@@ -4,6 +4,8 @@
 
   import { Popover, type PopoverCloseProps } from "bits-ui";
 
+  import Button from "../input/Button.svelte";
+
   type Props = {
     children?: Snippet;
 
@@ -15,8 +17,8 @@
 
 <Popover.Close {...closeProps}>
   {#snippet child({ props })}
-    <button {...props} {...buttonProps} class="btn" type="button">
+    <Button {...props} {...buttonProps} type="button">
       {@render children?.()}
-    </button>
+    </Button>
   {/snippet}
 </Popover.Close>

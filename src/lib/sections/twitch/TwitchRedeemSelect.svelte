@@ -1,5 +1,6 @@
 <script lang="ts">
   import SolarRefreshBold from "~icons/solar/refresh-bold";
+  import Button from "$lib/components/input/Button.svelte";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
   import { refreshRedeemsList, createGetRedeemsList } from "$lib/api/twitch";
 
@@ -48,10 +49,10 @@
     {onChangeSelected}
   />
 
-  <button type="button" class="btn" onclick={refreshRedeemsList}>
+  <Button type="button" onclick={refreshRedeemsList}>
     <SolarRefreshBold />
     Refresh Redeems
-  </button>
+  </Button>
 </div>
 
 {#if description}
