@@ -2,11 +2,11 @@
   import type { Item } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
-  import { Dialog, Separator } from "bits-ui";
-  import { fade, scale } from "svelte/transition";
   import { createItemsQuery } from "$lib/api/items";
 
+  import Dialog from "../Dialog.svelte";
   import SearchInput from "../form/SearchInput.svelte";
+  import DialogCloseButton from "../DialogCloseButton.svelte";
   import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
 
   type Props = {
@@ -59,69 +59,64 @@
   Loading items...
 {/if}
 
-<Dialog.Root>
-  <Dialog.Trigger asChild let:builder>
-    <button use:builder.action class="btn" type="button">
-      {selectedOptions.length > 0
+<Dialog
+  buttonLabel={{
+    text:
+      selectedOptions.length > 0
         ? `${selectedOptions.length} Items selected`
-        : "Select Items"}
-    </button>
-  </Dialog.Trigger>
-  <Dialog.Portal>
-    <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />
-    <Dialog.Content transition={scale}>
-      <Dialog.Title>Select Items</Dialog.Title>
+        : "Select Items",
+  }}
+>
+  {#snippet title()}
+    Select Items
+  {/snippet}
 
-      <Dialog.Description class="text-sm text-foreground-alt">
-        Choose which items will be thrown
-      </Dialog.Description>
+  {#snippet description()}
+    Choose which items will be thrown
+  {/snippet}
 
-      <Separator.Root />
+  {#snippet children()}
+    <div class="selection">
+      <ControlledCheckbox
+        checked={items.length > 0 && selected.length === items.length}
+        onCheckedChange={onToggleAll}
+      />
 
-      <div class="selection">
-        <ControlledCheckbox
-          checked={items.length > 0 && selected.length === items.length}
-          onCheckedChange={onToggleAll}
-        />
+      <SearchInput bind:value={search} placeholder="Search" />
+    </div>
 
-        <SearchInput bind:value={search} placeholder="Search" />
-      </div>
+    <div class="throwable-table-wrapper">
+      <div class="items">
+        {#each filteredItems as item (item.id)}
+          <div class="item">
+            <div class="item-column item-column--checkbox">
+              <ControlledCheckbox
+                checked={selected.includes(item.id)}
+                onCheckedChange={() => onSelectItem(item)}
+              />
+            </div>
 
-      <div class="throwable-table-wrapper">
-        <div class="items">
-          {#each filteredItems as item (item.id)}
-            <div class="item">
-              <div class="item-column item-column--checkbox">
-                <ControlledCheckbox
-                  checked={selected.includes(item.id)}
-                  onCheckedChange={() => onSelectItem(item)}
+            <div class="item-column item-column--preview">
+              <div class="throwable__image-wrapper">
+                <img
+                  class="throwable__image"
+                  src={getBackendURL(item.image.src)}
+                  alt="Throwable"
                 />
               </div>
-
-              <div class="item-column item-column--preview">
-                <div class="throwable__image-wrapper">
-                  <img
-                    class="throwable__image"
-                    src={getBackendURL(item.image.src)}
-                    alt="Throwable"
-                  />
-                </div>
-              </div>
-
-              <div class="item-column item-column--name">{item.name}</div>
             </div>
-          {/each}
-        </div>
-      </div>
 
-      <div data-dialog-actions>
-        <Dialog.Close type="button">
-          <span class="sr-only">Close</span>
-        </Dialog.Close>
+            <div class="item-column item-column--name">{item.name}</div>
+          </div>
+        {/each}
       </div>
-    </Dialog.Content>
-  </Dialog.Portal>
-</Dialog.Root>
+    </div>
+  {/snippet}
+
+  {#snippet actions()}
+    <DialogCloseButton buttonLabel={{ text: "Close" }} />
+  {/snippet}
+</Dialog>
 
 {#if selectedOptions.length > 0}
   <div class="selected">

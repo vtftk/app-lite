@@ -18,34 +18,46 @@
   };
 
   const { tabs }: Props = $props();
+
+  const firstTabValue = $derived(tabs.length > 0 ? tabs[0].value : undefined);
+
+  let value: string = $state("");
+
+  $effect(() => {
+    value = firstTabValue ?? "";
+  });
 </script>
 
-<Tabs.Root let:value asChild let:builder>
-  <div use:builder.action class="root">
-    <Tabs.List>
+<Tabs.Root bind:value>
+  {#snippet child({ props })}
+    <div {...props} class="root">
+      <Tabs.List>
+        {#each tabs as tab (tab.value)}
+          <Tabs.Trigger value={tab.value}>
+            {#if tab.icon}
+              <tab.icon />
+            {/if}
+            {tab.label}
+          </Tabs.Trigger>
+        {/each}
+      </Tabs.List>
       {#each tabs as tab (tab.value)}
-        <Tabs.Trigger value={tab.value}>
-          {#if tab.icon}
-            <tab.icon />
-          {/if}
-          {tab.label}
-        </Tabs.Trigger>
+        <Tabs.Content value={tab.value}>
+          {#snippet child({ props })}
+            {#if value === tab.value}
+              <div
+                {...props}
+                class="content"
+                class:content--disable-padding={tab.disablePadding}
+              >
+                {@render tab.content()}
+              </div>
+            {/if}
+          {/snippet}
+        </Tabs.Content>
       {/each}
-    </Tabs.List>
-    {#each tabs as tab (tab.value)}
-      <Tabs.Content value={tab.value} asChild let:builder>
-        {#if value === tab.value}
-          <div
-            use:builder.action
-            class="content"
-            class:content--disable-padding={tab.disablePadding}
-          >
-            {@render tab.content()}
-          </div>
-        {/if}
-      </Tabs.Content>
-    {/each}
-  </div>
+    </div>
+  {/snippet}
 </Tabs.Root>
 
 <style>

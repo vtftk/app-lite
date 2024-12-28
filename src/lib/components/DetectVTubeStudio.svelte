@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { VTubeStudioBroadcast } from "$lib/api/types";
 
-  import { Dialog, Separator } from "bits-ui";
-  import { fade, scale } from "svelte/transition";
   import { detectVTubeStudio } from "$lib/api/data";
   import { getErrorMessage } from "$lib/utils/error";
+  import SolarCardSearchBoldDuotone from "~icons/solar/card-search-bold-duotone";
 
+  import Dialog from "./Dialog.svelte";
   import Button from "./input/Button.svelte";
+  import DialogCloseButton from "./DialogCloseButton.svelte";
 
   type Props = {
     onChoosePort: (port: number) => void;
@@ -21,41 +22,45 @@
   }
 </script>
 
-<Dialog.Root>
-  <Dialog.Trigger type="button">Detect VTube Studio</Dialog.Trigger>
-  <Dialog.Portal>
-    <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />
-    <Dialog.Content transition={scale}>
-      <Dialog.Title>Detect VTube Studio</Dialog.Title>
+<Dialog
+  buttonLabel={{
+    icon: SolarCardSearchBoldDuotone,
+    text: "Detect VTube Studio",
+  }}
+>
+  <!-- Title -->
+  {#snippet title()}
+    Detect VTube Studio
+  {/snippet}
 
-      <Separator.Root />
+  <!-- Content -->
+  {#snippet children()}
+    {#if promise}
+      {#await promise}
+        <p>Detecting locally running VTube Studio...</p>
+      {:then r}
+        <p>Found running VTube Studio</p>
 
-      {#if promise}
-        {#await promise}
-          <p>Detecting locally running VTube Studio...</p>
-        {:then r}
-          <p>Found running VTube Studio</p>
+        <p>Version: {r.apiVersion}</p>
+        <p>Port: {r.data.port}</p>
+      {:catch e}
+        Failed to detect VTube Studio: {getErrorMessage(e)}
+      {/await}
+    {/if}
+  {/snippet}
 
-          <p>Version: {r.apiVersion}</p>
-          <p>Version: {r.data.port}</p>
-        {:catch e}
-          Failed to detect VTube Studio: {getErrorMessage(e)}
-        {/await}
-      {/if}
+  <!-- Action buttons -->
+  {#snippet actions()}
+    {#if promise}
+      {#await promise then r}
+        <DialogCloseButton
+          buttonLabel={{ text: `Choose ${r.data.port}` }}
+          onclick={() => onChoosePort(r.data.port)}
+        />
+      {/await}
+    {/if}
+    <Button onclick={onScan}>Scan</Button>
 
-      <div data-dialog-actions>
-        {#if promise}
-          {#await promise then r}
-            <Dialog.Close onclick={() => onChoosePort(r.data.port)}>
-              <span class="sr-only">Choose {r.data.port}</span>
-            </Dialog.Close>
-          {/await}
-        {/if}
-        <Button onclick={onScan}>Scan</Button>
-        <Dialog.Close>
-          <span class="sr-only">Close</span>
-        </Dialog.Close>
-      </div>
-    </Dialog.Content>
-  </Dialog.Portal>
-</Dialog.Root>
+    <DialogCloseButton buttonLabel={{ text: "Close" }} />
+  {/snippet}
+</Dialog>

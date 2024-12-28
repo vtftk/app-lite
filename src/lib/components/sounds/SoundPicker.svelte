@@ -3,13 +3,13 @@
   import type { Sound, SoundId } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
-  import { Dialog, Separator } from "bits-ui";
-  import { fade, scale } from "svelte/transition";
   import { createSoundsQuery } from "$lib/api/sounds";
   import { getAppData } from "$lib/api/runtimeAppData";
 
+  import Dialog from "../Dialog.svelte";
   import SoundPreview from "./SoundPreview.svelte";
   import SearchInput from "../form/SearchInput.svelte";
+  import DialogCloseButton from "../DialogCloseButton.svelte";
   import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
 
   type Props = {
@@ -28,8 +28,8 @@
     disabled,
     buttonContent,
     addButtonLabel = "Done",
-    title = "Select Sounds",
-    description,
+    title: titleLabel = "Select Sounds",
+    description: descriptionLabel,
     selected: initialSelected,
     onChangeSelected,
   }: Props = $props();
@@ -76,9 +76,9 @@
   };
 </script>
 
-<Dialog.Root>
-  <Dialog.Trigger asChild let:builder>
-    <button use:builder.action {disabled} class="btn" type="button">
+<Dialog>
+  {#snippet button({ props })}
+    <button {...props} {disabled} class="btn" type="button">
       {#if buttonContent}
         {@render buttonContent()}
       {:else}
@@ -87,81 +87,74 @@
           : "Select Sounds"}
       {/if}
     </button>
-  </Dialog.Trigger>
-  <Dialog.Portal>
-    <Dialog.Overlay transition={fade} transitionConfig={{ duration: 150 }} />
-    <Dialog.Content transition={scale}>
-      <Dialog.Title>{title}</Dialog.Title>
+  {/snippet}
 
-      <Dialog.Description>
-        {description}
-      </Dialog.Description>
+  {#snippet title()}
+    {titleLabel}
+  {/snippet}
 
-      <Separator.Root />
+  {#snippet description()}
+    {descriptionLabel}
+  {/snippet}
 
-      <div class="selection">
-        <SearchInput bind:value={search} placeholder="Search" />
-      </div>
+  {#snippet children()}
+    <div class="selection">
+      <SearchInput bind:value={search} placeholder="Search" />
+    </div>
 
-      <div class="sound-table-wrapper">
-        <table class="sound-table">
-          <thead>
-            <tr>
-              <th class="sound-column sound-column--checkbox">
+    <div class="sound-table-wrapper">
+      <table class="sound-table">
+        <thead>
+          <tr>
+            <th class="sound-column sound-column--checkbox">
+              <ControlledCheckbox
+                id="terms"
+                aria-labelledby="terms-label"
+                checked={sounds.length > 0 && selected.length === sounds.length}
+                onCheckedChange={onToggleAll}
+              />
+            </th>
+            <th class="sound-column sound-column--name">Sound Name</th>
+            <th class="sound-column sound-column--preview">Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each sounds as sound (sound.id)}
+            <tr class="sound-row">
+              <td class="sound-column sound-column--checkbox">
                 <ControlledCheckbox
                   id="terms"
                   aria-labelledby="terms-label"
-                  checked={sounds.length > 0 &&
-                    selected.length === sounds.length}
-                  onCheckedChange={onToggleAll}
+                  checked={selected.includes(sound.id)}
+                  onCheckedChange={() => onSelectSound(sound)}
                 />
-              </th>
-              <th class="sound-column sound-column--name">Sound Name</th>
-              <th class="sound-column sound-column--preview">Preview</th>
+              </td>
+
+              <td class="sound-column sound-column--name"> {sound.name} </td>
+
+              <td class="sound-column sound-column--preview">
+                <SoundPreview
+                  volume={sound.volume * $appData.sounds_config.global_volume}
+                  src={getBackendURL(sound.src)}
+                />
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {#each sounds as sound (sound.id)}
-              <tr class="sound-row">
-                <td class="sound-column sound-column--checkbox">
-                  <ControlledCheckbox
-                    id="terms"
-                    aria-labelledby="terms-label"
-                    checked={selected.includes(sound.id)}
-                    onCheckedChange={() => onSelectSound(sound)}
-                  />
-                </td>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {/snippet}
 
-                <td class="sound-column sound-column--name"> {sound.name} </td>
-
-                <td class="sound-column sound-column--preview">
-                  <SoundPreview
-                    volume={sound.volume * $appData.sounds_config.global_volume}
-                    src={getBackendURL(sound.src)}
-                  />
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-
-      <div data-dialog-actions>
-        <Dialog.Close>Close</Dialog.Close>
-        <Dialog.Close onclick={onSave}>
-          {addButtonLabel}
-        </Dialog.Close>
-      </div>
-    </Dialog.Content>
-  </Dialog.Portal>
-</Dialog.Root>
+  {#snippet actions()}
+    <DialogCloseButton buttonLabel={{ text: "Close" }} />
+    <DialogCloseButton
+      buttonLabel={{ text: addButtonLabel }}
+      onclick={onSave}
+    />
+  {/snippet}
+</Dialog>
 
 <style>
-  [data-dialog-actions] {
-    display: flex;
-    gap: 1rem;
-  }
-
   .selection {
     display: flex;
     gap: 1rem;

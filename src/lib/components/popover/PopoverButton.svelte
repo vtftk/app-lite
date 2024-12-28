@@ -5,7 +5,7 @@
   import { scale } from "svelte/transition";
   import {
     Popover,
-    type PopoverProps,
+    type PopoverRootProps,
     type PopoverContentProps,
     type PopoverTriggerProps,
   } from "bits-ui";
@@ -14,7 +14,7 @@
     children?: Snippet;
     content?: Snippet;
 
-    rootProps?: PopoverProps;
+    rootProps?: PopoverRootProps;
     triggerProps?: Omit<PopoverTriggerProps, "asChild">;
     contentProps?: Omit<PopoverContentProps, "asChild">;
   } & HTMLButtonAttributes;
@@ -30,26 +30,23 @@
 </script>
 
 <Popover.Root {...rootProps}>
-  <Popover.Trigger {...triggerProps} class="btn" asChild let:builder>
-    <button
-      {...buttonProps}
-      type="button"
-      class="trigger btn"
-      use:builder.action
-      {...builder}
-    >
-      {@render children?.()}
-    </button>
+  <Popover.Trigger {...triggerProps}>
+    {#snippet child({ props })}
+      <button {...props} {...buttonProps} type="button" class="trigger btn">
+        {@render children?.()}
+      </button>
+    {/snippet}
   </Popover.Trigger>
-  <Popover.Content sideOffset={8} {...contentProps} asChild let:builder>
-    <div
-      transition:scale={{ duration: 200 }}
-      class="content"
-      use:builder.action
-      {...builder}
-    >
-      {@render content?.()}
-    </div>
+  <Popover.Content sideOffset={8} {...contentProps}>
+    {#snippet child({ props, wrapperProps, open })}
+      <div {...wrapperProps}>
+        {#if open}
+          <div {...props} transition:scale={{ duration: 200 }} class="content">
+            {@render content?.()}
+          </div>
+        {/if}
+      </div>
+    {/snippet}
   </Popover.Content>
 </Popover.Root>
 

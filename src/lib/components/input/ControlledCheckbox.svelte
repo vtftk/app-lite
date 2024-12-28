@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { Checkbox, type CheckboxProps } from "bits-ui";
+  import { Checkbox, type CheckboxRootProps } from "bits-ui";
 
   type Props = {
     checked: boolean;
     onCheckedChange: VoidFunction;
-  } & CheckboxProps;
+  } & CheckboxRootProps;
 
   const { checked, onCheckedChange, ...props }: Props = $props();
 </script>
 
 <Checkbox.Root {...props} {checked} {onCheckedChange}>
-  <Checkbox.Indicator let:isChecked>
-    {#if isChecked}
+  {#snippet children({ checked })}
+    {#if checked}
       <span>&#10003;</span>
     {/if}
-  </Checkbox.Indicator>
+  {/snippet}
 </Checkbox.Root>

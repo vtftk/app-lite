@@ -147,10 +147,6 @@
   </PopoverCloseButton>
 {/snippet}
 
-{#snippet bulkAddSoundButton()}
-  <SettingsIcon />Add Impact Sounds
-{/snippet}
-
 <!-- Section before the content -->
 {#snippet beforeContent()}
   <div class="selection">
@@ -181,11 +177,14 @@
 
       <SoundPicker
         disabled={selected.length < 1}
-        buttonContent={bulkAddSoundButton}
         description="Choose which impact sounds you'd like to add the the selected throwables."
         selected={[]}
         onChangeSelected={onBulkAddSounds}
-      />
+      >
+        {#snippet buttonContent()}
+          <SettingsIcon /> Add Impact Sounds
+        {/snippet}
+      </SoundPicker>
 
       <Button onclick={onBulkDelete} disabled={selected.length < 1}>
         <DeleteIcon /> Delete

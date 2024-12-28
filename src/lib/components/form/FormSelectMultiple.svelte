@@ -16,9 +16,8 @@
     items: T[];
     item: Snippet<[T]>;
 
-    selected: string | undefined;
-
-    onChangeSelected: (value: string | undefined) => void;
+    selected: string[];
+    onChangeSelected: (value: string[]) => void;
   };
 
   const {
@@ -36,32 +35,26 @@
 
   function getSelection(
     items: T[],
-    selected: string | undefined,
-  ): { value: string; label: string } | undefined {
-    const item = items.find((item) => item.value === selected);
-    if (item === undefined) return undefined;
-    return {
-      value: item.value,
-      label: item.label,
-    };
+    selected: string[],
+  ): { value: string; label: string }[] {
+    return items
+      .filter((item) => selected.includes(item.value))
+      .map((item) => ({
+        value: item.value,
+        label: item.label,
+      }));
   }
 
   const selection = $derived(getSelection(items, selectedValues));
 
   const selectedLabel = $derived.by(() => {
-    if (Array.isArray(selection)) {
-      const labels = selection.map((value) => value.label);
+    const labels = selection.map((value) => value.label);
 
-      if (labels.length < 1) {
-        return undefined;
-      }
-
-      return labels.join(", ");
+    if (labels.length < 1) {
+      return undefined;
     }
 
-    if (selection === undefined) return undefined;
-
-    return selection.label;
+    return labels.join(", ");
   });
 </script>
 
@@ -70,12 +63,12 @@
 <div class="form-input">
   <label for={id}>{label}</label>
   <Select.Root
-    type="single"
+    type="multiple"
     onOpenChange={(value) => {
       open = value;
     }}
     value={selectedValues}
-    onValueChange={(selection: any) => {
+    onValueChange={(selection) => {
       onChangeSelected(selection);
     }}
   >

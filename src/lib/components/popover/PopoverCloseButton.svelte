@@ -13,14 +13,10 @@
   const { children, closeProps, ...buttonProps }: Props = $props();
 </script>
 
-<Popover.Close {...closeProps} class="btn" asChild let:builder>
-  <button
-    {...buttonProps}
-    class="trigger btn"
-    use:builder.action
-    {...builder}
-    type="button"
-  >
-    {@render children?.()}
-  </button>
+<Popover.Close {...closeProps}>
+  {#snippet child({ props })}
+    <button {...props} {...buttonProps} class="btn" type="button">
+      {@render children?.()}
+    </button>
+  {/snippet}
 </Popover.Close>

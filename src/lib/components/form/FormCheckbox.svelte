@@ -27,11 +27,11 @@
       onChecked(checked === true);
     }}
   >
-    <Checkbox.Indicator let:isChecked>
-      {#if isChecked}
+    {#snippet children({ checked })}
+      {#if checked}
         <span>&#10003;</span>
       {/if}
-    </Checkbox.Indicator>
+    {/snippet}
   </Checkbox.Root>
 
   <div>
