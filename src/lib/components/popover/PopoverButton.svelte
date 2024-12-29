@@ -11,6 +11,7 @@
   } from "bits-ui";
 
   import Button from "../input/Button.svelte";
+  import { preventDefault } from "svelte/legacy";
 
   type Props = {
     children?: Snippet;
@@ -20,6 +21,8 @@
     triggerProps?: Omit<PopoverTriggerProps, "asChild">;
     contentProps?: Omit<PopoverContentProps, "asChild">;
   } & HTMLButtonAttributes;
+
+  let open = $state(false);
 
   const {
     content,
@@ -31,25 +34,50 @@
   }: Props = $props();
 </script>
 
-<Popover.Root {...rootProps}>
+<Popover.Root controlledOpen {open} {...rootProps}>
   <Popover.Trigger {...triggerProps}>
     {#snippet child({ props })}
-      <Button {...props} {...buttonProps} type="button">
+      <Button
+        {...props}
+        {...buttonProps}
+        type="button"
+        onclick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          open = !open;
+        }}
+      >
         {@render children?.()}
       </Button>
     {/snippet}
   </Popover.Trigger>
-  <Popover.Content sideOffset={8} {...contentProps}>
-    {#snippet child({ props, wrapperProps, open })}
-      <div {...wrapperProps}>
-        {#if open}
-          <div {...props} transition:scale={{ duration: 200 }} class="content">
-            {@render content?.()}
-          </div>
-        {/if}
-      </div>
-    {/snippet}
-  </Popover.Content>
+  <Popover.Portal>
+    <Popover.Content
+      sideOffset={8}
+      onInteractOutside={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        open = false;
+      }}
+      {...contentProps}
+    >
+      {#snippet child({ props, wrapperProps, open })}
+        <div {...wrapperProps} class="wrapper">
+          {#if open}
+            <div
+              {...props}
+              transition:scale={{ duration: 200 }}
+              class="content"
+            >
+              {@render content?.()}
+            </div>
+          {/if}
+        </div>
+      {/snippet}
+    </Popover.Content>
+  </Popover.Portal>
 </Popover.Root>
 
 <style>
