@@ -240,7 +240,7 @@
             id="image"
             name="image"
             value={$data.image ?? existing?.image?.src}
-            scale={$data.scale}
+            scale={$data.scale * 0.5}
             pixelated={$data.pixelate}
           />
 
@@ -291,7 +291,6 @@
             );
           }}
         />
-        <FormErrorLabel name="impactSoundIds" />
 
         <div class="sounds">
           <p class="sounds__title">Selected Sounds</p>
@@ -304,6 +303,8 @@
             {/each}
           </div>
         </div>
+
+        <FormErrorLabel name="impactSoundIds" />
       </FormSection>
     </FormSections>
   </PageLayoutList>
@@ -314,7 +315,6 @@
     display: flex;
     gap: 1rem;
     flex-flow: column;
-    margin-top: 1rem;
   }
 
   .sounds__title {
