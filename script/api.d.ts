@@ -404,4 +404,8 @@ declare global {
    * @return The twitch name or null if its invalid or missing
    */
   export function getTargetUser(validate: boolean): string | null;
+
+  interface Array<T> {
+    random(): T;
+  }
 }
