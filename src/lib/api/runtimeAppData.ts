@@ -90,14 +90,8 @@ export function createOverlayURLQuery() {
   });
 }
 
-/**
- * Create a query to load the twitch URL
- */
-export function createTwitchOAuthURLQuery() {
-  return createQuery({
-    queryKey: ["twitch-oauth-url"],
-    queryFn: () => invoke<string>("get_twitch_oauth_uri"),
-  });
+export function getTwitchOAuthURI() {
+  return invoke<string>("get_twitch_oauth_uri");
 }
 
 /**
@@ -117,6 +111,8 @@ export function createDeriveModelCalibrated(
   return derived(
     [modelData, runtimeAppData],
     ([$modelData, $runtimeAppData]) => {
+      console.log($runtimeAppData.model_id, $modelData);
+
       // No model active
       if ($runtimeAppData.model_id === null) {
         return false;
