@@ -327,18 +327,25 @@
 
       <!-- Throw angle -->
       <div class="row">
-        <FormNumberInput
+        <FormSlider
           id="throwables.throw_angle.min"
           name="throwables.throw_angle.min"
           label="Minimum Throw Angle"
           description="Minimum angle an item will be throw at"
+          min={-360}
+          max={360}
+          step={15}
+          value={$data.throwables.throw_angle.min}
         />
-
-        <FormNumberInput
+        <FormSlider
           id="throwables.throw_angle.max"
           name="throwables.throw_angle.max"
           label="Maximum Throw Angle"
           description="Maximum angle an item will be throw at"
+          min={-360}
+          max={360}
+          step={15}
+          value={$data.throwables.throw_angle.max}
         />
       </div>
     </FormSection>
@@ -422,9 +429,7 @@
         max={1}
         step={0.1}
         value={$data.sounds.global_volume}
-        onChangeValue={(value) => {
-          setFields("sounds.global_volume", value);
-        }}
+        showTicks
       />
 
       <!-- TODO: Sound alerts volume, impact sound volume -->

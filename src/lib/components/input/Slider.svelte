@@ -1,11 +1,12 @@
 <script lang="ts">
   import { Slider, type WithoutChildren } from "bits-ui";
 
-  type Props = WithoutChildren<Slider.RootProps>;
+  type Props = { showTicks?: boolean } & WithoutChildren<Slider.RootProps>;
 
   let {
     value = $bindable(),
     ref = $bindable(null),
+    showTicks,
     ...restProps
   }: Props = $props();
 </script>
@@ -27,13 +28,15 @@
           </Slider.Thumb>
         {/each}
 
-        {#each ticks as index}
-          <Slider.Tick {index}>
-            {#snippet child({ props })}
-              <span {...props} class="tick"></span>
-            {/snippet}
-          </Slider.Tick>
-        {/each}
+        {#if showTicks}
+          {#each ticks as index}
+            <Slider.Tick {index}>
+              {#snippet child({ props })}
+                <span {...props} class="tick"></span>
+              {/snippet}
+            </Slider.Tick>
+          {/each}
+        {/if}
       </span>
     {/snippet}
   </Slider.Root>

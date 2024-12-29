@@ -3,6 +3,7 @@
 
   import Slider from "../input/Slider.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
+  import { createField } from "felte";
 
   type Props = {
     id: string;
@@ -10,7 +11,7 @@
     label: string;
     description?: string;
     value: number;
-    onChangeValue: (value: number) => void;
+    showTicks?: boolean;
   } & Omit<WithoutChildren<BitsSlider.RootProps>, "value" | "onValueChange">;
 
   let {
@@ -19,13 +20,14 @@
     label,
     description,
     value,
-    onChangeValue,
     ref = $bindable(null),
     min,
     max,
     step,
     ...restProps
   }: Props = $props();
+
+  const { field, onInput } = createField(name);
 </script>
 
 <div class="form-input">
@@ -40,7 +42,9 @@
         value={[value]}
         bind:ref
         {...restProps}
-        onValueChange={(value) => onChangeValue(value[0])}
+        onValueChange={(value) => {
+          onInput(value[0]);
+        }}
         {min}
         {max}
         {step}
@@ -48,6 +52,7 @@
     </div>
 
     <input
+      use:field
       data-felte-keep-on-remove
       type="number"
       {id}
@@ -55,6 +60,7 @@
       {min}
       {max}
       {step}
+      {value}
       aria-describedby="{name}-validation"
     />
   </div>
