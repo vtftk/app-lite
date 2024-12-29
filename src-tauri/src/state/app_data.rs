@@ -266,7 +266,6 @@ pub struct ItemWithImpactSoundIds {
 pub struct PhysicsConfig {
     pub enabled: bool,
     pub fps: u16,
-    pub reverse_gravity: bool,
     pub gravity_multiplier: f32,
     pub horizontal_multiplier: f32,
     pub vertical_multiplier: f32,
@@ -277,7 +276,6 @@ impl Default for PhysicsConfig {
         Self {
             enabled: true,
             fps: 30,
-            reverse_gravity: false,
             gravity_multiplier: 1.,
             horizontal_multiplier: 1.,
             vertical_multiplier: 1.,

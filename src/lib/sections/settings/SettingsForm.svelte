@@ -81,7 +81,6 @@
     physics: z.object({
       enabled: z.boolean(),
       fps: z.number(),
-      reverse_gravity: z.boolean(),
       gravity_multiplier: z.number(),
       horizontal_multiplier: z.number(),
       vertical_multiplier: z.number(),
@@ -134,7 +133,6 @@
       physics: {
         enabled: physics_config.enabled,
         fps: physics_config.fps,
-        reverse_gravity: physics_config.reverse_gravity,
         gravity_multiplier: physics_config.gravity_multiplier,
         horizontal_multiplier: physics_config.horizontal_multiplier,
         vertical_multiplier: physics_config.vertical_multiplier,
@@ -201,7 +199,6 @@
       physics_config: {
         enabled: physics.enabled,
         fps: physics.fps,
-        reverse_gravity: physics.reverse_gravity,
         gravity_multiplier: physics.gravity_multiplier,
         horizontal_multiplier: physics.horizontal_multiplier,
         vertical_multiplier: physics.vertical_multiplier,
@@ -385,13 +382,6 @@
         min={0}
         max={120}
         step={10}
-      />
-
-      <FormBoundCheckbox
-        id="physics.reverse_gravity"
-        name="physics.reverse_gravity"
-        label="Reverse Gravity"
-        description="Whether to reverse the direction of gravity"
       />
 
       <FormNumberInput

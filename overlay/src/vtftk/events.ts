@@ -119,10 +119,9 @@ function onAppDataUpdatedEvent(data: EventSourceData, appData: AppData) {
   data.appData = appData;
 
   // Recreate the physics engine
-  const { fps, reverse_gravity, gravity_multiplier } = appData.physics_config;
+  const { fps, gravity_multiplier } = appData.physics_config;
   setPhysicsEngineConfig({
     fps: fps,
-    reverseGravity: reverse_gravity,
     gravityMultiplier: gravity_multiplier,
   });
 }

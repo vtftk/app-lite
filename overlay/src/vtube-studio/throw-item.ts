@@ -175,11 +175,10 @@ export async function throwItem(
 
   // Initialize the physics engine
   if (physicsEngine === null) {
-    const { fps, reverse_gravity, gravity_multiplier } = appData.physics_config;
+    const { fps, gravity_multiplier } = appData.physics_config;
 
     physicsEngine = createPhysicsEngine({
       fps: fps,
-      reverseGravity: reverse_gravity,
       gravityMultiplier: gravity_multiplier,
     });
   }

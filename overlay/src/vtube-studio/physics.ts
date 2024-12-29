@@ -27,20 +27,17 @@ export type PhysicsEngineConfig = {
   // Frames per second to run the physics engine at (60)
   fps: number;
 
-  // Whether to reverse the affects of gravity (false)
-  reverseGravity: boolean;
-
   // Multiplier applied against gravity (1)
   gravityMultiplier: number;
 };
 
 export function createPhysicsEngine(config: PhysicsEngineConfig) {
-  const { fps, gravityMultiplier, reverseGravity } = config;
+  const { fps, gravityMultiplier } = config;
 
   const frameTime = 1000 / fps;
-  const gravityDirectionConst = reverseGravity ? -1 : 1;
   const deltaFrameTime = 1 / fps;
   const gravityConstant = 30;
+  const reverseGravity = gravityMultiplier < 0;
 
   const world: PhysicsWorld = { objects: [] };
 
@@ -71,10 +68,7 @@ export function createPhysicsEngine(config: PhysicsEngineConfig) {
 
         // Apply gravity
         object.velocityY +=
-          gravityConstant *
-          gravityMultiplier *
-          gravityDirectionConst *
-          deltaFrameTime;
+          gravityConstant * gravityMultiplier * deltaFrameTime;
 
         // Apply velocity
         object.y += object.velocityY;
