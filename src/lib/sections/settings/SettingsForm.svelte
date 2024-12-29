@@ -9,6 +9,7 @@
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSlider from "$lib/components/form/FormSlider.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarBallsBoldDuotone from "~icons/solar/balls-bold-duotone";
@@ -411,12 +412,19 @@
 
 {#snippet soundsTabContent()}
   <FormSections>
-    <FormSection title="Volume">
-      <FormNumberInput
+    <FormSection>
+      <FormSlider
         id="sounds.global_volume"
         name="sounds.global_volume"
         label="Global Volume"
         description="Overall volume of all sounds, including impact sounds"
+        min={0}
+        max={1}
+        step={0.1}
+        value={$data.sounds.global_volume}
+        onChangeValue={(value) => {
+          setFields("sounds.global_volume", value);
+        }}
       />
 
       <!-- TODO: Sound alerts volume, impact sound volume -->
