@@ -13,6 +13,12 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
+.skeleton-list {
+  display: flex;
+  flex-flow: column;
+  gap: 1rem;
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;

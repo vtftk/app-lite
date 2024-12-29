@@ -28,7 +28,11 @@
 </script>
 
 {#if $runtimeAppData.isLoading || $appData.isLoading}
-  <p>Loading data...</p>
+  <div class="skeleton-list">
+    <div class="skeleton" style="width: 90%; height: 1.5rem;"></div>
+    <div class="skeleton" style="width: 70%; height: 1rem;"></div>
+    <div class="skeleton" style="width: 80%; height: 1rem;"></div>
+  </div>
 {:else if $runtimeAppDataStore !== undefined || $appDataStore !== undefined}
   <slot />
 {/if}
