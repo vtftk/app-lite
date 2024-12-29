@@ -283,14 +283,14 @@
         id="throwables.duration"
         name="throwables.duration"
         label="Duration"
-        description=" Total time that it should take for a thrown item to hit the target"
+        description=" Total time that it should take for a thrown item to hit the target (ms)"
       />
 
       <FormNumberInput
         id="throwables.impact_delay"
         name="throwables.impact_delay"
         label="Impact Delay"
-        description="Delay before the impact is registered"
+        description="Delay before the impact is registered (ms)"
       />
     </FormSection>
 
@@ -301,14 +301,14 @@
           id="throwables.spin_speed.min"
           name="throwables.spin_speed.min"
           label="Minimum Spin Speed"
-          description="Minimum speed an item can spin at"
+          description="Minimum time to complete a full spin (ms)"
         />
 
         <FormNumberInput
           id="throwables.spin_speed.max"
           name="throwables.spin_speed.max"
           label="Maximum Spin Speed"
-          description="Maximum speed an item can spin at"
+          description="Maximum time to complete a full spin (ms)"
         />
       </div>
     </FormSection>
@@ -382,6 +382,9 @@
         name="physics.fps"
         label="FPS"
         description="Frame rate to run the animation at"
+        min={0}
+        max={120}
+        step={10}
       />
 
       <FormBoundCheckbox
@@ -395,7 +398,7 @@
         id="physics.gravity_multiplier"
         name="physics.gravity_multiplier"
         label="Gravity Multiplier"
-        description=""
+        description="Multiplier applied to gravity, set to -1 to reverse the direction of gravity"
       />
 
       <div class="row">

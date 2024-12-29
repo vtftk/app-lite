@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { createField } from "felte";
   import { Slider as BitsSlider, type WithoutChildren } from "bits-ui";
 
   import Slider from "../input/Slider.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
-  import { createField } from "felte";
 
   type Props = {
     id: string;
