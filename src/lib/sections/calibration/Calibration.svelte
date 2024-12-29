@@ -31,6 +31,8 @@
 
     <p>
       Position the guide marker on your models head then press <b>"Done"</b>.
+
+      <b>DO NOT MOVE YOUR MODEL</b>
     </p>
 
     <div>
@@ -62,6 +64,8 @@
       Position the guide marker on your models head then press <b>"Done"</b>. If
       your models head is out of view place the marker as close as you can get
       to the head (The top of the vtube studio capture window)
+
+      <b>DO NOT MOVE YOUR MODEL</b>
     </p>
 
     <div>
@@ -88,7 +92,10 @@
   {:else if $calibrationStep == CalibrationStep.Complete}
     <h1>Complete</h1>
     <p>Calibration complete</p>
-    <LinkButton href="/">Close</LinkButton>
+    <LinkButton
+      onclick={() => setCalibrationStep(CalibrationStep.NotStarted)}
+      href="/">Close</LinkButton
+    >
   {/if}
 </div>
 
