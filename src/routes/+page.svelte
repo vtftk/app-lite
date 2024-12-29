@@ -72,15 +72,23 @@
   let isCalibrationLoading = $state(true);
 
   $effect(() => {
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       isTwitchLoading = $isAuthenticated.isLoading;
     }, 200);
+
+    return () => {
+      clearTimeout(timeout);
+    };
   });
 
   $effect(() => {
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       isCalibrationLoading = $modelDataQuery.isLoading;
     }, 200);
+
+    return () => {
+      clearTimeout(timeout);
+    };
   });
 </script>
 
