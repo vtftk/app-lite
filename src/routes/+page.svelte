@@ -2,6 +2,7 @@
   import { toast } from "svelte-sonner";
   import { derived } from "svelte/store";
   import { invoke } from "@tauri-apps/api/core";
+  import { getVersion } from "@tauri-apps/api/app";
   import { setClipboard } from "$lib/utils/browser";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
@@ -190,10 +191,54 @@
           : "red"}
       ></div>
     </div>
+
+    <div class="creator-block">
+      <img
+        style="display: inline-block;vertical-align: middle;"
+        width="64"
+        height="64"
+        src="/avatar-64x64.png"
+        alt=""
+      />
+      <div class="creator-text">
+        <p>
+          Created by
+          <a
+            class="creator"
+            href="https://github.com/jacobtread"
+            target="_blank"
+          >
+            Jacobtread
+          </a>
+        </p>
+        <p class="version">
+          Version:
+
+          {#await getVersion() then version}
+            {version}
+          {/await}
+        </p>
+      </div>
+    </div>
   </div>
 </PageLayoutList>
 
 <style>
+  .creator-block {
+    display: flex;
+    align-items: center;
+  }
+
+  .version {
+    font-size: 0.8rem;
+    color: #999;
+  }
+
+  .creator {
+    color: #e66c6c;
+    font-weight: bold;
+  }
+
   .status {
     display: flex;
     flex-flow: column;
