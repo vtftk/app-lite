@@ -31,6 +31,7 @@ export type MainConfig = {
   clean_logs_days: number;
   clean_executions: boolean;
   clean_executions_days: number;
+  auto_updating: boolean;
 };
 
 export type ExternalsConfig = {

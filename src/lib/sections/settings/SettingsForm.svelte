@@ -76,6 +76,7 @@
       clean_logs_days: z.number(),
       clean_executions: z.boolean(),
       clean_executions_days: z.number(),
+      auto_updating: z.boolean(),
     }),
 
     physics: z.object({
@@ -129,6 +130,7 @@
         clean_logs_days: main_config.clean_logs_days,
         clean_executions: main_config.clean_executions,
         clean_executions_days: main_config.clean_executions_days,
+        auto_updating: main_config.auto_updating,
       },
       physics: {
         enabled: physics_config.enabled,
@@ -195,6 +197,7 @@
         clean_logs_days: main.clean_logs_days,
         clean_executions: main.clean_executions,
         clean_executions_days: main.clean_executions_days,
+        auto_updating: main.auto_updating,
       },
       physics_config: {
         enabled: physics.enabled,
@@ -210,6 +213,13 @@
 {#snippet mainTabContent()}
   <FormSections>
     <FormSection title="App">
+      <FormBoundCheckbox
+        id="main.auto_updating"
+        name="main.auto_updating"
+        label="Automatic Updates"
+        description="Automatically download and install the latest version when a new version is available"
+      />
+
       <p class="helper">
         Enabling "Minimize to tray" allows you to close the app when you're not
         managing your throwables while streaming to greatly reduce its resource
