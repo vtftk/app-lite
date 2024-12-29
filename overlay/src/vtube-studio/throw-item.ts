@@ -96,8 +96,6 @@ export async function throwItem(
   const modelScale =
     (modelPosition.size + LARGEST_MODEL_SIZE) / TOTAL_MODEL_SIZE_RANGE;
 
-  console.log(modelScale);
-
   const leftSide: boolean = isRandomDirectionLeft(throwables.direction);
 
   let angle = randomRange(
