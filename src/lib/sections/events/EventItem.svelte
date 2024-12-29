@@ -75,6 +75,8 @@
 
     padding: 0.5rem;
     overflow: hidden;
+
+    height: 60px;
   }
 
   .event__name {

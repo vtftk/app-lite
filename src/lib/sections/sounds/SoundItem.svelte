@@ -83,6 +83,7 @@
     padding: 0.5rem;
     align-items: center;
     overflow: hidden;
+    height: 60px;
   }
 
   .sound__name {

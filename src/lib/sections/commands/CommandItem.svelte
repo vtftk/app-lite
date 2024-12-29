@@ -73,6 +73,7 @@
     padding: 0.5rem;
     align-items: center;
     overflow: hidden;
+    height: 60px;
   }
 
   .item__name {
