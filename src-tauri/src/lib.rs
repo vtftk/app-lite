@@ -26,6 +26,7 @@ pub fn run() {
     env_logger::init();
 
     tauri::Builder::default()
+        // Shell access plugin
         .plugin(tauri_plugin_shell::init())
         // Don't allow creation of multiple windows, instead focus the existing window
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -57,6 +58,14 @@ pub fn run() {
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
             let script_handle = create_script_executor();
+
+            // Add auto updater plugin if auto updating is allowed
+            {
+                let app_data = app_data.blocking_read();
+                if app_data.main_config.auto_updating {
+                    handle.plugin(tauri_plugin_updater::Builder::new().build())?;
+                }
+            }
 
             // Run background cleanup
             tauri::async_runtime::spawn(clean_old_data(db.clone(), app_data.clone()));

@@ -43,6 +43,11 @@ impl AppDataStore {
         self.inner.data.read().await
     }
 
+    /// Obtain a read guard by blocking
+    pub fn blocking_read(&self) -> RwLockReadGuard<'_, AppData> {
+        self.inner.data.blocking_read()
+    }
+
     pub async fn write<F>(&self, action: F) -> anyhow::Result<()>
     where
         F: FnOnce(&mut AppData),
@@ -99,6 +104,8 @@ pub struct MainConfig {
     pub clean_executions: bool,
     /// Number of days of execution data to retain when cleaning executions
     pub clean_executions_days: u64,
+    /// Allow automatic updates
+    pub auto_updating: bool,
 }
 
 impl Default for MainConfig {
@@ -109,6 +116,7 @@ impl Default for MainConfig {
             clean_logs_days: 30,
             clean_executions: true,
             clean_executions_days: 30,
+            auto_updating: true,
         }
     }
 }
