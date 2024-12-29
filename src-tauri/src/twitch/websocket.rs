@@ -431,7 +431,7 @@ impl WebsocketClient {
         while subscriptions.peek().is_some() {
             let chunk = subscriptions
                 .by_ref()
-                .take(5)
+                .take(10)
                 .map(|subscription| subscription.subscribe(client, transport.clone(), token));
 
             _ = try_join_all(chunk).await;
