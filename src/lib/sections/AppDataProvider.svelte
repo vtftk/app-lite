@@ -36,3 +36,9 @@
 {:else if $runtimeAppDataStore !== undefined || $appDataStore !== undefined}
   <slot />
 {/if}
+
+<style>
+  .skeleton-list {
+    padding: 1rem;
+  }
+</style>

@@ -51,4 +51,8 @@
     height: 100%;
     overflow: hidden;
   }
+
+  .skeleton-list {
+    padding: 1rem;
+  }
 </style>
