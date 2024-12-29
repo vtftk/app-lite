@@ -15,6 +15,7 @@
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSlider from "$lib/components/form/FormSlider.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import ImageUpload from "$lib/components/form/ImageUpload.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
@@ -224,45 +225,46 @@
 {/snippet}
 
 {#snippet imageTabContent()}
-  <FormSection title="Image" description="Image that gets thrown">
-    <div class="row-group">
-      <ImageUpload
-        id="image"
-        name="image"
-        label="Image"
-        value={$data.image ?? existing?.image?.src}
-        scale={$data.scale}
-        pixelated={$data.pixelate}
+  <div class="row-group">
+    <ImageUpload
+      id="image"
+      name="image"
+      label="Image"
+      value={$data.image ?? existing?.image?.src}
+      scale={$data.scale}
+      pixelated={$data.pixelate}
+    />
+
+    <div class="column">
+      <FormNumberInput
+        id="scale"
+        name="scale"
+        label="Scale"
+        min={0.1}
+        max={10}
+        step={0.1}
       />
 
-      <div class="column">
-        <FormNumberInput
-          id="scale"
-          name="scale"
-          label="Scale"
-          min={0.1}
-          max={10}
-          step={0.1}
-        />
+      <FormSlider
+        id="weight"
+        name="weight"
+        label="Weight"
+        min={0}
+        max={4}
+        step={0.1}
+        value={$data.weight}
+        description="Weight affects how much force your model is hit with when the item impacts (Default: 1)"
+        showTicks
+      />
 
-        <FormNumberInput
-          id="weight"
-          name="weight"
-          label="Weight"
-          min={0}
-          max={10}
-          step={0.1}
-        />
-
-        <FormBoundCheckbox
-          id="pixelate"
-          name="pixelate"
-          label="Pixelate"
-          description="Use this option if your image is pixel art"
-        />
-      </div>
+      <FormBoundCheckbox
+        id="pixelate"
+        name="pixelate"
+        label="Pixelate"
+        description="Use this option if your image is pixel art"
+      />
     </div>
-  </FormSection>
+  </div>
 {/snippet}
 
 {#snippet impactSoundsTabContent()}

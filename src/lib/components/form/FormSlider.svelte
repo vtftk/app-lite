@@ -91,7 +91,6 @@
   .form-input label {
     font-size: 1rem;
     color: #fff;
-    font-weight: bold;
   }
 
   .form-input input {

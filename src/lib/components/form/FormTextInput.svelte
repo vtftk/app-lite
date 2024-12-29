@@ -46,6 +46,7 @@
 
   .form-input label {
     font-size: 1rem;
+    color: #fff;
   }
 
   .form-input input {

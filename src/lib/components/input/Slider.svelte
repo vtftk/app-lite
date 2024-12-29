@@ -44,7 +44,10 @@
 
 <style>
   .wrapper {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: #333;
+    border-radius: 0.25rem;
+    border: 1px solid #666;
   }
 
   .root {
@@ -55,7 +58,6 @@
     user-select: none;
     align-items: center;
 
-    background-color: #333;
     height: 1rem;
   }
 
@@ -83,5 +85,6 @@
     width: 1px;
     height: 5px;
     background-color: #fff;
+    cursor: pointer;
   }
 </style>
