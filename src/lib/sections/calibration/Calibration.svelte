@@ -31,8 +31,8 @@
 
     <p>
       Position the guide marker on your models head then press <b>"Done"</b>.
-
-      <b>DO NOT MOVE YOUR MODEL</b>
+      Move your model until it fits within the window
+      <b>DO NOT RESIZE YOUR MODEL</b>
     </p>
 
     <div>
@@ -62,10 +62,9 @@
 
     <p>
       Position the guide marker on your models head then press <b>"Done"</b>. If
-      your models head is out of view place the marker as close as you can get
-      to the head (The top of the vtube studio capture window)
+      your models head is out of view move your model into view
 
-      <b>DO NOT MOVE YOUR MODEL</b>
+      <b>DO NOT RESIZE YOUR MODEL</b>
     </p>
 
     <div>
