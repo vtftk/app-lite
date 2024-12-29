@@ -96,6 +96,10 @@
   title="Home | VTFTK"
   description="Details about your current setup"
 >
+  {#snippet actions()}
+    <LinkButton href="https://vtftk.pages.dev" target="_blank">Help</LinkButton
+    >{/snippet}
+
   <div class="status">
     {#if isTwitchLoading}
       <CardSkeleton />

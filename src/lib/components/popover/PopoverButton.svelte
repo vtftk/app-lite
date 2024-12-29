@@ -11,7 +11,6 @@
   } from "bits-ui";
 
   import Button from "../input/Button.svelte";
-  import { preventDefault } from "svelte/legacy";
 
   type Props = {
     children?: Snippet;
