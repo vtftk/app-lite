@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { LogId, EventId, LogsQuery } from "$shared/dataV2";
+
   import { onMount } from "svelte";
   import LogsTable from "$lib/components/LogsTable.svelte";
-  import { type LogId, type ScriptId, type LogsQuery } from "$shared/dataV2";
   import {
     eventLogsQuery,
     deleteEventLogs,
@@ -9,7 +10,7 @@
   } from "$lib/api/vevents";
 
   type Props = {
-    id: ScriptId;
+    id: EventId;
   };
 
   const { id }: Props = $props();

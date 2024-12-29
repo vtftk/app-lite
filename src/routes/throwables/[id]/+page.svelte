@@ -10,7 +10,11 @@
 </script>
 
 {#if $itemQuery.isLoading}
-  Loading...
+  <div class="skeleton-list">
+    <div class="skeleton" style="width: 90%; height: 1.5rem;"></div>
+    <div class="skeleton" style="width: 70%; height: 1rem;"></div>
+    <div class="skeleton" style="width: 80%; height: 1rem;"></div>
+  </div>
 {:else if $itemQuery.data}
   <ThrowableForm existing={$itemQuery.data} />
 {:else}
@@ -24,3 +28,9 @@
     {actions}
   />
 {/if}
+
+<style>
+  .skeleton-list {
+    padding: 1rem;
+  }
+</style>
