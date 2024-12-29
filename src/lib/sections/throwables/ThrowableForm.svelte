@@ -6,7 +6,6 @@
   import { uploadFile } from "$lib/api/data";
   import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
-  import HTabs from "$lib/components/HTabs.svelte";
   import { createSoundsQuery } from "$lib/api/sounds";
   import { toastErrorMessage } from "$lib/utils/error";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
@@ -20,14 +19,12 @@
   import ImageUpload from "$lib/components/form/ImageUpload.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import FormSection from "$lib/components/form/FormSection.svelte";
-  import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
-  import SolarAlbumBoldDuotone from "~icons/solar/album-bold-duotone";
+  import FormSections from "$lib/components/form/FormSections.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
-  import SolarVolumeLoudBoldDuotone from "~icons/solar/volume-loud-bold-duotone";
   import {
     FileType,
     type Sound,
@@ -218,87 +215,6 @@
   <LinkButton href="/throwables">Back</LinkButton>
 {/snippet}
 
-{#snippet detailsTabContent()}
-  <FormSection>
-    <FormTextInput id="name" name="name" label="Name" />
-  </FormSection>
-{/snippet}
-
-{#snippet imageTabContent()}
-  <div class="row-group">
-    <ImageUpload
-      id="image"
-      name="image"
-      label="Image"
-      value={$data.image ?? existing?.image?.src}
-      scale={$data.scale}
-      pixelated={$data.pixelate}
-    />
-
-    <div class="column">
-      <FormNumberInput
-        id="scale"
-        name="scale"
-        label="Scale"
-        min={0.1}
-        max={10}
-        step={0.1}
-      />
-
-      <FormSlider
-        id="weight"
-        name="weight"
-        label="Weight"
-        min={0}
-        max={4}
-        step={0.1}
-        value={$data.weight}
-        description="Weight affects how much force your model is hit with when the item impacts (Default: 1)"
-        showTicks
-      />
-
-      <FormBoundCheckbox
-        id="pixelate"
-        name="pixelate"
-        label="Pixelate"
-        description="Use this option if your image is pixel art"
-      />
-    </div>
-  </div>
-{/snippet}
-
-{#snippet impactSoundsTabContent()}
-  <FormSection
-    title="Impact Sounds"
-    description="Choose selection of sounds that can play when the item impacts"
-  >
-    <SoundPicker
-      description="Choose which sounds should play when this item impacts"
-      selected={$data.impactSoundIds}
-      onChangeSelected={(soundIds) => {
-        setFields(
-          "impactSoundIds",
-          soundIds.map((sound) => sound.id),
-          true,
-        );
-      }}
-    />
-    <FormErrorLabel name="impactSoundIds" />
-
-    <div class="sounds">
-      <p class="sounds__title">Selected Sounds</p>
-
-      <div class="sounds__grid">
-        {#each selectedOptions as option}
-          <li class="sound-item">
-            <p class="sound-item__name">{option.name}</p>
-          </li>
-        {/each}
-      </div>
-    </div>
-  </FormSection>
-{/snippet}
-
 <form use:form>
   <PageLayoutList
     title={existing ? "Edit Throwable" : "Create Throwable"}
@@ -307,28 +223,89 @@
       : "Create a new item that can be thrown"}
     {actions}
   >
-    <HTabs
-      tabs={[
-        {
-          value: "image",
-          icon: SolarAlbumBoldDuotone,
-          label: "Image",
-          content: imageTabContent,
-        },
-        {
-          value: "details",
-          icon: SolarBookBoldDuotone,
-          label: "Details",
-          content: detailsTabContent,
-        },
-        {
-          value: "impact_sounds",
-          icon: SolarVolumeLoudBoldDuotone,
-          label: "Impact Sounds",
-          content: impactSoundsTabContent,
-        },
-      ]}
-    />
+    <FormSections>
+      <FormSection
+        title="Details"
+        description="Choose selection of sounds that can play when the item impacts"
+      >
+        <FormTextInput id="name" name="name" label="Name" />
+      </FormSection>
+
+      <FormSection
+        title="Image"
+        description="The image to use and its configuration"
+      >
+        <div class="row-group">
+          <ImageUpload
+            id="image"
+            name="image"
+            value={$data.image ?? existing?.image?.src}
+            scale={$data.scale}
+            pixelated={$data.pixelate}
+          />
+
+          <div class="column">
+            <FormNumberInput
+              id="scale"
+              name="scale"
+              label="Scale"
+              min={0.1}
+              max={10}
+              step={0.1}
+            />
+
+            <FormSlider
+              id="weight"
+              name="weight"
+              label="Weight"
+              min={0}
+              max={4}
+              step={0.1}
+              value={$data.weight}
+              description="Weight affects how much force your model is hit with when the item impacts (Default: 1)"
+              showTicks
+            />
+
+            <FormBoundCheckbox
+              id="pixelate"
+              name="pixelate"
+              label="Pixelate"
+              description="Use this option if your image is pixel art"
+            />
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Impact Sounds"
+        description="Choose selection of sounds that can play when the item impacts"
+      >
+        <SoundPicker
+          description="Choose which sounds should play when this item impacts"
+          selected={$data.impactSoundIds}
+          onChangeSelected={(soundIds) => {
+            setFields(
+              "impactSoundIds",
+              soundIds.map((sound) => sound.id),
+              true,
+            );
+          }}
+        />
+        <FormErrorLabel name="impactSoundIds" />
+
+        <div class="sounds">
+          <p class="sounds__title">Selected Sounds</p>
+
+          <div class="sounds__grid">
+            {#each selectedOptions as option}
+              <li class="sound-item">
+                <p class="sound-item__name">{option.name}</p>
+              </li>
+            {/each}
+          </div>
+        </div>
+      </FormSection>
+    </FormSections>
   </PageLayoutList>
 </form>
 
@@ -355,6 +332,7 @@
     display: grid;
     grid-template-columns: 1fr;
     flex: auto;
+    gap: 1rem;
   }
 
   .sound-item {

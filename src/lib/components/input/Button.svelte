@@ -9,7 +9,7 @@
   const { children, ...props }: Props = $props();
 </script>
 
-<button type="button" class="btn" {...props}>
+<button type="button" {...props} class="btn {props.class}">
   {@render children?.()}
 </button>
 
