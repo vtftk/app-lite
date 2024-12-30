@@ -16,7 +16,7 @@ try {
 
 // Send shoutout
 try {
-  await api.twitch.sendShoutout(twitchUser.id);
+  await api.twitch.shoutout(twitchUser.id);
 } catch (e) {
   // Ignored.. official shoutout can fail due to ratelimiting or if the user isn't streaming
   console.error("failed to send shoutout", e);

@@ -17,7 +17,7 @@ if (follower === null) {
   return `The user ${userName} is not following`;
 }
 
-const startDate = new Date(follower.followed_at);
+const startDate = follower.followedAt;
 const endDate = new Date();
 
 let years = endDate.getFullYear() - startDate.getFullYear();

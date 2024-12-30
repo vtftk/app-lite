@@ -1,10 +1,8 @@
-const message = ctx.message;
-
 // Acknowledge the request
 api.twitch.sendChat("Loading available voices.....");
 
 // Get list of voices
-const voices = await api.vtftk.ttsVoices(message);
+const voices = await api.integrations.tts_monster.voices();
 
 await api.twitch.sendChat("Available voices: ");
 
@@ -25,3 +23,4 @@ for (const voice of voices) {
 if (voicesMessage.length > 0) {
   await api.twitch.sendChat(voicesMessage + ".");
 }
+
