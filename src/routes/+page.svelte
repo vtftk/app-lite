@@ -1,12 +1,12 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
-  import { derived } from "svelte/store";
   import { invoke } from "@tauri-apps/api/core";
   import Card from "$lib/components/Card.svelte";
   import { getVersion } from "@tauri-apps/api/app";
   import Label from "$lib/components/Label.svelte";
   import { setClipboard } from "$lib/utils/browser";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { derived as derivedStore } from "svelte/store";
   import Button from "$lib/components/input/Button.svelte";
   import { createModelDataQuery } from "$lib/api/calibration";
   import { createIsAuthenticatedQuery } from "$lib/api/twitch";
@@ -27,7 +27,7 @@
   const overlayURLQuery = createOverlayURLQuery();
 
   const modelDataQuery = createModelDataQuery();
-  const modelData = derived(
+  const modelData = derivedStore(
     modelDataQuery,
     ($modelDataQuery) => $modelDataQuery.data ?? [],
   );
@@ -81,9 +81,11 @@
     };
   });
 
+  const modelDataLoading = $derived($modelDataQuery.isLoading);
+
   $effect(() => {
     const timeout = setTimeout(() => {
-      isCalibrationLoading = $modelDataQuery.isLoading;
+      isCalibrationLoading = modelDataLoading;
     }, 200);
 
     return () => {
