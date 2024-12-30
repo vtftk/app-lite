@@ -8,8 +8,8 @@ import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
-import libraryDefinition from "../../script/api.d.ts?raw";
-import builtinLibraryDefinition from "../../script/builtin.d.ts?raw";
+import libraryDefinition from "../../scripting/dist/runtime.d.ts?raw";
+import builtinLibraryDefinition from "../../scripting/types/builtin.d.ts?raw";
 
 const compilerOptions =
   monaco.languages.typescript.javascriptDefaults.getCompilerOptions();

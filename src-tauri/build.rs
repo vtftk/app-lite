@@ -7,9 +7,6 @@ fn main() {
     create_runtime_snapshot();
 }
 
-/// Embed runtime script to rebuild snapshot on change
-static _RUNTIME: &[u8] = include_bytes!("./src/script/esm/runtime.js");
-
 /// Creates a snapshot of the runtime wrapper code
 ///
 /// This makes the code startup faster and prevents needing to
@@ -25,7 +22,7 @@ fn create_runtime_snapshot() {
         esm_entry_point = "vtftk:runtime",
         // list of all JS files in the extension
         esm = [
-            dir "./src/script/esm",
+            dir "../scripting/dist",
             "vtftk:runtime" = "runtime.js"
         ]
     );
