@@ -512,6 +512,17 @@
         description="API Key to use TTS monster TTS voice generation"
         type="password"
       />
+
+      <p class="helper">
+        You can find your TTS Monster API key using the instructions
+        <a
+          href="https://docs.tts.monster/authentication#finding-your-api-token"
+          target="_blank"
+          class="link"
+        >
+          Here
+        </a>
+      </p>
     </FormSection>
   </FormSections>
 {/snippet}
