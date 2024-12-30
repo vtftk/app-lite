@@ -2,6 +2,7 @@
   import type { Snippet, Component } from "svelte";
 
   import { Tabs } from "bits-ui";
+  import { fly } from "svelte/transition";
 
   type Props = {
     tabs: Tab[];
@@ -57,12 +58,14 @@
         <Tabs.Content value={tab.value}>
           {#snippet child({ props })}
             {#if value === tab.value}
-              <div
-                {...props}
-                class="content"
-                class:content--disable-padding={tab.disablePadding}
-              >
-                {@render tab.content()}
+              <div {...props} class="content">
+                <div
+                  class="content__inner"
+                  class:content--disable-padding={tab.disablePadding}
+                  in:fly={{ x: -100, duration: 250 }}
+                >
+                  {@render tab.content()}
+                </div>
               </div>
             {/if}
           {/snippet}
@@ -83,14 +86,20 @@
   .tabs-list {
     display: flex;
     flex-flow: row;
+    justify-content: stretch;
   }
 
   .content {
     position: relative;
     flex: auto;
     overflow: auto;
-    flex-flow: column;
     border: 1px solid #333;
+  }
+
+  .content__inner {
+    position: relative;
+    height: 100%;
+    overflow: auto;
     padding: 1rem;
   }
 
@@ -110,6 +119,8 @@
     cursor: pointer;
     font-size: 1em;
     text-decoration: none;
+    transition: all 0.25s ease;
+    flex: auto;
   }
 
   .tab-button:first-of-type {
