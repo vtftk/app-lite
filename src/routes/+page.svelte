@@ -6,6 +6,7 @@
   import Label from "$lib/components/Label.svelte";
   import { setClipboard } from "$lib/utils/browser";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { debounce } from "$lib/utils/debounce.svelte";
   import { derived as derivedStore } from "svelte/store";
   import Button from "$lib/components/input/Button.svelte";
   import { createModelDataQuery } from "$lib/api/calibration";
@@ -68,30 +69,12 @@
   }
 
   // Consistent loading times to prevent flickering
-  let isTwitchLoading = $state(true);
-  let isCalibrationLoading = $state(true);
-
-  $effect(() => {
-    const timeout = setTimeout(() => {
-      isTwitchLoading = $isAuthenticated.isLoading;
-    }, 200);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  });
-
-  const modelDataLoading = $derived($modelDataQuery.isLoading);
-
-  $effect(() => {
-    const timeout = setTimeout(() => {
-      isCalibrationLoading = modelDataLoading;
-    }, 200);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  });
+  const isTwitchLoading = $derived.by(
+    debounce(() => $isAuthenticated.isLoading, 300, true),
+  );
+  const isCalibrationLoading = $derived.by(
+    debounce(() => $modelDataQuery.isLoading, 300, true),
+  );
 </script>
 
 <PageLayoutList
