@@ -35,7 +35,7 @@ pub struct Model {
     /// The outcome of the command
     pub outcome: CommandOutcome,
     /// Cooldown between each trigger of the command
-    pub cooldown: u32,
+    pub cooldown: CommandCooldown,
     /// Minimum required role to trigger the command
     pub require_role: MinimumRequireRole,
     /// Ordering
@@ -49,6 +49,14 @@ pub struct Model {
 pub enum CommandOutcome {
     Template { message: String },
     Script { script: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+#[serde(tag = "type")]
+pub struct CommandCooldown {
+    pub enabled: bool,
+    pub duration: u32,
+    pub per_user: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -86,7 +94,7 @@ pub struct CreateCommand {
     pub command: String,
     pub aliases: CommandAliases,
     pub outcome: CommandOutcome,
-    pub cooldown: u32,
+    pub cooldown: CommandCooldown,
     pub require_role: MinimumRequireRole,
 }
 
@@ -97,7 +105,7 @@ pub struct UpdateCommand {
     pub command: Option<String>,
     pub aliases: Option<CommandAliases>,
     pub outcome: Option<CommandOutcome>,
-    pub cooldown: Option<u32>,
+    pub cooldown: Option<CommandCooldown>,
     pub require_role: Option<MinimumRequireRole>,
     pub order: Option<u32>,
 }
@@ -147,12 +155,17 @@ impl Model {
     }
 
     /// Find the most recent execution of this command
-    pub async fn last_execution<C>(&self, db: &C) -> DbResult<Option<CommandExecutionModel>>
+    pub async fn last_execution<C>(
+        &self,
+        db: &C,
+        offset: u64,
+    ) -> DbResult<Option<CommandExecutionModel>>
     where
         C: ConnectionTrait + Send + 'static,
     {
         self.find_related(super::command_executions::Entity)
             .order_by_desc(CommandExecutionColumn::CreatedAt)
+            .offset(offset)
             .one(db)
             .await
     }

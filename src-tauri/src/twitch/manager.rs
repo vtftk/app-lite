@@ -425,7 +425,7 @@ impl TwitchManager {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[allow(unused)]
 pub struct TwitchEventUser {
     pub id: UserId,

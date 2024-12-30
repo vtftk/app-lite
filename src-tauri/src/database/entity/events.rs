@@ -37,7 +37,7 @@ pub struct Model {
     /// Outcome the event should trigger
     pub outcome: EventOutcome,
     /// Cooldown between each trigger of the even
-    pub cooldown: u32,
+    pub cooldown: EventCooldown,
     /// Minimum required role to trigger the event
     pub require_role: MinimumRequireRole,
     /// Delay before executing the outcome
@@ -47,6 +47,14 @@ pub struct Model {
 
     // Date time of creation
     pub created_at: DateTimeUtc,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+#[serde(tag = "type")]
+pub struct EventCooldown {
+    pub enabled: bool,
+    pub duration: u32,
+    pub per_user: bool,
 }
 
 /// Copy of the [EventTrigger] enum but string variants to
@@ -271,7 +279,7 @@ pub struct CreateEvent {
     pub name: String,
     pub trigger: EventTrigger,
     pub outcome: EventOutcome,
-    pub cooldown: u32,
+    pub cooldown: EventCooldown,
     pub require_role: MinimumRequireRole,
     pub outcome_delay: u32,
 }
@@ -282,7 +290,7 @@ pub struct UpdateEvent {
     pub name: Option<String>,
     pub trigger: Option<EventTrigger>,
     pub outcome: Option<EventOutcome>,
-    pub cooldown: Option<u32>,
+    pub cooldown: Option<EventCooldown>,
     pub require_role: Option<MinimumRequireRole>,
     pub outcome_delay: Option<u32>,
     pub order: Option<u32>,
@@ -321,12 +329,17 @@ impl Model {
     }
 
     /// Find the most recent execution of this event
-    pub async fn last_execution<C>(&self, db: &C) -> DbResult<Option<EventExecutionModel>>
+    pub async fn last_execution<C>(
+        &self,
+        db: &C,
+        offset: u64,
+    ) -> DbResult<Option<EventExecutionModel>>
     where
         C: ConnectionTrait + Send + 'static,
     {
         self.find_related(super::event_executions::Entity)
             .order_by_desc(EventExecutionColumn::CreatedAt)
+            .offset(offset)
             .one(db)
             .await
     }

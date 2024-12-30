@@ -1,6 +1,9 @@
 use anyhow::Context;
 use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
+
+use crate::twitch::manager::TwitchEventUser;
 
 use super::shared::DbResult;
 
@@ -21,9 +24,17 @@ pub struct Model {
     pub created_at: DateTimeUtc,
 }
 
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, FromJsonQueryResult, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct CommandExecutionMetadata(pub serde_json::Value);
+pub struct CommandExecutionMetadata {
+    /// User who triggered the event
+    pub user: Option<TwitchEventUser>,
+
+    /// Catchall for any other metadata
+    #[serde(flatten)]
+    #[serde_as(as = "serde_with::Map<_, _>")]
+    pub data: Vec<(String, serde_json::Value)>,
+}
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
@@ -47,7 +58,7 @@ impl ActiveModelBehavior for ActiveModel {}
 #[derive(Debug)]
 pub struct CreateCommandExecution {
     pub command_id: Uuid,
-    pub metadata: serde_json::Value,
+    pub metadata: CommandExecutionMetadata,
     pub created_at: DateTimeUtc,
 }
 
@@ -61,7 +72,7 @@ impl Model {
         let active_model = ActiveModel {
             id: Set(id),
             command_id: Set(create.command_id),
-            metadata: Set(CommandExecutionMetadata(create.metadata)),
+            metadata: Set(create.metadata),
             created_at: Set(create.created_at),
         };
 

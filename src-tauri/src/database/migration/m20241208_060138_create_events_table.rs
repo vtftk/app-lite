@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
                     .col(string(Events::TriggerType))
                     .col(json(Events::Trigger))
                     .col(json(Events::Outcome))
-                    .col(integer(Events::Cooldown))
+                    .col(json(Events::Cooldown))
                     .col(string(Events::RequireRole))
                     .col(integer(Events::OutcomeDelay))
                     .col(integer(Events::Order))

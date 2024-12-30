@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
                     .col(text(Commands::Command))
                     .col(json(Commands::Aliases))
                     .col(json(Commands::Outcome))
-                    .col(integer(Commands::Cooldown))
+                    .col(json(Commands::Cooldown))
                     .col(string(Commands::RequireRole))
                     .col(integer(Commands::Order))
                     .col(date_time(Commands::CreatedAt))

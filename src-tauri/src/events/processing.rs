@@ -4,23 +4,25 @@ use anyhow::{anyhow, Context};
 use chrono::TimeDelta;
 use futures::{future::BoxFuture, stream::FuturesUnordered};
 use log::{debug, error};
-use sea_orm::{sqlx::types::chrono::Utc, DatabaseConnection};
+use sea_orm::{prelude::DateTimeUtc, sqlx::types::chrono::Utc, DatabaseConnection};
 use tokio::{sync::broadcast, try_join};
 use twitch_api::types::UserId;
 
 use crate::{
     database::entity::{
-        command_executions::{CommandExecutionModel, CreateCommandExecution},
+        command_executions::{
+            CommandExecutionMetadata, CommandExecutionModel, CreateCommandExecution,
+        },
         commands::CommandOutcome,
-        event_executions::{CreateEventExecution, EventExecutionModel},
+        event_executions::{CreateEventExecution, EventExecutionMetadata, EventExecutionModel},
         shared::MinimumRequireRole,
-        EventModel,
+        CommandModel, EventModel,
     },
     events::matching::match_raid_event,
     script::runtime::{
         CommandContext, CommandContextUser, RuntimeExecutionContext, ScriptExecutorHandle,
     },
-    twitch::manager::{TwitchEvent, TwitchManager},
+    twitch::manager::{TwitchEvent, TwitchEventUser, TwitchManager},
 };
 
 use super::{
@@ -148,6 +150,85 @@ async fn process_twitch_event(
     Ok(())
 }
 
+pub fn is_cooldown_elapsed(
+    execution_time: DateTimeUtc,
+    current_time: DateTimeUtc,
+    cooldown: u32,
+) -> anyhow::Result<bool> {
+    let cooldown_end_time = execution_time
+        .checked_add_signed(TimeDelta::milliseconds(cooldown as i64))
+        .context("cooldown finishes too far in the future to compute")?;
+
+    Ok(current_time > cooldown_end_time)
+}
+
+pub async fn is_command_cooldown_elapsed(
+    db: &DatabaseConnection,
+    command: &CommandModel,
+    user: &TwitchEventUser,
+    current_time: DateTimeUtc,
+) -> anyhow::Result<bool> {
+    let cooldown = &command.cooldown;
+
+    // No cooldown enabled
+    if !cooldown.enabled {
+        return Ok(true);
+    }
+
+    // Handle global cooldown (Check last execution)
+    if !cooldown.per_user {
+        let last_execution = command
+            .last_execution(db, 0)
+            .await
+            .context("failed to request last execution for command")?;
+
+        let last_execution = match last_execution {
+            Some(value) => value,
+            None => return Ok(true),
+        };
+
+        return is_cooldown_elapsed(last_execution.created_at, current_time, cooldown.duration);
+    }
+
+    let mut offset = 0;
+
+    loop {
+        let last_execution = command
+            .last_execution(db, offset)
+            .await
+            .context("failed to request last execution for command")?;
+
+        // Cooldown elapsed if no more to check
+        let last_execution = match last_execution {
+            Some(value) => value,
+            None => return Ok(true),
+        };
+
+        // Check if the execution has elapsed the cooldown
+        let last_execution_elapsed =
+            is_cooldown_elapsed(last_execution.created_at, current_time, cooldown.duration)?;
+
+        // Execution was not from the target user
+        if last_execution
+            .metadata
+            .user
+            .is_none_or(|event_user| event_user.id != user.id)
+        {
+            offset += 1;
+
+            // If the execution had elapsed the cooldown we can treat the rest as elapsed too (We can skip checking the rest)
+            if last_execution_elapsed {
+                return Ok(true);
+            }
+
+            continue;
+        }
+
+        // Found an execution
+        return Ok(last_execution_elapsed);
+    }
+}
+
 pub async fn execute_command(
     db: &DatabaseConnection,
     script_handle: &ScriptExecutorHandle,
@@ -159,46 +240,38 @@ pub async fn execute_command(
         return Err(anyhow!("Non chat input data provided for chat execute"));
     };
 
+    let user = match event_data.user.clone() {
+        Some(value) => value,
+        None => return Err(anyhow!("got chat event without a user")),
+    };
+
     // Ensure required role is present
     if !has_required_role(
         twitch_manager,
-        event_data.user.as_ref().map(|user| user.id.clone()),
+        Some(user.id.clone()),
         &command.command.require_role,
     )
     .await
     {
-        debug!("skipping event: missing required role");
+        debug!("skipping command: missing required role");
         return Ok(());
     }
 
     let current_time = Utc::now();
 
-    let last_execution = command
-        .command
-        .last_execution(db)
-        .await
-        .context("failed to request last execution for command")?;
-
-    // Ensure cooldown is not active
-    if let Some(last_execution) = last_execution {
-        let cooldown_end_time = last_execution
-            .created_at
-            .checked_add_signed(TimeDelta::milliseconds(command.command.cooldown as i64))
-            .context("cooldown finishes too far in the future to compute")?;
-
-        if current_time < cooldown_end_time {
-            debug!("skipping command: cooldown");
-            return Ok(());
-        }
+    if !is_command_cooldown_elapsed(db, &command.command, &user, current_time).await? {
+        debug!("skipping command: cooldown");
+        return Ok(());
     }
 
     // Create metadata for storage
-    let metadata =
-        serde_json::to_value(&event_data).context("failed to serialize event metadata")?;
-
-    let user = match event_data.user {
-        Some(value) => value,
-        None => return Err(anyhow!("failed to get twitch user")),
+    let metadata = CommandExecutionMetadata {
+        user: Some(user.clone()),
+        data: vec![(
+            "input_data".to_string(),
+            serde_json::to_value(&event_data.input_data)
+                .context("failed to serialize command metadata")?,
+        )],
     };
 
     match command.command.outcome {
@@ -269,6 +342,79 @@ pub async fn execute_command(
     Ok(())
 }
 
+pub async fn is_event_cooldown_elapsed(
+    db: &DatabaseConnection,
+    event: &EventModel,
+    user: Option<&TwitchEventUser>,
+    current_time: DateTimeUtc,
+) -> anyhow::Result<bool> {
+    let cooldown = &event.cooldown;
+
+    // No cooldown enabled
+    if !cooldown.enabled {
+        return Ok(true);
+    }
+
+    // Handle global cooldown (Check last execution)
+    if !cooldown.per_user {
+        let last_execution = event
+            .last_execution(db, 0)
+            .await
+            .context("failed to request last execution for event")?;
+
+        let last_execution = match last_execution {
+            Some(value) => value,
+            None => return Ok(true),
+        };
+
+        return is_cooldown_elapsed(last_execution.created_at, current_time, cooldown.duration);
+    }
+
+    let user = match user {
+        Some(user) => user,
+        // Anonymous users bypass the cooldown
+        None => return Ok(true),
+    };
+
+    let mut offset = 0;
+
+    loop {
+        let last_execution = event
+            .last_execution(db, offset)
+            .await
+            .context("failed to request last execution for event")?;
+
+        // Cooldown elapsed if no more to check
+        let last_execution = match last_execution {
+            Some(value) => value,
+            None => return Ok(true),
+        };
+
+        // Check if the execution has elapsed the cooldown
+        let last_execution_elapsed =
+            is_cooldown_elapsed(last_execution.created_at, current_time, cooldown.duration)?;
+
+        // Execution was not from the target user
+        if last_execution
+            .metadata
+            .user
+            .is_none_or(|event_user| event_user.id != user.id)
+        {
+            offset += 1;
+
+            // If the execution had elapsed the cooldown we can treat the rest as elapsed too (We can skip checking the rest)
+            if last_execution_elapsed {
+                return Ok(true);
+            }
+
+            continue;
+        }
+
+        // Found an execution
+        return Ok(last_execution_elapsed);
+    }
+}
+
 pub async fn execute_event(
     db: &DatabaseConnection,
     twitch_manager: &Arc<TwitchManager>,
@@ -292,27 +438,21 @@ pub async fn execute_event(
 
     let current_time = Utc::now();
 
-    let last_execution = event
-        .last_execution(db)
-        .await
-        .context("failed to request last execution for event")?;
-
     // Ensure cooldown is not active
-    if let Some(last_execution) = last_execution {
-        let cooldown_end_time = last_execution
-            .created_at
-            .checked_add_signed(TimeDelta::milliseconds(event.cooldown as i64))
-            .context("cooldown finishes too far in the future to compute")?;
-
-        if current_time < cooldown_end_time {
-            debug!("skipping event: cooldown");
-            return Ok(());
-        }
+    if !is_event_cooldown_elapsed(db, &event, event_data.user.as_ref(), current_time).await? {
+        debug!("skipping event: cooldown");
+        return Ok(());
     }
 
     // Create metadata for storage
-    let metadata =
-        serde_json::to_value(&event_data).context("failed to serialize event metadata")?;
+    let metadata = EventExecutionMetadata {
+        user: event_data.user.clone(),
+        data: vec![(
+            "input_data".to_string(),
+            serde_json::to_value(&event_data.input_data)
+                .context("failed to serialize event metadata")?,
+        )],
+    };
 
     // Wait for outcome delay
     tokio::time::sleep(Duration::from_millis(event.outcome_delay as u64)).await;
