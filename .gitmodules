@@ -1,0 +1,3 @@
+[submodule "scripting"]
+	path = scripting
+	url = https://github.com/vtftk/scripting
