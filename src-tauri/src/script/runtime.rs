@@ -3,7 +3,7 @@ use crate::{
     script::ops::{
         http::op_http_request,
         kv::{op_kv_get, op_kv_remove, op_kv_set},
-        logging::{op_log_debug, op_log_error, op_log_info, op_log_warn},
+        logging::op_log,
         twitch::{
             op_twitch_get_follower, op_twitch_get_user_by_username, op_twitch_is_mod,
             op_twitch_is_vip, op_twitch_send_chat, op_twitch_send_chat_announcement,
@@ -43,10 +43,7 @@ deno_core::extension!(
     ops = [
         op_http_request,
         op_twitch_send_chat,
-        op_log_debug,
-        op_log_info,
-        op_log_warn,
-        op_log_error,
+        op_log,
         op_twitch_is_mod,
         op_twitch_is_vip,
         op_twitch_get_user_by_username,

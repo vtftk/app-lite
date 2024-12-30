@@ -24,59 +24,26 @@ fn exec_prefix(ctx: Option<&RuntimeExecutionContext>) -> String {
 }
 
 #[op2]
-pub fn op_log_debug(#[serde] ctx: Option<RuntimeExecutionContext>, #[string] message: String) {
+pub fn op_log(
+    #[serde] ctx: Option<RuntimeExecutionContext>,
+    #[serde] level: LoggingLevelDb,
+    #[string] message: String,
+) {
     let prefix = exec_prefix(ctx.as_ref());
-    log::debug!("{prefix}: {message}");
+
+    let log_level = match &level {
+        LoggingLevelDb::Debug => log::Level::Debug,
+        LoggingLevelDb::Info => log::Level::Info,
+        LoggingLevelDb::Warn => log::Level::Warn,
+        LoggingLevelDb::Error => log::Level::Error,
+    };
+
+    log::log!(log_level, "{prefix}: {message}");
 
     if let Some(ctx) = ctx {
         tokio::spawn(global_script_event(LogPersistEvent {
             ctx,
-            level: LoggingLevelDb::Debug,
-            message,
-            created_at: Utc::now(),
-        }));
-    }
-}
-
-#[op2]
-pub fn op_log_info(#[serde] ctx: Option<RuntimeExecutionContext>, #[string] message: String) {
-    let prefix = exec_prefix(ctx.as_ref());
-    log::info!("{prefix}: {message}");
-
-    if let Some(ctx) = ctx {
-        tokio::spawn(global_script_event(LogPersistEvent {
-            ctx,
-            level: LoggingLevelDb::Info,
-            message,
-            created_at: Utc::now(),
-        }));
-    }
-}
-
-#[op2]
-pub fn op_log_warn(#[serde] ctx: Option<RuntimeExecutionContext>, #[string] message: String) {
-    let prefix = exec_prefix(ctx.as_ref());
-    log::warn!("{prefix}: {message}");
-
-    if let Some(ctx) = ctx {
-        tokio::spawn(global_script_event(LogPersistEvent {
-            ctx,
-            level: LoggingLevelDb::Warn,
-            message,
-            created_at: Utc::now(),
-        }));
-    }
-}
-
-#[op2]
-pub fn op_log_error(#[serde] ctx: Option<RuntimeExecutionContext>, #[string] message: String) {
-    let prefix = exec_prefix(ctx.as_ref());
-    log::error!("{prefix}: {message}");
-
-    if let Some(ctx) = ctx {
-        tokio::spawn(global_script_event(LogPersistEvent {
-            ctx,
-            level: LoggingLevelDb::Error,
+            level,
             message,
             created_at: Utc::now(),
         }));
