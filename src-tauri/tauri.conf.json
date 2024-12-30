@@ -40,7 +40,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVGQ0IwNjc2NEQ5ODQ1MTUKUldRVlJaaE5kZ2JMWCtjMmMxUm03Y05SNlhEZ1hRY2cyM1A3N2tFWmpENUpWclVvTEVUdERZekMK",
       "endpoints": [
-        "https://github.com/jacobtread/vtftk/releases/latest/download/latest.json"
+        "https://github.com/vtftk/app/releases/latest/download/latest.json"
       ]
     }
   }
