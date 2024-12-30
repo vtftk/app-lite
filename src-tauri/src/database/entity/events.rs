@@ -50,11 +50,21 @@ pub struct Model {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
-#[serde(tag = "type")]
+#[serde(default)]
 pub struct EventCooldown {
     pub enabled: bool,
     pub duration: u32,
     pub per_user: bool,
+}
+
+impl Default for EventCooldown {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            duration: 0,
+            per_user: false,
+        }
+    }
 }
 
 /// Copy of the [EventTrigger] enum but string variants to

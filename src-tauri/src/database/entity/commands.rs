@@ -52,11 +52,21 @@ pub enum CommandOutcome {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
-#[serde(tag = "type")]
+#[serde(default)]
 pub struct CommandCooldown {
     pub enabled: bool,
     pub duration: u32,
     pub per_user: bool,
+}
+
+impl Default for CommandCooldown {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            duration: 1000,
+            per_user: false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
