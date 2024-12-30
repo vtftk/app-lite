@@ -1,6 +1,0 @@
-[submodule "scripting"]
-	path = scripting
-	url = https://github.com/vtftk/scripting
-[submodule "overlay"]
-	path = overlay
-	url = https://github.com/vtftk/overlay
