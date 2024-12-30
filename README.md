@@ -13,7 +13,23 @@
 
 ## 
 
-Checkout the [Website](https://vtftk.pages.dev/) for guides and setup instructions
+
+<table>
+<tr>
+<td>
+
+![Avatar](./docs/avatar-64x64.png)
+
+</td>
+<td>
+
+Checkout the [Website](https://vtftk.pages.dev/) for guides and setup instructions, examples, and documentation for scripting
+
+</td>
+</tr>
+</table>
+
+
 
 Create items that can be thrown at you, sounds that can be played, and trigger VTube studio. All using events from twitch such as redeems, commands, subscriptions, follows, raids, bits
 
