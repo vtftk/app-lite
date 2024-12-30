@@ -15,5 +15,6 @@
     flex-shrink: 0;
     background-color: #151515;
     border-right: 1px solid #222;
+    z-index: 1;
   }
 </style>

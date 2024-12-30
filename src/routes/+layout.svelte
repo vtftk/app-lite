@@ -3,6 +3,8 @@
   import "$lib/styles/global.scss";
   // Font family for code editor
   import "@fontsource/jetbrains-mono";
+  import { page } from "$app/stores";
+  import { fly } from "svelte/transition";
   import { navigating } from "$app/stores";
   import { queryClient } from "$lib/api/utils";
   import Sidebar from "$lib/components/nav/Sidebar.svelte";
@@ -17,17 +19,20 @@
   <AppDataProvider>
     <main class="main">
       <Sidebar />
-      <div class="content">
-        {#if $navigating}
-          <div class="skeleton-list">
-            <div class="skeleton" style="width: 90%; height: 1.5rem;"></div>
-            <div class="skeleton" style="width: 70%; height: 1rem;"></div>
-            <div class="skeleton" style="width: 80%; height: 1rem;"></div>
-          </div>
-        {:else}
-          <slot />
-        {/if}
-      </div>
+
+      {#key $page.url}
+        <div class="content" in:fly={{ y: -100, duration: 250 }}>
+          {#if $navigating}
+            <div class="skeleton-list">
+              <div class="skeleton" style="width: 90%; height: 1.5rem;"></div>
+              <div class="skeleton" style="width: 70%; height: 1rem;"></div>
+              <div class="skeleton" style="width: 80%; height: 1rem;"></div>
+            </div>
+          {:else}
+            <slot />
+          {/if}
+        </div>
+      {/key}
     </main>
   </AppDataProvider>
 </QueryClientProvider>
