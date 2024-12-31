@@ -178,14 +178,12 @@ export enum ThrowableDataType {
 }
 
 export type ThrowableDataThrow = {
-  throwable_ids: Uuid[];
   amount: number;
   use_input_amount: boolean;
   input_amount_config: InputAmountConfig;
 };
 
 export type ThrowableDataBarrage = {
-  throwable_ids: Uuid[];
   amount_per_throw: number;
   frequency: number;
   amount: number;
@@ -215,10 +213,6 @@ export type BitsAmountDynamic = {
   max_amount: number;
 };
 
-export type BitsAmount =
-  | ({ type: BitsAmountType.Fixed } & BitsAmountFixed)
-  | ({ type: BitsAmountType.Dynamic } & BitsAmountDynamic);
-
 export enum EventOutcomeType {
   ThrowBits = "ThrowBits",
   Throwable = "Throwable",
@@ -234,9 +228,12 @@ export type EventOutcomeBits = {
   _1000: Option<Uuid>;
   _5000: Option<Uuid>;
   _10000: Option<Uuid>;
-  amount: BitsAmount;
+  amount: ThrowableData;
 };
-export type EventOutcomeThrowable = { data: ThrowableData };
+export type EventOutcomeThrowable = {
+  throwable_ids: Uuid[];
+  data: ThrowableData;
+};
 export type EventOutcomeTriggerHotkey = { hotkey_id: Uuid };
 export type EventOutcomePlaySound = { sound_id: Uuid };
 export type EventOutcomeSendChatMessage = { template: string };

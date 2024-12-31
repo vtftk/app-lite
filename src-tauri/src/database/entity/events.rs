@@ -135,11 +135,9 @@ pub enum EventTrigger {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
-pub enum ThrowableData {
+pub enum ThrowableAmountData {
     /// Throw items (All at once)
     Throw {
-        /// IDs of the items that can be thrown
-        throwable_ids: Vec<Uuid>,
         /// Amount of items to throw
         amount: i64,
 
@@ -153,8 +151,6 @@ pub enum ThrowableData {
 
     /// Throw a throwable barrage
     Barrage {
-        /// IDs of the items that can be thrown
-        throwable_ids: Vec<Uuid>,
         /// Amount to throw for each throw
         amount_per_throw: u32,
         /// Time between each thrown item (Milliseconds)
@@ -201,26 +197,15 @@ pub struct EventOutcomeBits {
     /// Throwable to throw for 10000 bits (Override, defaults to builtin)
     pub _10000: Option<Uuid>,
     /// How many bits to throw
-    pub amount: BitsAmount,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(tag = "type")]
-pub enum BitsAmount {
-    /// Throw fixed amount of bits
-    Fixed { amount: i64 },
-
-    /// Throw the number of bits the user provided
-    Dynamic {
-        /// Maximum number to throw
-        max_amount: i64,
-    },
+    pub amount: ThrowableAmountData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EventOutcomeThrowable {
+    /// IDs of the throwables to throw
+    pub throwable_ids: Vec<Uuid>,
     /// Throwable data
-    pub data: ThrowableData,
+    pub data: ThrowableAmountData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

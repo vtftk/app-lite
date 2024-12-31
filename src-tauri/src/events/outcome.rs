@@ -8,8 +8,9 @@ use uuid::Uuid;
 use crate::{
     database::entity::{
         events::{
-            BitsAmount, EventOutcome, EventOutcomeBits, EventOutcomePlaySound, EventOutcomeScript,
-            EventOutcomeSendChat, EventOutcomeThrowable, EventOutcomeTriggerHotkey, ThrowableData,
+            EventOutcome, EventOutcomeBits, EventOutcomePlaySound, EventOutcomeScript,
+            EventOutcomeSendChat, EventOutcomeThrowable, EventOutcomeTriggerHotkey,
+            ThrowableAmountData,
         },
         items::ThrowableImageConfig,
         EventModel, ItemModel, SoundModel,
@@ -164,46 +165,36 @@ async fn throw_bits_outcome(
         None => create_default_bit_throwable(input),
     };
 
-    let amount = match data.amount {
-        BitsAmount::Dynamic { max_amount } => input.min(max_amount),
-        BitsAmount::Fixed { amount } => amount,
-    };
-
-    Ok(EventMessage::ThrowItem(ThrowItemMessage {
-        items,
-        config: ThrowItemConfig::All { amount },
-    }))
+    create_throwable_message(items, data.amount, Some(input))
 }
 
-// Produce a throwable message
-async fn throwable_outcome(
-    db: &DatabaseConnection,
-    event_data: EventData,
-    data: EventOutcomeThrowable,
-) -> anyhow::Result<EventMessage> {
+fn get_event_data_input_amount(event_data: &EventData) -> Option<i64> {
     // Compute amount derived from input
-    let input_amount = match event_data.input_data {
-        EventInputData::Bits { bits, .. } => Some(bits),
-        EventInputData::GiftedSubscription { total, .. } => Some(total),
+    match &event_data.input_data {
+        EventInputData::Bits { bits, .. } => Some(*bits),
+        EventInputData::GiftedSubscription { total, .. } => Some(*total),
         EventInputData::Subscription { .. } => Some(1),
         EventInputData::ReSubscription {
             cumulative_months, ..
-        } => Some(cumulative_months),
+        } => Some(*cumulative_months),
         EventInputData::Chat { cheer, .. } => cheer.map(|value| value as i64),
-        EventInputData::Raid { viewers } => Some(viewers),
+        EventInputData::Raid { viewers } => Some(*viewers),
 
         _ => None,
-    };
+    }
+}
 
-    match data.data {
-        ThrowableData::Throw {
-            throwable_ids,
+fn create_throwable_message(
+    items: ItemsWithSounds,
+    amount: ThrowableAmountData,
+    input_amount: Option<i64>,
+) -> anyhow::Result<EventMessage> {
+    match amount {
+        ThrowableAmountData::Throw {
             amount,
             use_input_amount,
             input_amount_config,
         } => {
-            let items = resolve_items(db, &throwable_ids).await?;
-
             let amount = if use_input_amount {
                 let input_amount = input_amount.unwrap_or(amount);
 
@@ -223,16 +214,13 @@ async fn throwable_outcome(
                 config: ThrowItemConfig::All { amount },
             }))
         }
-        ThrowableData::Barrage {
-            throwable_ids,
+        ThrowableAmountData::Barrage {
             amount_per_throw,
             frequency,
             amount,
             use_input_amount,
             input_amount_config,
         } => {
-            let items = resolve_items(db, &throwable_ids).await?;
-
             let amount = if use_input_amount {
                 let input_amount = input_amount.unwrap_or(amount);
 
@@ -257,6 +245,17 @@ async fn throwable_outcome(
             }))
         }
     }
+}
+
+// Produce a throwable message
+async fn throwable_outcome(
+    db: &DatabaseConnection,
+    event_data: EventData,
+    data: EventOutcomeThrowable,
+) -> anyhow::Result<EventMessage> {
+    let items = resolve_items(db, &data.throwable_ids).await?;
+
+    create_throwable_message(items, data.data, get_event_data_input_amount(&event_data))
 }
 
 /// Produce a hotkey trigger message

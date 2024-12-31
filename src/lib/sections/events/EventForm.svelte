@@ -19,6 +19,7 @@
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
@@ -41,7 +42,6 @@
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
   import {
-    BitsAmountType,
     EventOutcomeType,
     EventTriggerType,
     ThrowableDataType,
@@ -56,7 +56,6 @@
   import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
-  import FormSections from "$lib/components/form/FormSections.svelte";
 
   type Props = {
     existing?: VEvent;
@@ -101,14 +100,12 @@
   const throwableDataSchema = z.discriminatedUnion("type", [
     z.object({
       type: z.literal(ThrowableDataType.Throw),
-      throwable_ids: z.array(z.string()),
       amount: z.number().default(1),
       use_input_amount: z.boolean().default(false),
       input_amount_config: inputAmountConfigSchema,
     }),
     z.object({
       type: z.literal(ThrowableDataType.Barrage),
-      throwable_ids: z.array(z.string()),
       amount_per_throw: z.number(),
       frequency: z.number(),
       amount: z.number().default(1),
@@ -127,16 +124,11 @@
       _1000: z.string().nullable(),
       _5000: z.string().nullable(),
       _10000: z.string().nullable(),
-      amount: z.discriminatedUnion("type", [
-        z.object({ type: z.literal(BitsAmountType.Fixed), amount: z.number() }),
-        z.object({
-          type: z.literal(BitsAmountType.Dynamic),
-          max_amount: z.number(),
-        }),
-      ]),
+      amount: throwableDataSchema,
     }),
     z.object({
       type: z.literal(EventOutcomeType.Throwable),
+      throwable_ids: z.array(z.string()),
       data: throwableDataSchema,
     }),
 
@@ -189,9 +181,9 @@
     },
     outcome: {
       type: EventOutcomeType.Throwable,
+      throwable_ids: [],
       data: {
         type: ThrowableDataType.Throw,
-        throwable_ids: [],
         amount: 1,
         use_input_amount: false,
         input_amount_config: {
@@ -307,17 +299,22 @@
           _10000: null,
           _5000: null,
           amount: {
-            type: BitsAmountType.Dynamic,
-            max_amount: 20,
+            type: ThrowableDataType.Throw,
+            amount: 20,
+            use_input_amount: false,
+            input_amount_config: {
+              multiplier: 1,
+              range: { min: 1, max: 100 },
+            },
           },
         };
       case EventOutcomeType.Throwable:
         return {
           type: EventOutcomeType.Throwable,
+          throwable_ids: [],
           data: {
             type: ThrowableDataType.Throw,
             amount: 1,
-            throwable_ids: [],
             use_input_amount: false,
             input_amount_config: {
               multiplier: 1,
@@ -430,7 +427,6 @@
         return {
           type: ThrowableDataType.Throw,
           amount: 1,
-          throwable_ids: [],
           use_input_amount: false,
           input_amount_config: {
             multiplier: 1,
@@ -443,7 +439,6 @@
           amount: 50,
           amount_per_throw: 5,
           frequency: 100,
-          throwable_ids: [],
           use_input_amount: false,
           input_amount_config: {
             multiplier: 1,
@@ -530,6 +525,7 @@
             label: "Throw Bits",
             description:
               "Only available when using the bits trigger, will throw bits",
+            content: throwBitsOutcomeContent,
           },
         ]
       : []),
@@ -634,6 +630,165 @@
   {/if}
 {/snippet}
 
+{#snippet throwBitsOutcomeContent()}
+  {#if $data.outcome.type === EventOutcomeType.ThrowBits}
+    <ThrowableDataTypeSelect
+      id="outcome.data.type"
+      name="outcome.data.type"
+      label="Throwable Type"
+      selected={$data.outcome.amount.type}
+      onChangeSelected={(selected) => {
+        onChangeThrowableDataType(selected);
+      }}
+    />
+
+    {#if $data.outcome.amount.type === ThrowableDataType.Throw}
+      {#if isEventTriggerWithInput}
+        {@const { label, description } =
+          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
+        <FormBoundCheckbox
+          id="outcome.amount.use_input_amount"
+          name="outcome.amount.use_input_amount"
+          {label}
+          {description}
+        />
+      {/if}
+
+      {#if isEventTriggerWithInput && $data.outcome.amount.use_input_amount}
+        <FormNumberInput
+          id="outcome.amount.input_amount_config.multiplier"
+          name="outcome.amount.input_amount_config.multiplier"
+          label="Multiplier"
+          description="Multiplier applied against the amount"
+          min={1}
+          step={0.1}
+          max={100}
+        />
+        <div class="throwable-config-grid">
+          <FormNumberInput
+            id="outcome.amount.input_amount_config.range.min"
+            name="outcome.amount.input_amount_config.range.min"
+            label="Minimum Amount"
+            description="Minimum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+          <FormNumberInput
+            id="outcome.amount.input_amount_config.range.max"
+            name="outcome.amount.input_amount_config.range.max"
+            label="Maximum Amount"
+            description="Maximum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+        </div>
+      {:else}
+        <FormNumberInput
+          id="outcome.amount.amount"
+          name="outcome.amount.amount"
+          label="Total number of items to throw"
+          min={1}
+        />
+      {/if}
+
+      <p>
+        {$data.outcome.amount.amount} random item{$data.outcome.amount.amount >
+        1
+          ? "s"
+          : ""} will be chosen from your selection below and thrown
+      </p>
+    {:else if $data.outcome.amount.type === ThrowableDataType.Barrage}
+      <div class="throwable-config-grid">
+        <FormNumberInput
+          id="outcome.amount.amount_per_throw"
+          name="outcome.amount.amount_per_throw"
+          label="Amount per throw"
+          description="How many items to throw in each barrage"
+          min={1}
+        />
+
+        <FormNumberInput
+          id="outcome.amount.frequency"
+          name="outcome.amount.frequency"
+          label="Frequency"
+          description="Time between each barrage of items (ms)"
+          step={100}
+          min={0}
+          max={1000 * 60 * 60}
+        />
+      </div>
+
+      {#if isEventTriggerWithInput}
+        {@const { label, description } =
+          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
+        <FormBoundCheckbox
+          id="outcome.amount.use_input_amount"
+          name="outcome.amount.use_input_amount"
+          {label}
+          {description}
+        />
+      {/if}
+
+      {#if isEventTriggerWithInput && $data.outcome.amount.use_input_amount}
+        <div class="throwable-config-grid">
+          <FormNumberInput
+            id="outcome.amount.input_amount_config.multiplier"
+            name="outcome.amount.input_amount_config.multiplier"
+            label="Multiplier"
+            description="Multiplier applied against the amount"
+            min={1}
+            step={0.1}
+            max={100}
+          />
+          <FormNumberInput
+            id="outcome.amount.input_amount_config.range.min"
+            name="outcome.amount.input_amount_config.range.min"
+            label="Minimum Amount"
+            description="Minimum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+          <FormNumberInput
+            id="outcome.amount.input_amount_config.range.max"
+            name="outcome.amount.input_amount_config.range.max"
+            label="Maximum Amount"
+            description="Maximum amount of items to throw"
+            min={1}
+            step={1}
+            max={1000}
+          />
+        </div>
+      {:else}
+        <FormNumberInput
+          id="outcome.amount.amount"
+          name="outcome.amount.amount"
+          label="Total number of items to throw"
+          description="Total number of items to throw for the whole barrage"
+          min={1}
+        />
+      {/if}
+
+      <p>
+        {$data.outcome.amount.amount_per_throw} bit{$data.outcome.amount
+          .amount > 1
+          ? "s"
+          : ""} will be chosen and thrown every {$data.outcome.amount
+          .frequency}ms {$data.outcome.amount.use_input_amount
+          ? "until a maximum of " +
+            $data.outcome.amount.input_amount_config.range.max +
+            " have been thrown based on the input "
+          : "until a total of " + ($data.outcome.amount.amount ?? 1)} item{$data
+          .outcome.amount.amount > 1
+          ? "s"
+          : ""} have been thrown
+      </p>
+    {/if}
+  {/if}
+{/snippet}
+
 {#snippet throwableOutcomeContent()}
   {#if $data.outcome.type === EventOutcomeType.Throwable}
     <ThrowableDataTypeSelect
@@ -702,13 +857,6 @@
           ? "s"
           : ""} will be chosen from your selection below and thrown
       </p>
-
-      <ThrowablePicker
-        selected={$data.outcome.data.throwable_ids}
-        onChangeSelect={(selected) => {
-          setFields("outcome.data.throwable_ids", selected, true);
-        }}
-      />
     {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
       <div class="throwable-config-grid">
         <FormNumberInput
@@ -795,14 +943,14 @@
           ? "s"
           : ""} have been thrown
       </p>
-
-      <ThrowablePicker
-        selected={$data.outcome.data.throwable_ids}
-        onChangeSelect={(selected) => {
-          setFields("outcome.data.throwable_ids", selected, true);
-        }}
-      />
     {/if}
+
+    <ThrowablePicker
+      selected={$data.outcome.throwable_ids}
+      onChangeSelect={(selected) => {
+        setFields("outcome.throwable_ids", selected, true);
+      }}
+    />
   {/if}
 {/snippet}
 
