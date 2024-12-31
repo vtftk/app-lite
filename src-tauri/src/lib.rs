@@ -1,6 +1,8 @@
 use anyhow::Context;
 use database::clean_old_data;
-use events::{create_event_channel, processing::process_twitch_events};
+use events::{
+    create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
+};
 use log::error;
 use script::{events::ScriptEventActor, runtime::create_script_executor};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
@@ -70,9 +72,20 @@ pub fn run() {
             // Run background cleanup
             tauri::async_runtime::spawn(clean_old_data(db.clone(), app_data.clone()));
 
+            // Create background event scheduler
+            let scheduler_handle = create_scheduler(
+                db.clone(),
+                twitch_manager.clone(),
+                script_handle.clone(),
+                event_tx.clone(),
+            );
+
             // Provide app data and runtime app data stores
             app.manage(app_data.clone());
             app.manage(runtime_app_data.clone());
+
+            // Provide access to the scheduler
+            app.manage(scheduler_handle);
 
             // Provide access to twitch manager and event sender
             app.manage(event_tx.clone());

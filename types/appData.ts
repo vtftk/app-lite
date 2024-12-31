@@ -138,6 +138,7 @@ export enum EventTriggerType {
   GiftedSubscription = "GiftedSubscription",
   Bits = "Bits",
   Raid = "Raid",
+  Timer = "Timer",
 }
 
 export const EVENT_TRIGGER_TYPES = [
@@ -148,6 +149,7 @@ export const EVENT_TRIGGER_TYPES = [
   EventTriggerType.GiftedSubscription,
   EventTriggerType.Bits,
   EventTriggerType.Raid,
+  EventTriggerType.Timer,
 ] as const;
 
 export const EVENT_TRIGGER_NAMES: Record<EventTriggerType, string> = {
@@ -158,6 +160,7 @@ export const EVENT_TRIGGER_NAMES: Record<EventTriggerType, string> = {
   [EventTriggerType.GiftedSubscription]: "Gifted Subscription",
   [EventTriggerType.Bits]: "Bits",
   [EventTriggerType.Raid]: "Raid",
+  [EventTriggerType.Timer]: "Timer",
 } as const;
 
 export type EventTrigger =
@@ -173,6 +176,10 @@ export type EventTrigger =
   | {
       type: EventTriggerType.Raid;
       min_raiders: number;
+    }
+  | {
+      type: EventTriggerType.Timer;
+      interval: number;
     };
 
 export enum ThrowableDataType {

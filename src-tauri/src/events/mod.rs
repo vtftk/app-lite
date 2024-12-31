@@ -1,6 +1,7 @@
 pub mod matching;
 pub mod outcome;
 pub mod processing;
+pub mod scheduler;
 
 use serde::Serialize;
 use tokio::sync::broadcast;

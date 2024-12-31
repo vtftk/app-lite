@@ -86,6 +86,8 @@ pub enum EventTriggerType {
     Bits,
     #[sea_orm(string_value = "Raid")]
     Raid,
+    #[sea_orm(string_value = "Timer")]
+    Timer,
 }
 
 impl EventTriggerType {
@@ -98,6 +100,7 @@ impl EventTriggerType {
             EventTrigger::GiftedSubscription => EventTriggerType::GiftedSubscription,
             EventTrigger::Bits { .. } => EventTriggerType::Bits,
             EventTrigger::Raid { .. } => EventTriggerType::Raid,
+            EventTrigger::Timer { .. } => EventTriggerType::Timer,
         }
     }
 }
@@ -130,6 +133,12 @@ pub enum EventTrigger {
     Raid {
         /// Minimum raiders required to trigger
         min_raiders: u32,
+    },
+
+    /// Run the event automatically on a fixed interval timer
+    Timer {
+        /// Interval in seconds to run
+        interval: u64,
     },
 }
 

@@ -4,9 +4,11 @@
 
 use std::sync::Arc;
 
+use crate::database::entity::events::{EventTrigger, EventTriggerType};
 use crate::database::entity::shared::{ExecutionsQuery, LogsQuery, UpdateOrdering};
 use crate::database::entity::{EventExecutionModel, EventLogsModel};
 use crate::events::outcome::produce_outcome_message;
+use crate::events::scheduler::SchedulerHandle;
 use crate::events::EventMessage;
 use crate::script::runtime::ScriptExecutorHandle;
 use crate::twitch::manager::TwitchManager;
@@ -49,9 +51,16 @@ pub async fn get_event_by_id(
 pub async fn create_event(
     create: CreateEvent,
     db: State<'_, DatabaseConnection>,
+    scheduler: State<'_, SchedulerHandle>,
 ) -> CmdResult<EventModel> {
     let db = db.inner();
     let event = EventModel::create(db, create).await?;
+
+    // Update the event scheduler
+    if let EventTrigger::Timer { .. } = event.trigger {
+        update_scheduler_events(db, scheduler.inner()).await;
+    }
+
     Ok(event)
 }
 
@@ -61,24 +70,50 @@ pub async fn update_event(
     event_id: Uuid,
     update: UpdateEvent,
     db: State<'_, DatabaseConnection>,
+    scheduler: State<'_, SchedulerHandle>,
 ) -> CmdResult<EventModel> {
     let db = db.inner();
     let event = EventModel::get_by_id(db, event_id)
         .await?
         .context("event not found")?;
     let event = event.update(db, update).await?;
+
+    // Update the event scheduler
+    if let EventTrigger::Timer { .. } = event.trigger {
+        update_scheduler_events(db, scheduler.inner()).await;
+    }
+
     Ok(event)
 }
 
 /// Delete a event
 #[tauri::command]
-pub async fn delete_event(event_id: Uuid, db: State<'_, DatabaseConnection>) -> CmdResult<()> {
+pub async fn delete_event(
+    event_id: Uuid,
+    db: State<'_, DatabaseConnection>,
+    scheduler: State<'_, SchedulerHandle>,
+) -> CmdResult<()> {
     let db = db.inner();
     let event = EventModel::get_by_id(db, event_id)
         .await?
         .context("event not found")?;
+
+    let is_timer_event = matches!(event.trigger, EventTrigger::Timer { .. });
+
     event.delete(db).await?;
+
+    // Update the event scheduler
+    if is_timer_event {
+        update_scheduler_events(db, scheduler.inner()).await;
+    }
+
     Ok(())
+}
+
+async fn update_scheduler_events(db: &DatabaseConnection, scheduler: &SchedulerHandle) {
+    if let Ok(events) = EventModel::get_by_trigger_type(db, EventTriggerType::Timer).await {
+        _ = scheduler.update_events(events).await;
+    }
 }
 
 /// Get a specific event by ID

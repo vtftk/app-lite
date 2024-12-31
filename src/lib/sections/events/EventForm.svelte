@@ -28,6 +28,7 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
+  import SolarStopwatchBoldDuotone from "~icons/solar/stopwatch-bold-duotone";
   import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
@@ -89,6 +90,10 @@
     z.object({
       type: z.literal(EventTriggerType.Raid),
       min_raiders: z.number(),
+    }),
+    z.object({
+      type: z.literal(EventTriggerType.Timer),
+      interval: z.number(),
     }),
   ]);
 
@@ -292,6 +297,8 @@
         return { type: EventTriggerType.Bits, min_bits: 1 };
       case EventTriggerType.Raid:
         return { type: EventTriggerType.Raid, min_raiders: 1 };
+      case EventTriggerType.Timer:
+        return { type: EventTriggerType.Timer, interval: 60 };
     }
   }
 
@@ -547,6 +554,14 @@
         "Event will trigger when the channel is raided by another channel",
       content: raidContent,
     },
+    {
+      icon: SolarStopwatchBoldDuotone,
+      color: "green",
+      value: EventTriggerType.Timer,
+      label: "Timer",
+      description: "Event will trigger on a fixed timer",
+      content: timerContent,
+    },
   ];
 
   const outcomeOptions = $derived([
@@ -673,6 +688,17 @@
       name="trigger.min_raiders"
       label="Minimum Raiders"
       description="Minimum number of people that must be apart of the raid to trigger"
+    />
+  {/if}
+{/snippet}
+
+{#snippet timerContent()}
+  {#if $data.trigger.type === EventTriggerType.Timer}
+    <FormNumberInput
+      id="trigger.interval"
+      name="trigger.interval"
+      label="Interval"
+      description="Time in seconds between each trigger of the timer"
     />
   {/if}
 {/snippet}
