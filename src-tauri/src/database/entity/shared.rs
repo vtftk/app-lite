@@ -9,10 +9,12 @@ pub type DbResult<T> = Result<T, DbErr>;
 pub enum MinimumRequireRole {
     #[sea_orm(string_value = "None")]
     None,
-    #[sea_orm(string_value = "Mod")]
-    Mod,
+    #[sea_orm(string_value = "Follower")]
+    Follower,
     #[sea_orm(string_value = "Vip")]
     Vip,
+    #[sea_orm(string_value = "Mod")]
+    Mod,
     #[sea_orm(string_value = "Broadcaster")]
     Broadcaster,
 }

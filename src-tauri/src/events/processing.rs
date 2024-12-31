@@ -526,5 +526,13 @@ pub async fn has_required_role(
             .is_ok_and(|mods| mods.iter().any(|mods| mods.user_id == user));
     }
 
+    // Check the user is a follower
+    if let MinimumRequireRole::Follower = required_role {
+        return twitch_manager
+            .get_follower_by_id(user)
+            .await
+            .is_ok_and(|value| value.is_some());
+    }
+
     false
 }

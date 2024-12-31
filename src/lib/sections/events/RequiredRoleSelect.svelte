@@ -22,6 +22,11 @@
       description: "Anyone can use",
     },
     {
+      value: MinimumRequiredRole.Follower,
+      label: "Follower",
+      description: "Must be following the streamer",
+    },
+    {
       value: MinimumRequiredRole.Vip,
       label: "VIP",
       description: "Must be VIP, Moderator, or the streamer to use",

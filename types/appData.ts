@@ -107,6 +107,7 @@ export type ThrowableImageConfig = {
 
 export enum MinimumRequiredRole {
   None = "None",
+  Follower = "Follower",
   Vip = "Vip",
   Mod = "Mod",
   Broadcaster = "Broadcaster",
@@ -114,6 +115,7 @@ export enum MinimumRequiredRole {
 
 export const MINIMUM_REQUIRED_ROLE_VALUES = [
   MinimumRequiredRole.None,
+  MinimumRequiredRole.Follower,
   MinimumRequiredRole.Vip,
   MinimumRequiredRole.Mod,
   MinimumRequiredRole.Broadcaster,
@@ -122,6 +124,7 @@ export const MINIMUM_REQUIRED_ROLE_VALUES = [
 export const MINIMUM_REQUIRED_ROLE_NAMES: Record<MinimumRequiredRole, string> =
   {
     [MinimumRequiredRole.None]: "None",
+    [MinimumRequiredRole.Follower]: "Follower",
     [MinimumRequiredRole.Vip]: "Vip",
     [MinimumRequiredRole.Mod]: "Moderator",
     [MinimumRequiredRole.Broadcaster]: "Broadcaster",
