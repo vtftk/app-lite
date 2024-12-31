@@ -7,12 +7,12 @@
  * with the Rust side of the runtime
  */
 
-import * as logging from "./logging";
 import * as kv from "./kv";
-import * as twitch from "./twitch";
 import * as http from "./http";
-import * as integrations from "./integrations";
 import * as vtftk from "./vtftk";
+import * as twitch from "./twitch";
+import * as logging from "./logging";
+import * as integrations from "./integrations";
 
 // API functions provided to the runtime
 Object.defineProperty(globalThis, "api", {
