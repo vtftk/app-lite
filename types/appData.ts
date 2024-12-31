@@ -220,6 +220,7 @@ export enum EventOutcomeType {
   PlaySound = "PlaySound",
   SendChatMessage = "SendChatMessage",
   Script = "Script",
+  ChannelEmotes = "ChannelEmotes",
 }
 
 export type EventOutcomeBits = {
@@ -238,14 +239,17 @@ export type EventOutcomeTriggerHotkey = { hotkey_id: Uuid };
 export type EventOutcomePlaySound = { sound_id: Uuid };
 export type EventOutcomeSendChatMessage = { template: string };
 export type EventOutcomeScript = { script: string };
-
+export type EventOutcomeChannelEmotes = {
+  amount: ThrowableData;
+};
 export type EventOutcome =
   | ({ type: EventOutcomeType.ThrowBits } & EventOutcomeBits)
   | ({ type: EventOutcomeType.Throwable } & EventOutcomeThrowable)
   | ({ type: EventOutcomeType.TriggerHotkey } & EventOutcomeTriggerHotkey)
   | ({ type: EventOutcomeType.PlaySound } & EventOutcomePlaySound)
   | ({ type: EventOutcomeType.SendChatMessage } & EventOutcomeSendChatMessage)
-  | ({ type: EventOutcomeType.Script } & EventOutcomeScript);
+  | ({ type: EventOutcomeType.Script } & EventOutcomeScript)
+  | ({ type: EventOutcomeType.ChannelEmotes } & EventOutcomeChannelEmotes);
 
 export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
   EventOutcome,

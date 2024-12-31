@@ -8,9 +8,9 @@ use uuid::Uuid;
 use crate::{
     database::entity::{
         events::{
-            EventOutcome, EventOutcomeBits, EventOutcomePlaySound, EventOutcomeScript,
-            EventOutcomeSendChat, EventOutcomeThrowable, EventOutcomeTriggerHotkey,
-            ThrowableAmountData,
+            EventOutcome, EventOutcomeBits, EventOutcomeChannelEmotes, EventOutcomePlaySound,
+            EventOutcomeScript, EventOutcomeSendChat, EventOutcomeThrowable,
+            EventOutcomeTriggerHotkey, ThrowableAmountData,
         },
         items::ThrowableImageConfig,
         EventModel, ItemModel, SoundModel,
@@ -46,6 +46,11 @@ pub async fn produce_outcome_message(
         EventOutcome::Script(data) => {
             execute_script(script_handle, event.id, event_data, data).await?;
             Ok(None)
+        }
+        EventOutcome::ChannelEmotes(data) => {
+            throw_channel_emotes_outcome(twitch_manager, event_data, data)
+                .await
+                .map(Some)
         }
     }
 }
@@ -166,6 +171,58 @@ async fn throw_bits_outcome(
     };
 
     create_throwable_message(items, data.amount, Some(input))
+}
+
+/// Produce a channel emote throwing outcome message
+async fn throw_channel_emotes_outcome(
+    twitch_manager: &Arc<TwitchManager>,
+    event_data: EventData,
+    data: EventOutcomeChannelEmotes,
+) -> anyhow::Result<EventMessage> {
+    let user = match event_data.user {
+        Some(user) => user,
+        None => {
+            return Err(anyhow!(
+                "cannot throw channel emotes when user is not present"
+            ))
+        }
+    };
+
+    let emotes = twitch_manager.get_channel_emotes(user.id.clone()).await?;
+
+    // Create sounds from builtins
+    let impact_sounds: Vec<SoundModel> = create_default_impact_sounds();
+    let impact_sound_ids: Vec<Uuid> = impact_sounds.iter().map(|sound| sound.id).collect();
+
+    let items = emotes
+        .into_iter()
+        .map(|emote| {
+            let item = ItemModel {
+                id: Uuid::new_v4(),
+                name: "<builtin-bits>".to_string(),
+                image: ThrowableImageConfig {
+                    src: emote.images.url_4x,
+                    pixelate: false,
+                    scale: 1.0,
+                    weight: 1.0,
+                },
+                order: 0,
+                created_at: Utc::now(),
+            };
+
+            ItemWithImpactSoundIds {
+                item,
+                impact_sound_ids: impact_sound_ids.clone(),
+            }
+        })
+        .collect();
+
+    let items = ItemsWithSounds {
+        items,
+        impact_sounds,
+    };
+
+    create_throwable_message(items, data.amount, None)
 }
 
 fn get_event_data_input_amount(event_data: &EventData) -> Option<i64> {
@@ -325,6 +382,20 @@ const DEFAULT_SOUND_FILES: &[(&str, &str)] = &[
     ("Seq1.15 Hit #3 96 HK1", "Seq1_15_Hit_3_96_HK1.wav"),
 ];
 
+fn create_default_impact_sounds() -> Vec<SoundModel> {
+    DEFAULT_SOUND_FILES
+        .iter()
+        .map(|(name, file_name)| SoundModel {
+            id: Uuid::new_v4(),
+            name: name.to_string(),
+            src: format!("backend://defaults/sounds/{file_name}"),
+            volume: 1.,
+            order: 0,
+            created_at: Utc::now(),
+        })
+        .collect()
+}
+
 pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
     // Get the general bit category
     let bit_index: usize = match amount {
@@ -346,18 +417,7 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
     let bit_src = format!("backend://defaults/bits/{bit_file_name}");
 
     // Create sounds from builtins
-    let impact_sounds: Vec<SoundModel> = DEFAULT_SOUND_FILES
-        .iter()
-        .map(|(name, file_name)| SoundModel {
-            id: Uuid::new_v4(),
-            name: name.to_string(),
-            src: format!("backend://defaults/sounds/{file_name}"),
-            volume: 1.,
-            order: 0,
-            created_at: Utc::now(),
-        })
-        .collect();
-
+    let impact_sounds: Vec<SoundModel> = create_default_impact_sounds();
     let impact_sound_ids: Vec<Uuid> = impact_sounds.iter().map(|sound| sound.id).collect();
 
     let item = ItemModel {

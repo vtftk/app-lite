@@ -21,7 +21,7 @@ use twitch_api::{
     helix::{
         channels::{Follower, GetChannelFollowersRequest, Vip},
         chat::{
-            SendAShoutoutRequest, SendAShoutoutResponse, SendChatAnnouncementBody,
+            ChannelEmote, SendAShoutoutRequest, SendAShoutoutResponse, SendChatAnnouncementBody,
             SendChatAnnouncementRequest, SendChatAnnouncementResponse, SendChatMessageBody,
             SendChatMessageRequest, SendChatMessageResponse,
         },
@@ -171,6 +171,18 @@ impl TwitchManager {
             display_name: user.display_name,
             profile_image_url: user.profile_image_url,
         }))
+    }
+
+    pub async fn get_channel_emotes(&self, user_id: UserId) -> anyhow::Result<Vec<ChannelEmote>> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        let emotes = self
+            .helix_client
+            .get_channel_emotes_from_id(user_id, &token)
+            .await?;
+
+        Ok(emotes)
     }
 
     pub async fn get_follower_by_id(&self, user_id: UserId) -> anyhow::Result<Option<Follower>> {

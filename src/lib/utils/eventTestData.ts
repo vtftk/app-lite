@@ -33,7 +33,7 @@ export function getEventTestingData(triggerType: EventTriggerType): VEventData {
   const userName = randomArrayItem(USER_NAMES);
   const userDisplayname = USER_DISPLAY_NAMES[userName];
   const user = {
-    id: "test_user",
+    id: "12826",
     name: userName,
     display_name: userDisplayname,
   };

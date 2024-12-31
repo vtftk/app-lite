@@ -228,6 +228,12 @@ pub struct EventOutcomeScript {
     pub script: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EventOutcomeChannelEmotes {
+    /// How many emotes to throw
+    pub amount: ThrowableAmountData,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, FromJsonQueryResult)]
 #[serde(tag = "type")]
 pub enum EventOutcome {
@@ -243,6 +249,8 @@ pub enum EventOutcome {
     SendChatMessage(EventOutcomeSendChat),
     /// Execute a script
     Script(EventOutcomeScript),
+    /// Throw the emotes of a specific channel
+    ChannelEmotes(EventOutcomeChannelEmotes),
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
