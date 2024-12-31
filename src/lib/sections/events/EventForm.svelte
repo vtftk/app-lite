@@ -48,7 +48,7 @@
     MinimumRequiredRole,
     MINIMUM_REQUIRED_ROLE_VALUES,
   } from "$shared/appData";
-
+  import SolarEmojiFunnyCircleBoldDuotone from "~icons/solar/emoji-funny-circle-bold-duotone";
   import EventLogs from "./EventLogs.svelte";
   import SoundSelect from "./SoundSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
@@ -565,7 +565,7 @@
     ...($data.trigger.type === EventTriggerType.Raid
       ? [
           {
-            icon: SolarHandMoneyBoldDuotone,
+            icon: SolarEmojiFunnyCircleBoldDuotone,
             color: "yellow",
             value: EventOutcomeType.ChannelEmotes,
             label: "Channel Emotes",
