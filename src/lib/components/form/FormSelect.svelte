@@ -4,7 +4,7 @@
 >
   import type { Snippet } from "svelte";
 
-  import { Select } from "bits-ui";
+  import { Select, type SelectRootProps } from "bits-ui";
   import SolarAltArrowUpBold from "~icons/solar/alt-arrow-up-bold";
   import SolarAltArrowDownBold from "~icons/solar/alt-arrow-down-bold";
 
@@ -23,7 +23,10 @@
     selected: V | undefined;
 
     onChangeSelected: (value: V) => void;
-  };
+  } & Omit<
+    SelectRootProps,
+    "type" | "onOpenChange" | "value" | "onValueChange"
+  >;
 
   const {
     id,
@@ -34,6 +37,8 @@
     item,
     selected: selectedValues,
     onChangeSelected,
+    allowDeselect,
+    ...rootProps
   }: Props<T> = $props();
 
   let open = $state(false);
@@ -63,6 +68,8 @@
 <div class="form-input">
   <label for={id}>{label}</label>
   <Select.Root
+    {...rootProps}
+    allowDeselect={allowDeselect ?? false}
     type="single"
     onOpenChange={(value) => {
       open = value;
