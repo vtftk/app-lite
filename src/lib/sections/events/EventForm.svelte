@@ -38,6 +38,7 @@
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
   import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
+  import SolarEmojiFunnyCircleBoldDuotone from "~icons/solar/emoji-funny-circle-bold-duotone";
   import SolarUsersGroupRoundedBoldDuotone from "~icons/solar/users-group-rounded-bold-duotone";
   import SolarHeadphonesRoundSoundBoldDuotone from "~icons/solar/headphones-round-sound-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
@@ -48,7 +49,7 @@
     MinimumRequiredRole,
     MINIMUM_REQUIRED_ROLE_VALUES,
   } from "$shared/appData";
-  import SolarEmojiFunnyCircleBoldDuotone from "~icons/solar/emoji-funny-circle-bold-duotone";
+
   import EventLogs from "./EventLogs.svelte";
   import SoundSelect from "./SoundSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
