@@ -56,6 +56,7 @@
   import RequiredRoleSelect from "./RequiredRoleSelect.svelte";
   import TwitchRedeemSelect from "../twitch/TwitchRedeemSelect.svelte";
   import ThrowableDataTypeSelect from "./ThrowableDataTypeSelect.svelte";
+  import FormSections from "$lib/components/form/FormSections.svelte";
 
   type Props = {
     existing?: VEvent;
@@ -159,6 +160,12 @@
 
   type OutcomeSchema = z.infer<typeof outcomeSchema>;
 
+  const cooldownSchema = z.object({
+    enabled: z.boolean(),
+    duration: z.number(),
+    per_user: z.boolean(),
+  });
+
   const schema = z.object({
     name: z.string().min(1, "Name is required"),
     enabled: z.boolean(),
@@ -167,7 +174,7 @@
     outcome: outcomeSchema,
 
     require_role: z.enum(MINIMUM_REQUIRED_ROLE_VALUES),
-    cooldown: z.number(),
+    cooldown: cooldownSchema,
     outcome_delay: z.number(),
   });
 
@@ -194,7 +201,7 @@
       },
     },
     require_role: MinimumRequiredRole.None,
-    cooldown: 0,
+    cooldown: { enabled: true, duration: 0, per_user: false },
     outcome_delay: 0,
   };
 
@@ -883,37 +890,66 @@
 {/snippet}
 
 {#snippet requirementsTabContent()}
-  <!-- Cooldown and role requirements -->
-  <FormSection
-    title="Delays, cooldown, and requirements"
-    description="Configure any delays, cooldown, or requirements on this events trigger"
-  >
-    <RequiredRoleSelect
-      id="require_role"
-      name="require_role"
-      label="Minimum Required Role"
-      selected={$data.require_role}
-      onChangeSelected={(selected) => setFields("require_role", selected, true)}
-      description="Minimum required role the user triggering the event must have in order for the event to trigger"
-    />
+  <FormSections>
+    <!-- Role requirements -->
+    <FormSection
+      title="Requirements"
+      description="Configure requirements for this command to trigger"
+    >
+      <RequiredRoleSelect
+        id="require_role"
+        name="require_role"
+        label="Minimum Required Role"
+        selected={$data.require_role}
+        onChangeSelected={(selected) =>
+          setFields("require_role", selected, true)}
+        description="Minimum required role the user triggering the event must have in order for the event to trigger"
+      />
+    </FormSection>
+    <!-- Cooldown -->
+    <FormSection
+      title="Cooldown "
+      description="Configure cooldown between each trigger of the event"
+    >
+      <FormBoundCheckbox
+        id="cooldown.enabled"
+        name="cooldown.enabled"
+        label="Enabled"
+        description="Whether the cooldown is enabled"
+      />
 
-    <FormNumberInput
-      id="cooldown"
-      name="cooldown"
-      label="Cooldown"
-      description="Cooldown before this event can be triggered again (ms)"
-      min={0}
-      step={100}
-    />
-    <FormNumberInput
-      id="outcome_delay"
-      name="outcome_delay"
-      label="Outcome Delay"
-      description="Delay before this event will be triggered (ms)"
-      min={0}
-      step={100}
-    />
-  </FormSection>
+      <FormNumberInput
+        id="cooldown.duration"
+        name="cooldown.duration"
+        label="Duration"
+        description="How long the cooldown should be between each trigger of the event (ms)"
+        min={0}
+        step={100}
+      />
+
+      <FormBoundCheckbox
+        id="cooldown.per_user"
+        name="cooldown.per_user"
+        label="Per Person"
+        description="Whether the cooldown is on a per person basis or a cooldown for everyone"
+      />
+    </FormSection>
+
+    <!-- Delay -->
+    <FormSection
+      title="Delay"
+      description="Delay before the outcome will occur"
+    >
+      <FormNumberInput
+        id="outcome_delay"
+        name="outcome_delay"
+        label="Outcome Delay"
+        description="Delay before this event will be triggered (ms)"
+        min={0}
+        step={100}
+      />
+    </FormSection>
+  </FormSections>
 {/snippet}
 
 {#snippet codeTabContent()}

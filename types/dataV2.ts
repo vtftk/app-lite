@@ -97,9 +97,15 @@ export type Command = {
   command: string;
   aliases: string[];
   outcome: CommandOutcome;
-  cooldown: number;
+  cooldown: CommandCooldown;
   require_role: MinimumRequiredRole;
   order: number;
+};
+
+export type CommandCooldown = {
+  enabled: boolean;
+  duration: number;
+  per_user: boolean;
 };
 
 export type CreateCommand = {
@@ -108,7 +114,7 @@ export type CreateCommand = {
   command: string;
   aliases: string[];
   outcome: CommandOutcome;
-  cooldown: number;
+  cooldown: CommandCooldown;
   require_role: MinimumRequiredRole;
 };
 
@@ -120,7 +126,7 @@ export type UpdateCommand = {
     command: string;
     aliases: string[];
     outcome: CommandOutcome;
-    cooldown: number;
+    cooldown: CommandCooldown;
     require_role: MinimumRequiredRole;
     order: number;
   }>;
@@ -134,10 +140,16 @@ export type VEvent = {
   enabled: boolean;
   trigger: EventTrigger;
   outcome: EventOutcome;
-  cooldown: number;
+  cooldown: VEventCooldown;
   require_role: MinimumRequiredRole;
   outcome_delay: number;
   order: number;
+};
+
+export type VEventCooldown = {
+  enabled: boolean;
+  duration: number;
+  per_user: boolean;
 };
 
 export type CreateEvent = {
@@ -145,7 +157,7 @@ export type CreateEvent = {
   enabled: boolean;
   trigger: EventTrigger;
   outcome: EventOutcome;
-  cooldown: number;
+  cooldown: VEventCooldown;
   require_role: MinimumRequiredRole;
   outcome_delay: number;
 };
@@ -157,7 +169,7 @@ export type UpdateEvent = {
     enabled: boolean;
     trigger: EventTrigger;
     outcome: EventOutcome;
-    cooldown: number;
+    cooldown: VEventCooldown;
     require_role: MinimumRequiredRole;
     outcome_delay: number;
     order: number;

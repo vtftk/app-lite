@@ -64,15 +64,21 @@ return \`You said: "\${message}"; Heres a random title: \${title}, Heres a rando
   const outcomeSchema = z.discriminatedUnion("type", [
     z.object({
       type: z.literal(CommandOutcomeType.Template),
-      message: z.string(),
+      message: z
+        .string()
+        .default("Hey $(user), this is the test command response"),
     }),
     z.object({
       type: z.literal(CommandOutcomeType.Script),
-      script: z.string(),
+      script: z.string().default(exampleCode),
     }),
   ]);
 
-  type OutcomeSchema = z.infer<typeof outcomeSchema>;
+  const cooldownSchema = z.object({
+    enabled: z.boolean(),
+    duration: z.number(),
+    per_user: z.boolean(),
+  });
 
   const schema = z.object({
     name: z.string().min(1, "You must specify a name"),
@@ -80,19 +86,10 @@ return \`You said: "\${message}"; Heres a random title: \${title}, Heres a rando
     enabled: z.boolean(),
     outcome: outcomeSchema,
     require_role: z.enum(MINIMUM_REQUIRED_ROLE_VALUES),
-    cooldown: z.number(),
+    cooldown: cooldownSchema,
   });
 
   type Schema = z.infer<typeof schema>;
-
-  const createDefaults: Schema = {
-    name: "",
-    command: "!test",
-    enabled: true,
-    outcome: getOutcomeDefaults(CommandOutcomeType.Template),
-    require_role: MinimumRequiredRole.None,
-    cooldown: 1000,
-  };
 
   function createFromExisting(config: Command): Partial<Schema> {
     return {
@@ -104,6 +101,15 @@ return \`You said: "\${message}"; Heres a random title: \${title}, Heres a rando
       cooldown: config.cooldown,
     };
   }
+
+  const createDefaults: Schema = {
+    name: "",
+    command: "",
+    enabled: true,
+    outcome: getOutcomeDefaults(CommandOutcomeType.Template),
+    require_role: MinimumRequiredRole.None,
+    cooldown: { enabled: true, duration: 1000, per_user: false },
+  };
 
   const { form, data, setFields, isDirty, setIsDirty } = createForm<Schema>({
     // Derive initial values
@@ -173,7 +179,9 @@ return \`You said: "\${message}"; Heres a random title: \${title}, Heres a rando
     setIsDirty(false);
   }
 
-  function getOutcomeDefaults(type: CommandOutcomeType): OutcomeSchema {
+  function getOutcomeDefaults(
+    type: CommandOutcomeType,
+  ): z.infer<typeof outcomeSchema> {
     switch (type) {
       case CommandOutcomeType.Template:
         return {
@@ -229,6 +237,7 @@ return \`You said: "\${message}"; Heres a random title: \${title}, Heres a rando
         name="command"
         label="Command"
         description="Message that will trigger this command"
+        placeholder="!test"
       />
 
       <FormBoundCheckbox
@@ -313,29 +322,51 @@ return \`You said: "\${message}"; Heres a random title: \${title}, Heres a rando
 {/snippet}
 
 {#snippet requirementsTabContent()}
-  <!-- Cooldown and role requirements -->
-  <FormSection
-    title="Cooldown, and requirements"
-    description="Configure any cooldown, or requirements on this command trigger"
-  >
-    <RequiredRoleSelect
-      id="require_role"
-      name="require_role"
-      label="Minimum Required Role"
-      selected={$data.require_role}
-      onChangeSelected={(selected) => setFields("require_role", selected, true)}
-      description="Minimum required role the user triggering the event must have in order for the event to trigger"
-    />
+  <FormSections>
+    <!-- Cooldown and role requirements -->
+    <FormSection
+      title="Requirements"
+      description="Configure requirements for this command to trigger"
+    >
+      <RequiredRoleSelect
+        id="require_role"
+        name="require_role"
+        label="Minimum Required Role"
+        selected={$data.require_role}
+        onChangeSelected={(selected) =>
+          setFields("require_role", selected, true)}
+        description="Minimum required role the user triggering the event must have in order for the event to trigger"
+      />
+    </FormSection>
 
-    <FormNumberInput
-      id="cooldown"
-      name="cooldown"
-      label="Cooldown"
-      description="Cooldown before this event can be triggered again (ms)"
-      min={0}
-      step={100}
-    />
-  </FormSection>
+    <FormSection
+      title="Cooldown"
+      description="Configure cooldown between each use of the command"
+    >
+      <FormBoundCheckbox
+        id="cooldown.enabled"
+        name="cooldown.enabled"
+        label="Enabled"
+        description="Whether the cooldown is enabled"
+      />
+
+      <FormNumberInput
+        id="cooldown.duration"
+        name="cooldown.duration"
+        label="Duration"
+        description="How long the cooldown should be between each use of the command (ms)"
+        min={0}
+        step={100}
+      />
+
+      <FormBoundCheckbox
+        id="cooldown.per_user"
+        name="cooldown.per_user"
+        label="Per Person"
+        description="Whether the cooldown is on a per person basis or a cooldown for everyone"
+      />
+    </FormSection>
+  </FormSections>
 {/snippet}
 
 {#snippet executionsTabContent()}
