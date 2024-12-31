@@ -31,6 +31,8 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::ModeratorManageAnnouncements,
     // Allow deleting messages
     Scope::ModeratorManageChatMessages,
+    // Allow creating stream markers
+    Scope::ChannelManageBroadcast,
 ];
 
 /// Port to run the local server on
