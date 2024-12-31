@@ -1,4 +1,15 @@
 /**
+ * Helper to assert the validity of a user ID before
+ * sending it to actual APIs
+ *
+ * @param userId The user ID to check
+ */
+function assertUserId(userId: TwitchUserId) {
+  if (userId === undefined) throw new Error("userId must be provided");
+  if (typeof userId !== "string") throw new Error("userId is invalid");
+}
+
+/**
  * Send a chat message to twitch
  *
  * @param message Message to send
@@ -24,12 +35,9 @@ export type TwitchAnnouncementColor =
  */
 export function sendChatAnnouncement(
   message: string,
-  color?: TwitchAnnouncementColor,
+  color: TwitchAnnouncementColor = "primary",
 ): Promise<void> {
-  return Deno.core.ops.op_twitch_send_chat_announcement(
-    message,
-    color ?? "primary",
-  );
+  return Deno.core.ops.op_twitch_send_chat_announcement(message, color);
 }
 
 export type TwitchUserId = string;
@@ -67,6 +75,8 @@ export function getUserByUsername(
  * @returns Promise resolved when the shoutout is complete
  */
 export function shoutout(userId: TwitchUserId): Promise<void> {
+  assertUserId(userId);
+
   return Deno.core.ops.op_twitch_send_shoutout(userId);
 }
 
@@ -76,7 +86,9 @@ export function shoutout(userId: TwitchUserId): Promise<void> {
  * @param userId The ID of the user
  * @returns Promise resolved with whether the user is a mod
  */
-export function isModerator(userId: TwitchUserId): Promise<void> {
+export function isModerator(userId: TwitchUserId): Promise<boolean> {
+  assertUserId(userId);
+
   return Deno.core.ops.op_twitch_is_mod(userId);
 }
 
@@ -86,8 +98,21 @@ export function isModerator(userId: TwitchUserId): Promise<void> {
  * @param userId The ID of the user
  * @returns Promise resolved with whether the user is a vip
  */
-export function isVip(userId: TwitchUserId): Promise<void> {
+export function isVip(userId: TwitchUserId): Promise<boolean> {
+  assertUserId(userId);
+
   return Deno.core.ops.op_twitch_is_vip(userId);
+}
+
+/**
+ * Checks if the user is a follower on the twitch channel
+ *
+ * @param userId The ID of the user
+ * @returns Promise resolved with whether the user is a follower
+ */
+export async function isFollower(userId: TwitchUserId): Promise<boolean> {
+  const follower = await getFollower(userId);
+  return follower !== null;
 }
 
 export interface TwitchFollower {
@@ -116,6 +141,8 @@ export interface TwitchFollower {
 export async function getFollower(
   userId: TwitchUserId,
 ): Promise<TwitchFollower | null> {
+  assertUserId(userId);
+
   // Internal format for a twitch follower
   interface _TwitchFollower {
     followed_at: string;
