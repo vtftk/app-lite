@@ -5,6 +5,7 @@ use crate::{
         kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::op_log,
         twitch::{
+            op_twitch_delete_all_chat_messages, op_twitch_delete_chat_message,
             op_twitch_get_follower, op_twitch_get_user_by_username, op_twitch_is_mod,
             op_twitch_is_vip, op_twitch_send_chat, op_twitch_send_chat_announcement,
             op_twitch_send_shoutout,
@@ -41,23 +42,31 @@ static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
 deno_core::extension!(
     api_extension,
     ops = [
+        // HTTP
         op_http_request,
-        op_twitch_send_chat,
+        // Logging
         op_log,
+        // Twitch
+        op_twitch_send_chat,
         op_twitch_is_mod,
         op_twitch_is_vip,
         op_twitch_get_user_by_username,
         op_twitch_get_follower,
         op_twitch_send_chat_announcement,
         op_twitch_send_shoutout,
+        op_twitch_delete_chat_message,
+        op_twitch_delete_all_chat_messages,
+        // KV
         op_kv_get,
         op_kv_set,
         op_kv_remove,
+        // VTFTK Sounds
         op_vtftk_play_sound,
+        op_vtftk_play_sound_seq,
+        // TTS Monster
         op_vtftk_tts_generate,
         op_vtftk_tts_get_voices,
         op_vtftk_tts_generate_parsed,
-        op_vtftk_play_sound_seq
     ],
     docs = "Extension providing APIs to the JS runtime"
 );
@@ -257,8 +266,9 @@ static JS_CALL_WRAPPER: &str = include_str!("./esm/wrapper_call.js");
 static JS_COMMAND_WRAPPER: &str = include_str!("./esm/wrapper_command.js");
 
 #[derive(Debug, Serialize)]
-#[serde(rename = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CommandContext {
+    pub message_id: String,
     pub full_message: String,
     pub message: String,
     pub user: CommandContextUser,
@@ -267,7 +277,7 @@ pub struct CommandContext {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CommandContextUser {
     pub id: UserId,
     pub name: UserName,

@@ -260,6 +260,7 @@ impl WebsocketClient {
             Event::ChannelChatMessageV1(payload) => {
                 let msg = map_message(payload.message)?;
                 _ = self.tx.send(TwitchEvent::ChatMsg(TwitchEventChatMsg {
+                    message_id: msg.message_id,
                     user_id: msg.chatter_user_id,
                     user_name: msg.chatter_user_login,
                     user_display_name: msg.chatter_user_name,

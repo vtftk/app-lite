@@ -1,7 +1,7 @@
 use super::websocket::WebsocketClient;
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
-use log::error;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
@@ -30,7 +30,7 @@ use twitch_api::{
         EmptyBody,
     },
     twitch_oauth2::{AccessToken, UserToken},
-    types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
+    types::{DisplayName, MsgId, RedemptionId, SubscriptionTier, UserId, UserName},
     HelixClient,
 };
 
@@ -128,6 +128,34 @@ impl TwitchManager {
             .data;
 
         Ok(response)
+    }
+
+    pub async fn delete_chat_message(&self, message_id: MsgId) -> anyhow::Result<()> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let user_id = token.user_id.clone();
+
+        self.helix_client
+            .delete_chat_message(user_id.clone(), user_id.clone(), message_id, &token)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_all_chat_messages(&self) -> anyhow::Result<()> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let user_id = token.user_id.clone();
+
+        self.helix_client
+            .delete_all_chat_message(&user_id, &user_id, &token)
+            .await?;
+
+        Ok(())
     }
 
     pub async fn send_chat_announcement_message(
@@ -524,6 +552,7 @@ pub struct TwitchEventReSub {
 #[derive(Debug, Clone)]
 #[allow(unused)]
 pub struct TwitchEventChatMsg {
+    pub message_id: MsgId,
     pub user_id: UserId,
     pub user_name: UserName,
     pub user_display_name: DisplayName,

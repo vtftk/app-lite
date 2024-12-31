@@ -29,6 +29,8 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::ModeratorManageShoutouts,
     // Allow sending chat announcements
     Scope::ModeratorManageAnnouncements,
+    // Allow deleting messages
+    Scope::ModeratorManageChatMessages,
 ];
 
 /// Port to run the local server on

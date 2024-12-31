@@ -2,7 +2,10 @@ use log::error;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Deserializer, Serialize};
 use tokio::join;
-use twitch_api::{eventsub::channel::chat::Fragment, types::SubscriptionTier};
+use twitch_api::{
+    eventsub::channel::chat::Fragment,
+    types::{MsgId, SubscriptionTier},
+};
 
 use crate::{
     database::entity::{
@@ -113,6 +116,9 @@ pub enum EventInputData {
 
     /// Chat message specific data
     Chat {
+        /// ID of the chat message
+        message_id: MsgId,
+
         /// The chat message itself
         message: String,
 
@@ -449,6 +455,7 @@ pub async fn match_chat_event(
 
     let event_data = EventData {
         input_data: EventInputData::Chat {
+            message_id: event.message_id,
             message: event.message.text,
             fragments: event.message.fragments,
             cheer: event.cheer.map(|cheer| cheer.bits),

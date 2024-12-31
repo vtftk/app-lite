@@ -236,7 +236,12 @@ pub async fn execute_command(
     command: CommandWithContext,
     event_data: EventData,
 ) -> anyhow::Result<()> {
-    let EventInputData::Chat { message, .. } = &event_data.input_data else {
+    let EventInputData::Chat {
+        message,
+        message_id,
+        ..
+    } = &event_data.input_data
+    else {
         return Err(anyhow!("Non chat input data provided for chat execute"));
     };
 
@@ -308,6 +313,7 @@ pub async fn execute_command(
             };
 
             let ctx = CommandContext {
+                message_id: message_id.to_string(),
                 full_message: message.to_string(),
                 input_data: event_data.input_data,
                 message: command.message,

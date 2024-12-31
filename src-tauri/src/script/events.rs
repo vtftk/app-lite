@@ -4,7 +4,10 @@ use log::error;
 use sea_orm::{prelude::DateTimeUtc, DatabaseConnection, ModelTrait};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
-use twitch_api::{helix::channels::Follower, types::UserId};
+use twitch_api::{
+    helix::channels::Follower,
+    types::{MsgId, UserId},
+};
 use uuid::Uuid;
 
 use crate::{
@@ -99,6 +102,50 @@ impl Handler<TwitchSendChat> for ScriptEventActor {
         let twitch_manager = self.twitch_manager.clone();
         Fr::new_box(async move {
             _ = twitch_manager.send_chat_message(&msg.message).await?;
+            Ok(())
+        })
+    }
+}
+
+/// Message to trigger deleting a message from Twitch chat
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TwitchDeleteChatMessage {
+    pub message_id: MsgId,
+}
+
+impl Handler<TwitchDeleteChatMessage> for ScriptEventActor {
+    type Response = Fr<TwitchDeleteChatMessage>;
+
+    fn handle(
+        &mut self,
+        msg: TwitchDeleteChatMessage,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            twitch_manager.delete_chat_message(msg.message_id).await?;
+            Ok(())
+        })
+    }
+}
+
+/// Message to trigger deleting all messages from Twitch chat
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TwitchDeleteAllChatMessages;
+
+impl Handler<TwitchDeleteAllChatMessages> for ScriptEventActor {
+    type Response = Fr<TwitchDeleteAllChatMessages>;
+
+    fn handle(
+        &mut self,
+        _msg: TwitchDeleteAllChatMessages,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            twitch_manager.delete_all_chat_messages().await?;
             Ok(())
         })
     }

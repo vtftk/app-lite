@@ -24,11 +24,11 @@ export type TwitchAnnouncementColor =
  */
 export function sendChatAnnouncement(
   message: string,
-  color?: TwitchAnnouncementColor
+  color?: TwitchAnnouncementColor,
 ): Promise<void> {
   return Deno.core.ops.op_twitch_send_chat_announcement(
     message,
-    color ?? "primary"
+    color ?? "primary",
   );
 }
 
@@ -50,7 +50,7 @@ export interface TwitchUser {
  * @returns Promise resolved to the twitch user
  */
 export function getUserByUsername(
-  username: TwitchUsername
+  username: TwitchUsername,
 ): Promise<TwitchUser> {
   // Validate username before calling API
   if (!isValidUsernameStrict(username)) {
@@ -114,7 +114,7 @@ export interface TwitchFollower {
  * @returns The follower or null if the user is not following
  */
 export async function getFollower(
-  userId: TwitchUserId
+  userId: TwitchUserId,
 ): Promise<TwitchFollower | null> {
   // Internal format for a twitch follower
   interface _TwitchFollower {
@@ -150,7 +150,7 @@ export async function getFollower(
  */
 export function getUsernameArg(
   rawArg: unknown,
-  validate = false
+  validate = false,
 ): string | null {
   // Arg not provided
   if (rawArg === undefined || rawArg === null || typeof rawArg !== "string")
@@ -207,4 +207,26 @@ export function isValidUsernameStrict(username: TwitchUsername): boolean {
   }
 
   return true;
+}
+
+/**
+ * Delete a specific message from chat
+ *
+ * @param messageId ID of the chat message to delete
+ * @returns Promise resolved when the message is deleted
+ */
+export function deleteChatMessage(messageId: string): Promise<void> {
+  if (messageId === undefined) throw new Error("messageId must be provided");
+  if (typeof messageId !== "string") throw new Error("messageId is invalid");
+
+  return Deno.core.ops.op_twitch_delete_chat_message(messageId);
+}
+
+/**
+ * Deletes all messages from chat
+ *
+ * @returns Promise resolved when the message
+ */
+export function deleteAllChatMessages(): Promise<void> {
+  return Deno.core.ops.op_twitch_delete_all_chat_messages();
 }

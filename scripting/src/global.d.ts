@@ -1,11 +1,11 @@
 /// <reference no-default-lib="true" />
 
-import * as logging from "./logging";
 import * as kv from "./kv";
-import * as twitch from "./twitch";
 import * as http from "./http";
-import * as integrations from "./integrations";
 import * as vtftk from "./vtftk";
+import * as twitch from "./twitch";
+import * as logging from "./logging";
+import * as integrations from "./integrations";
 
 declare global {
   export interface Api {
@@ -77,6 +77,7 @@ declare global {
       tier: SubscriptionTier;
     };
     chat: {
+      message_id: string;
       message: string;
       fragments: any[];
       cheer: number | null;
@@ -96,6 +97,9 @@ declare global {
 
 declare global {
   export interface CommandContext {
+    // ID of the message
+    messageId: string;
+
     // Full original message
     fullMessage: string;
 

@@ -1,14 +1,18 @@
 use crate::{
     script::events::{
-        global_script_event, TwitchGetFollower, TwitchGetUserByUsername, TwitchIsMod, TwitchIsVip,
-        TwitchSendChat, TwitchSendChatAnnouncement, TwitchSendShoutout,
+        global_script_event, TwitchDeleteAllChatMessages, TwitchDeleteChatMessage,
+        TwitchGetFollower, TwitchGetUserByUsername, TwitchIsMod, TwitchIsVip, TwitchSendChat,
+        TwitchSendChatAnnouncement, TwitchSendShoutout,
     },
     twitch::manager::TwitchUser,
 };
 use anyhow::Context;
 use deno_core::*;
 use log::debug;
-use twitch_api::{helix::channels::Follower, types::UserId};
+use twitch_api::{
+    helix::channels::Follower,
+    types::{MsgId, UserId},
+};
 
 /// Operation for sending a chat message from JS
 #[op2(async)]
@@ -54,6 +58,24 @@ pub async fn op_twitch_get_follower(#[string] user_id: String) -> anyhow::Result
     })
     .await
     .context("failed to send event")?
+}
+
+#[op2(async)]
+#[serde]
+pub async fn op_twitch_delete_chat_message(#[string] message_id: String) -> anyhow::Result<()> {
+    global_script_event(TwitchDeleteChatMessage {
+        message_id: MsgId::new(message_id),
+    })
+    .await
+    .context("failed to send event")?
+}
+
+#[op2(async)]
+#[serde]
+pub async fn op_twitch_delete_all_chat_messages() -> anyhow::Result<()> {
+    global_script_event(TwitchDeleteAllChatMessages)
+        .await
+        .context("failed to send event")?
 }
 
 #[op2(async)]
