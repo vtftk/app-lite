@@ -1,7 +1,7 @@
 
-import typescript from '@rollup/plugin-typescript';
 import { dts } from "rollup-plugin-dts";
-import copy from 'rollup-plugin-copy'
+import typescript from '@rollup/plugin-typescript';
+
 import fixGlobalFile from './fix-global-file.mjs';
 
 export default [
@@ -14,14 +14,9 @@ export default [
         plugins: [typescript()]
     },
     {
-        input: "dist/types/global.d.ts",
+        input: "dist/types/runtime.d.ts",
         output: [{ file: "dist/runtime.d.ts", format: "es" }],
         plugins: [
-            copy({
-                targets: [
-                    { src: 'src/global.d.ts', dest: 'dist/types' },
-                ]
-            }),
             dts({
                 respectExternal: true
             }),

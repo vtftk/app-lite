@@ -21,7 +21,7 @@ export function setText(key: string, value: string): Promise<void> {
  */
 export async function getText(
   key: string,
-  defaultValue: string
+  defaultValue: string,
 ): Promise<string>;
 
 /**
@@ -41,7 +41,7 @@ export async function getText(key: string): Promise<string | null>;
  */
 export async function getText(
   key: string,
-  defaultValue?: string
+  defaultValue?: string,
 ): Promise<string | null> {
   if (typeof key !== "string") throw new Error("key must be a string");
   const value: string | null = await Deno.core.ops.op_kv_get(key);
@@ -83,7 +83,7 @@ export function setNumber(key: string, value: number): Promise<void> {
  */
 export async function getNumber(
   key: string,
-  defaultValue: number
+  defaultValue: number,
 ): Promise<number>;
 
 /**
@@ -103,7 +103,7 @@ export async function getNumber(key: string): Promise<number | null>;
  */
 export async function getNumber(
   key: string,
-  defaultValue?: number
+  defaultValue?: number,
 ): Promise<number | null> {
   if (typeof key !== "string") throw new Error("key must be a string");
   const value = await Deno.core.ops.op_kv_get(key);
@@ -151,7 +151,7 @@ export async function getArray<T>(key: string): Promise<T[] | null>;
  */
 export async function getArray<T>(
   key: string,
-  defaultValue?: T[]
+  defaultValue?: T[],
 ): Promise<T[] | null> {
   if (typeof key !== "string") throw new Error("key must be a string");
   const value = await Deno.core.ops.op_kv_get(key);
@@ -199,7 +199,7 @@ export async function getObject<T>(key: string): Promise<T | null>;
  */
 export async function getObject<T>(
   key: string,
-  defaultValue?: T
+  defaultValue?: T,
 ): Promise<T | null> {
   if (typeof key !== "string") throw new Error("key must be a string");
   const value = await Deno.core.ops.op_kv_get(key);
@@ -341,7 +341,7 @@ export function createScopedCounter(key: string): ScopedCounter {
    * @returns Promise resolved to the new value
    */
   const update = async (scope: string, action: Transform<number>) => {
-    const objectValue = await getObject<any>(key, {});
+    const objectValue = await getObject<ScopedCounterObject>(key, {});
     const value = objectValue[scope] ?? 0;
     const updated = action(value);
     objectValue[scope] = updated;

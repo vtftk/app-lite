@@ -1,3 +1,5 @@
+/// <reference no-default-lib="true" />
+
 /**
  * This is the core runtime script this is stored as a JS snapshot
  * and all the globals created by this script are exposed when
@@ -11,35 +13,45 @@ import * as kv from "./kv";
 import * as http from "./http";
 import * as vtftk from "./vtftk";
 import * as twitch from "./twitch";
+import * as random from "./random";
 import * as logging from "./logging";
 import * as integrations from "./integrations";
+import "./eventContext";
+import "./commandContext";
+import "./arrayExt";
 
-// API functions provided to the runtime
+const _api = Object.freeze({
+  twitch,
+  kv,
+  http,
+  logging,
+  vtftk,
+  integrations,
+  random,
+});
+
+const _console = Object.freeze({
+  log: logging.info,
+  info: logging.info,
+  error: logging.error,
+  debug: logging.debug,
+});
+
+// Define API globals
 Object.defineProperty(globalThis, "api", {
-  value: {
-    twitch,
-    kv,
-    http,
-    logging,
-    vtftk,
-    integrations,
-  },
+  value: _api,
   writable: false,
   configurable: false,
 });
 
-// Copy the logging functions to the commonly known console functions
+// Define console globals
 Object.defineProperty(globalThis, "console", {
-  value: {
-    log: logging.info,
-    info: logging.info,
-    error: logging.error,
-    debug: logging.debug,
-  },
+  value: _console,
   writable: false,
   configurable: false,
 });
 
-Array.prototype.random = function () {
-  return this[Math.floor(Math.random() * this.length)];
-};
+declare global {
+  export const api: typeof _api;
+  export const console: typeof _console;
+}

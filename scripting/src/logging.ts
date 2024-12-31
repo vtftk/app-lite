@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const { AsyncVariable, setAsyncContext } = Deno.core;
 
 // Async variable for storing logging context

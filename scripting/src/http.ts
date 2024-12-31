@@ -57,7 +57,7 @@ type HttpResponseBody<F> = F extends keyof HttpResponseFormatMap
   : HttpResponseFormatMap["text"];
 
 export async function request<O extends HttpOptions>(
-  options: O
+  options: O,
 ): Promise<HttpResponse<O["responseFormat"]>> {
   // URL must be defined and a string
   if (options.url === undefined || typeof options.url !== "string") {
@@ -72,7 +72,7 @@ export async function request<O extends HttpOptions>(
     requestBody = { type: "json", value: body };
   }
 
-  let responseFormat = (options.responseFormat ?? "text").toLowerCase();
+  const responseFormat = (options.responseFormat ?? "text").toLowerCase();
 
   const response = await Deno.core.ops.op_http_request({
     url: options.url,
@@ -97,7 +97,7 @@ type GetHttpOptions = Omit<HttpOptions, "body" | "method" | "url">;
 
 export function get<O extends GetHttpOptions>(
   url: string,
-  options?: O
+  options?: O,
 ): Promise<HttpResponse<O["responseFormat"]>> {
   return request({ ...options, url, method: "GET" });
 }
@@ -105,7 +105,7 @@ export function get<O extends GetHttpOptions>(
 export function post<B extends HttpBody | undefined, O extends HttpOptions>(
   url: string,
   body?: B,
-  options?: O
+  options?: O,
 ): Promise<HttpResponse<O["responseFormat"]>> {
   return request({ ...options, url, method: "POST", body });
 }
@@ -113,7 +113,7 @@ export function post<B extends HttpBody | undefined, O extends HttpOptions>(
 export function put<B extends HttpBody | undefined, O extends HttpOptions>(
   url: string,
   body?: B,
-  options?: O
+  options?: O,
 ): Promise<HttpResponse<O["responseFormat"]>> {
   return request({ ...options, url, method: "PUT", body });
 }
@@ -121,7 +121,7 @@ export function put<B extends HttpBody | undefined, O extends HttpOptions>(
 export function patch<B extends HttpBody | undefined, O extends HttpOptions>(
   url: string,
   body?: B,
-  options?: O
+  options?: O,
 ): Promise<HttpResponse<O["responseFormat"]>> {
   return request({ ...options, url, method: "PATCH", body });
 }
