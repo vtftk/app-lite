@@ -5,6 +5,7 @@
 use std::{iter::Peekable, str::Chars};
 
 use anyhow::Context;
+use futures::{future::BoxFuture, stream::FuturesOrdered, StreamExt};
 use log::debug;
 use reqwest::header;
 use serde::{Deserialize, Serialize};
@@ -131,26 +132,44 @@ impl TTSMonsterService {
             .iter()
             .find(|voice| voice.voice_id.eq(&default_voice_id));
 
-        for (name, message) in pairs {
-            // Find the requested voice
-            let voice = voices
-                .iter()
-                .find(|voice| name.eq_ignore_ascii_case(&voice.name))
-                .or(default_voice);
+        // Match up pairs to their voices
+        let pairs: Vec<(&TTSMonsterVoice, String)> = pairs
+            .into_iter()
+            .filter_map(|(name, message)| {
+                // Find the requested voice
+                let voice = voices
+                    .iter()
+                    .find(|voice| name.eq_ignore_ascii_case(&voice.name))
+                    .or(default_voice);
 
-            let voice = match voice {
-                Some(value) => value,
-                // Ignore unknown voice
-                None => continue,
-            };
+                voice.map(|voice| (voice, message))
+            })
+            .collect();
 
-            debug!("found requested tts voice: ({name}) {voice:?}");
+        let mut pairs_iter = pairs.into_iter();
 
-            let url = Self::generate(token, voice.voice_id, message).await?;
+        loop {
+            // Take 5 pairs at a time and process them
+            let mut futures: FuturesOrdered<BoxFuture<'_, anyhow::Result<String>>> = pairs_iter
+                .by_ref()
+                .take(5)
+                .map(
+                    |(voice, message)| -> BoxFuture<'_, anyhow::Result<String>> {
+                        Box::pin(Self::generate(token, voice.voice_id, message))
+                    },
+                )
+                .collect();
 
-            debug!("generated tts response: {:?}", url);
+            if futures.is_empty() {
+                break;
+            }
 
-            generated.push(url);
+            while let Some(result) = futures.next().await {
+                if let Ok(url) = result {
+                    debug!("generated tts response: {:?}", url);
+                    generated.push(url);
+                }
+            }
         }
 
         Ok(generated)
