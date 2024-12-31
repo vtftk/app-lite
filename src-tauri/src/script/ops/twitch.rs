@@ -1,8 +1,8 @@
 use crate::{
     script::events::{
-        global_script_event, TwitchDeleteAllChatMessages, TwitchDeleteChatMessage,
-        TwitchGetFollower, TwitchGetUserByUsername, TwitchIsMod, TwitchIsVip, TwitchSendChat,
-        TwitchSendChatAnnouncement, TwitchSendShoutout,
+        global_script_event, TwitchCreateStreamMarker, TwitchDeleteAllChatMessages,
+        TwitchDeleteChatMessage, TwitchGetFollower, TwitchGetUserByUsername, TwitchIsMod,
+        TwitchIsVip, TwitchSendChat, TwitchSendChatAnnouncement, TwitchSendShoutout,
     },
     twitch::manager::TwitchUser,
 };
@@ -74,6 +74,16 @@ pub async fn op_twitch_delete_chat_message(#[string] message_id: String) -> anyh
 #[serde]
 pub async fn op_twitch_delete_all_chat_messages() -> anyhow::Result<()> {
     global_script_event(TwitchDeleteAllChatMessages)
+        .await
+        .context("failed to send event")?
+}
+
+#[op2(async)]
+#[serde]
+pub async fn op_twitch_create_stream_marker(
+    #[string] description: Option<String>,
+) -> anyhow::Result<()> {
+    global_script_event(TwitchCreateStreamMarker { description })
         .await
         .context("failed to send event")?
 }

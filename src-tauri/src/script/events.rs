@@ -151,6 +151,29 @@ impl Handler<TwitchDeleteAllChatMessages> for ScriptEventActor {
     }
 }
 
+/// Message to trigger creating a twitch stream marker
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TwitchCreateStreamMarker {
+    pub description: Option<String>,
+}
+
+impl Handler<TwitchCreateStreamMarker> for ScriptEventActor {
+    type Response = Fr<TwitchCreateStreamMarker>;
+
+    fn handle(
+        &mut self,
+        msg: TwitchCreateStreamMarker,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let twitch_manager = self.twitch_manager.clone();
+        Fr::new_box(async move {
+            twitch_manager.create_stream_marker(msg.description).await?;
+            Ok(())
+        })
+    }
+}
+
 /// Message to check if a user is a moderator for a twitch channel
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<bool>")]

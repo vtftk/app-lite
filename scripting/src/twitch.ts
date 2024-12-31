@@ -257,3 +257,13 @@ export function deleteChatMessage(messageId: string): Promise<void> {
 export function deleteAllChatMessages(): Promise<void> {
   return Deno.core.ops.op_twitch_delete_all_chat_messages();
 }
+
+/**
+ * Creates a new stream marker
+ *
+ * @param description Optional description for the stream marker
+ * @returns Promise resolved when the marker is created
+ */
+export function createStreamMarker(description?: string): Promise<void> {
+  return Deno.core.ops.op_twitch_create_stream_marker(description);
+}

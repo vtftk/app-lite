@@ -5,10 +5,10 @@ use crate::{
         kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::op_log,
         twitch::{
-            op_twitch_delete_all_chat_messages, op_twitch_delete_chat_message,
-            op_twitch_get_follower, op_twitch_get_user_by_username, op_twitch_is_mod,
-            op_twitch_is_vip, op_twitch_send_chat, op_twitch_send_chat_announcement,
-            op_twitch_send_shoutout,
+            op_twitch_create_stream_marker, op_twitch_delete_all_chat_messages,
+            op_twitch_delete_chat_message, op_twitch_get_follower, op_twitch_get_user_by_username,
+            op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat,
+            op_twitch_send_chat_announcement, op_twitch_send_shoutout,
         },
         vtftk::{
             op_vtftk_play_sound, op_vtftk_play_sound_seq, op_vtftk_tts_generate,
@@ -56,6 +56,7 @@ deno_core::extension!(
         op_twitch_send_shoutout,
         op_twitch_delete_chat_message,
         op_twitch_delete_all_chat_messages,
+        op_twitch_create_stream_marker,
         // KV
         op_kv_get,
         op_kv_set,

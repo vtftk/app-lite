@@ -1,7 +1,7 @@
 use super::websocket::WebsocketClient;
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
-use log::{debug, error};
+use log::error;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
@@ -153,6 +153,20 @@ impl TwitchManager {
 
         self.helix_client
             .delete_all_chat_message(&user_id, &user_id, &token)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn create_stream_marker(&self, description: Option<String>) -> anyhow::Result<()> {
+        // Obtain twitch access token
+        let token = self.get_user_token().await.context("not authenticated")?;
+
+        // Get broadcaster user ID
+        let user_id = token.user_id.clone();
+
+        self.helix_client
+            .create_stream_marker(&user_id, description.unwrap_or_default(), &token)
             .await?;
 
         Ok(())
