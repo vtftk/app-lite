@@ -13,8 +13,9 @@ use crate::{
         CommandModel, EventModel,
     },
     twitch::manager::{
-        TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
-        TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub, TwitchEventUser,
+        TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
+        TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
+        TwitchEventUser,
     },
 };
 
@@ -133,6 +134,12 @@ pub enum EventInputData {
     Raid {
         /// The number of viewers in the raid.
         viewers: i64,
+    },
+
+    /// Ad break specific data
+    AdBreakBegin {
+        /// Duration of the ad break in seconds
+        duration_seconds: i32,
     },
 
     /// No additional input data
@@ -507,6 +514,34 @@ pub async fn match_raid_event(
             name: event.user_name,
             display_name: event.user_display_name,
         }),
+    };
+
+    Ok(EventMatchingData {
+        events,
+        commands: Default::default(),
+        event_data,
+    })
+}
+
+pub async fn match_ad_break_event(
+    db: &DatabaseConnection,
+    event: TwitchEventAdBreakBegin,
+) -> anyhow::Result<EventMatchingData> {
+    let events = EventModel::get_by_trigger_type(db, EventTriggerType::AdBreakBegin).await;
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let event_data = EventData {
+        input_data: EventInputData::AdBreakBegin {
+            duration_seconds: event.duration_seconds,
+        },
+        user: None,
     };
 
     Ok(EventMatchingData {

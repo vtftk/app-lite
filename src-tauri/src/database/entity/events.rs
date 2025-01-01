@@ -88,6 +88,8 @@ pub enum EventTriggerType {
     Raid,
     #[sea_orm(string_value = "Timer")]
     Timer,
+    #[sea_orm(string_value = "AdBreakBegin")]
+    AdBreakBegin,
 }
 
 impl EventTriggerType {
@@ -101,6 +103,7 @@ impl EventTriggerType {
             EventTrigger::Bits { .. } => EventTriggerType::Bits,
             EventTrigger::Raid { .. } => EventTriggerType::Raid,
             EventTrigger::Timer { .. } => EventTriggerType::Timer,
+            EventTrigger::AdBreakBegin => EventTriggerType::AdBreakBegin,
         }
     }
 }
@@ -140,6 +143,9 @@ pub enum EventTrigger {
         /// Interval in seconds to run
         interval: u64,
     },
+
+    /// Ad break started
+    AdBreakBegin,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

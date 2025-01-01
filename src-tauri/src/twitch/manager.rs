@@ -589,6 +589,13 @@ pub struct TwitchEventRaid {
 
 #[derive(Debug, Clone)]
 #[allow(unused)]
+pub struct TwitchEventAdBreakBegin {
+    /// Duration in seconds of the AD
+    pub duration_seconds: i32,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
 pub enum TwitchEvent {
     Redeem(TwitchEventRedeem),
     CheerBits(TwitchEventCheerBits),
@@ -598,6 +605,7 @@ pub enum TwitchEvent {
     ResubMsg(TwitchEventReSub),
     ChatMsg(TwitchEventChatMsg),
     Raid(TwitchEventRaid),
+    AdBreakBegin(TwitchEventAdBreakBegin),
 
     ModeratorsChanged,
     VipsChanged,

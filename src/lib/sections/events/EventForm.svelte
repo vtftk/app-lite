@@ -28,6 +28,7 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
+  import SolarMoneyBagBoldDuotone from "~icons/solar/money-bag-bold-duotone";
   import SolarStopwatchBoldDuotone from "~icons/solar/stopwatch-bold-duotone";
   import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
@@ -94,6 +95,9 @@
     z.object({
       type: z.literal(EventTriggerType.Timer),
       interval: z.number(),
+    }),
+    z.object({
+      type: z.literal(EventTriggerType.AdBreakBegin),
     }),
   ]);
 
@@ -299,6 +303,8 @@
         return { type: EventTriggerType.Raid, min_raiders: 1 };
       case EventTriggerType.Timer:
         return { type: EventTriggerType.Timer, interval: 60 };
+      case EventTriggerType.AdBreakBegin:
+        return { type: EventTriggerType.AdBreakBegin };
     }
   }
 
@@ -561,6 +567,13 @@
       label: "Timer",
       description: "Event will trigger on a fixed timer",
       content: timerContent,
+    },
+    {
+      icon: SolarMoneyBagBoldDuotone,
+      color: "blue",
+      value: EventTriggerType.AdBreakBegin,
+      label: "Ad Break Started",
+      description: "Event will trigger when an Ad break is started",
     },
   ];
 

@@ -1,6 +1,7 @@
 use super::manager::{
-    TwitchEvent, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow, TwitchEventGiftSub,
-    TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
+    TwitchEvent, TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits,
+    TwitchEventFollow, TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
+    TwitchEventSub,
 };
 use anyhow::Context;
 use axum::async_trait;
@@ -321,6 +322,16 @@ impl WebsocketClient {
                 }))
             }
 
+            // Ad break started
+            Event::ChannelAdBreakBeginV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self
+                    .tx
+                    .send(TwitchEvent::AdBreakBegin(TwitchEventAdBreakBegin {
+                        duration_seconds: msg.duration_seconds,
+                    }))
+            }
+
             _ => {}
         }
 
@@ -353,8 +364,8 @@ impl WebsocketClient {
     /// websocket events session
     async fn create_subscriptions(&self) -> anyhow::Result<()> {
         use eventsub::channel::{
-            ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2, ChannelModeratorAddV1,
-            ChannelModeratorRemoveV1, ChannelPointsCustomRewardAddV1,
+            ChannelAdBreakBeginV1, ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2,
+            ChannelModeratorAddV1, ChannelModeratorRemoveV1, ChannelPointsCustomRewardAddV1,
             ChannelPointsCustomRewardRedemptionAddV1, ChannelPointsCustomRewardRemoveV1,
             ChannelPointsCustomRewardUpdateV1, ChannelSubscribeV1, ChannelSubscriptionGiftV1,
             ChannelSubscriptionMessageV1, ChannelVipAddV1, ChannelVipRemoveV1,
@@ -424,6 +435,10 @@ impl WebsocketClient {
             Box::new(EventSub(
                 ChannelPointsCustomRewardUpdateV1::broadcaster_user_id(user_id.clone()),
             )),
+            // Subscribe to add break started
+            Box::new(EventSub(ChannelAdBreakBeginV1::broadcaster_user_id(
+                user_id.clone(),
+            ))),
         ];
 
         let mut subscriptions = subscriptions.into_iter().peekable();

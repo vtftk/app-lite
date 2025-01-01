@@ -121,15 +121,6 @@ export const MINIMUM_REQUIRED_ROLE_VALUES = [
   MinimumRequiredRole.Broadcaster,
 ] as const;
 
-export const MINIMUM_REQUIRED_ROLE_NAMES: Record<MinimumRequiredRole, string> =
-  {
-    [MinimumRequiredRole.None]: "None",
-    [MinimumRequiredRole.Follower]: "Follower",
-    [MinimumRequiredRole.Vip]: "Vip",
-    [MinimumRequiredRole.Mod]: "Moderator",
-    [MinimumRequiredRole.Broadcaster]: "Broadcaster",
-  } as const;
-
 export enum EventTriggerType {
   Redeem = "Redeem",
   Command = "Command",
@@ -139,29 +130,8 @@ export enum EventTriggerType {
   Bits = "Bits",
   Raid = "Raid",
   Timer = "Timer",
+  AdBreakBegin = "AdBreakBegin",
 }
-
-export const EVENT_TRIGGER_TYPES = [
-  EventTriggerType.Redeem,
-  EventTriggerType.Command,
-  EventTriggerType.Follow,
-  EventTriggerType.Subscription,
-  EventTriggerType.GiftedSubscription,
-  EventTriggerType.Bits,
-  EventTriggerType.Raid,
-  EventTriggerType.Timer,
-] as const;
-
-export const EVENT_TRIGGER_NAMES: Record<EventTriggerType, string> = {
-  [EventTriggerType.Redeem]: "Redeem",
-  [EventTriggerType.Command]: "Command",
-  [EventTriggerType.Follow]: "Follow",
-  [EventTriggerType.Subscription]: "Subscription",
-  [EventTriggerType.GiftedSubscription]: "Gifted Subscription",
-  [EventTriggerType.Bits]: "Bits",
-  [EventTriggerType.Raid]: "Raid",
-  [EventTriggerType.Timer]: "Timer",
-} as const;
 
 export type EventTrigger =
   | {
@@ -180,6 +150,9 @@ export type EventTrigger =
   | {
       type: EventTriggerType.Timer;
       interval: number;
+    }
+  | {
+      type: EventTriggerType.AdBreakBegin;
     };
 
 export enum ThrowableDataType {

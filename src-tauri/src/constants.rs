@@ -33,6 +33,8 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::ModeratorManageChatMessages,
     // Allow creating stream markers
     Scope::ChannelManageBroadcast,
+    // Scope to read ad break messages
+    Scope::ChannelReadAds,
 ];
 
 /// Port to run the local server on
