@@ -32,6 +32,7 @@ export type MainConfig = {
   clean_executions: boolean;
   clean_executions_days: number;
   auto_updating: boolean;
+  http_port: number;
 };
 
 export type ExternalsConfig = {

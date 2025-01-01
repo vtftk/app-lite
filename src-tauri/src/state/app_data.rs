@@ -67,7 +67,7 @@ pub async fn load_app_data(path: &Path) -> anyhow::Result<AppData> {
 }
 
 pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()> {
-    let parent = path.parent().expect("parent should exist");
+    let parent = path.parent().context("parent should exist")?;
 
     if !parent.exists() {
         tokio::fs::create_dir_all(parent).await?
@@ -106,6 +106,19 @@ pub struct MainConfig {
     pub clean_executions_days: u64,
     /// Allow automatic updates
     pub auto_updating: bool,
+    /// Port for the HTTP server
+    http_port: u16,
+}
+
+impl MainConfig {
+    pub fn get_http_port(&self) -> u16 {
+        #[cfg(not(debug_assertions))]
+        return self.http_port;
+
+        // Debug fixed port override
+        #[cfg(debug_assertions)]
+        return 58372;
+    }
 }
 
 impl Default for MainConfig {
@@ -117,6 +130,7 @@ impl Default for MainConfig {
             clean_executions: true,
             clean_executions_days: 30,
             auto_updating: true,
+            http_port: 58371,
         }
     }
 }

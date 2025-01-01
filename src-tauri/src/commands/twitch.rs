@@ -1,4 +1,5 @@
-use crate::constants::{LOCAL_SERVER_PORT, TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES};
+use crate::constants::{TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES};
+use crate::state::app_data::AppDataStore;
 use crate::{commands::CmdResult, twitch::manager::TwitchManager};
 use anyhow::Context;
 use log::debug;
@@ -34,16 +35,21 @@ pub async fn refresh_redeems_list(
 
 /// Obtain a URL for use logging into twitch using OAuth2
 #[tauri::command]
-pub fn get_twitch_oauth_uri() -> String {
-    let url = format!("http://localhost:{}/oauth", LOCAL_SERVER_PORT);
-    let (url, _) = ImplicitUserTokenBuilder::new(
-        ClientId::from_static(TWITCH_CLIENT_ID),
-        Url::parse(&url).unwrap(),
-    )
-    .set_scopes(TWITCH_REQUIRED_SCOPES.to_vec())
-    .generate_url();
+pub async fn get_twitch_oauth_uri(state: tauri::State<'_, AppDataStore>) -> CmdResult<String> {
+    let http_port = {
+        let app_data = state.read().await;
+        app_data.main_config.get_http_port()
+    };
 
-    url.to_string()
+    let redirect_url = format!("http://localhost:{http_port}/oauth",);
+    let redirect_url = Url::parse(&redirect_url).context("invalid redirect_uri")?;
+
+    let (url, _csrf) =
+        ImplicitUserTokenBuilder::new(ClientId::from_static(TWITCH_CLIENT_ID), redirect_url)
+            .set_scopes(TWITCH_REQUIRED_SCOPES.to_vec())
+            .generate_url();
+
+    Ok(url.to_string())
 }
 
 #[tauri::command]

@@ -6,6 +6,7 @@
   import { minMax } from "$lib/utils/validation";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
+  import Aside from "$lib/components/Aside.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -77,6 +78,7 @@
       clean_executions: z.boolean(),
       clean_executions_days: z.number(),
       auto_updating: z.boolean(),
+      http_port: z.number(),
     }),
 
     physics: z.object({
@@ -131,6 +133,7 @@
         clean_executions: main_config.clean_executions,
         clean_executions_days: main_config.clean_executions_days,
         auto_updating: main_config.auto_updating,
+        http_port: main_config.http_port,
       },
       physics: {
         enabled: physics_config.enabled,
@@ -198,6 +201,7 @@
         clean_executions: main.clean_executions,
         clean_executions_days: main.clean_executions_days,
         auto_updating: main.auto_updating,
+        http_port: main.http_port,
       },
       physics_config: {
         enabled: physics.enabled,
@@ -279,6 +283,27 @@
         description="Number of days executions will be retained for"
         min={0}
       />
+    </FormSection>
+
+    <FormSection
+      title="Advanced"
+      description="Advanced options for experienced users"
+    >
+      <FormNumberInput
+        id="main.http_port"
+        name="main.http_port"
+        label="Internal Server Port"
+        description="Port the internal server (Overlay, Twitch Authentication, and other internal logic)"
+      />
+
+      <Aside title="IMPORTANT" severity="error">
+        You should only change the internal server port if you're having issues
+        due to the port being in use. You will need to copy your overlay URL
+        again if you change this port.
+        <br />
+        <br />
+        You will need to restart for the port change to take effect
+      </Aside>
     </FormSection>
   </FormSections>
 {/snippet}
