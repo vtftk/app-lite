@@ -12,13 +12,13 @@
   import Button from "$lib/components/input/Button.svelte";
   import { createSound, updateSound } from "$lib/api/sounds";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
+  import FormSlider from "$lib/components/form/FormSlider.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
-  import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
 
   type Props = {
     existing?: Sound;
@@ -163,13 +163,16 @@
         />
         <FormErrorLabel name="sound" />
 
-        <FormNumberInput
+        <FormSlider
           id="volume"
           name="volume"
           label="Volume"
+          description="Base volume the sound is played out"
           min={0}
           max={1}
           step={0.1}
+          value={$data.volume}
+          showTicks
         />
       </FormSection>
     </FormSections>
