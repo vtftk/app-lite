@@ -596,6 +596,19 @@ pub struct TwitchEventAdBreakBegin {
 
 #[derive(Debug, Clone)]
 #[allow(unused)]
+pub struct TwitchEventShoutoutReceive {
+    /// The broadcaster ID that gave the shoutout
+    pub user_id: UserId,
+    /// The broadcaster user name that gave the shoutout
+    pub user_name: UserName,
+    /// The broadcaster display name that gave the shoutout
+    pub user_display_name: DisplayName,
+    /// The number of users that were watching the from-broadcaster’s stream at the time of the Shoutout.
+    pub viewer_count: i64,
+}
+
+#[derive(Debug, Clone)]
+#[allow(unused)]
 pub enum TwitchEvent {
     Redeem(TwitchEventRedeem),
     CheerBits(TwitchEventCheerBits),
@@ -606,6 +619,7 @@ pub enum TwitchEvent {
     ChatMsg(TwitchEventChatMsg),
     Raid(TwitchEventRaid),
     AdBreakBegin(TwitchEventAdBreakBegin),
+    ShoutoutReceive(TwitchEventShoutoutReceive),
 
     ModeratorsChanged,
     VipsChanged,

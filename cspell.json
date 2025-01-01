@@ -19,6 +19,7 @@
     "rustls",
     "serde",
     "Shoutout",
+    "shoutouts",
     "sonner",
     "sqlx",
     "staticlib",

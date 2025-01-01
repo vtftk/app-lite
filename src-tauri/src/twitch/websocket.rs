@@ -1,7 +1,7 @@
 use super::manager::{
     TwitchEvent, TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits,
     TwitchEventFollow, TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
-    TwitchEventSub,
+    TwitchEventShoutoutReceive, TwitchEventSub,
 };
 use anyhow::Context;
 use axum::async_trait;
@@ -332,6 +332,19 @@ impl WebsocketClient {
                     }))
             }
 
+            // Shoutout received
+            Event::ChannelShoutoutReceiveV1(payload) => {
+                let msg = map_message(payload.message)?;
+                _ = self
+                    .tx
+                    .send(TwitchEvent::ShoutoutReceive(TwitchEventShoutoutReceive {
+                        user_id: msg.from_broadcaster_user_id,
+                        user_name: msg.from_broadcaster_user_login,
+                        user_display_name: msg.from_broadcaster_user_name,
+                        viewer_count: msg.viewer_count,
+                    }))
+            }
+
             _ => {}
         }
 
@@ -367,8 +380,9 @@ impl WebsocketClient {
             ChannelAdBreakBeginV1, ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2,
             ChannelModeratorAddV1, ChannelModeratorRemoveV1, ChannelPointsCustomRewardAddV1,
             ChannelPointsCustomRewardRedemptionAddV1, ChannelPointsCustomRewardRemoveV1,
-            ChannelPointsCustomRewardUpdateV1, ChannelSubscribeV1, ChannelSubscriptionGiftV1,
-            ChannelSubscriptionMessageV1, ChannelVipAddV1, ChannelVipRemoveV1,
+            ChannelPointsCustomRewardUpdateV1, ChannelShoutoutReceiveV1, ChannelSubscribeV1,
+            ChannelSubscriptionGiftV1, ChannelSubscriptionMessageV1, ChannelVipAddV1,
+            ChannelVipRemoveV1,
         };
 
         let session_id = self.session_id.as_deref().context("no active session")?;
@@ -437,6 +451,11 @@ impl WebsocketClient {
             )),
             // Subscribe to add break started
             Box::new(EventSub(ChannelAdBreakBeginV1::broadcaster_user_id(
+                user_id.clone(),
+            ))),
+            // Subscribe to shoutout received
+            Box::new(EventSub(ChannelShoutoutReceiveV1::new(
+                user_id.clone(),
                 user_id.clone(),
             ))),
         ];

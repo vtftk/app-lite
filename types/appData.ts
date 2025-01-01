@@ -131,6 +131,7 @@ export enum EventTriggerType {
   Raid = "Raid",
   Timer = "Timer",
   AdBreakBegin = "AdBreakBegin",
+  ShoutoutReceive = "ShoutoutReceive",
 }
 
 export type EventTrigger =
@@ -153,6 +154,10 @@ export type EventTrigger =
     }
   | {
       type: EventTriggerType.AdBreakBegin;
+    }
+  | {
+      type: EventTriggerType.ShoutoutReceive;
+      min_viewers: number;
     };
 
 export enum ThrowableDataType {

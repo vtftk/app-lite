@@ -14,8 +14,8 @@ use crate::{
     },
     twitch::manager::{
         TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
-        TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem, TwitchEventSub,
-        TwitchEventUser,
+        TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
+        TwitchEventShoutoutReceive, TwitchEventSub, TwitchEventUser,
     },
 };
 
@@ -140,6 +140,12 @@ pub enum EventInputData {
     AdBreakBegin {
         /// Duration of the ad break in seconds
         duration_seconds: i32,
+    },
+
+    /// Shoutout specific data
+    ShoutoutReceive {
+        /// Number of viewers in the shoutout
+        viewer_count: i64,
     },
 
     /// No additional input data
@@ -497,7 +503,7 @@ pub async fn match_raid_event(
 
     let raiders = event.viewers;
 
-    // Filter events for the matching reward ID
+    // Filter events for the matching viewer minimum amount
     let events = events
        .into_iter()
        .filter(|event| {
@@ -540,6 +546,44 @@ pub async fn match_ad_break_event(
     let event_data = EventData {
         input_data: EventInputData::AdBreakBegin {
             duration_seconds: event.duration_seconds,
+        },
+        user: None,
+    };
+
+    Ok(EventMatchingData {
+        events,
+        commands: Default::default(),
+        event_data,
+    })
+}
+
+pub async fn match_shoutout_receive_event(
+    db: &DatabaseConnection,
+    event: TwitchEventShoutoutReceive,
+) -> anyhow::Result<EventMatchingData> {
+    let events = EventModel::get_by_trigger_type(db, EventTriggerType::ShoutoutReceive).await;
+
+    let events = match events {
+        Ok(value) => value,
+        Err(err) => {
+            error!("failed to load events: {:?}", err);
+            Default::default()
+        }
+    };
+
+    let viewers = event.viewer_count;
+
+    // Filter events for the matching viewer minimum amount
+    let events = events
+       .into_iter()
+       .filter(|event| {
+           matches!(&event.trigger, EventTrigger::ShoutoutReceive { min_viewers } if viewers >= *min_viewers as i64)
+       })
+       .collect();
+
+    let event_data = EventData {
+        input_data: EventInputData::ShoutoutReceive {
+            viewer_count: viewers,
         },
         user: None,
     };

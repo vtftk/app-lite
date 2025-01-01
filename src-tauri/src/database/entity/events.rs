@@ -90,6 +90,8 @@ pub enum EventTriggerType {
     Timer,
     #[sea_orm(string_value = "AdBreakBegin")]
     AdBreakBegin,
+    #[sea_orm(string_value = "ShoutoutReceive")]
+    ShoutoutReceive,
 }
 
 impl EventTriggerType {
@@ -104,6 +106,7 @@ impl EventTriggerType {
             EventTrigger::Raid { .. } => EventTriggerType::Raid,
             EventTrigger::Timer { .. } => EventTriggerType::Timer,
             EventTrigger::AdBreakBegin => EventTriggerType::AdBreakBegin,
+            EventTrigger::ShoutoutReceive { .. } => EventTriggerType::ShoutoutReceive,
         }
     }
 }
@@ -146,6 +149,12 @@ pub enum EventTrigger {
 
     /// Ad break started
     AdBreakBegin,
+
+    /// Shoutout received
+    ShoutoutReceive {
+        /// Minimum viewers required
+        min_viewers: u32,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

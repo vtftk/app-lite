@@ -18,7 +18,7 @@ use crate::{
         shared::MinimumRequireRole,
         CommandModel, EventModel,
     },
-    events::matching::{match_ad_break_event, match_raid_event},
+    events::matching::{match_ad_break_event, match_raid_event, match_shoutout_receive_event},
     script::runtime::{
         CommandContext, CommandContextUser, RuntimeExecutionContext, ScriptExecutorHandle,
     },
@@ -83,6 +83,7 @@ async fn process_twitch_event(
         TwitchEvent::ChatMsg(event) => match_chat_event(&db, event).await?,
         TwitchEvent::Raid(event) => match_raid_event(&db, event).await?,
         TwitchEvent::AdBreakBegin(event) => match_ad_break_event(&db, event).await?,
+        TwitchEvent::ShoutoutReceive(event) => match_shoutout_receive_event(&db, event).await?,
 
         // Internal events
         TwitchEvent::ModeratorsChanged => {

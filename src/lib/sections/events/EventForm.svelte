@@ -31,6 +31,7 @@
   import SolarMoneyBagBoldDuotone from "~icons/solar/money-bag-bold-duotone";
   import SolarStopwatchBoldDuotone from "~icons/solar/stopwatch-bold-duotone";
   import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
+  import SolarHandHeartBoldDuotone from "~icons/solar/hand-heart-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
   import ThrowablePicker from "$lib/components/throwable/ThrowablePicker.svelte";
@@ -98,6 +99,10 @@
     }),
     z.object({
       type: z.literal(EventTriggerType.AdBreakBegin),
+    }),
+    z.object({
+      type: z.literal(EventTriggerType.ShoutoutReceive),
+      min_viewers: z.number(),
     }),
   ]);
 
@@ -305,6 +310,8 @@
         return { type: EventTriggerType.Timer, interval: 60 };
       case EventTriggerType.AdBreakBegin:
         return { type: EventTriggerType.AdBreakBegin };
+      case EventTriggerType.ShoutoutReceive:
+        return { type: EventTriggerType.ShoutoutReceive, min_viewers: 1 };
     }
   }
 
@@ -575,8 +582,15 @@
       label: "Ad Break Started",
       description: "Event will trigger when an Ad break is started",
     },
+    {
+      icon: SolarHandHeartBoldDuotone,
+      color: "purple",
+      value: EventTriggerType.ShoutoutReceive,
+      label: "Shoutout Received",
+      description: "Event will trigger when another channel gives a shoutout",
+      content: shoutoutReceiveContent,
+    },
   ];
-
   const outcomeOptions = $derived([
     ...($data.trigger.type === EventTriggerType.Bits
       ? [
@@ -712,6 +726,17 @@
       name="trigger.interval"
       label="Interval"
       description="Time in seconds between each trigger of the timer"
+    />
+  {/if}
+{/snippet}
+
+{#snippet shoutoutReceiveContent()}
+  {#if $data.trigger.type === EventTriggerType.ShoutoutReceive}
+    <FormNumberInput
+      id="trigger.min_viewers"
+      name="trigger.min_viewers"
+      label="Minimum Viewers"
+      description="Minimum viewers the channel must have when giving the shoutout"
     />
   {/if}
 {/snippet}
