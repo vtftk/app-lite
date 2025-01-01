@@ -1,3 +1,5 @@
+import { runWithContext } from "./context";
+
 export interface TwitchEventUser {
   id: string;
   name: string;
@@ -59,4 +61,12 @@ declare global {
    * Event data, only available within the context of a event outcome script
    */
   const event: EventContext;
+}
+
+export function createEventOutlet(
+  userFunction: (event: EventContext) => Promise<unknown>,
+) {
+  return (ctx: unknown, eventContext: EventContext): Promise<unknown> => {
+    return runWithContext(ctx, userFunction, eventContext);
+  };
 }

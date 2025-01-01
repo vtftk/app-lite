@@ -1,2 +1,3 @@
+export { createEventOutlet } from "./eventContext";
 export { getContext, runWithContext } from "./context";
-export { extendCommandContext } from "./commandContext";
+export { createCommandOutlet } from "./commandContext";

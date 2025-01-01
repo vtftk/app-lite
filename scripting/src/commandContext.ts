@@ -1,3 +1,5 @@
+import { runWithContext } from "./context";
+
 export interface CommandContext {
   // ID of the message
   messageId: string;
@@ -39,15 +41,19 @@ export interface CommandContext {
   get targetUserValid(): string | null;
 }
 
+type BaseCommandContext = Omit<
+  CommandContext,
+  "targetUser" | "targetUserValid"
+>;
+
 /**
- * Internal logic, e
+ * Internal logic, extends the base command context
+ * to provide additional getters
  *
- * @param baseContext
- * @returns
+ * @param baseContext The base context
+ * @returns The extended context
  */
-export function extendCommandContext(
-  baseContext: Omit<CommandContext, "targetUser" | "targetUserValid">,
-): CommandContext {
+function extendCommandContext(baseContext: BaseCommandContext): CommandContext {
   return {
     ...baseContext,
 
@@ -74,4 +80,26 @@ declare global {
    * command scripts
    */
   const ctx: CommandContext;
+}
+
+/**
+ * Creates the outlet that the rust world interacts with for creating
+ * commands
+ *
+ * @param userFunction The async function containing the user code
+ */
+export function createCommandOutlet(
+  userFunction: (ctx: CommandContext) => Promise<unknown>,
+) {
+  return (ctx: unknown, baseContext: BaseCommandContext): Promise<void> => {
+    return runWithContext(ctx, async () => {
+      const commandCtx = extendCommandContext(baseContext);
+      const value = await userFunction(commandCtx);
+
+      // Send the chat response if the return value is a string
+      if (typeof value === "string") {
+        await api.twitch.sendChat(value);
+      }
+    });
+  };
 }
