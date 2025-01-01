@@ -193,6 +193,12 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
     let (tx, mut rx) = mpsc::channel::<ScriptExecutorMessage>(5);
 
     std::thread::spawn(move || {
+        // Create a new tokio runtime in the dedicated thread
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("failed to create script async runtime");
+
         // Create runtime
         let mut js_runtime = JsRuntime::new(RuntimeOptions {
             startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
@@ -203,7 +209,7 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
 
         let mut local_set = LocalSet::new();
 
-        tauri::async_runtime::block_on(poll_fn(|cx| {
+        runtime.block_on(poll_fn(|cx| {
             // Initial pass when not messages are available
             {
                 // Poll the promises local set
