@@ -12,7 +12,7 @@
     calibrationState as calibrationStep,
   } from "$lib/api/calibration";
 
-  let resetOnDestroy = true;
+  let resetOnDestroy = false;
 
   function setCalibrationStep(step: CalibrationStep): Promise<void> {
     return invoke("set_calibration_step", { step });
@@ -183,7 +183,12 @@
       {#if $calibrationStep == CalibrationStep.NotStarted}
         <LinkButton href="/" onclick={onReset}>Cancel</LinkButton>
 
-        <Button onclick={() => setCalibrationStep(CalibrationStep.Smallest)}>
+        <Button
+          onclick={() => {
+            resetOnDestroy = true;
+            setCalibrationStep(CalibrationStep.Smallest);
+          }}
+        >
           Start
         </Button>
       {:else if $calibrationStep == CalibrationStep.Smallest}
