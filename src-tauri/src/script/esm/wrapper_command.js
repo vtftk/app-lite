@@ -8,24 +8,15 @@
   };
 
   return async (ctx, cmd_ctx) => {
-    api.logging.runWithContext(ctx, async () => {
-      const commandCtx = {
-        ...cmd_ctx,
+    const { runWithContext, extendCommandContext } = api.internal;
 
-        // Inject getters for helping with getting the target user
-        get targetUser() {
-          return api.twitch.getUsernameArg(cmd_ctx.args[0], false);
-        },
-
-        get targetUserValid() {
-          return api.twitch.getUsernameArg(cmd_ctx.args[0], true);
-        },
-      };
-
+    runWithContext(ctx, async () => {
+      const commandCtx = extendCommandContext(cmd_ctx);
       const value = await userFunction(commandCtx);
+
       if (typeof value === "string") {
         await api.twitch.sendChat(value);
       }
-    });
+    })
   };
 })();

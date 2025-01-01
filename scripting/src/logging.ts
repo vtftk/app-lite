@@ -1,39 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const { AsyncVariable, setAsyncContext } = Deno.core;
-
-// Async variable for storing logging context
-const loggingContextVariable = new AsyncVariable();
-
-/**
- * Runs the provided function within the specific logging context
- *
- * @internal
- *
- * @param ctx The logging context
- * @param callback The function to run
- * @param args Arguments for the function
- */
-export function runWithContext<C, A extends any[], R>(
-  ctx: C,
-  callback: (...args: A) => R,
-  ...args: A
-): R {
-  const previous = loggingContextVariable.enter(ctx);
-  try {
-    return Reflect.apply(callback, null, args);
-  } finally {
-    setAsyncContext(previous);
-  }
-}
-
-/**
- * Get the current logging context set by {@see runWithContext}
- *
- * @returns The current context or undefined if not within a context
- */
-export function getContext<T>(): T {
-  return loggingContextVariable.get();
-}
+import { getContext } from "./context";
 
 /**
  * Log the provided arguments at the "INFO" level
@@ -83,6 +49,7 @@ function _log(
   ...args: unknown[]
 ): void {
   const ctx = getContext();
+
   Deno.core.ops.op_log(ctx, level, stringifyArgs(...args));
 }
 

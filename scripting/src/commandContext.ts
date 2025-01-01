@@ -39,6 +39,29 @@ export interface CommandContext {
   get targetUserValid(): string | null;
 }
 
+/**
+ * Internal logic, e
+ *
+ * @param baseContext
+ * @returns
+ */
+export function extendCommandContext(
+  baseContext: Omit<CommandContext, "targetUser" | "targetUserValid">,
+): CommandContext {
+  return {
+    ...baseContext,
+
+    // Inject getters for helping with getting the target user
+    get targetUser() {
+      return api.twitch.getUsernameArg(baseContext.args[0], false);
+    },
+
+    get targetUserValid() {
+      return api.twitch.getUsernameArg(baseContext.args[0], true);
+    },
+  };
+}
+
 export type CommandUser = {
   id: string;
   name: string;

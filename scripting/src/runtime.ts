@@ -15,12 +15,24 @@ import * as vtftk from "./vtftk";
 import * as twitch from "./twitch";
 import * as random from "./random";
 import * as logging from "./logging";
+import * as internal from "./internal";
 import * as integrations from "./integrations";
 import "./eventContext";
 import "./commandContext";
 import "./arrayExt";
 
-const _api = Object.freeze({
+interface API {
+  twitch: typeof twitch;
+  kv: typeof kv;
+  http: typeof http;
+  logging: typeof logging;
+  vtftk: typeof vtftk;
+  integrations: typeof integrations;
+  random: typeof random;
+  internal: typeof internal;
+}
+
+const _api: Readonly<API> = Object.freeze({
   twitch,
   kv,
   http,
@@ -28,6 +40,7 @@ const _api = Object.freeze({
   vtftk,
   integrations,
   random,
+  internal,
 });
 
 const _console = Object.freeze({
@@ -52,6 +65,6 @@ Object.defineProperty(globalThis, "console", {
 });
 
 declare global {
-  export const api: typeof _api;
+  export const api: API;
   export const console: typeof _console;
 }

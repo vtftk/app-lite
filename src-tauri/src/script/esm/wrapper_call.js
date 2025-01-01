@@ -9,7 +9,7 @@
   };
 
   return async (ctx, data) => {
-    api.logging.runWithContext(ctx, async () => {
+    api.internal.runWithContext(ctx, async () => {
       await userFunction(data);
     });
   };
