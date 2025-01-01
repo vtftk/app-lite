@@ -6,9 +6,7 @@
 </script>
 
 {#if $runtimeAppData.vtube_studio_connected}
-  <div class="container">
-    <Calibration />
-  </div>
+  <Calibration />
 {:else}
   <div>
     <h1>Not Connected</h1>
