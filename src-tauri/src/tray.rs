@@ -45,10 +45,10 @@ pub fn create_tray_menu(app: &mut App) -> anyhow::Result<()> {
 fn handle_open_clicked(app: &AppHandle) -> anyhow::Result<()> {
     if let Some((_name, window)) = app.webview_windows().iter().next() {
         // Show existing window if none are present
-        window.show().expect("failed to show window");
+        window.show().context("failed to show window")?;
 
         // Focus the window
-        window.set_focus().expect("failed to focus window");
+        window.set_focus().context("failed to focus window")?;
     } else {
         // Recreate the web view from the existing config
         recreate_window(app).context("failed to recreate window")?;
@@ -76,12 +76,12 @@ fn recreate_window(app: &AppHandle) -> anyhow::Result<()> {
             .app
             .windows
             .first()
-            .expect("missing first window config")
+            .context("missing first window config")?
             .clone(),
     )
-    .expect("failed to recreate window from config")
+    .context("failed to recreate window from config")?
     .build()
-    .expect("failed to create new window");
+    .context("failed to create new window")?;
 
     Ok(())
 }

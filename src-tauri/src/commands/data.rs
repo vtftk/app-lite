@@ -147,7 +147,7 @@ pub async fn delete_src_file(url: String, app_handle: AppHandle) -> anyhow::Resu
     let app_data_path = app_handle
         .path()
         .app_data_dir()
-        .expect("failed to get app data dir");
+        .context("failed to get app data dir")?;
 
     let file_path = app_data_path
         .join("content")
