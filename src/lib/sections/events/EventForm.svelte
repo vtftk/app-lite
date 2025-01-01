@@ -1429,6 +1429,11 @@
           {:else if $data.trigger.type === EventTriggerType.Bits}
             <li>$(userInput) - Replaced with the bits gift message</li>
             <li>$(bits) - Replaced with the number of bits gifted</li>
+          {:else if $data.trigger.type === EventTriggerType.AdBreakBegin}
+            <li>
+              $(duration) - Will be replaced with the ad break duration in
+              seconds
+            </li>
           {/if}
         </ul>
       </div>

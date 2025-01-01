@@ -105,6 +105,9 @@ async fn send_chat_message(
             message = message.replace("$(userInput)", user_input.to_string().as_str());
             message = message.replace("$(bits)", bits.to_string().as_str());
         }
+        EventInputData::AdBreakBegin { duration_seconds } => {
+            message = message.replace("$(duration)", duration_seconds.to_string().as_str());
+        }
         _ => {}
     }
 
