@@ -521,7 +521,7 @@
         id="model.model_return_time"
         name="model.model_return_time"
         label="Return Time"
-        description="Time it takes for the model to return to its original position after being hit"
+        description="Time it takes for the model to return to its original position after being hit (ms)"
       />
 
       <EyesModeSelect
