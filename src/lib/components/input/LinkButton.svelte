@@ -3,13 +3,14 @@
   import type { HTMLAnchorAttributes } from "svelte/elements";
 
   type Props = {
+    variant?: "default" | "warning" | "error";
     children?: Snippet;
   } & HTMLAnchorAttributes;
 
-  const { children, ...props }: Props = $props();
+  const { variant, children, ...props }: Props = $props();
 </script>
 
-<a class="btn" {...props}>
+<a class="btn" {...props} data-variant={variant}>
   {@render children?.()}
 </a>
 
@@ -28,9 +29,27 @@
     text-decoration: none;
   }
 
+  .btn[data-variant="warning"] {
+    border-color: #f0c082;
+    background-color: #422d1b;
+    color: #f0c482;
+  }
+
+  .btn[data-variant="error"] {
+    border-color: #f08282;
+    background-color: #421b1b;
+    color: #f08282;
+  }
+
   .btn:hover {
     background-color: #444;
     border-color: #777;
+  }
+
+  .btn[data-variant="warning"]:hover {
+    border-color: #f0c792;
+    background-color: #775538;
+    color: #f5d6a7;
   }
 
   .btn:disabled,

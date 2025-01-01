@@ -2,9 +2,9 @@ import { updateRuntimeData } from "./api";
 import { BACKEND_HTTP } from "../constants";
 import { beginCalibrationStep } from "./calibration";
 import { CalibrationStep } from "./calibration-types";
-import { ModelParameters } from "../vtube-studio/model";
 import { VTubeStudioWebSocket } from "../vtube-studio/socket";
 import { triggerHotkey, requestHotkeys } from "../vtube-studio/hotkeys";
+import { ModelParameters, requestMoveModel } from "../vtube-studio/model";
 import { throwItem, setPhysicsEngineConfig } from "../vtube-studio/throw-item";
 import {
   loadAudio,
@@ -55,12 +55,6 @@ export function createEventSource(data: EventSourceData) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function onMessage(data: EventSourceData, event: any) {
   switch (event.type) {
-    case "SetCalibrationStep": {
-      if (data.vtSocket) {
-        onSetCalibrationStepEvent(data, data.vtSocket, event.step);
-      }
-      break;
-    }
     case "ThrowItem": {
       if (data.vtSocket && data.modelParameters) {
         onThrowItemEvent(
@@ -71,14 +65,6 @@ async function onMessage(data: EventSourceData, event: any) {
           event.items,
           event.config,
         );
-      }
-
-      break;
-    }
-
-    case "UpdateHotkeys": {
-      if (data.vtSocket) {
-        onUpdateHotkeysEvent(data.vtSocket);
       }
 
       break;
@@ -110,6 +96,28 @@ async function onMessage(data: EventSourceData, event: any) {
 
     case "AppDataUpdated": {
       onAppDataUpdatedEvent(data, event.app_data);
+      break;
+    }
+
+    case "UpdateHotkeys": {
+      if (data.vtSocket) {
+        onUpdateHotkeysEvent(data.vtSocket);
+      }
+
+      break;
+    }
+
+    case "SetCalibrationStep": {
+      if (data.vtSocket) {
+        onSetCalibrationStepEvent(data, data.vtSocket, event.step);
+      }
+      break;
+    }
+
+    case "MoveModel": {
+      if (data.vtSocket) {
+        onMoveModelEvent(data.vtSocket, event.x, event.y);
+      }
       break;
     }
   }
@@ -193,6 +201,18 @@ async function onSetCalibrationStepEvent(
   beginCalibrationStep(vtSocket, step, (model_data) => {
     // Update the model data map to include the new model data
     data.modelCalibration.set(model_data.id, model_data.calibration);
+  });
+}
+async function onMoveModelEvent(
+  vtSocket: VTubeStudioWebSocket,
+  x: number,
+  y: number,
+) {
+  await requestMoveModel(vtSocket, {
+    valuesAreRelativeToModel: true,
+    timeInSeconds: 1,
+    positionX: x,
+    positionY: y,
   });
 }
 

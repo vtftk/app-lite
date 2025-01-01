@@ -139,6 +139,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             // Calibration commands
             commands::calibration::set_calibration_step,
+            commands::calibration::calibration_move_model,
             commands::calibration::get_calibration_data,
             // Testing and running commands
             commands::test::test_throw,

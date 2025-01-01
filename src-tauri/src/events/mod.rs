@@ -41,6 +41,12 @@ pub enum EventMessage {
         step: CalibrationStep,
     },
 
+    // Move the model for calibration purposes
+    MoveModel {
+        x: f32,
+        y: f32,
+    },
+
     /// Throw item
     ThrowItem(ThrowItemMessage),
 

@@ -18,6 +18,19 @@ pub fn set_calibration_step(
     Ok(())
 }
 
+/// Move the model for calibration
+#[tauri::command]
+pub fn calibration_move_model(
+    x: f32,
+    y: f32,
+    event_sender: State<'_, broadcast::Sender<EventMessage>>,
+) -> Result<(), ()> {
+    event_sender
+        .send(EventMessage::MoveModel { x, y })
+        .map_err(|_| ())?;
+    Ok(())
+}
+
 /// Get all model data
 #[tauri::command]
 pub async fn get_calibration_data(

@@ -3,13 +3,19 @@
   import type { HTMLButtonAttributes } from "svelte/elements";
 
   type Props = {
+    variant?: "default" | "warning" | "error";
     children?: Snippet;
   } & HTMLButtonAttributes;
 
-  const { children, ...props }: Props = $props();
+  const { variant = "default", children, ...props }: Props = $props();
 </script>
 
-<button type="button" {...props} class="btn {props.class}">
+<button
+  type="button"
+  {...props}
+  class="btn {props.class}"
+  data-variant={variant}
+>
   {@render children?.()}
 </button>
 
@@ -28,9 +34,27 @@
     text-decoration: none;
   }
 
+  .btn[data-variant="warning"] {
+    border-color: #eef082;
+    background-color: #423f1b;
+    color: #f0ee82;
+  }
+
+  .btn[data-variant="error"] {
+    border-color: #f08282;
+    background-color: #421b1b;
+    color: #f08282;
+  }
+
   .btn:hover {
     background-color: #444;
     border-color: #777;
+  }
+
+  .btn[data-variant="warning"]:hover {
+    border-color: #f0c792;
+    background-color: #775538;
+    color: #f5d6a7;
   }
 
   .btn:disabled,

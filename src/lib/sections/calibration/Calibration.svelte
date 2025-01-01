@@ -5,6 +5,8 @@
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import SolarSquareArrowUpBoldDuotone from "~icons/solar/square-arrow-up-bold-duotone";
+  import SolarSquareArrowDownBoldDuotone from "~icons/solar/square-arrow-down-bold-duotone";
   import {
     CalibrationStep,
     calibrationState as calibrationStep,
@@ -12,8 +14,20 @@
 
   let resetOnDestroy = true;
 
-  async function setCalibrationStep(step: CalibrationStep) {
-    await invoke("set_calibration_step", { step });
+  function setCalibrationStep(step: CalibrationStep): Promise<void> {
+    return invoke("set_calibration_step", { step });
+  }
+
+  function moveModel(x: number, y: number): Promise<void> {
+    return invoke("calibration_move_model", { x, y });
+  }
+
+  function moveModelUp() {
+    return moveModel(0, 0.5);
+  }
+
+  function moveModelDown() {
+    return moveModel(0, -0.5);
   }
 
   function onReset() {
@@ -23,7 +37,7 @@
 
   // Reset calibration state on component destroy if its not already been reset
   onDestroy(() => {
-    if (!resetOnDestroy) {
+    if (resetOnDestroy) {
       onReset();
     }
   });
@@ -72,13 +86,13 @@
           During the calibration process your model will shrink and grow.
           <br />
           <br />
-          <b>DO NOT</b> manually resize your model at any point. The size set
-          during the calibration process is important for calibration will
-          ensure items at thrown at your model correctly
+          <b>DO NOT</b> manually move or resize your model at any point. The
+          size set during the calibration process is important for calibration
+          will ensure items at thrown at your model correctly
           <br />
           <br />
           If you accidentally resize your model press the "Cancel" button and start
-          again
+          again.
         </Aside>
 
         <p>
@@ -86,17 +100,14 @@
         </p>
       {:else if $calibrationStep == CalibrationStep.Smallest}
         <div class="row">
-          <p>
-            Your model has been shrunk to its smallest size.
-            <br /><br />
-            Position the guide marker on your models head then press
-            <b>"Done" </b>
-            <br /><br />
-            If your model is out of view, move your model vertically so that it is
-            within view then place the guide marker on your models head.
-          </p>
+          <div class="column" style="min-width: 14rem;">
+            <p>
+              Your model has been shrunk to its smallest size.
+              <br /><br />
+              Position the guide marker on your models head then press
+              <b>"Done" </b>
+            </p>
 
-          <div style="flex-shrink: 0;">
             <img
               alt="OBS Interact"
               src="/help/guide-marker-head.jpg"
@@ -104,29 +115,35 @@
               width="auto"
             />
           </div>
-        </div>
 
-        <Aside severity="tip">
-          To move the guide marker press "Interact" in OBS while the Overlay is
-          selected.
-          <div>
-            <img alt="OBS Interact" src="/help/obs-interact.jpg" />
+          <div class="column">
+            <Aside title="IMPORANT" severity="error">
+              <b>DO NOT MANUALLY MOVE OR RESIZE YOUR MODEL</b>. The sizing is
+              important for calibration. If you've accidentally resized your
+              model press "Cancel" and start again.
+              <br /><br />
+              If your model is out of view use the "Move Up" and "Move Down" buttons
+              below to move it into view
+            </Aside>
+            <Aside severity="tip">
+              To move the guide marker press "Interact" in OBS while the Overlay
+              is selected.
+              <div>
+                <img alt="OBS Interact" src="/help/obs-interact.jpg" />
+              </div>
+            </Aside>
           </div>
-        </Aside>
-
-        <Aside severity="warning">
-          <b>DO NOT RESIZE YOUR MODEL</b>. The sizing is important for
-          calibration. If you've accidentally resized your model press "Cancel"
-          and start again
-        </Aside>
+        </div>
       {:else if $calibrationStep == CalibrationStep.Largest}
         <div class="row">
-          <p>
-            Your model has grown to its largest size. Position the guide marker
-            on your models head then press <b>"Done"</b>
-          </p>
+          <div class="column" style="min-width: 14rem;">
+            <p>
+              Your model has been grown to its largest size.
+              <br /><br />
+              Position the guide marker on your models head then press
+              <b>"Done" </b>
+            </p>
 
-          <div style="flex-shrink: 0;">
             <img
               alt="OBS Interact"
               src="/help/guide-marker-head.jpg"
@@ -134,28 +151,31 @@
               width="auto"
             />
           </div>
-        </div>
 
-        <Aside severity="tip">
-          To move the guide marker press "Interact" in OBS while the Overlay is
-          selected
-
-          <div>
-            <img alt="OBS Interact" src="/help/obs-interact.jpg" />
+          <div class="column">
+            <Aside title="IMPORANT" severity="error">
+              <b>DO NOT MANUALLY MOVE OR RESIZE YOUR MODEL</b>. The sizing is
+              important for calibration. If you've accidentally resized your
+              model press "Cancel" and start again.
+              <br /><br />
+              If your model is out of view use the "Move Up" and "Move Down" buttons
+              below to move it into view
+            </Aside>
+            <Aside severity="tip">
+              To move the guide marker press "Interact" in OBS while the Overlay
+              is selected.
+              <div>
+                <img alt="OBS Interact" src="/help/obs-interact.jpg" />
+              </div>
+            </Aside>
           </div>
-        </Aside>
-
-        <Aside severity="warning">
-          <b>DO NOT RESIZE YOUR MODEL</b>. The sizing is important for
-          calibration. If you've accidentally resized your model press "Cancel"
-          and start again
-        </Aside>
+        </div>
       {:else if $calibrationStep == CalibrationStep.Complete}
         <Aside severity="success"
           >Calibration complete, you can now throw items at your model. Press
           the "Close" button to return to the Home tab or press any other tab on
-          the sidebar</Aside
-        >
+          the sidebar
+        </Aside>
       {/if}
     </div>
 
@@ -167,13 +187,31 @@
           Start
         </Button>
       {:else if $calibrationStep == CalibrationStep.Smallest}
-        <LinkButton href="/" onclick={onReset}>Cancel</LinkButton>
+        <LinkButton variant="warning" href="/" onclick={onReset}>
+          Cancel
+        </LinkButton>
+
+        <Button onclick={moveModelUp}>
+          <SolarSquareArrowUpBoldDuotone />Move Up
+        </Button>
+        <Button onclick={moveModelDown}>
+          <SolarSquareArrowDownBoldDuotone />Move Down
+        </Button>
 
         <Button onclick={() => setCalibrationStep(CalibrationStep.Largest)}>
           Done
         </Button>
       {:else if $calibrationStep == CalibrationStep.Largest}
-        <LinkButton href="/" onclick={onReset}>Cancel</LinkButton>
+        <LinkButton variant="warning" href="/" onclick={onReset}>
+          Cancel
+        </LinkButton>
+
+        <Button onclick={moveModelUp}>
+          <SolarSquareArrowUpBoldDuotone />Move Up
+        </Button>
+        <Button onclick={moveModelDown}>
+          <SolarSquareArrowDownBoldDuotone />Move Down
+        </Button>
 
         <Button onclick={() => setCalibrationStep(CalibrationStep.Complete)}>
           Done
@@ -288,5 +326,12 @@
     gap: 1rem;
     width: 100%;
     justify-content: space-between;
+  }
+
+  .column {
+    display: flex;
+    flex-flow: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 </style>
