@@ -1,9 +1,10 @@
 use anyhow::Context;
+use constants::TWITCH_REQUIRED_SCOPES;
 use database::clean_old_data;
 use events::{
     create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
 };
-use log::error;
+use log::{error, info};
 use script::{events::ScriptEventActor, runtime::create_script_executor};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use std::sync::Arc;
@@ -220,13 +221,31 @@ async fn attempt_twitch_auth_existing_token(
     twitch_manager: Arc<TwitchManager>,
 ) {
     // Read existing access token
-    let access_token = {
+    let (access_token, scopes) = {
         let app_data = app_data_store.read().await;
-        match app_data.twitch_config.access_token.clone() {
-            Some(value) => value,
-            None => return,
+        match (
+            &app_data.twitch_config.access_token,
+            &app_data.twitch_config.scopes,
+        ) {
+            (Some(access_token), Some(scopes)) => (access_token.clone(), scopes.clone()),
+            _ => return,
         }
     };
+
+    for required_scope in TWITCH_REQUIRED_SCOPES {
+        if !scopes.contains(required_scope) {
+            info!("logging out current access token, missing required scope");
+
+            // Clear outdated / invalid access token
+            _ = app_data_store
+                .write(|app_data| {
+                    app_data.twitch_config.access_token = None;
+                })
+                .await;
+
+            return;
+        }
+    }
 
     if let Err(err) = twitch_manager
         .attempt_auth_existing_token(access_token)

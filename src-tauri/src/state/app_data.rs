@@ -8,6 +8,7 @@ use anyhow::Context;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard};
+use twitch_api::{helix::Scope, twitch_oauth2::AccessToken};
 use uuid::Uuid;
 
 use crate::database::entity::{ItemModel, SoundModel};
@@ -162,7 +163,8 @@ impl Default for VTubeStudioConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct TwitchConfig {
-    pub access_token: Option<String>,
+    pub access_token: Option<AccessToken>,
+    pub scopes: Option<Vec<Scope>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

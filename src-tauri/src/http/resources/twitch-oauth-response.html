@@ -54,14 +54,15 @@
 
         titleElement.innerText = "Completing Login";
         textElement.innerText = "Finishing up the login, don't close this page yet"
-
         await fetch(endpoint, {
             method: "POST",
             headers: {
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                access_token: params.get('access_token')
+                access_token: params.get('access_token'),
+                scopes: params.get('scope')
+                    .split(' ')
             })
         })
 

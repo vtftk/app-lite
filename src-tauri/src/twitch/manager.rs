@@ -42,17 +42,18 @@ pub struct TwitchManager {
 }
 
 pub struct TwitchManagerStateAuthenticated {
-    // Token for the authenticated user
+    /// Token for the authenticated user
     token: UserToken,
-    // Currently active websocket connection
+
+    /// Currently active websocket connection
     _websocket: WebsocketManagedTask,
 
-    // List of available rewards
+    /// List of available rewards
     rewards: Option<Arc<[CustomReward]>>,
 
-    // Current loaded list of moderators
+    /// Current loaded list of moderators
     moderators: Option<Arc<[Moderator]>>,
-    // Current loaded list of vips
+    /// Current loaded list of vips
     vips: Option<Arc<[Vip]>>,
 }
 
@@ -89,9 +90,10 @@ impl TwitchManager {
         )
     }
 
-    pub async fn attempt_auth_existing_token(&self, token: String) -> anyhow::Result<()> {
-        let access_token = AccessToken::from(token);
-
+    pub async fn attempt_auth_existing_token(
+        &self,
+        access_token: AccessToken,
+    ) -> anyhow::Result<()> {
         // Create user token (Validates it with the twitch backend)
         let user_token =
             UserToken::from_existing(&self.helix_client, access_token, None, None).await?;
