@@ -665,7 +665,7 @@
     const throwPromise = testEvent(existing.id, eventData);
 
     toast.promise(throwPromise, {
-      loading: "Sending test event...",
+      loading: "Running test event...",
       success: "Tested event",
       error: toastErrorMessage("Failed to test event"),
     });
