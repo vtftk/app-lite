@@ -289,12 +289,23 @@
       title="Advanced"
       description="Advanced options for experienced users"
     >
-      <FormNumberInput
-        id="main.http_port"
-        name="main.http_port"
-        label="Internal Server Port"
-        description="Port the internal server (Overlay, Twitch Authentication, and other internal logic)"
-      />
+      <div class="row row-ll">
+        <FormNumberInput
+          id="main.http_port"
+          name="main.http_port"
+          label="Internal Server Port"
+          description="Port the internal server (Overlay, Twitch Authentication, and other internal logic)"
+        />
+
+        <Button
+          type="button"
+          onclick={() => {
+            setFields("main.http_port", 58371);
+          }}
+        >
+          Default
+        </Button>
+      </div>
 
       <Aside title="IMPORTANT" severity="error">
         You should only change the internal server port if you're having issues
