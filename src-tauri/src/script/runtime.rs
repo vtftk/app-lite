@@ -263,9 +263,6 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
     ScriptExecutorHandle { tx }
 }
 
-static JS_CALL_WRAPPER: &str = include_str!("./esm/wrapper_call.js");
-static JS_COMMAND_WRAPPER: &str = include_str!("./esm/wrapper_command.js");
-
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommandContext {
@@ -285,7 +282,7 @@ pub struct CommandContextUser {
     pub display_name: DisplayName,
 }
 
-/// Executes the provided command'
+/// Executes the provided command
 ///
 /// Returns a promise value that resolves when the command is complete
 fn execute_command(
@@ -294,33 +291,56 @@ fn execute_command(
     script: String,
     cmd_ctx: CommandContext,
 ) -> anyhow::Result<v8::Global<v8::Value>> {
-    let script = JS_COMMAND_WRAPPER.replace("USER_CODE;", &script);
+    // Get the handle scope
+    let scope = &mut runtime.handle_scope();
 
-    // Execute script (Wrapper returns a function)
-    let output = runtime.execute_script("<anon>", script)?;
+    // Wrap code in async function to allow await
+    let code = format!("async (event) => {{ {script} }}");
 
-    let global_promise: v8::Global<v8::Value> = {
-        // Get the handle scope
-        let scope = &mut runtime.handle_scope();
+    // Eval user code to create the async function
+    let event_fn: Local<'_, v8::Function> =
+        JsRuntime::eval(scope, &code).context("failed to create script function")?;
 
-        // Get the global object
-        let global = scope.get_current_context().global(scope).cast();
+    // Get the global object
+    let global = scope.get_current_context().global(scope);
 
-        let local = Local::new(scope, output);
-        let local_fn: Local<'_, v8::Function> = local
-            .try_into()
-            .context("wrapper didn't produce function")?;
+    // Create object keys
+    let api_key = to_v8(scope, "api")?;
+    let internal_key = to_v8(scope, "internal")?;
+    let execute_command_outlet_key = to_v8(scope, "executeCommandOutlet")?;
 
-        let ctx_value = to_v8(scope, ctx)?;
-        let cmd_ctx_value = to_v8(scope, cmd_ctx)?;
+    // Get API object
+    let api: Local<'_, v8::Object> = global
+        .get(scope, api_key)
+        .context("api unavailable")?
+        .try_cast()?;
 
-        let result = local_fn
-            .call(scope, global, &[ctx_value, cmd_ctx_value])
-            .context("function provided no return value")?;
-        Global::new(scope, result)
-    };
+    // Get internal API object
+    let internal: Local<'_, v8::Object> = api
+        .get(scope, internal_key)
+        .context("internal api unavailable")?
+        .try_cast()?;
 
-    Ok(global_promise)
+    // Get executeCommandOutlet function
+    let execute_command_outlet: Local<'_, v8::Function> = internal
+        .get(scope, execute_command_outlet_key)
+        .context("executeCommandOutlet missing")?
+        .try_cast()?;
+
+    let global_value = global.try_cast()?;
+    let ctx_value = to_v8(scope, ctx)?;
+    let cmd_ctx_value = to_v8(scope, cmd_ctx)?;
+    let event_fn_value = event_fn.try_cast()?;
+
+    let result = execute_command_outlet
+        .call(
+            scope,
+            global_value,
+            &[ctx_value, cmd_ctx_value, event_fn_value],
+        )
+        .context("function provided no return value")?;
+
+    Ok(Global::new(scope, result))
 }
 
 /// Executes the provided script using the provided event
@@ -332,32 +352,54 @@ fn execute_script(
     script: String,
     data: EventData,
 ) -> anyhow::Result<v8::Global<v8::Value>> {
-    let script = JS_CALL_WRAPPER.replace("USER_CODE;", &script);
+    // Get the handle scope
+    let scope = &mut runtime.handle_scope();
 
-    // Execute script
-    let output = runtime.execute_script("<anon>", script)?;
+    // Wrap code in async function to allow await
+    let code = format!("async (event) => {{ {script} }}");
 
-    let global_promise: v8::Global<v8::Value> = {
-        // Get the handle scope
-        let scope = &mut runtime.handle_scope();
+    // Eval user code to create the async function
+    let event_fn: Local<'_, v8::Function> =
+        JsRuntime::eval(scope, &code).context("failed to create script function")?;
 
-        // Get the global object
-        let global = scope.get_current_context().global(scope).cast();
+    // Get the global object
+    let global = scope.get_current_context().global(scope);
 
-        let local = Local::new(scope, output);
-        let local_fn: Local<'_, v8::Function> = local
-            .try_into()
-            .context("wrapper didn't produce function")?;
+    // Create object keys
+    let api_key = to_v8(scope, "api")?;
+    let internal_key = to_v8(scope, "internal")?;
+    let execute_event_outlet_key = to_v8(scope, "executeEventOutlet")?;
 
-        let ctx_value = to_v8(scope, ctx)?;
-        let data_value = to_v8(scope, data)?;
+    // Get API object
+    let api: Local<'_, v8::Object> = global
+        .get(scope, api_key)
+        .context("api unavailable")?
+        .try_cast()?;
 
-        let result = local_fn
-            .call(scope, global, &[ctx_value, data_value])
-            .context("function provided no return value")?;
+    // Get internal API object
+    let internal: Local<'_, v8::Object> = api
+        .get(scope, internal_key)
+        .context("internal api unavailable")?
+        .try_cast()?;
 
-        Global::new(scope, result)
-    };
+    // Get executeEventOutlet function
+    let execute_event_outlet: Local<'_, v8::Function> = internal
+        .get(scope, execute_event_outlet_key)
+        .context("executeEventOutlet missing")?
+        .try_cast()?;
 
-    Ok(global_promise)
+    let global_value = global.try_cast()?;
+    let ctx_value = to_v8(scope, ctx)?;
+    let data_value = to_v8(scope, data)?;
+    let event_fn_value = event_fn.try_cast()?;
+
+    let result = execute_event_outlet
+        .call(
+            scope,
+            global_value,
+            &[ctx_value, data_value, event_fn_value],
+        )
+        .context("function provided no return value")?;
+
+    Ok(Global::new(scope, result))
 }

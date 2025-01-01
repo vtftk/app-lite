@@ -82,24 +82,25 @@ declare global {
   const ctx: CommandContext;
 }
 
-/**
- * Creates the outlet that the rust world interacts with for creating
- * commands
- *
- * @param userFunction The async function containing the user code
- */
-export function createCommandOutlet(
+export function executeCommandOutlet(
+  ctx: unknown,
+  baseContext: BaseCommandContext,
   userFunction: (ctx: CommandContext) => Promise<unknown>,
-) {
-  return (ctx: unknown, baseContext: BaseCommandContext): Promise<void> => {
-    return runWithContext(ctx, async () => {
-      const commandCtx = extendCommandContext(baseContext);
-      const value = await userFunction(commandCtx);
+): Promise<void> {
+  return runWithContext(ctx, async () => {
+    const commandCtx = extendCommandContext(baseContext);
 
-      // Send the chat response if the return value is a string
-      if (typeof value === "string") {
-        await api.twitch.sendChat(value);
-      }
-    });
-  };
+    let value;
+    try {
+      value = await userFunction(commandCtx);
+    } catch (err) {
+      console.error("error running user command code", err);
+      return;
+    }
+
+    // Send the chat response if the return value is a string
+    if (typeof value === "string") {
+      await api.twitch.sendChat(value);
+    }
+  });
 }

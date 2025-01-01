@@ -63,10 +63,16 @@ declare global {
   const event: EventContext;
 }
 
-export function createEventOutlet(
+export function executeEventOutlet(
+  ctx: unknown,
+  eventContext: EventContext,
   userFunction: (event: EventContext) => Promise<unknown>,
-) {
-  return (ctx: unknown, eventContext: EventContext): Promise<unknown> => {
-    return runWithContext(ctx, userFunction, eventContext);
-  };
+): Promise<void> {
+  return runWithContext(ctx, async () => {
+    try {
+      await userFunction(eventContext);
+    } catch (err) {
+      console.error("error running user event code", err);
+    }
+  });
 }
