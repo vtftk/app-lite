@@ -12,16 +12,13 @@
 <Checkbox.Root {...props} {checked} {onCheckedChange}>
   {#snippet children({ checked })}
     {#if checked}
-      <span>&#10003;</span>
+      <span class="indicator">&#10003;</span>
     {/if}
   {/snippet}
 </Checkbox.Root>
 
 <style>
-  :global([data-checkbox-indicator]) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  .indicator {
     color: #fff;
   }
 
