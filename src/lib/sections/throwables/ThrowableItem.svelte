@@ -62,6 +62,7 @@
         class:item__image--pixelate={config.image.pixelate}
         src={getBackendURL(config.image.src)}
         alt="Throwable"
+        loading="lazy"
       />
     </div>
   </div>

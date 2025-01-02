@@ -3,13 +3,13 @@
   import type { UpdateOrdering } from "$shared/dataV2";
 
   import { onMount } from "svelte";
+  import { passiveEventArg } from "$lib/utils/browser";
   import {
     dndzone,
     type DndEvent,
     SHADOW_ITEM_MARKER_PROPERTY_NAME,
+    type TransformDraggedElementFunction,
   } from "svelte-dnd-action";
-
-  import SizeAndPositionManager from "./SizeAndPositionManager";
 
   type Props = {
     // Available items for the grid
@@ -37,92 +37,33 @@
 
   let containerHeight: number = $state(0);
   let wrapper: HTMLDivElement | undefined = $state();
-  let offsetState = $state(0);
   let wrapperStyle = $state("");
-  let innerStyle = $state("");
-
-  let previousOffset = 0;
-
-  let styleCache: Partial<Record<number, string>> = {};
 
   // Local state for list of items to allow reordering
   let items: T[] = $state([]);
-
-  let virtualizedItems: { item: T; index: number; style: string }[] = $state(
-    [],
-  );
-
-  const itemCount = $derived(Math.ceil(items.length / 2));
-
-  const sizeAndPositionManager = new SizeAndPositionManager({
-    itemCount: 0,
-    itemSize: itemHeight,
-    estimatedItemSize: itemHeight,
-  });
 
   // Update the items when the props change
   $effect(() => {
     items = _items;
   });
 
-  function handleDndConsider(e: CustomEvent<DndEvent<T>>) {
-    items = e.detail.items;
-  }
+  const styleCache: Partial<Record<number, string>> = {};
+  const rowCount = $derived(Math.ceil(items.length / 2));
+  const totalSize = $derived(rowCount * itemHeight);
 
-  async function handleDndFinalize(e: CustomEvent<DndEvent<T>>) {
-    items = e.detail.items;
-    onUpdateOrder(items.map((item, index) => ({ id: item.id, order: index })));
-  }
+  // Current scroll offset
+  let offset = $state(0);
 
-  $effect(() => {
-    sizeAndPositionManager.updateConfig({
-      itemSize: itemHeight,
-      itemCount,
-      estimatedItemSize: itemHeight,
-    });
+  const virtualItems: VirtualItems = $derived.by(() =>
+    createVirtualItems(containerHeight, offset, rowCount, itemHeight),
+  );
 
-    recomputeSizes();
-  });
+  type VirtualItems = {
+    startIndex: number;
+    stopIndex: number;
+  };
 
-  $effect(() => {
-    if (previousOffset !== offsetState) {
-      refresh();
-      previousOffset = offsetState;
-    }
-  });
-
-  $effect(() => {
-    const _ = containerHeight;
-    recomputeSizes();
-  });
-
-  refresh();
-
-  /**
-   * the third argument for event bundler
-   * @see https://github.com/WICG/EventListenerOptions/blob/gh-pages/explainer.md
-   */
-  const thirdEventArg = (() => {
-    let result: boolean | { passive: true } = false;
-
-    try {
-      const arg = Object.defineProperty({}, "passive", {
-        get() {
-          result = { passive: true };
-          return true;
-        },
-      });
-
-      // @ts-expect-error Testing passive
-      window.addEventListener("testpassive", arg, arg);
-      // @ts-expect-error Testing passive
-      window.remove("testpassive", arg, arg);
-    } catch (_e) {
-      /* */
-    }
-
-    return result;
-  })();
+  const COLUMNS: number = 2;
 
   onMount(() => {
     if (wrapper === undefined) return;
@@ -136,7 +77,7 @@
     containerHeight = wrapper.clientHeight;
 
     resizeObserver.observe(wrapper);
-    wrapper.addEventListener("scroll", handleScroll, thirdEventArg);
+    wrapper.addEventListener("scroll", handleScroll, passiveEventArg);
 
     return () => {
       if (wrapper === undefined) return;
@@ -144,62 +85,97 @@
     };
   });
 
-  function refresh() {
-    const { start, stop } = sizeAndPositionManager.getVisibleRange({
-      containerSize: containerHeight,
-      offset: offsetState,
-      overscanCount: 2,
-    } as never);
+  function binarySearch({
+    low,
+    high,
+    offset,
+  }: {
+    low: number;
+    high: number;
+    offset: number;
+  }) {
+    let middle = 0;
+    let currentOffset = 0;
 
-    let updatedItems = [];
+    while (low <= high) {
+      middle = low + Math.floor((high - low) / 2);
+      currentOffset = middle * itemHeight;
 
-    const totalSize = sizeAndPositionManager.getTotalSize();
-
-    innerStyle = `flex-direction:column;height:${totalSize}px;`;
-
-    if (start !== undefined && stop !== undefined) {
-      for (let index = start; index <= (stop + 1) * 2; index++) {
-        let item = items[index];
-        if (index < items.length) {
-          updatedItems.push({
-            item,
-            index,
-            style: getStyle(index),
-          });
-        }
+      if (currentOffset === offset) {
+        return middle;
+      } else if (currentOffset < offset) {
+        low = middle + 1;
+      } else if (currentOffset > offset) {
+        high = middle - 1;
       }
     }
 
-    virtualizedItems = updatedItems;
+    if (low > 0) {
+      return low - 1;
+    }
+
+    return 0;
   }
 
-  function recomputeSizes(startIndex = 0) {
-    styleCache = {};
-    sizeAndPositionManager.resetItem(startIndex);
-    refresh();
+  function createVirtualItems(
+    containerSize: number,
+    offset: number,
+    rowCount: number,
+    itemHeight: number,
+  ): VirtualItems {
+    const overscanCount = 2;
+    const maxOffset = offset + containerSize;
+
+    const totalSize = rowCount * itemHeight;
+
+    if (totalSize === 0) {
+      return {
+        startIndex: 0,
+        stopIndex: 0,
+      };
+    }
+
+    // Find the first visible row
+    const startRow = Math.max(
+      0,
+      binarySearch({
+        high: rowCount,
+        low: 0,
+        offset: Math.max(0, offset),
+      }) - overscanCount,
+    );
+
+    const startOffset = startRow * itemHeight;
+    const visibleHeight = maxOffset - startOffset;
+    const visibleRows = Math.ceil(visibleHeight / itemHeight);
+
+    // Determine the last visible row
+    const stopRow = Math.min(
+      startRow + visibleRows + overscanCount,
+      rowCount - 1,
+    );
+
+    const startIndex: number = startRow;
+    const stopIndex: number = stopRow * COLUMNS + COLUMNS - 1;
+
+    return {
+      startIndex,
+      stopIndex,
+    };
   }
 
-  function handleScroll(event: Event) {
-    const offset = wrapper?.scrollTop ?? 0;
-
-    if (offset < 0 || offsetState === offset || event.target !== wrapper)
-      return;
-
-    offsetState = offset;
-  }
-
-  function getStyle(index: number) {
+  function getItemStyle(index: number) {
     if (styleCache[index]) return styleCache[index];
 
+    // Compute row
     const row = Math.floor(index / 2);
 
-    const listIndex = row;
+    // Compute column
     const column = index % 2;
 
-    const { size, offset } =
-      sizeAndPositionManager.getSizeAndPositionForIndex(listIndex);
+    const offset = row * itemHeight;
 
-    let style = `height:${size}px;position:absolute;top:${offset}px;`;
+    let style = `height:${itemHeight}px;position:absolute;top:${offset}px;`;
     if (column === 1) {
       style += "width:calc(50% - 4px);left:calc(50% + 4px);";
     } else {
@@ -208,23 +184,61 @@
 
     return (styleCache[index] = style);
   }
+
+  function handleScroll(event: Event) {
+    const scrollOffset = wrapper?.scrollTop ?? 0;
+
+    if (scrollOffset < 0 || offset === scrollOffset || event.target !== wrapper)
+      return;
+
+    offset = scrollOffset;
+  }
+
+  function handleDndConsider(e: CustomEvent<DndEvent<T>>) {
+    items = e.detail.items;
+  }
+
+  async function handleDndFinalize(e: CustomEvent<DndEvent<T>>) {
+    // Splice the new collection items
+    items = e.detail.items;
+    onUpdateOrder(items.map((item, index) => ({ id: item.id, order: index })));
+  }
+
+  const transformDraggedElement: TransformDraggedElementFunction = (
+    element?: HTMLElement,
+    _data?: unknown,
+    _index?: number,
+  ) => {
+    if (element) {
+      // @ts-expect-error Clearing left position styling
+      element.style.left = undefined;
+    }
+  };
 </script>
 
 <div bind:this={wrapper} class="wrapper" style={wrapperStyle}>
   <div
-    style={innerStyle}
+    style={`height:${totalSize}px;`}
     class="grid"
-    use:dndzone={{ items, dragDisabled: disableOrdering }}
+    use:dndzone={{
+      items,
+      dragDisabled: disableOrdering,
+      transformDraggedElement,
+    }}
     onconsider={handleDndConsider}
     onfinalize={handleDndFinalize}
   >
-    {#each virtualizedItems as item (items[item.index].id)}
-      <div class="item-wrapper" style={item.style}>
-        {@render renderItem(items[item.index])}
+    {#each items as item, index (item.id)}
+      <div style={getItemStyle(index)}>
+        {#if index >= virtualItems.startIndex && index <= virtualItems.stopIndex}
+          <div class="item-wrapper">
+            {@render renderItem(item)}
 
-        <!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
-        {#if (items[item.index] as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-          <div class="custom-shadow-item"></div>
+            <!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
+            {#if (item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+              <div class="custom-shadow-item"></div>
+            {/if}
+          </div>
         {/if}
       </div>
     {/each}

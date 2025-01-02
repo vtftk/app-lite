@@ -10,13 +10,13 @@
   import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
-  import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
+  import VirtualOrderableGrid from "$lib/components/VirtualOrderableGrid.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import PopoverCloseButton from "$lib/components/popover/PopoverCloseButton.svelte";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
@@ -209,7 +209,7 @@
   {actions}
   {beforeContent}
 >
-  <OrderableGrid
+  <VirtualOrderableGrid
     {items}
     {item}
     onUpdateOrder={updateItemOrder}
