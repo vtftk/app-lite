@@ -295,7 +295,7 @@ fn execute_command(
     let scope = &mut runtime.handle_scope();
 
     // Wrap code in async function to allow await
-    let code = format!("async (event) => {{ {script} }}");
+    let code = format!("async (ctx) => {{ {script} }}");
 
     // Eval user code to create the async function
     let event_fn: Local<'_, v8::Function> =
