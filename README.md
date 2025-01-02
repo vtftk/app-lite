@@ -4,21 +4,19 @@
 </td>
 <td>
 <h1>VTuber Fun ToolKit (VTFTK)</h1>
-<p><b>WIP</b> App for VTubers to create interactive experiences with their viewers
-</p>
+<p>App for VTubers to create interactive experiences with their viewers</p>
 <a href="https://vtftk.pages.dev/" target="_blank">Website</a>
 </td>
 </tr>
 </table>
 
-## 
-
+##
 
 <table>
 <tr>
 <td>
 
-![Avatar](./docs/avatar-64x64.png)
+![Avatar](./docs/avatar/avatar-64x64.png)
 
 </td>
 <td>
@@ -29,80 +27,136 @@ Checkout the [Website](https://vtftk.pages.dev/) for guides and setup instructio
 </tr>
 </table>
 
+## 🎯 Project Overview
 
+This tool allows you to create interactive items that can be thrown at your VTube Studio model, play sounds, trigger VTube Studio hotkeys, and much more with custom scripting. 
 
-Create items that can be thrown at you, sounds that can be played, and trigger VTube studio. All using events from twitch such as redeems, commands, subscriptions, follows, raids, bits
+Inspired by [KBonk](https://github.com/typeou/karasubonk), this project aims to provide a more tailored and enhanced experience, better suited to my specific needs, preferences, and implementing features that I make use of.
 
-Still early stages and work in progress, but it does work and throwables / sounds can be created then triggered by events.
+![Throwables](./docs/content/throwables.png)
 
-Aiming to be a tailored and improved version of [KBonk](https://github.com/typeou/karasubonk) more suited to my needs and wants.
+## ⚡ Events
 
-![Throwables](./docs/items.png)
+**VTFTK** has a powerful event system that lets you react to "triggers" and produce an "outcome" for various things.
 
-## Events
+**Triggers:** You can react to these things:  
+- 🎉 **Channel Point Redeems** - Run when a channel point redeem is used
+- 💬 **Chat Commands** - Run when specific chat commands are used
+- ➕ **New Follows** - Run when followers are gained
+- ⭐ **Subscriptions** or Gifted Subs - Run when subscriptions are made
+- 💎 **Bits Donations** - Run when bits are donated
+- 🚀 **Raids** - Run when another Twitch channel raids you
+- ⏲️ **Timers** - Run automatically at some fixed time in seconds
+- 📢 **Ads Starting** - Run whenever an ad break starts 
 
-React to stream events such as channel point redeems, follows, subscriptions etc and perform actions such as throwing items, playing sounds, triggering **VTube Studio** hotkeys, sending chat messages, and running code
-
-![Event](./docs/events.png)
-
-## Custom Commands
-
-Write custom commands using JavaScript powered by `deno_core`.  Build in editor running on [Monaco](https://microsoft.github.io/monaco-editor/) providing great editing experience and type hinting for the APIs.
-
-With built in APIs for tracking data data like counters and storing key-value pairs, Making HTTP requests, and Interacting with Twitch
-
-
-![Commands](./docs/commands.png)
-
-Individual executions and logging for commands is also tracked, this information can be found under the "Logs" and "Executions" tabs
+**Outcomes:** You can trigger these:  
+- 🪶 Throw items at your avatar  
+- 🎛️ Activate VTube Studio hotkeys  
+- 🔊 Play custom sounds  
+- 💬 Send messages in Twitch chat  
+- 🖥️ Run custom scripts 
 
 <table>
 <tr>
-<td><img src="./docs/command-executions.png"  > Command Executions </td>
-<td><img src="./docs/command-logs.png"  > Command Logs</td>
-</tr><tr>
-<td><img src="./docs/command-metadata.png"  > Execution Metadata </td>
-<td><img src="./docs/commands.png"  > Custom Javascript Commands </td>
+<td>
+
+![Triggers](./docs/content/event-triggers.png)
+
+Triggers
+
+</td>
+<td>
+
+![Outcomes](./docs/content/event-outcomes.png)    
+
+Outcomes
+
+</td>
 </tr>
 </table>
 
-## Sounds 
 
-Sounds, play custom sounds when events occur. Can be used to create sound alerts. Sounds can also be attached to throwable items to
-play the sound upon impact
+## 🛠️ Custom Commands
 
-![alt text](./docs/sounds.png)
+Create custom commands, using either simple templates or advanced 
+custom code to create your own custom experience.
 
-## TTS Monster Integration
+<table>
+<tr>
+<td>
 
-Integrated with [TTS Monster](https://tts.monster/) to use AI generated text to speech voices. Currently only available through the scripting API
+![Custom code](./docs/content/command-code.png)  
 
-Below is an example script allowing the user to redeem a "TTS" redeem and input a message for the AI TTS to say:
+Custom code
 
-![TTS Scripting](./docs/tts-scripting.png)
+</td>
+<td>
 
-## Low resource usage
+![Simple template](./docs/content/command-template.png)
 
-Built on Rust for the core logic and storing user data in an SQLite database the app maintains a low memory footprint keeping resource usage as low as possible.
+Simple template
 
-The web technologies used for the UI can take up a bit of resource which is unavoidable. However, to combat this you can close the **VTFTK** window and it will continue to run in the background as just the server, this removes any usage that the Webview for the app
-would normally have.
+</td>
+</tr>
+</table>
 
-You can then re-open the webview or completely quit **VTFTK** by clicking on the tray menu icon:
+
+
+<table>
+<tr>
+<td>
+
+![Avatar Nerd](./docs/avatar/avatarNerd-64x64.png) 
+
+</td>
+<td>
+
+The editor takes advantage of the [Monaco](https://microsoft.github.io/monaco-editor/) to provide a nice editing experience with type hinting right within the editor. See [Scripting](#scripting) for details about scripting itself
+
+</td>
+</tr>
+</table>
+
+## 💻 Scripting
+
+Powerful built-in scripting using JavaScript, powered by the [Deno Core](https://github.com/denoland/deno_core) runtime using the same performant JavaScript engine used in modern browsers.
+
+Scripting has built in helpers for things such as:
+
+- 🌐 **HTTP Client** – Connect with external APIs to fetch or send data.
+- 🎥 **Twitch** – Send chat messages, get user details, and give shoutouts with ease.
+- 🗂️ **Key-Value Store** – Save and retrieve data that sticks around even after your stream ends.
+- 📊 **Counters** – Keep track of numbers like redeems, subs, or any other countable event.
+- 🤖 **TTS Monster** - Use the TTS monster APIs from within scripting to generate and play TTS messages
+
+## 🔊 Sounds
+
+Play custom sounds for different events, perfect for creating sound alerts! You can also attach sounds to throwable items to play on impact.
+
+![Sounds](./docs/content/sounds.png)
+
+## 🤖 TTS Monster Integration
+
+This tool is integrated with TTS Monster to let you use AI-generated text-to-speech voices. Currently, it’s available through the scripting API.
+
+### Example:
+With a custom script, users can redeem a "TTS" reward and input a message for the AI to speak aloud!    
+
+![TTS Monster Script](./docs/content/tts-monster.png)
+
+## 🧠 Low Resource Usage
+The app is built with Rust for efficient performance, and user data is stored in a lightweight SQLite database, ensuring low memory usage.
+
+While the web technologies used for the UI may take up some resources, you can reduce this by closing the VTFTK window. The app will continue running in the background as just the server, removing any unnecessary resource usage from the UI.
+
+You can easily reopen the webview or fully quit VTFTK by clicking the tray menu icon: 
 
 ![Tray Icon](./docs/tray-icon.png)
 
+## 🛠️ Built-In Assets
 
-## Built-in assets
+The app includes a collection of pre-configured throwable items from [Pixel Mart](https://ghostpixxells.itch.io/pixel-mart).
 
-Collection of built in pre-configured throwable items from [Pixel Mart](https://ghostpixxells.itch.io/pixel-mart)
+Sounds are sourced from [KBonk](https://github.com/typeou/karasubonk) which is originally sourced from [Game Audio GDC](https://sonniss.com/gameaudiogdc) specifically from the [Hong Kong Action Kit Hit Kit 1](http://www.sonniss.com/sound-effects/hong-kong-action-kit-hit-kit-1/) kit
 
-Sounds sourced from [KBonk](https://github.com/typeou/karasubonk) which is originally sourced from 
-
-[Game Audio GDC](https://sonniss.com/gameaudiogdc) from the [Hong Kong Action Kit Hit Kit 1](http://www.sonniss.com/sound-effects/hong-kong-action-kit-hit-kit-1/)
-
-
-![Builtins](./docs/items.png)
-
-
-
+![Builtins](./docs/content/throwables.png)
