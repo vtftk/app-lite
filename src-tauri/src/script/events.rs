@@ -378,6 +378,45 @@ impl Handler<KvGet> for ScriptEventActor {
     }
 }
 
+/// Message to get sounds with a matching name
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<Vec<SoundModel>>")]
+pub struct GetSoundsByName {
+    pub name: String,
+    pub ignore_case: bool,
+}
+
+impl Handler<GetSoundsByName> for ScriptEventActor {
+    type Response = Fr<GetSoundsByName>;
+
+    fn handle(&mut self, msg: GetSoundsByName, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let db = self.db.clone();
+        Fr::new_box(async move {
+            let sounds = SoundModel::get_by_name(&db, &msg.name, msg.ignore_case).await?;
+            Ok(sounds)
+        })
+    }
+}
+
+/// Message to get a sound by ID
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<Option<SoundModel>>")]
+pub struct GetSoundByID {
+    pub id: Uuid,
+}
+
+impl Handler<GetSoundByID> for ScriptEventActor {
+    type Response = Fr<GetSoundByID>;
+
+    fn handle(&mut self, msg: GetSoundByID, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let db = self.db.clone();
+        Fr::new_box(async move {
+            let sound = SoundModel::get_by_id(&db, msg.id).await?;
+            Ok(sound)
+        })
+    }
+}
+
 /// Message to play a sound
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]

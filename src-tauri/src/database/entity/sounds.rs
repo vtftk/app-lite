@@ -2,7 +2,10 @@ use super::shared::{DbResult, UpdateOrdering};
 use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
-use sea_orm::{entity::prelude::*, ActiveValue::Set, IntoActiveModel, QueryOrder, UpdateResult};
+use sea_orm::{
+    entity::prelude::*, sea_query::Func, ActiveValue::Set, IntoActiveModel, QueryOrder,
+    UpdateResult,
+};
 use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
@@ -110,6 +113,31 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find()
+            .order_by_asc(Column::Order)
+            .order_by_desc(Column::CreatedAt)
+            .all(db)
+            .await
+    }
+
+    /// Find all sounds with a matching name, optionally ignoring case
+    pub async fn get_by_name<C>(db: &C, name: &str, ignore_case: bool) -> DbResult<Vec<Self>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut select = Entity::find();
+
+        if ignore_case {
+            select = select.filter(
+                // Convert stored name to lower case
+                Expr::expr(Func::lower(Expr::col(Column::Name)))
+                    // Compare with lowercase value
+                    .eq(name.to_lowercase()),
+            )
+        } else {
+            select = select.filter(Column::Name.eq(name))
+        }
+
+        select
             .order_by_asc(Column::Order)
             .order_by_desc(Column::CreatedAt)
             .all(db)

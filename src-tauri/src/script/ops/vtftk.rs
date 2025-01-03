@@ -2,7 +2,8 @@ use crate::{
     database::entity::SoundModel,
     integrations::tts_monster::TTSMonsterVoice,
     script::events::{
-        global_script_event, PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices,
+        global_script_event, GetSoundByID, GetSoundsByName, PlaySound, PlaySoundSeq, TTSGenerate,
+        TTSGenerateParsed, TTSGetVoices,
     },
 };
 use anyhow::Context;
@@ -10,6 +11,27 @@ use chrono::Utc;
 use deno_core::op2;
 use serde::Deserialize;
 use uuid::Uuid;
+
+/// Find sounds by name
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_get_sounds_by_name(
+    #[string] name: String,
+    ignore_case: bool,
+) -> anyhow::Result<Vec<SoundModel>> {
+    global_script_event(GetSoundsByName { name, ignore_case })
+        .await
+        .context("failed to send event")?
+}
+
+/// Find sound by ID
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_get_sound_by_id(#[serde] id: Uuid) -> anyhow::Result<Option<SoundModel>> {
+    global_script_event(GetSoundByID { id })
+        .await
+        .context("failed to send event")?
+}
 
 #[op2(async)]
 #[string]
