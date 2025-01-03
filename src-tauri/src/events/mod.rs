@@ -58,6 +58,12 @@ pub enum EventMessage {
         hotkey_id: String,
     },
 
+    /// Trigger a vtube studio hotkey by name
+    TriggerHotkeyByName {
+        hotkey_name: String,
+        ignore_case: bool,
+    },
+
     /// Play a sound
     PlaySound {
         config: SoundModel,

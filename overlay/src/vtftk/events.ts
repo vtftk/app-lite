@@ -78,6 +78,18 @@ async function onMessage(data: EventSourceData, event: any) {
       break;
     }
 
+    case "TriggerHotkeyByName": {
+      if (data.vtSocket) {
+        onTriggerHotkeyByNameEvent(
+          data.vtSocket,
+          event.hotkey_name,
+          event.ignore_case,
+        );
+      }
+
+      break;
+    }
+
     case "PlaySound": {
       if (data.vtSocket) {
         onPlaySoundEvent(data.appData, event.config);
@@ -191,6 +203,26 @@ async function onTriggerHotkeyEvent(
   const hotkeys = await triggerHotkey(vtSocket, hotkeyID);
 
   return hotkeys;
+}
+
+async function onTriggerHotkeyByNameEvent(
+  vtSocket: VTubeStudioWebSocket,
+  hotkeyName: string,
+  ignoreCase: boolean,
+) {
+  const hotkeys = await requestHotkeys(vtSocket);
+
+  const hotkey = hotkeys.find((hotkey) => {
+    if (ignoreCase) {
+      return hotkey.name.toLowerCase() === hotkeyName.toLowerCase();
+    } else {
+      return hotkey.name === hotkeyName;
+    }
+  });
+
+  if (hotkey === undefined) return;
+
+  await triggerHotkey(vtSocket, hotkey.hotkeyID);
 }
 
 async function onSetCalibrationStepEvent(

@@ -5,6 +5,7 @@ use crate::{
     script::events::{
         global_script_event, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs, GetSoundsByNames,
         PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices, ThrowItems,
+        TriggerHotkey, TriggerHotkeyByName,
     },
     state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
 };
@@ -13,6 +14,28 @@ use chrono::Utc;
 use deno_core::op2;
 use serde::Deserialize;
 use uuid::Uuid;
+
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_trigger_vt_hotkey(#[string] hotkey_id: String) -> anyhow::Result<()> {
+    global_script_event(TriggerHotkey { hotkey_id })
+        .await
+        .context("failed to send event")?
+}
+
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_trigger_vt_hotkey_by_name(
+    #[string] hotkey_name: String,
+    ignore_case: bool,
+) -> anyhow::Result<()> {
+    global_script_event(TriggerHotkeyByName {
+        hotkey_name,
+        ignore_case,
+    })
+    .await
+    .context("failed to send event")?
+}
 
 /// Throw items
 #[op2(async)]

@@ -504,6 +504,54 @@ impl Handler<ThrowItems> for ScriptEventActor {
     }
 }
 
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TriggerHotkey {
+    pub hotkey_id: String,
+}
+
+impl Handler<TriggerHotkey> for ScriptEventActor {
+    type Response = Mr<TriggerHotkey>;
+
+    fn handle(&mut self, msg: TriggerHotkey, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let result = self
+            .event_sender
+            .send(EventMessage::TriggerHotkey {
+                hotkey_id: msg.hotkey_id,
+            })
+            .context("event receiver was closed");
+
+        Mr(result.map(|_| ()))
+    }
+}
+
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct TriggerHotkeyByName {
+    pub hotkey_name: String,
+    pub ignore_case: bool,
+}
+
+impl Handler<TriggerHotkeyByName> for ScriptEventActor {
+    type Response = Mr<TriggerHotkeyByName>;
+
+    fn handle(
+        &mut self,
+        msg: TriggerHotkeyByName,
+        _ctx: &mut ServiceContext<Self>,
+    ) -> Self::Response {
+        let result = self
+            .event_sender
+            .send(EventMessage::TriggerHotkeyByName {
+                hotkey_name: msg.hotkey_name,
+                ignore_case: msg.ignore_case,
+            })
+            .context("event receiver was closed");
+
+        Mr(result.map(|_| ()))
+    }
+}
+
 /// Message to play a sound
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]

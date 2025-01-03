@@ -462,3 +462,30 @@ export function throwItems(
 ): Promise<void> {
   return Deno.core.ops.op_vtftk_throw_items(items, config);
 }
+
+/**
+ * Trigger a VTube studio hotkey using its ID
+ *
+ * @param hotkeyID The ID of the hotkey to trigger
+ * @returns Promise resolved when the hotkey is triggered
+ */
+export function triggerVTHotkey(hotkeyID: string) {
+  return Deno.core.ops.op_vtftk_trigger_vt_hotkey(hotkeyID);
+}
+
+/**
+ * Trigger a VTube studio hotkey using its name
+ *
+ * @param hotkeyName The name of the hotkey
+ * @param ignoreCase Whether to ignore the case of the name
+ * @returns Promise resolved when the hotkey is triggered
+ */
+export function triggerVTHotkeyByName(
+  hotkeyName: string,
+  ignoreCase: boolean = false,
+) {
+  return Deno.core.ops.op_vtftk_trigger_vt_hotkey_by_name(
+    hotkeyName,
+    ignoreCase,
+  );
+}
