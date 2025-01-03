@@ -3,7 +3,7 @@ pub mod outcome;
 pub mod processing;
 pub mod scheduler;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
 use crate::{
@@ -20,7 +20,7 @@ pub struct ThrowItemMessage {
     pub config: ThrowItemConfig,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ThrowItemConfig {
     /// Throw all items at once

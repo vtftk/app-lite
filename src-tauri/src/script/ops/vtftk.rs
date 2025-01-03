@@ -1,10 +1,12 @@
 use crate::{
     database::entity::SoundModel,
+    events::ThrowItemConfig,
     integrations::tts_monster::TTSMonsterVoice,
     script::events::{
-        global_script_event, GetSoundByID, GetSoundsByName, PlaySound, PlaySoundSeq, TTSGenerate,
-        TTSGenerateParsed, TTSGetVoices,
+        global_script_event, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs, GetSoundsByNames,
+        PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices, ThrowItems,
     },
+    state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
 };
 use anyhow::Context;
 use chrono::Utc;
@@ -12,14 +14,49 @@ use deno_core::op2;
 use serde::Deserialize;
 use uuid::Uuid;
 
+/// Throw items
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_throw_items(
+    #[serde] items: ItemsWithSounds,
+    #[serde] config: ThrowItemConfig,
+) -> anyhow::Result<()> {
+    global_script_event(ThrowItems { items, config })
+        .await
+        .context("failed to send event")?
+}
+
+/// Find items by name
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_get_items_by_names(
+    #[serde] names: Vec<String>,
+    ignore_case: bool,
+) -> anyhow::Result<Vec<ItemWithImpactSoundIds>> {
+    global_script_event(GetItemsByNames { names, ignore_case })
+        .await
+        .context("failed to send event")?
+}
+
+/// Find items by ids
+#[op2(async)]
+#[serde]
+pub async fn op_vtftk_get_items_by_ids(
+    #[serde] ids: Vec<Uuid>,
+) -> anyhow::Result<Vec<ItemWithImpactSoundIds>> {
+    global_script_event(GetItemsByIDs { ids })
+        .await
+        .context("failed to send event")?
+}
+
 /// Find sounds by name
 #[op2(async)]
 #[serde]
-pub async fn op_vtftk_get_sounds_by_name(
-    #[string] name: String,
+pub async fn op_vtftk_get_sounds_by_names(
+    #[serde] names: Vec<String>,
     ignore_case: bool,
 ) -> anyhow::Result<Vec<SoundModel>> {
-    global_script_event(GetSoundsByName { name, ignore_case })
+    global_script_event(GetSoundsByNames { names, ignore_case })
         .await
         .context("failed to send event")?
 }
@@ -27,8 +64,10 @@ pub async fn op_vtftk_get_sounds_by_name(
 /// Find sound by ID
 #[op2(async)]
 #[serde]
-pub async fn op_vtftk_get_sound_by_id(#[serde] id: Uuid) -> anyhow::Result<Option<SoundModel>> {
-    global_script_event(GetSoundByID { id })
+pub async fn op_vtftk_get_sounds_by_ids(
+    #[serde] ids: Vec<Uuid>,
+) -> anyhow::Result<Vec<SoundModel>> {
+    global_script_event(GetSoundsByIDs { ids })
         .await
         .context("failed to send event")?
 }

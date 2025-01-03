@@ -16,11 +16,11 @@ use crate::{
         event_logs::{CreateEventLog, EventLogsModel},
         key_value::{CreateKeyValue, KeyValueModel, KeyValueType},
         shared::LoggingLevelDb,
-        SoundModel,
+        ItemModel, SoundModel,
     },
-    events::EventMessage,
+    events::{EventMessage, ThrowItemConfig, ThrowItemMessage},
     integrations::tts_monster::{TTSMonsterService, TTSMonsterVoice},
-    state::app_data::AppDataStore,
+    state::app_data::{AppDataStore, ItemWithImpactSoundIds, ItemsWithSounds},
     twitch::manager::{TwitchManager, TwitchUser},
 };
 
@@ -381,18 +381,18 @@ impl Handler<KvGet> for ScriptEventActor {
 /// Message to get sounds with a matching name
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<Vec<SoundModel>>")]
-pub struct GetSoundsByName {
-    pub name: String,
+pub struct GetSoundsByNames {
+    pub names: Vec<String>,
     pub ignore_case: bool,
 }
 
-impl Handler<GetSoundsByName> for ScriptEventActor {
-    type Response = Fr<GetSoundsByName>;
+impl Handler<GetSoundsByNames> for ScriptEventActor {
+    type Response = Fr<GetSoundsByNames>;
 
-    fn handle(&mut self, msg: GetSoundsByName, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+    fn handle(&mut self, msg: GetSoundsByNames, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let db = self.db.clone();
         Fr::new_box(async move {
-            let sounds = SoundModel::get_by_name(&db, &msg.name, msg.ignore_case).await?;
+            let sounds = SoundModel::get_by_names(&db, &msg.names, msg.ignore_case).await?;
             Ok(sounds)
         })
     }
@@ -400,20 +400,107 @@ impl Handler<GetSoundsByName> for ScriptEventActor {
 
 /// Message to get a sound by ID
 #[derive(Message)]
-#[msg(rtype = "anyhow::Result<Option<SoundModel>>")]
-pub struct GetSoundByID {
-    pub id: Uuid,
+#[msg(rtype = "anyhow::Result<Vec<SoundModel>>")]
+pub struct GetSoundsByIDs {
+    pub ids: Vec<Uuid>,
 }
 
-impl Handler<GetSoundByID> for ScriptEventActor {
-    type Response = Fr<GetSoundByID>;
+impl Handler<GetSoundsByIDs> for ScriptEventActor {
+    type Response = Fr<GetSoundsByIDs>;
 
-    fn handle(&mut self, msg: GetSoundByID, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+    fn handle(&mut self, msg: GetSoundsByIDs, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let db = self.db.clone();
         Fr::new_box(async move {
-            let sound = SoundModel::get_by_id(&db, msg.id).await?;
+            let sound = SoundModel::get_by_ids(&db, &msg.ids).await?;
             Ok(sound)
         })
+    }
+}
+
+/// Message to get sounds with a matching name
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<Vec<ItemWithImpactSoundIds>>")]
+pub struct GetItemsByNames {
+    pub names: Vec<String>,
+    pub ignore_case: bool,
+}
+
+impl Handler<GetItemsByNames> for ScriptEventActor {
+    type Response = Fr<GetItemsByNames>;
+
+    fn handle(&mut self, msg: GetItemsByNames, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let db = self.db.clone();
+        Fr::new_box(async move {
+            let items: Vec<ItemWithImpactSoundIds> =
+                ItemModel::get_by_names_with_impact_sounds(&db, &msg.names, msg.ignore_case)
+                    .await?
+                    .into_iter()
+                    .map(|(item, impact_sounds)| ItemWithImpactSoundIds {
+                        item,
+                        impact_sound_ids: impact_sounds
+                            .into_iter()
+                            .map(|impact_sound| impact_sound.sound_id)
+                            .collect(),
+                    })
+                    .collect();
+
+            Ok(items)
+        })
+    }
+}
+
+/// Message to get a sound by ID
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<Vec<ItemWithImpactSoundIds>>")]
+pub struct GetItemsByIDs {
+    pub ids: Vec<Uuid>,
+}
+
+impl Handler<GetItemsByIDs> for ScriptEventActor {
+    type Response = Fr<GetItemsByIDs>;
+
+    fn handle(&mut self, msg: GetItemsByIDs, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let db = self.db.clone();
+        Fr::new_box(async move {
+            let items: Vec<ItemWithImpactSoundIds> =
+                ItemModel::get_by_ids_with_impact_sounds(&db, &msg.ids)
+                    .await?
+                    .into_iter()
+                    .map(|(item, impact_sounds)| ItemWithImpactSoundIds {
+                        item,
+                        impact_sound_ids: impact_sounds
+                            .into_iter()
+                            .map(|impact_sound| impact_sound.sound_id)
+                            .collect(),
+                    })
+                    .collect();
+
+            Ok(items)
+        })
+    }
+}
+
+/// Message to throw items
+#[derive(Message)]
+#[msg(rtype = "anyhow::Result<()>")]
+pub struct ThrowItems {
+    pub items: ItemsWithSounds,
+    pub config: ThrowItemConfig,
+}
+
+impl Handler<ThrowItems> for ScriptEventActor {
+    type Response = Mr<ThrowItems>;
+
+    fn handle(&mut self, msg: ThrowItems, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+        let result = self
+            .event_sender
+            .send(EventMessage::ThrowItem(ThrowItemMessage {
+                items: msg.items,
+                config: msg.config,
+            }))
+            .context("event receiver was closed");
+
+        Mr(result.map(|_| ()))
     }
 }
 

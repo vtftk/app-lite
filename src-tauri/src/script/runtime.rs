@@ -11,8 +11,9 @@ use crate::{
             op_twitch_send_chat_announcement, op_twitch_send_shoutout,
         },
         vtftk::{
-            op_vtftk_get_sound_by_id, op_vtftk_get_sounds_by_name, op_vtftk_play_sound,
-            op_vtftk_play_sound_seq, op_vtftk_tts_generate, op_vtftk_tts_generate_parsed,
+            op_vtftk_get_items_by_ids, op_vtftk_get_items_by_names, op_vtftk_get_sounds_by_ids,
+            op_vtftk_get_sounds_by_names, op_vtftk_play_sound, op_vtftk_play_sound_seq,
+            op_vtftk_throw_items, op_vtftk_tts_generate, op_vtftk_tts_generate_parsed,
             op_vtftk_tts_get_voices,
         },
     },
@@ -65,8 +66,12 @@ deno_core::extension!(
         // VTFTK Sounds
         op_vtftk_play_sound,
         op_vtftk_play_sound_seq,
-        op_vtftk_get_sounds_by_name,
-        op_vtftk_get_sound_by_id,
+        op_vtftk_get_sounds_by_names,
+        op_vtftk_get_sounds_by_ids,
+        // VTFTK Items
+        op_vtftk_get_items_by_names,
+        op_vtftk_get_items_by_ids,
+        op_vtftk_throw_items,
         // TTS Monster
         op_vtftk_tts_generate,
         op_vtftk_tts_get_voices,

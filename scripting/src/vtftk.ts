@@ -81,7 +81,7 @@ export function getSoundsByName(
   name: string,
   ignoreCase: boolean = false,
 ): Promise<SoundModel[]> {
-  return Deno.core.ops.op_vtftk_get_sounds_by_name(name, ignoreCase);
+  return getSoundsByNames([name], ignoreCase);
 }
 
 /**
@@ -91,29 +91,11 @@ export function getSoundsByName(
  * @param ignoreCase Whether to ignore name casing when searching
  * @returns Promise resolved to the list of sounds found
  */
-export async function getSoundsByNames(
+export function getSoundsByNames(
   names: string[],
   ignoreCase: boolean = false,
 ): Promise<SoundModel[]> {
-  const results = await Promise.allSettled(
-    names.map(async (name) => {
-      try {
-        return await getSoundsByName(name, ignoreCase);
-      } catch (error) {
-        console.error("error loading sounds by name", { name, error });
-        throw error;
-      }
-    }),
-  );
-  const sounds: SoundModel[] = [];
-
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      sounds.push(...result.value);
-    }
-  }
-
-  return sounds;
+  return Deno.core.ops.op_vtftk_get_sounds_by_names(names, ignoreCase);
 }
 
 /**
@@ -122,40 +104,325 @@ export async function getSoundsByNames(
  * @param id The ID of the sound
  * @returns The sound that was found or null if none were found
  */
-export function getSoundByID(id: string): Promise<SoundModel | null> {
-  return Deno.core.ops.op_vtftk_get_sound_by_id(id);
+export async function getSoundByID(id: string): Promise<SoundModel | null> {
+  const sounds = await getSoundsByIDs([id]);
+  if (sounds.length < 1) return null;
+  return sounds[0];
+}
+
+export function getSoundsByIDs(ids: string[]): Promise<SoundModel[]> {
+  return Deno.core.ops.op_vtftk_get_sounds_by_ids(ids);
 }
 
 /**
- * Gets a collection of sounds using a list of IDs for
- * the sounds to find
+ * Item stored within VTFTK
  *
- * Sounds that were not found will not be included in the
- * result and will be logged as an error
- *
- * @param ids The IDs of the sounds to find
- * @returns The list of sounds
+ * @member id Unique ID of the item
+ * @member name Name of the item
+ * @member image Configuration for the item image
+ * @member order Order of the item within the UI
+ * @member created_at Date time when the item was created
+ * @member impact_sound_ids List of IDs for sounds this item can play on impact
  */
-export async function getSoundsByIDs(ids: string[]): Promise<SoundModel[]> {
-  const results = await Promise.allSettled(
-    ids.map(async (id) => {
-      try {
-        const sound = await getSoundByID(id);
-        if (sound === null) throw new Error("sound does not exist");
-        return sound;
-      } catch (error) {
-        console.error("error loading sound", { id, error });
-        throw error;
-      }
-    }),
-  );
-  const sounds: SoundModel[] = [];
+export interface ItemModel {
+  id: string;
+  name: string;
+  image: ItemModelImage;
+  order: number;
+  created_at: string;
+  impact_sound_ids: string[];
+}
 
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      sounds.push(result.value);
+/**
+ * Item image config
+ *
+ * @member src URL for the image source
+ * @member weight Weight the item has on impact (Affects how much the model flinches, Default: 1)
+ * @member scale Scale of the image (Default: 1)
+ * @member pixelate Whether to pixelate the image when scaling (Use to make pixel art scale properly)
+ *
+ */
+export interface ItemModelImage {
+  src: string;
+  weight: number;
+  scale: number;
+  pixelate: boolean;
+}
+
+export interface ItemsWithSounds {
+  items: ItemModel[];
+  impact_sounds: SoundModel[];
+}
+
+type ThrowItemConfig =
+  | { type: "All"; amount: number }
+  | {
+      type: "Barrage";
+      amount_per_throw: number;
+      amount: number;
+      frequency: number;
+    };
+
+/**
+ * Loads all the impact sounds for the
+ * provided collection of items
+ *
+ * @param items The items
+ * @returns The items with sounds
+ */
+export async function getItemsWithSounds(
+  items: ItemModel[],
+): Promise<ItemsWithSounds> {
+  // Collect impact sound IDs
+  const impactSoundIds = new Set<string>();
+  for (const item of items) {
+    for (const soundId of item.impact_sound_ids) {
+      impactSoundIds.add(soundId);
     }
   }
 
-  return sounds;
+  // Load impact sounds
+  const sounds = await getSoundsByIDs(Array.from(impactSoundIds));
+  return {
+    items,
+    impact_sounds: sounds,
+  };
+}
+
+/**
+ * Find an item by name
+ *
+ * @param name The name of the item
+ * @param ignoreCase Whether to ignore case when searching
+ * @returns The item if found otherwise null
+ */
+export async function getItemByName(
+  name: string,
+  ignoreCase: boolean = false,
+): Promise<ItemModel | null> {
+  const items = await getItemsByName(name, ignoreCase);
+  if (items.length < 1) return null;
+  return items[0];
+}
+
+/**
+ * Find a collection of items by name
+ *
+ * @param names The name to search for
+ * @param ignoreCase Whether to ignore case when searching
+ * @returns The list of items found
+ */
+export function getItemsByName(
+  name: string,
+  ignoreCase: boolean = false,
+): Promise<ItemModel[]> {
+  return getItemsByNames([name], ignoreCase);
+}
+
+/**
+ * Find a collection of items by names
+ *
+ * @param names The list of names to search for
+ * @param ignoreCase Whether to ignore case when searching
+ * @returns The list of items found
+ */
+export function getItemsByNames(
+  names: string[],
+  ignoreCase: boolean = false,
+): Promise<ItemModel[]> {
+  return Deno.core.ops.op_vtftk_get_items_by_names(names, ignoreCase);
+}
+
+/**
+ * Find a specific item by ID
+ *
+ * @param id The ID of the item
+ * @returns The found item or null if undefined
+ */
+export async function getItemById(id: string): Promise<ItemModel | null> {
+  const items = await getItemsByIds([id]);
+  if (items.length < 1) return null;
+  return items[0];
+}
+
+/**
+ * Finds a collection of items by their IDs
+ *
+ * @param ids The IDs of the items
+ * @returns The items that were found
+ */
+export function getItemsByIds(ids: string[]): Promise<ItemModel[]> {
+  return Deno.core.ops.op_vtftk_get_items_by_ids(ids);
+}
+
+/**
+ * Throws a bunch of items all at once from a collection of IDs
+ *
+ * @param ids IDs of the items to throw
+ * @param amount The total amount to throw all at once
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwAllByIds(
+  ids: string[],
+  amount: number = 10,
+): Promise<void> {
+  return throwItemsByIDs(ids, {
+    type: "All",
+    amount,
+  });
+}
+
+/**
+ * Throws a bunch of items all at once from a collection of names
+ *
+ * @param names The names of the items to throw
+ * @param ignoreCase Whether to ignore casing when matching names
+ * @param amount The total amount to throw all at once
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwAllByNames(
+  names: string[],
+  ignoreCase: boolean = false,
+  amount: number = 10,
+): Promise<void> {
+  return throwItemsByNames(names, ignoreCase, {
+    type: "All",
+    amount,
+  });
+}
+
+/**
+ * Throws a bunch of items all at once
+ *
+ * @param items The items to throw
+ * @param amount The total amount to throw all at once
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwAll(
+  items: ItemsWithSounds,
+  amount: number,
+): Promise<void> {
+  return throwItems(items, {
+    type: "All",
+    amount,
+  });
+}
+
+/**
+ * Configuration for how to throw a barrage
+ *
+ * @member totalAmount The total amount of items to throw
+ * @member amountPerThrow The amount of items to throw per barrage
+ * @member frequency The time between each barrage (ms)
+ */
+interface BarrageConfig {
+  totalAmount?: number;
+  amountPerThrow?: number;
+  frequency?: number;
+}
+
+/**
+ * Throw a barrage of items
+ *
+ * @param items The items with sounds to throw
+ * @param config Configuration for how to throw the barrage
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwBarrage(
+  items: ItemsWithSounds,
+  config: BarrageConfig = {},
+): Promise<void> {
+  return throwItems(items, {
+    type: "Barrage",
+    amount: config.totalAmount ?? 15,
+    amount_per_throw: config.amountPerThrow ?? 5,
+    frequency: config.frequency ?? 100,
+  });
+}
+
+/**
+ * Throw a barrage of items by the IDs of the items
+ *
+ * @param ids The IDs of the items to throw
+ * @param config Configuration for how to throw the barrage
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwBarrageByIds(
+  ids: string[],
+  config: BarrageConfig = {},
+): Promise<void> {
+  return throwItemsByIDs(ids, {
+    type: "Barrage",
+    amount: config.totalAmount ?? 15,
+    amount_per_throw: config.amountPerThrow ?? 5,
+    frequency: config.frequency ?? 100,
+  });
+}
+
+/**
+ * Throw a barrage of items by the names of the items
+ *
+ * @param names The names of the items
+ * @param ignoreCase Whether to ignore casing when searching for names
+ * @param config Configuration for how to throw the barrage
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwBarrageByNames(
+  names: string[],
+  ignoreCase: boolean = false,
+  config: BarrageConfig = {},
+): Promise<void> {
+  return throwItemsByNames(names, ignoreCase, {
+    type: "Barrage",
+    amount: config.totalAmount ?? 15,
+    amount_per_throw: config.amountPerThrow ?? 5,
+    frequency: config.frequency ?? 100,
+  });
+}
+
+/**
+ * Throws a collection of items by ID
+ *
+ * @param ids The IDs of the items to throw
+ * @param config Configuration for the throw
+ * @returns Promise resolved when the throw is queued
+ */
+export async function throwItemsByIDs(ids: string[], config: ThrowItemConfig) {
+  const items = await getItemsByIds(ids);
+  const itemsWithSounds = await getItemsWithSounds(items);
+
+  return throwItems(itemsWithSounds, config);
+}
+
+/**
+ * Throws a collection of items by name
+ *
+ * @param names The names of the items to throw
+ * @param ignoreCase  Whether to ignore casing when finding the items
+ * @param config Configuration for the throw
+ * @returns Promise resolved when the throw is queued
+ */
+export async function throwItemsByNames(
+  names: string[],
+  ignoreCase: boolean,
+  config: ThrowItemConfig,
+): Promise<void> {
+  const items = await getItemsByNames(names, ignoreCase);
+  const itemsWithSounds = await getItemsWithSounds(items);
+
+  return throwItems(itemsWithSounds, config);
+}
+
+/**
+ * Throws a collection of items
+ *
+ * @param items The items to throw
+ * @param config Configuration for the throw
+ * @returns Promise resolved when the throw is queued
+ */
+export function throwItems(
+  items: ItemsWithSounds,
+  config: ThrowItemConfig,
+): Promise<void> {
+  return Deno.core.ops.op_vtftk_throw_items(items, config);
 }

@@ -120,7 +120,7 @@ impl Model {
     }
 
     /// Find all sounds with a matching name, optionally ignoring case
-    pub async fn get_by_name<C>(db: &C, name: &str, ignore_case: bool) -> DbResult<Vec<Self>>
+    pub async fn get_by_names<C>(db: &C, names: &[String], ignore_case: bool) -> DbResult<Vec<Self>>
     where
         C: ConnectionTrait + Send + 'static,
     {
@@ -131,10 +131,10 @@ impl Model {
                 // Convert stored name to lower case
                 Expr::expr(Func::lower(Expr::col(Column::Name)))
                     // Compare with lowercase value
-                    .eq(name.to_lowercase()),
+                    .is_in(names.iter().map(|name| name.to_lowercase())),
             )
         } else {
-            select = select.filter(Column::Name.eq(name))
+            select = select.filter(Column::Name.is_in(names))
         }
 
         select
