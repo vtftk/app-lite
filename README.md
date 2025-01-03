@@ -128,6 +128,8 @@ Scripting has built in helpers for things such as:
 - 🗂️ **Key-Value Store** – Save and retrieve data that sticks around even after your stream ends.
 - 📊 **Counters** – Keep track of numbers like redeems, subs, or any other countable event.
 - 🤖 **TTS Monster** - Use the TTS monster APIs from within scripting to generate and play TTS messages
+- 🔊 **Play Sounds** - Play sounds through the overlays both custom sounds and sounds from your list
+- 🎯 **Throw Items** - Throw items from your collection of items
 
 ## 🔊 Sounds
 
