@@ -53,6 +53,42 @@ export function playSoundSeq(sounds: SoundSeq[]): Promise<void> {
 }
 
 /**
+ * Play a sound by name
+ *
+ * @param name The name of the sound to play
+ * @param ignoreCase Whether to ignore case when matching the sound
+ * @param volume Optionally use a different sound volume
+ * @returns Promise resolved when the sounds has been queued
+ */
+export async function playSoundByName(
+  name: string,
+  ignoreCase: boolean = false,
+  volume?: number,
+): Promise<void> {
+  const sound = await getSoundByName(name, ignoreCase);
+  if (sound === null) return;
+
+  return playSound(sound.src, volume ?? sound.volume);
+}
+
+/**
+ * Play a sound by ID
+ *
+ * @param id ID of the sound to play
+ * @param volume Optionally use a different sound volume
+ * @returns Promise resolved when the sounds has been queued
+ */
+export async function playSoundByID(
+  id: string,
+  volume?: number,
+): Promise<void> {
+  const sound = await getSoundByID(id);
+  if (sound === null) return;
+
+  return playSound(sound.src, volume ?? sound.volume);
+}
+
+/**
  * Same as {@see getSoundByName} but returns either the first
  * found sound or none if none were found
  *
