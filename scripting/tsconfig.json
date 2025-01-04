@@ -10,8 +10,9 @@
     "strict": true,
     "noEmit": false,
     "noLib": true,
-    "typeRoots": ["./types"]
+    "typeRoots": ["./types"],
+    "skipLibCheck": true
   },
-  "include": ["src/**/*", "types/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*", "types/**/*", "node_modules/@types/jest/index.d.ts"],
+  "exclude": ["dist"]
 }

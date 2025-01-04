@@ -66,5 +66,6 @@ Object.defineProperty(globalThis, "console", {
 
 declare global {
   export const api: API;
+
   export const console: typeof _console;
 }
