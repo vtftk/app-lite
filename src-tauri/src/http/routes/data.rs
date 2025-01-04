@@ -23,10 +23,7 @@ use tauri::{path::BaseDirectory, AppHandle, Manager};
 /// Obtain the current app data configuration. Contains stored
 /// state such as calibration and throwables configuration
 pub async fn get_app_data(Extension(app_data): Extension<AppDataStore>) -> Json<AppData> {
-    let mut data = app_data.read().await.clone();
-
-    // Hide twitch access token from frontend
-    data.twitch_config.access_token = None;
+    let data = app_data.read().await.clone();
 
     Json(data)
 }

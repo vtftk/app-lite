@@ -11,9 +11,15 @@ pub mod links;
 pub mod model_data;
 pub mod shared;
 pub mod sounds;
+pub mod twitch_access;
 
 #[allow(unused)]
 pub use items::{ItemActiveModel, ItemColumn, ItemEntity, ItemModel};
+
+#[allow(unused)]
+pub use twitch_access::{
+    TwitchAccessActiveModel, TwitchAccessColumn, TwitchAccessEntity, TwitchAccessModel,
+};
 
 #[allow(unused)]
 pub use sounds::{SoundActiveModel, SoundColumn, SoundEntity, SoundModel};

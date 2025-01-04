@@ -3,6 +3,7 @@ use std::sync::Arc;
 use anyhow::Context;
 use axum::{response::IntoResponse, Extension, Json};
 use reqwest::header::CONTENT_TYPE;
+use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 use twitch_api::{
     helix::Scope,
@@ -10,7 +11,10 @@ use twitch_api::{
 };
 
 use crate::{
-    http::error::HttpResult, state::app_data::AppDataStore, twitch::manager::TwitchManager,
+    database::entity::{twitch_access::SetTwitchAccess, TwitchAccessModel},
+    http::error::HttpResult,
+    state::app_data::AppDataStore,
+    twitch::manager::TwitchManager,
 };
 
 /// Embedded oauth response page for handling sending the fragment
@@ -37,7 +41,7 @@ pub struct OAuthComplete {
 /// Handles the completion of OAuth logging into the twitch account storing
 /// the access token and authorized scopes
 pub async fn handle_oauth_complete(
-    Extension(app_data): Extension<AppDataStore>,
+    Extension(db): Extension<DatabaseConnection>,
     Extension(twitch_manager): Extension<Arc<TwitchManager>>,
     Json(req): Json<OAuthComplete>,
 ) -> HttpResult<()> {
@@ -51,13 +55,14 @@ pub async fn handle_oauth_complete(
 
     twitch_manager.set_authenticated(token).await;
 
-    app_data
-        .write(|app_data| {
-            app_data.twitch_config.access_token = Some(access_token);
-            app_data.twitch_config.scopes = Some(scopes);
-        })
-        .await
-        .context("saving app data")?;
+    TwitchAccessModel::set(
+        &db,
+        SetTwitchAccess {
+            access_token,
+            scopes,
+        },
+    )
+    .await?;
 
     Ok(Json(()))
 }

@@ -1,11 +1,12 @@
 use anyhow::Context;
 use constants::TWITCH_REQUIRED_SCOPES;
-use database::clean_old_data;
+use database::{clean_old_data, entity::TwitchAccessModel};
 use events::{
     create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
 };
-use log::{error, info};
+use log::{debug, error, info};
 use script::{events::ScriptEventActor, runtime::create_script_executor};
+use sea_orm::{DatabaseConnection, ModelTrait};
 use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
 use std::sync::Arc;
 use tauri::Manager;
@@ -100,7 +101,7 @@ pub fn run() {
 
             // Attempt to authenticate with twitch using the saved token
             _ = tauri::async_runtime::spawn(attempt_twitch_auth_existing_token(
-                app_data.clone(),
+                db.clone(),
                 twitch_manager.clone(),
             ));
 
@@ -217,32 +218,30 @@ pub fn run() {
 
 /// Attempts to authenticate with twitch using an existing access token
 async fn attempt_twitch_auth_existing_token(
-    app_data_store: AppDataStore,
+    db: DatabaseConnection,
     twitch_manager: Arc<TwitchManager>,
 ) {
-    // Read existing access token
-    let (access_token, scopes) = {
-        let app_data = app_data_store.read().await;
-        match (
-            &app_data.twitch_config.access_token,
-            &app_data.twitch_config.scopes,
-        ) {
-            (Some(access_token), Some(scopes)) => (access_token.clone(), scopes.clone()),
-            _ => return,
+    let access = match TwitchAccessModel::get(&db).await {
+        Ok(Some(value)) => value,
+        Ok(None) => {
+            debug!("not authenticated, skipping login");
+            return;
+        }
+        Err(err) => {
+            error!("failed to load twitch access: {err:?}");
+            return;
         }
     };
+
+    let access_token = access.access_token.0.clone();
+    let scopes = &access.scopes.0;
 
     for required_scope in TWITCH_REQUIRED_SCOPES {
         if !scopes.contains(required_scope) {
             info!("logging out current access token, missing required scope");
 
             // Clear outdated / invalid access token
-            _ = app_data_store
-                .write(|app_data| {
-                    app_data.twitch_config.access_token = None;
-                })
-                .await;
-
+            access.delete(&db).await;
             return;
         }
     }
@@ -254,10 +253,6 @@ async fn attempt_twitch_auth_existing_token(
         error!("stored access token is invalid: {}", err);
 
         // Clear outdated / invalid access token
-        _ = app_data_store
-            .write(|app_data| {
-                app_data.twitch_config.access_token = None;
-            })
-            .await;
+        access.delete(&db).await;
     }
 }

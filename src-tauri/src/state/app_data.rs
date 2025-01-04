@@ -83,7 +83,6 @@ pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()
 #[serde(default)]
 pub struct AppData {
     pub main_config: MainConfig,
-    pub twitch_config: TwitchConfig,
     pub throwables_config: ThrowablesConfig,
     pub model_config: ModelConfig,
     pub sounds_config: SoundsConfig,
