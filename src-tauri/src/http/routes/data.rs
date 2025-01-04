@@ -1,4 +1,5 @@
 use crate::{
+    database::entity::{vt_access::SetVTAccess, VTAccessModel},
     http::{
         error::{DynHttpError, HttpResult},
         models::{GetAuthTokenResponse, SetAuthTokenRequest},
@@ -16,6 +17,7 @@ use axum::{
     Extension, Json,
 };
 use reqwest::header::CONTENT_TYPE;
+use sea_orm::{DatabaseConnection, ModelTrait};
 use tauri::{path::BaseDirectory, AppHandle, Manager};
 
 /// GET /app-data
@@ -135,24 +137,39 @@ pub async fn get_defaults_file(
 
 /// POST /data/set-auth-token
 pub async fn handle_set_auth_token(
-    Extension(app_data): Extension<AppDataStore>,
+    Extension(db): Extension<DatabaseConnection>,
     Json(req): Json<SetAuthTokenRequest>,
 ) -> HttpResult<()> {
-    app_data
-        .write(|app_data| {
-            app_data.vtube_studio_config.auth_token = req.auth_token;
-        })
-        .await
-        .context("saving app data")?;
+    if let Some(access_token) = req.auth_token {
+        // Set new access token
+        VTAccessModel::set(&db, SetVTAccess { access_token })
+            .await
+            .context("failed to update access")?;
+    } else {
+        // Clear existing access token
+        let access = VTAccessModel::get(&db)
+            .await
+            .context("failed to get access")?;
+        if let Some(access) = access {
+            access
+                .delete(&db)
+                .await
+                .context("failed to delete original token")?;
+        }
+    }
 
     Ok(Json(()))
 }
 
 /// GET /data/get-auth-token
 pub async fn handle_get_auth_token(
-    Extension(app_data): Extension<AppDataStore>,
+    Extension(db): Extension<DatabaseConnection>,
 ) -> HttpResult<GetAuthTokenResponse> {
-    let app_data = app_data.read().await;
-    let auth_token = app_data.vtube_studio_config.auth_token.clone();
-    Ok(Json(GetAuthTokenResponse { auth_token }))
+    let access = VTAccessModel::get(&db)
+        .await
+        .context("failed to get access")?;
+
+    Ok(Json(GetAuthTokenResponse {
+        auth_token: access.map(|access| access.access_token),
+    }))
 }

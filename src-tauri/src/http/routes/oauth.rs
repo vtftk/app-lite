@@ -13,7 +13,6 @@ use twitch_api::{
 use crate::{
     database::entity::{twitch_access::SetTwitchAccess, TwitchAccessModel},
     http::error::HttpResult,
-    state::app_data::AppDataStore,
     twitch::manager::TwitchManager,
 };
 

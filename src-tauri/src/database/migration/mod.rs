@@ -13,6 +13,7 @@ mod m20241212_114700_create_key_value_table;
 mod m20241214_080902_create_command_logs_table;
 mod m20241227_110419_create_event_logs_table;
 mod m20250104_053253_create_twitch_access_table;
+mod m20250104_060420_create_vt_access_table;
 
 pub struct Migrator;
 
@@ -33,6 +34,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20241214_080902_create_command_logs_table::Migration),
             Box::new(m20241227_110419_create_event_logs_table::Migration),
             Box::new(m20250104_053253_create_twitch_access_table::Migration),
+            Box::new(m20250104_060420_create_vt_access_table::Migration),
         ]
     }
 }

@@ -146,7 +146,6 @@ pub struct ExternalsConfig {
 pub struct VTubeStudioConfig {
     pub host: String,
     pub port: u16,
-    pub auth_token: Option<String>,
 }
 
 impl Default for VTubeStudioConfig {
@@ -154,7 +153,6 @@ impl Default for VTubeStudioConfig {
         Self {
             host: "localhost".to_string(),
             port: 8001,
-            auth_token: None,
         }
     }
 }

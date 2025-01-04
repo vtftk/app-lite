@@ -241,7 +241,7 @@ async fn attempt_twitch_auth_existing_token(
             info!("logging out current access token, missing required scope");
 
             // Clear outdated / invalid access token
-            access.delete(&db).await;
+            _ = access.delete(&db).await;
             return;
         }
     }
@@ -253,6 +253,6 @@ async fn attempt_twitch_auth_existing_token(
         error!("stored access token is invalid: {}", err);
 
         // Clear outdated / invalid access token
-        access.delete(&db).await;
+        _ = access.delete(&db).await;
     }
 }

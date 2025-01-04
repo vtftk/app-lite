@@ -12,6 +12,7 @@ pub mod model_data;
 pub mod shared;
 pub mod sounds;
 pub mod twitch_access;
+pub mod vt_access;
 
 #[allow(unused)]
 pub use items::{ItemActiveModel, ItemColumn, ItemEntity, ItemModel};
@@ -20,6 +21,9 @@ pub use items::{ItemActiveModel, ItemColumn, ItemEntity, ItemModel};
 pub use twitch_access::{
     TwitchAccessActiveModel, TwitchAccessColumn, TwitchAccessEntity, TwitchAccessModel,
 };
+
+#[allow(unused)]
+pub use vt_access::{VTAccessActiveModel, VTAccessColumn, VTAccessEntity, VTAccessModel};
 
 #[allow(unused)]
 pub use sounds::{SoundActiveModel, SoundColumn, SoundEntity, SoundModel};
