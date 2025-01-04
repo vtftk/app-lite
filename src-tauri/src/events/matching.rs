@@ -20,8 +20,6 @@ use crate::{
 };
 
 /// Data for matched events to trigger
-///
-/// TODO: Often small lists, use tinyvec instead?
 pub struct EventMatchingData {
     /// List of events to attempt to trigger
     pub events: Vec<EventModel>,
