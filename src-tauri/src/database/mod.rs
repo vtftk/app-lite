@@ -3,6 +3,7 @@ use std::path::Path;
 use anyhow::Context;
 use chrono::Days;
 use chrono::Utc;
+use entity::app_data::AppDataModel;
 use entity::CommandExecutionModel;
 use entity::CommandLogsModel;
 use entity::EventExecutionModel;
@@ -13,8 +14,6 @@ use sea_orm::Database;
 use sea_orm::DatabaseConnection;
 use sea_orm_migration::MigratorTrait;
 use tokio::fs::{create_dir_all, File};
-
-use crate::state::app_data::AppDataStore;
 
 pub mod entity;
 mod migration;
@@ -46,9 +45,8 @@ pub async fn connect_database(path: &Path) -> anyhow::Result<DatabaseConnection>
     Ok(db)
 }
 
-pub async fn clean_old_data(db: DatabaseConnection, app_data: AppDataStore) -> anyhow::Result<()> {
-    let app_data = app_data.read().await;
-    let main_config = &app_data.main_config;
+pub async fn clean_old_data(db: DatabaseConnection) -> anyhow::Result<()> {
+    let main_config = AppDataModel::get_main_config(&db).await?;
 
     let now = Utc::now();
 

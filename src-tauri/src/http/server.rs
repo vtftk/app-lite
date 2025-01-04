@@ -6,8 +6,8 @@ use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::Arc;
 
 use super::routes;
+use crate::database::entity::app_data::AppDataModel;
 use crate::events::EventRecvHandle;
-use crate::state::app_data::AppDataStore;
 use crate::state::runtime_app_data::RuntimeAppDataStore;
 use crate::twitch::manager::TwitchManager;
 use anyhow::Context;
@@ -21,13 +21,9 @@ pub async fn start(
     event_handle: EventRecvHandle,
     app_handle: AppHandle,
     twitch_manager: Arc<TwitchManager>,
-    app_data: AppDataStore,
     runtime_app_data: RuntimeAppDataStore,
 ) -> anyhow::Result<()> {
-    let port = {
-        let app_data = &*app_data.read().await;
-        app_data.main_config.get_http_port()
-    };
+    let port = AppDataModel::get_http_port(&db).await?;
 
     // build our application with a single route
     let app = routes::router()
@@ -35,7 +31,6 @@ pub async fn start(
         .layer(Extension(event_handle))
         .layer(Extension(app_handle))
         .layer(Extension(twitch_manager))
-        .layer(Extension(app_data))
         .layer(Extension(runtime_app_data))
         .layer(CorsLayer::very_permissive());
 

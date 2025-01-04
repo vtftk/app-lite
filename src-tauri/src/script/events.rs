@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     database::entity::{
+        app_data::AppDataModel,
         command_logs::{CommandLogsModel, CreateCommandLog},
         event_logs::{CreateEventLog, EventLogsModel},
         key_value::{CreateKeyValue, KeyValueModel, KeyValueType},
@@ -20,7 +21,7 @@ use crate::{
     },
     events::{EventMessage, ThrowItemConfig, ThrowItemMessage},
     integrations::tts_monster::{TTSMonsterService, TTSMonsterVoice},
-    state::app_data::{AppDataStore, ItemWithImpactSoundIds, ItemsWithSounds},
+    state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
     twitch::manager::{TwitchManager, TwitchUser},
 };
 
@@ -59,9 +60,6 @@ where
 /// KV store etc etc
 #[derive(Service)]
 pub struct ScriptEventActor {
-    /// App data store access
-    app_data: AppDataStore,
-
     /// Sender handle for submitting event messages
     event_sender: broadcast::Sender<EventMessage>,
 
@@ -74,13 +72,11 @@ pub struct ScriptEventActor {
 
 impl ScriptEventActor {
     pub fn new(
-        app_data: AppDataStore,
         event_sender: broadcast::Sender<EventMessage>,
         db: DatabaseConnection,
         twitch_manager: Arc<TwitchManager>,
     ) -> Self {
         Self {
-            app_data,
             event_sender,
             db,
             twitch_manager,
@@ -603,17 +599,12 @@ impl Handler<TTSGetVoices> for ScriptEventActor {
     type Response = Fr<TTSGetVoices>;
 
     fn handle(&mut self, _msg: TTSGetVoices, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let app_data: AppDataStore = self.app_data.clone();
+        let db = self.db.clone();
         Fr::new_box(async move {
-            let token = {
-                app_data
-                    .read()
-                    .await
-                    .externals_config
-                    .tts_monster_api_key
-                    .clone()
-                    .context("missing tts monster api key")?
-            };
+            let externals_config = AppDataModel::get_externals_config(&db).await?;
+            let token = externals_config
+                .tts_monster_api_key
+                .context("missing tts monster api key")?;
 
             TTSMonsterService::get_voices(&token).await
         })
@@ -632,17 +623,12 @@ impl Handler<TTSGenerate> for ScriptEventActor {
     type Response = Fr<TTSGenerate>;
 
     fn handle(&mut self, msg: TTSGenerate, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let app_data: AppDataStore = self.app_data.clone();
+        let db = self.db.clone();
         Fr::new_box(async move {
-            let token = {
-                app_data
-                    .read()
-                    .await
-                    .externals_config
-                    .tts_monster_api_key
-                    .clone()
-                    .context("missing tts monster api key")?
-            };
+            let externals_config = AppDataModel::get_externals_config(&db).await?;
+            let token = externals_config
+                .tts_monster_api_key
+                .context("missing tts monster api key")?;
 
             TTSMonsterService::generate(&token, msg.voice_id, msg.message).await
         })
@@ -665,17 +651,12 @@ impl Handler<TTSGenerateParsed> for ScriptEventActor {
         msg: TTSGenerateParsed,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let app_data: AppDataStore = self.app_data.clone();
+        let db = self.db.clone();
         Fr::new_box(async move {
-            let token = {
-                app_data
-                    .read()
-                    .await
-                    .externals_config
-                    .tts_monster_api_key
-                    .clone()
-                    .context("missing tts monster api key")?
-            };
+            let externals_config = AppDataModel::get_externals_config(&db).await?;
+            let token = externals_config
+                .tts_monster_api_key
+                .context("missing tts monster api key")?;
 
             TTSMonsterService::generate_parsed(&token, msg.message).await
         })

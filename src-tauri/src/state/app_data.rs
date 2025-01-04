@@ -1,97 +1,39 @@
-use std::{
-    fmt::Debug,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-
-use anyhow::Context;
-use log::debug;
+use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{RwLock, RwLockReadGuard};
+use std::fmt::Debug;
 use twitch_api::{helix::Scope, twitch_oauth2::AccessToken};
 use uuid::Uuid;
 
 use crate::database::entity::{ItemModel, SoundModel};
 
-#[derive(Clone)]
-pub struct AppDataStore {
-    inner: Arc<AppDataStoreInner>,
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct AppConfig {
+    pub main_config: MainConfig,
+    pub externals_config: ExternalsConfig,
 }
 
-pub struct AppDataStoreInner {
-    /// Current app data
-    data: RwLock<AppData>,
-
-    /// File path the app data is stored at
-    path: PathBuf,
-}
-
-impl AppDataStore {
-    pub async fn load(path: PathBuf) -> anyhow::Result<Self> {
-        let data = if !path.exists() {
-            AppData::default()
-        } else {
-            load_app_data(&path).await?
-        };
-        let inner = RwLock::new(data);
-        Ok(Self {
-            inner: Arc::new(AppDataStoreInner { data: inner, path }),
-        })
-    }
-
-    /// Obtain a read guard
-    pub async fn read(&self) -> RwLockReadGuard<'_, AppData> {
-        self.inner.data.read().await
-    }
-
-    /// Obtain a read guard by blocking
-    pub fn blocking_read(&self) -> RwLockReadGuard<'_, AppData> {
-        self.inner.data.blocking_read()
-    }
-
-    pub async fn write<F>(&self, action: F) -> anyhow::Result<()>
-    where
-        F: FnOnce(&mut AppData),
-    {
-        let data = &mut *self.inner.data.write().await;
-        action(data);
-
-        debug!("writing app data");
-        save_app_data(&self.inner.path, data).await
-    }
-}
-
-pub async fn load_app_data(path: &Path) -> anyhow::Result<AppData> {
-    let data = tokio::fs::read(path).await.context("read file")?;
-    let data = serde_json::from_slice(&data).context("parse file")?;
-    Ok(data)
-}
-
-pub async fn save_app_data(path: &Path, app_data: &AppData) -> anyhow::Result<()> {
-    let parent = path.parent().context("parent should exist")?;
-
-    if !parent.exists() {
-        tokio::fs::create_dir_all(parent).await?
-    }
-
-    let data = serde_json::to_string(app_data)?;
-    tokio::fs::write(path, &data).await.context("write file")?;
-    Ok(())
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct OverlayConfig {
+    pub throwables_config: ThrowablesConfig,
+    pub model_config: ModelConfig,
+    pub sounds_config: SoundsConfig,
+    pub vtube_studio_config: VTubeStudioConfig,
+    pub physics_config: PhysicsConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct AppData {
-    pub main_config: MainConfig,
-    pub throwables_config: ThrowablesConfig,
-    pub model_config: ModelConfig,
-    pub sounds_config: SoundsConfig,
-    pub vtube_studio_config: VTubeStudioConfig,
-    pub externals_config: ExternalsConfig,
-    pub physics_config: PhysicsConfig,
+    #[serde(flatten)]
+    pub app: AppConfig,
+
+    #[serde(flatten)]
+    pub overlay: OverlayConfig,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromJsonQueryResult)]
 #[serde(default)]
 pub struct MainConfig {
     /// Minimize to try instead of closing
@@ -121,6 +63,10 @@ impl MainConfig {
     }
 }
 
+pub fn default_http_port() -> u16 {
+    58371
+}
+
 impl Default for MainConfig {
     fn default() -> Self {
         Self {
@@ -130,12 +76,12 @@ impl Default for MainConfig {
             clean_executions: true,
             clean_executions_days: 30,
             auto_updating: true,
-            http_port: 58371,
+            http_port: default_http_port(),
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, FromJsonQueryResult)]
 #[serde(default)]
 pub struct ExternalsConfig {
     pub tts_monster_api_key: Option<String>,

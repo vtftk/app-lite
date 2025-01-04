@@ -1,3 +1,4 @@
+pub mod app_data;
 pub mod command_executions;
 pub mod command_logs;
 pub mod commands;

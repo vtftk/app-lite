@@ -1,11 +1,11 @@
 use crate::{
-    database::entity::{vt_access::SetVTAccess, VTAccessModel},
+    database::entity::{app_data::AppDataModel, vt_access::SetVTAccess, VTAccessModel},
     http::{
         error::{DynHttpError, HttpResult},
         models::{GetAuthTokenResponse, SetAuthTokenRequest},
     },
     state::{
-        app_data::{AppData, AppDataStore},
+        app_data::AppData,
         runtime_app_data::{RuntimeAppData, RuntimeAppDataStore, UpdateRuntimeAppData},
     },
 };
@@ -24,10 +24,10 @@ use tauri::{path::BaseDirectory, AppHandle, Manager};
 ///
 /// Obtain the current app data configuration. Contains stored
 /// state such as calibration and throwables configuration
-pub async fn get_app_data(Extension(app_data): Extension<AppDataStore>) -> Json<AppData> {
-    let data = app_data.read().await.clone();
+pub async fn get_app_data(Extension(db): Extension<DatabaseConnection>) -> HttpResult<AppData> {
+    let data = AppDataModel::get_or_default(&db).await?;
 
-    Json(data)
+    Ok(Json(data))
 }
 
 /// GET /runtime-app-data

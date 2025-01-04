@@ -1,15 +1,18 @@
 use anyhow::Context;
 use constants::TWITCH_REQUIRED_SCOPES;
-use database::{clean_old_data, entity::TwitchAccessModel};
+use database::{
+    clean_old_data,
+    entity::{app_data::AppDataModel, TwitchAccessModel},
+};
 use events::{
     create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
 };
 use log::{debug, error, info};
 use script::{events::ScriptEventActor, runtime::create_script_executor};
 use sea_orm::{DatabaseConnection, ModelTrait};
-use state::{app_data::AppDataStore, runtime_app_data::RuntimeAppDataStore};
+use state::runtime_app_data::RuntimeAppDataStore;
 use std::sync::Arc;
-use tauri::Manager;
+use tauri::{async_runtime::block_on, Manager};
 use twitch::manager::TwitchManager;
 
 mod commands;
@@ -46,18 +49,14 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .context("failed to get app data dir")?;
-            let app_data_file = app_data_path.join("data.json");
 
             let db_file = app_data_path.join("app.db");
 
-            let db = tauri::async_runtime::block_on(database::connect_database(&db_file))
-                .expect("failed to load database");
+            let db =
+                block_on(database::connect_database(&db_file)).expect("failed to load database");
 
             let (twitch_manager, twitch_event_rx) = TwitchManager::new(handle.clone());
             let (event_tx, event_rx) = create_event_channel();
-
-            let app_data = tauri::async_runtime::block_on(AppDataStore::load(app_data_file))
-                .expect("failed to load app data");
 
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
@@ -65,14 +64,14 @@ pub fn run() {
 
             // Add auto updater plugin if auto updating is allowed
             {
-                let app_data = app_data.blocking_read();
-                if app_data.main_config.auto_updating {
+                let auto_updating = block_on(AppDataModel::is_auto_updating(&db))?;
+                if auto_updating {
                     handle.plugin(tauri_plugin_updater::Builder::new().build())?;
                 }
             }
 
             // Run background cleanup
-            tauri::async_runtime::spawn(clean_old_data(db.clone(), app_data.clone()));
+            tauri::async_runtime::spawn(clean_old_data(db.clone()));
 
             // Create background event scheduler
             let scheduler_handle = create_scheduler(
@@ -82,8 +81,7 @@ pub fn run() {
                 event_tx.clone(),
             );
 
-            // Provide app data and runtime app data stores
-            app.manage(app_data.clone());
+            // Provide runtime app data stores
             app.manage(runtime_app_data.clone());
 
             // Provide access to the scheduler
@@ -106,14 +104,9 @@ pub fn run() {
             ));
 
             // Initialize script actor
-            let actor = ScriptEventActor::new(
-                app_data.clone(),
-                event_tx.clone(),
-                db.clone(),
-                twitch_manager.clone(),
-            );
+            let actor = ScriptEventActor::new(event_tx.clone(), db.clone(), twitch_manager.clone());
 
-            tauri::async_runtime::block_on(script::events::init_global_script_event_actor(actor));
+            block_on(script::events::init_global_script_event_actor(actor));
 
             // Handle events triggered by twitch
             _ = tauri::async_runtime::spawn(process_twitch_events(
@@ -130,7 +123,6 @@ pub fn run() {
                 event_rx,
                 handle,
                 twitch_manager,
-                app_data,
                 runtime_app_data,
             ));
 
@@ -206,10 +198,11 @@ pub fn run() {
         // Prevent default exit handling, app exiting is done
         .run(|app, event| {
             if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
-                let app_data = app.state::<AppDataStore>();
-                let app_data = &*tauri::async_runtime::block_on(app_data.read());
+                let db = app.state::<DatabaseConnection>();
+                let main_config = block_on(AppDataModel::get_main_config(db.inner()));
+                let minimize_to_tray = main_config.is_ok_and(|value| value.minimize_to_tray);
 
-                if code.is_none() && app_data.main_config.minimize_to_tray {
+                if code.is_none() && minimize_to_tray {
                     api.prevent_exit();
                 }
             }

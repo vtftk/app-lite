@@ -1,13 +1,15 @@
 use crate::{
     commands::CmdResult,
+    database::entity::app_data::AppDataModel,
     events::EventMessage,
     state::{
-        app_data::{AppData, AppDataStore},
+        app_data::AppData,
         runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
     },
 };
 use anyhow::Context;
 use log::{debug, error};
+use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 use std::{path::Path, str::FromStr};
 use tauri::{AppHandle, Manager, Url};
@@ -26,18 +28,14 @@ pub fn update_hotkeys(
 }
 
 #[tauri::command]
-pub async fn get_overlay_url(app_data: tauri::State<'_, AppDataStore>) -> CmdResult<String> {
-    let http_port = {
-        let app_data = app_data.read().await;
-        app_data.main_config.get_http_port()
-    };
-
+pub async fn get_overlay_url(db: tauri::State<'_, DatabaseConnection>) -> CmdResult<String> {
+    let http_port = AppDataModel::get_http_port(db.inner()).await?;
     Ok(format!("http://localhost:{}/overlay", http_port))
 }
 
 #[tauri::command]
-pub async fn get_app_data(app_data: tauri::State<'_, AppDataStore>) -> CmdResult<AppData> {
-    Ok(app_data.read().await.clone())
+pub async fn get_app_data(db: tauri::State<'_, DatabaseConnection>) -> CmdResult<AppData> {
+    Ok(AppDataModel::get_or_default(db.inner()).await?)
 }
 
 #[tauri::command]
@@ -50,16 +48,13 @@ pub async fn get_runtime_app_data(
 #[tauri::command]
 pub async fn set_app_data(
     app_data: AppData,
-    app_data_store: tauri::State<'_, AppDataStore>,
+    db: tauri::State<'_, DatabaseConnection>,
     event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
 ) -> CmdResult<bool> {
-    app_data_store
-        .write(|old_app_data| *old_app_data = app_data.clone())
-        .await
-        .context("write app data")?;
+    let model = AppDataModel::set(db.inner(), app_data).await?;
 
     _ = event_sender.send(EventMessage::AppDataUpdated {
-        app_data: Box::new(app_data),
+        app_data: Box::new(model.data.0),
     });
 
     Ok(true)

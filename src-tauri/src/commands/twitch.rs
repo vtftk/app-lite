@@ -1,9 +1,10 @@
 use crate::constants::{TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES};
-use crate::state::app_data::AppDataStore;
+use crate::database::entity::app_data::AppDataModel;
 use crate::{commands::CmdResult, twitch::manager::TwitchManager};
 use anyhow::Context;
 use log::debug;
 use reqwest::Url;
+use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tauri::State;
 use twitch_api::helix::points::CustomReward;
@@ -35,11 +36,8 @@ pub async fn refresh_redeems_list(
 
 /// Obtain a URL for use logging into twitch using OAuth2
 #[tauri::command]
-pub async fn get_twitch_oauth_uri(state: tauri::State<'_, AppDataStore>) -> CmdResult<String> {
-    let http_port = {
-        let app_data = state.read().await;
-        app_data.main_config.get_http_port()
-    };
+pub async fn get_twitch_oauth_uri(db: tauri::State<'_, DatabaseConnection>) -> CmdResult<String> {
+    let http_port = AppDataModel::get_http_port(db.inner()).await?;
 
     let redirect_url = format!("http://localhost:{http_port}/oauth",);
     let redirect_url = Url::parse(&redirect_url).context("invalid redirect_uri")?;
