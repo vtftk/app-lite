@@ -585,7 +585,11 @@ pub async fn match_shoutout_receive_event(
         input_data: EventInputData::ShoutoutReceive {
             viewer_count: viewers,
         },
-        user: None,
+        user: Some(TwitchEventUser {
+            id: event.user_id,
+            name: event.user_name,
+            display_name: event.user_display_name,
+        }),
     };
 
     Ok(EventMatchingData {
