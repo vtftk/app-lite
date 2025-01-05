@@ -49,13 +49,21 @@ pub async fn create_sound(
 pub async fn update_sound(
     sound_id: Uuid,
     update: UpdateSound,
+    app_handle: AppHandle,
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<SoundModel> {
     let db = db.inner();
     let sound = SoundModel::get_by_id(db, sound_id)
         .await?
         .context("sound not found")?;
+    let original_sound_url = sound.src.clone();
     let sound = sound.update(db, update).await?;
+
+    // Delete previous sound file when changed
+    if sound.src != original_sound_url {
+        delete_src_file(original_sound_url, app_handle).await?;
+    }
+
     Ok(sound)
 }
 

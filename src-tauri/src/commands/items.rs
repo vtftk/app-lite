@@ -79,14 +79,23 @@ pub async fn create_item(
 pub async fn update_item(
     item_id: Uuid,
     update: UpdateItem,
+    app_handle: AppHandle,
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<ItemWithImpactSounds> {
     let db = db.inner();
     let item = ItemModel::get_by_id(db, item_id)
         .await?
         .context("item not found")?;
+
+    let original_item_url = item.image.src.clone();
+
     let item = item.update(db, update).await?;
     let impact_sounds = item.get_impact_sounds(db).await?;
+
+    // Delete previous image file when changed
+    if item.image.src != original_item_url {
+        delete_src_file(original_item_url, app_handle).await?;
+    }
 
     Ok(ItemWithImpactSounds {
         item,
