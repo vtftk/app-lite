@@ -12,6 +12,7 @@
   "author": "Jacobtread",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/jest": "^29.5.14",
     "glob": "^11.0.0",
