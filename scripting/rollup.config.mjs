@@ -5,6 +5,7 @@ import { dts } from "rollup-plugin-dts";
 import { fileURLToPath } from 'node:url';
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 import fixGlobalFile from './fix-global-file.mjs';
 
@@ -28,15 +29,28 @@ function getTestFiles() {
 }
 
 
+
 export default [
     // Main runtime bundle
     {
-        input: 'src/runtime/index.ts',
+        input: 'src/index.ts',
         output: {
             file: 'dist/runtime.js',
             format: 'es'
         },
-        plugins: [typescript(), terser()]
+        plugins: [
+            // Resolve imported modules
+            nodeResolve(),
+            // Parse and compile typescript
+            typescript(),
+            // Minify output
+            terser({
+                format: {
+                    // Deno extensions can only use ASCII characters
+                    ascii_only: true
+                }
+            })
+        ]
     },
 
     // Compiled test javascript
@@ -52,11 +66,11 @@ export default [
 
     // Bundle typescript definitions
     {
-        input: "dist/types/runtime/index.d.ts",
+        input: "dist/types/index.d.ts",
         output: [{ file: "dist/runtime.d.ts", format: "es" }],
         plugins: [
             dts({
-                respectExternal: true
+                respectExternal: true,
             }),
             fixGlobalFile(),
         ],
