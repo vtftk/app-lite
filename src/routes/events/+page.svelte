@@ -70,7 +70,7 @@
 </script>
 
 {#snippet actions()}
-  <LinkButton href="/events/create">Create Event</LinkButton>
+  <LinkButton href="/events/create">Create</LinkButton>
 {/snippet}
 
 {#snippet beforeContent()}

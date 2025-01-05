@@ -71,7 +71,7 @@
 </script>
 
 {#snippet actions()}
-  <LinkButton href="/commands/create">Create Command</LinkButton>
+  <LinkButton href="/commands/create">Create</LinkButton>
 {/snippet}
 
 {#snippet beforeContent()}
