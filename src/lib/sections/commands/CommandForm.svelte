@@ -84,6 +84,16 @@ return message;
 
   type Schema = z.infer<typeof schema>;
 
+  const outcomeState: Record<
+    CommandOutcomeType,
+    z.infer<typeof outcomeSchema>
+  > = {
+    [CommandOutcomeType.Template]: getOutcomeDefaults(
+      CommandOutcomeType.Template,
+    ),
+    [CommandOutcomeType.Script]: getOutcomeDefaults(CommandOutcomeType.Script),
+  };
+
   function createFromExisting(config: Command): Partial<Schema> {
     return {
       name: config.name,
@@ -190,22 +200,12 @@ return message;
     }
   }
 
-  let variantState: Record<
-    CommandOutcomeType,
-    z.infer<typeof outcomeSchema>
-  > = {
-    [CommandOutcomeType.Template]: getOutcomeDefaults(
-      CommandOutcomeType.Template,
-    ),
-    [CommandOutcomeType.Script]: getOutcomeDefaults(CommandOutcomeType.Script),
-  };
-
   function onChangeOutcomeType(type: CommandOutcomeType) {
     // Store current variant state
-    variantState[$data.outcome.type] = $data.outcome;
+    outcomeState[$data.outcome.type] = $data.outcome;
 
     // Swap with new state
-    const defaults = variantState[type];
+    const defaults = outcomeState[type];
     setFields("outcome", defaults, true);
   }
 
@@ -254,71 +254,25 @@ return message;
         description="Whether this command can be used"
       />
     </FormSection>
-
-    <FormSection title="Type" description="Type of command">
-      <div class="event-trigger-grid">
-        {#each commandTypeOption as option (option.value)}
-          <CardButton
-            icon={option.icon}
-            color={option.color}
-            label={option.label}
-            description={option.description}
-            selected={$data.outcome.type === option.value}
-            onclick={() =>
-              $data.outcome.type !== option.value &&
-              onChangeOutcomeType(option.value)}
-            contentVisible={$data.outcome.type === option.value}
-          />
-        {/each}
-      </div>
-    </FormSection>
-
-    <FormSections>
-      <!-- Cooldown and role requirements -->
-      <FormSection
-        title="Requirements"
-        description="Configure requirements for this command to trigger"
-      >
-        <RequiredRoleSelect
-          id="require_role"
-          name="require_role"
-          label="Minimum Required Role"
-          selected={$data.require_role}
-          onChangeSelected={(selected) =>
-            setFields("require_role", selected, true)}
-          description="Minimum required role the user triggering the event must have in order for the event to trigger"
-        />
-      </FormSection>
-
-      <FormSection
-        title="Cooldown"
-        description="Configure cooldown between each use of the command"
-      >
-        <FormBoundCheckbox
-          id="cooldown.enabled"
-          name="cooldown.enabled"
-          label="Enabled"
-          description="Whether the cooldown is enabled"
-        />
-
-        <FormNumberInput
-          id="cooldown.duration"
-          name="cooldown.duration"
-          label="Duration"
-          description="How long the cooldown should be between each use of the command (ms)"
-          min={0}
-          step={100}
-        />
-
-        <FormBoundCheckbox
-          id="cooldown.per_user"
-          name="cooldown.per_user"
-          label="Per Person"
-          description="Whether the cooldown is on a per person basis or a cooldown for everyone"
-        />
-      </FormSection>
-    </FormSections>
   </FormSections>
+{/snippet}
+
+{#snippet typeTabContent()}
+  <div class="event-trigger-grid">
+    {#each commandTypeOption as option (option.value)}
+      <CardButton
+        icon={option.icon}
+        color={option.color}
+        label={option.label}
+        description={option.description}
+        selected={$data.outcome.type === option.value}
+        onclick={() =>
+          $data.outcome.type !== option.value &&
+          onChangeOutcomeType(option.value)}
+        contentVisible={$data.outcome.type === option.value}
+      />
+    {/each}
+  </div>
 {/snippet}
 
 {#snippet codeTabContent()}
@@ -374,6 +328,54 @@ return message;
   {/if}
 {/snippet}
 
+{#snippet requirementsTabContent()}
+  <FormSections>
+    <!-- Cooldown and role requirements -->
+    <FormSection
+      title="Requirements"
+      description="Configure requirements for this command to trigger"
+    >
+      <RequiredRoleSelect
+        id="require_role"
+        name="require_role"
+        label="Minimum Required Role"
+        selected={$data.require_role}
+        onChangeSelected={(selected) =>
+          setFields("require_role", selected, true)}
+        description="Minimum required role the user triggering the event must have in order for the event to trigger"
+      />
+    </FormSection>
+
+    <FormSection
+      title="Cooldown"
+      description="Configure cooldown between each use of the command"
+    >
+      <FormBoundCheckbox
+        id="cooldown.enabled"
+        name="cooldown.enabled"
+        label="Enabled"
+        description="Whether the cooldown is enabled"
+      />
+
+      <FormNumberInput
+        id="cooldown.duration"
+        name="cooldown.duration"
+        label="Duration"
+        description="How long the cooldown should be between each use of the command (ms)"
+        min={0}
+        step={100}
+      />
+
+      <FormBoundCheckbox
+        id="cooldown.per_user"
+        name="cooldown.per_user"
+        label="Per Person"
+        description="Whether the cooldown is on a per person basis or a cooldown for everyone"
+      />
+    </FormSection>
+  </FormSections>
+{/snippet}
+
 {#snippet executionsTabContent()}
   {#if existing !== undefined}
     <CommandExecutions id={existing.id} />
@@ -414,10 +416,16 @@ return message;
     <HTabs
       tabs={[
         {
-          value: "settings",
+          value: "details",
           icon: SolarSettingsBoldDuotone,
-          label: "Settings",
+          label: "Details",
           content: settingsTabContent,
+        },
+        {
+          value: "type",
+          icon: SolarCardSendBoldDuotone,
+          label: "Type",
+          content: typeTabContent,
         },
 
         {
@@ -430,7 +438,12 @@ return message;
           content: codeTabContent,
           disablePadding: true,
         },
-
+        {
+          value: "requirements",
+          icon: SolarChecklistMinimalisticBoldDuotone,
+          label: "Requirements",
+          content: requirementsTabContent,
+        },
         ...(existing !== undefined
           ? [
               {
