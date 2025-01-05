@@ -31,7 +31,7 @@ function getTestFiles() {
 export default [
     // Main runtime bundle
     {
-        input: 'src/runtime.ts',
+        input: 'src/runtime/index.ts',
         output: {
             file: 'dist/runtime.js',
             format: 'es'
@@ -52,7 +52,7 @@ export default [
 
     // Bundle typescript definitions
     {
-        input: "dist/types/runtime.d.ts",
+        input: "dist/types/runtime/index.d.ts",
         output: [{ file: "dist/runtime.d.ts", format: "es" }],
         plugins: [
             dts({
