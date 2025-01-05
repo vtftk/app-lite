@@ -112,7 +112,7 @@
 
 <PageLayoutList
   title="Commands"
-  description="Create custom commands"
+  description="Custom twitch commands"
   {actions}
   {beforeContent}
 >

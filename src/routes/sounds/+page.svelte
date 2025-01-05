@@ -119,7 +119,7 @@
 
 <PageLayoutList
   title="Sounds"
-  description="Create sounds that can be triggered"
+  description="Create sounds that can be used for events or use as impact sounds"
   {actions}
   {beforeContent}
 >
