@@ -25,13 +25,15 @@ use deno_core::{
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
 use serde::{Deserialize, Serialize};
-use std::{future::Future, pin::Pin, task::Poll};
+use std::{future::Future, path::PathBuf, pin::Pin, rc::Rc, task::Poll};
 use tokio::{
     sync::{mpsc, oneshot},
     task::LocalSet,
 };
 use twitch_api::types::{DisplayName, UserId, UserName};
 use uuid::Uuid;
+
+use super::module_loader::AppModuleLoader;
 
 /// Snapshot of the script engine runtime, see [build.rs](../../build.rs)
 static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
@@ -197,7 +199,7 @@ fn spawn_script_promise(
 ///
 /// The JS runtime is !Send and thus it cannot be shared across tokio async tasks
 /// so here its provided a dedicated single threaded runtime and its own thread
-pub fn create_script_executor() -> ScriptExecutorHandle {
+pub fn create_script_executor(modules_path: PathBuf) -> ScriptExecutorHandle {
     let (tx, rx) = mpsc::channel::<ScriptExecutorMessage>(5);
 
     std::thread::spawn(move || {
@@ -211,7 +213,9 @@ pub fn create_script_executor() -> ScriptExecutorHandle {
         let js_runtime = JsRuntime::new(RuntimeOptions {
             startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
             extensions: vec![api_extension::init_ops()],
-
+            module_loader: Some(Rc::new(AppModuleLoader {
+                module_root: modules_path,
+            })),
             ..Default::default()
         });
 

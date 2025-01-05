@@ -60,7 +60,7 @@ pub fn run() {
 
             let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
-            let script_handle = create_script_executor();
+            let script_handle = create_script_executor(app_data_path.join("modules"));
 
             // Add auto updater plugin if auto updating is allowed
             {
