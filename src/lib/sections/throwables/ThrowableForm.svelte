@@ -24,6 +24,7 @@
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
+  import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import {
@@ -220,16 +221,27 @@
     <!-- End actions -->
     {#snippet actions()}
       {#if existing}
-        <Button type="button" onclick={onTestThrow} disabled={!testingEnabled}>
+        <!-- Button to test throwable -->
+        <PopoverButton disabled={!testingEnabled}>
+          {#snippet content()}
+            <Button
+              type="button"
+              onclick={onTestThrow}
+              disabled={!testingEnabled}
+            >
+              <BallIcon /> Test
+            </Button>
+            <Button
+              type="button"
+              onclick={onTestBarrage}
+              disabled={!testingEnabled}
+            >
+              <BallsIcon /> Test Barrage
+            </Button>
+          {/snippet}
+
           <BallIcon /> Test
-        </Button>
-        <Button
-          type="button"
-          onclick={onTestBarrage}
-          disabled={!testingEnabled}
-        >
-          <BallsIcon /> Test Barrage
-        </Button>
+        </PopoverButton>
       {/if}
       <Button type="submit">{existing ? "Save" : "Create"}</Button>
     {/snippet}
