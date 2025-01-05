@@ -5,21 +5,35 @@
     title: string;
     description: string;
 
+    beforeTitle?: Snippet;
     actions?: Snippet;
     beforeContent?: Snippet;
     children?: Snippet;
   };
 
-  const { title, description, actions, beforeContent, children }: Props =
-    $props();
+  const {
+    title,
+    description,
+    beforeTitle,
+    actions,
+    beforeContent,
+    children,
+  }: Props = $props();
 </script>
 
 <div class="container">
   <div class="title-area">
+    {#if beforeTitle}
+      <div class="actions-start">
+        {@render beforeTitle()}
+      </div>
+    {/if}
+
     <div>
       <h1 class="title">{title}</h1>
       <p class="text">{description}</p>
     </div>
+
     <div class="actions">
       {@render actions?.()}
     </div>
@@ -55,6 +69,14 @@
 
   .title-area {
     display: flex;
+  }
+
+  .actions-start {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    align-items: center;
+    margin-right: 1rem;
   }
 
   .actions {

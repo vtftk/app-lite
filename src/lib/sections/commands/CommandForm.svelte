@@ -15,6 +15,7 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
+  import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
@@ -374,24 +375,30 @@ return message;
 {/snippet}
 
 <form use:form>
-  {#snippet actions()}
-    {#if existing && $isDirty}
-      Unsaved changes...
-    {/if}
-
-    <Button type="submit">
-      {existing ? "Save" : "Create"}
-    </Button>
-    <LinkButton href="/commands">Back</LinkButton>
-  {/snippet}
-
   <PageLayoutList
     title={existing ? "Edit Command" : "Create Command"}
     description={existing
       ? `Editing "${existing.name}"`
       : "Create an event that will trigger some outcome"}
-    {actions}
   >
+    <!-- Back button -->
+    {#snippet beforeTitle()}
+      <LinkButton href="/commands">
+        <SolarAltArrowLeftBold />
+      </LinkButton>
+    {/snippet}
+
+    <!-- End actions -->
+    {#snippet actions()}
+      {#if existing && $isDirty}
+        Unsaved changes...
+      {/if}
+
+      <Button type="submit">
+        {existing ? "Save" : "Create"}
+      </Button>
+    {/snippet}
+
     <HTabs
       tabs={[
         {

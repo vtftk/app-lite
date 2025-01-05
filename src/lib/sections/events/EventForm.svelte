@@ -21,6 +21,7 @@
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
+  import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
   import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
@@ -1454,28 +1455,33 @@
 {/snippet}
 
 <form use:form>
-  {#snippet actions()}
-    {#if existing && $isDirty}
-      Unsaved changes...
-    {/if}
-
-    {#if existing}
-      <Button type="button" onclick={onTest}>
-        <BallIcon /> Test
-      </Button>
-    {/if}
-
-    <Button type="submit">{existing ? "Save" : "Create"}</Button>
-    <LinkButton href="/events">Back</LinkButton>
-  {/snippet}
-
   <PageLayoutList
     title={existing ? "Edit Event" : "Create Event"}
     description={existing
       ? `Editing "${existing.name}"`
       : "Create an event that will trigger some outcome"}
-    {actions}
   >
+    <!-- Back button -->
+    {#snippet beforeTitle()}
+      <LinkButton href="/events">
+        <SolarAltArrowLeftBold />
+      </LinkButton>
+    {/snippet}
+
+    {#snippet actions()}
+      {#if existing && $isDirty}
+        Unsaved changes...
+      {/if}
+
+      {#if existing}
+        <Button type="button" onclick={onTest}>
+          <BallIcon /> Test
+        </Button>
+      {/if}
+
+      <Button type="submit">{existing ? "Save" : "Create"}</Button>
+    {/snippet}
+
     <HTabs
       tabs={[
         {

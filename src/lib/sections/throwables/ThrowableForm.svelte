@@ -21,6 +21,7 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
+  import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
@@ -202,27 +203,37 @@
   }
 </script>
 
-{#snippet actions()}
-  {#if existing}
-    <Button type="button" onclick={onTestThrow} disabled={!testingEnabled}>
-      <BallIcon /> Test
-    </Button>
-    <Button type="button" onclick={onTestBarrage} disabled={!testingEnabled}>
-      <BallsIcon /> Test Barrage
-    </Button>
-  {/if}
-  <Button type="submit">{existing ? "Save" : "Create"}</Button>
-  <LinkButton href="/throwables">Back</LinkButton>
-{/snippet}
-
 <form use:form>
   <PageLayoutList
     title={existing ? "Edit Throwable" : "Create Throwable"}
     description={existing
       ? `Editing "${existing.name}"`
       : "Create a new item that can be thrown"}
-    {actions}
   >
+    <!-- Back button -->
+    {#snippet beforeTitle()}
+      <LinkButton href="/throwables">
+        <SolarAltArrowLeftBold />
+      </LinkButton>
+    {/snippet}
+
+    <!-- End actions -->
+    {#snippet actions()}
+      {#if existing}
+        <Button type="button" onclick={onTestThrow} disabled={!testingEnabled}>
+          <BallIcon /> Test
+        </Button>
+        <Button
+          type="button"
+          onclick={onTestBarrage}
+          disabled={!testingEnabled}
+        >
+          <BallsIcon /> Test Barrage
+        </Button>
+      {/if}
+      <Button type="submit">{existing ? "Save" : "Create"}</Button>
+    {/snippet}
+
     <FormSections>
       <FormSection
         title="Details"

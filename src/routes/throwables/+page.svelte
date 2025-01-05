@@ -26,6 +26,7 @@
     createItemsQuery,
     bulkAppendItemSounds,
   } from "$lib/api/items";
+  import SolarAddCircleBold from "~icons/solar/add-circle-bold";
 
   const runtimeAppData = getRuntimeAppData();
 

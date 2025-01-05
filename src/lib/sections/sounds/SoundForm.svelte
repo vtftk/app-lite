@@ -17,6 +17,7 @@
   import SoundUpload from "$lib/components/form/SoundUpload.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
+  import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
 
@@ -127,21 +128,26 @@
 </script>
 
 <form use:form>
-  {#snippet actions()}
-    <Button type="submit" disabled={!$isValid}>
-      {existing ? "Save" : "Create"}
-    </Button>
-
-    <LinkButton href="/sounds">Back</LinkButton>
-  {/snippet}
-
   <PageLayoutList
     title={existing ? "Edit Sound" : "Create Sound"}
     description={existing
       ? `Editing "${existing.name}"`
       : "Create a sound that can be triggered"}
-    {actions}
   >
+    <!-- Back button -->
+    {#snippet beforeTitle()}
+      <LinkButton href="/sounds">
+        <SolarAltArrowLeftBold />
+      </LinkButton>
+    {/snippet}
+
+    <!-- End actions -->
+    {#snippet actions()}
+      <Button type="submit" disabled={!$isValid}>
+        {existing ? "Save" : "Create"}
+      </Button>
+    {/snippet}
+
     <FormSections>
       <FormSection>
         <FormTextInput id="name" name="name" label="Name" />
