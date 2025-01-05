@@ -1,20 +1,19 @@
 <script lang="ts">
   import type { Snippet, Component } from "svelte";
-  import type { HTMLButtonAttributes } from "svelte/elements";
 
-  import { Dialog } from "bits-ui";
+  import { Dialog, type DialogCloseProps } from "bits-ui";
 
   import Button from "./input/Button.svelte";
 
   type Props = {
     buttonLabel?: { text?: string; icon?: Component };
     button?: Snippet<[{ props: Record<string, unknown> }]>;
-  } & HTMLButtonAttributes;
+  } & DialogCloseProps;
 
-  const { button, buttonLabel }: Props = $props();
+  const { button, buttonLabel, ...buttonProps }: Props = $props();
 </script>
 
-<Dialog.Close>
+<Dialog.Close {...buttonProps}>
   {#snippet child({ props })}
     {#if button}
       {@render button({ props })}

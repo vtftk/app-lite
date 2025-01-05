@@ -7,6 +7,7 @@
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
 
   import Button from "./input/Button.svelte";
+  import { confirmDialog } from "./GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
   import ExecutionMetadataDialog from "./ExecutionMetadataDialog.svelte";
 
@@ -41,8 +42,14 @@
     }
   }
 
-  function onBulkDelete() {
-    if (!confirm("Are you sure you want to delete the selected log entries?")) {
+  async function onBulkDelete() {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description:
+        "Are you sure you want to delete the selected execution entries?",
+    });
+
+    if (!confirm) {
       return;
     }
 

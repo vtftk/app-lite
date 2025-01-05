@@ -10,6 +10,7 @@
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
     deleteEvents,
@@ -51,8 +52,13 @@
     }
   }
 
-  function onBulkDelete() {
-    if (!confirm("Are you sure you want to delete the selected events?")) {
+  async function onBulkDelete() {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete the selected events?",
+    });
+
+    if (!confirm) {
       return;
     }
 

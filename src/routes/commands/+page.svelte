@@ -10,6 +10,7 @@
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import CommandItem from "$lib/sections/commands/CommandItem.svelte";
+  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
     updateCommandOrder,
@@ -53,8 +54,13 @@
     }
   }
 
-  function onBulkDelete() {
-    if (!confirm("Are you sure you want to delete the selected commands?")) {
+  async function onBulkDelete() {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete the selected commands?",
+    });
+
+    if (!confirm) {
       return;
     }
 

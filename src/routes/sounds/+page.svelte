@@ -11,6 +11,7 @@
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
+  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import BulkSoundImport from "$lib/components/sounds/BulkSoundImport.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import {
@@ -55,8 +56,13 @@
     }
   }
 
-  function onBulkDelete() {
-    if (!confirm("Are you sure you want to delete the selected sounds?")) {
+  async function onBulkDelete() {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete the selected sounds?",
+    });
+
+    if (!confirm) {
       return;
     }
 

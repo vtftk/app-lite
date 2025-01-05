@@ -9,6 +9,7 @@
   import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
 
   import Button from "./input/Button.svelte";
+  import { confirmDialog } from "./GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
   type Props = {
     logs: LogData[];
@@ -37,8 +38,13 @@
     }
   }
 
-  function onBulkDelete() {
-    if (!confirm("Are you sure you want to delete the selected log entries?")) {
+  async function onBulkDelete() {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete the selected log entries?",
+    });
+
+    if (!confirm) {
       return;
     }
 

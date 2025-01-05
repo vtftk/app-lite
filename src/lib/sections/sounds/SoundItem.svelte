@@ -12,6 +12,7 @@
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
+  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import SoundPlayButton from "$lib/components/sounds/SoundPlayButton.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
@@ -27,7 +28,12 @@
   const { config, selected, onToggleSelected }: Props = $props();
 
   async function onDelete() {
-    if (!confirm("Are you sure you want to delete this sound item?")) {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete this sound?",
+    });
+
+    if (!confirm) {
       return;
     }
 

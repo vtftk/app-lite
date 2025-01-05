@@ -16,6 +16,7 @@
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
+  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import VirtualOrderableGrid from "$lib/components/VirtualOrderableGrid.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import PopoverCloseButton from "$lib/components/popover/PopoverCloseButton.svelte";
@@ -26,7 +27,6 @@
     createItemsQuery,
     bulkAppendItemSounds,
   } from "$lib/api/items";
-  import SolarAddCircleBold from "~icons/solar/add-circle-bold";
 
   const runtimeAppData = getRuntimeAppData();
 
@@ -70,8 +70,13 @@
     }
   }
 
-  function onBulkDelete() {
-    if (!confirm("Are you sure you want to delete the selected throwables?")) {
+  async function onBulkDelete() {
+    const confirm = await confirmDialog({
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete the selected throwables?",
+    });
+
+    if (!confirm) {
       return;
     }
 
@@ -86,12 +91,14 @@
     selected = [];
   }
 
-  function onBulkAddSounds(sounds: Sound[]) {
-    if (
-      !confirm(
+  async function onBulkAddSounds(sounds: Sound[]) {
+    const confirm = await confirmDialog({
+      title: "Confirm Add Sounds",
+      description:
         "Are you sure you want to add the selected impact sounds to the selected throwables?",
-      )
-    ) {
+    });
+
+    if (!confirm) {
       return;
     }
 
