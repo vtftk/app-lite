@@ -16,7 +16,7 @@ use axum::{
     http::{Response, StatusCode},
     Extension, Json,
 };
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::{CACHE_CONTROL, CONTENT_TYPE};
 use sea_orm::{DatabaseConnection, ModelTrait};
 use tauri::{path::BaseDirectory, AppHandle, Manager};
 
@@ -101,6 +101,7 @@ pub async fn get_content_file(
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(CONTENT_TYPE, mime.first_or_octet_stream().essence_str())
+        .header(CACHE_CONTROL, "public, max-age=31536000, immutable")
         .body(file_bytes.into())
         .context("failed to make response")?)
 }
@@ -131,6 +132,7 @@ pub async fn get_defaults_file(
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(CONTENT_TYPE, mime.first_or_octet_stream().essence_str())
+        .header(CACHE_CONTROL, "public, max-age=31536000, immutable")
         .body(file_bytes.into())
         .context("failed to make response")?)
 }
