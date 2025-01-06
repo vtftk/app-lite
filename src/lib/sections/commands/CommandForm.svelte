@@ -309,18 +309,15 @@ return message;
       </section>
 
       <div class="hints">
-        <p>
-          If your response message is longer than 500 characters it will be
-          split into multiple messages and sent separately
-        </p>
-        <p>Templating</p>
-        <ul>
-          <li>
-            $(user) - Replaced with the name of the user using the command
+        <h3>Templating</h3>
+        <p>The following templates will be replaced if they are found</p>
+        <ul class="templates">
+          <li class="template">
+            <span>$(user)</span> - Replaced with the name of the user using the command
           </li>
-          <li>
-            $(touser) - Replaced with the name of the user this command is
-            targeting (First provided twitch username)
+          <li class="template">
+            <span>$(touser)</span> - Replaced with the name of the user this command
+            is targeting (First provided twitch username)
           </li>
         </ul>
       </div>
@@ -492,6 +489,9 @@ return message;
 
   .hints {
     max-width: 14rem;
+    padding: 1rem;
+    height: 100%;
+    overflow: auto;
   }
 
   .event-trigger-grid {
@@ -499,5 +499,22 @@ return message;
 
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  .templates {
+    list-style: none;
+    display: flex;
+    flex-flow: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .template {
+    padding: 0.5rem;
+    background-color: #1f1f1f;
+  }
+
+  .template > span {
+    color: #e4b654;
   }
 </style>

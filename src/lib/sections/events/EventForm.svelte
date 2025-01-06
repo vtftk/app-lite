@@ -879,35 +879,39 @@
       </section>
 
       <div class="hints">
-        <p>
-          If your response message is longer than 500 characters it will be
-          split into multiple messages and sent separately
-        </p>
-        <p>Templating</p>
+        <h3>Templating</h3>
 
-        <ul>
-          <li>
-            $(user) - Replaced with the name of the user who triggered the
-            event. Replaced with "Anonymous" when no username is available
+        <p>The following templates will be replaced if they are found</p>
+
+        <ul class="templates">
+          <li class="template">
+            <span>$(user)</span> - Replaced with the name of the user who triggered
+            the event. Replaced with "Anonymous" when no username is available
           </li>
 
           {#if $data.trigger.type === EventTriggerType.Redeem}
-            <li>
-              $(userInput) - Replaced with the redeem message for redeems that
-              allow user input
+            <li class="template">
+              <span>$(userInput)</span> - Replaced with the redeem message for redeems
+              that allow user input
             </li>
-            <li>$(rewardName) - Replaced with the name of the redeemable</li>
-            <li>
-              $(rewardCost) - Replaced with the channel points cost of the
-              redeem
+            <li class="template">
+              <span>$(rewardName)</span> - Replaced with the name of the redeemable
+            </li>
+            <li class="template">
+              <span>$(rewardCost)</span> - Replaced with the channel points cost
+              of the redeem
             </li>
           {:else if $data.trigger.type === EventTriggerType.Bits}
-            <li>$(userInput) - Replaced with the bits gift message</li>
-            <li>$(bits) - Replaced with the number of bits gifted</li>
+            <li class="template">
+              <span>$(userInput)</span> - Replaced with the bits gift message
+            </li>
+            <li class="template">
+              <span>$(bits)</span> - Replaced with the number of bits gifted
+            </li>
           {:else if $data.trigger.type === EventTriggerType.AdBreakBegin}
-            <li>
-              $(duration) - Will be replaced with the ad break duration in
-              seconds
+            <li class="template">
+              <span>$(duration)</span> - Will be replaced with the ad break duration
+              in seconds
             </li>
           {/if}
         </ul>
@@ -1051,6 +1055,7 @@
     display: flex;
     flex-direction: row;
     height: 100%;
+    overflow: hidden;
   }
 
   .template-split .editor {
@@ -1060,5 +1065,25 @@
 
   .hints {
     max-width: 14rem;
+    padding: 1rem;
+    height: 100%;
+    overflow: auto;
+  }
+
+  .templates {
+    list-style: none;
+    display: flex;
+    flex-flow: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .template {
+    padding: 0.5rem;
+    background-color: #1f1f1f;
+  }
+
+  .template > span {
+    color: #e4b654;
   }
 </style>
