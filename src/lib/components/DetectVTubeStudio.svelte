@@ -35,18 +35,25 @@
 
   <!-- Content -->
   {#snippet children()}
-    {#if promise}
-      {#await promise}
-        <p>Detecting locally running VTube Studio...</p>
-      {:then r}
-        <p>Found running VTube Studio</p>
+    <div class="content">
+      {#if promise}
+        {#await promise}
+          <p>Detecting locally running VTube Studio...</p>
+          <div class="skeleton" style="width: 100%; height: 0.5rem"></div>
+        {:then r}
+          <p>Found running VTube Studio</p>
 
-        <p>Version: {r.apiVersion}</p>
-        <p>Port: {r.data.port}</p>
-      {:catch e}
-        Failed to detect VTube Studio: {getErrorMessage(e)}
-      {/await}
-    {/if}
+          <p>Version: {r.apiVersion}</p>
+          <p>Port: {r.data.port}</p>
+        {:catch e}
+          <p class="error">
+            <b>Failed to detect VTube Studio</b>: {getErrorMessage(e)}
+          </p>
+
+          <p>Ensure that VTube Studio is running on this computer</p>
+        {/await}
+      {/if}
+    </div>
   {/snippet}
 
   <!-- Action buttons -->
@@ -64,3 +71,16 @@
     <DialogCloseButton buttonLabel={{ text: "Close" }} />
   {/snippet}
 </Dialog>
+
+<style>
+  .error {
+    color: #c53939;
+  }
+
+  .content {
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-flow: column;
+  }
+</style>
