@@ -222,7 +222,7 @@ export type EventOutcomeBits = {
 };
 export type EventOutcomeThrowable = {
   throwable_ids: Uuid[];
-  data: ThrowableData;
+  amount: ThrowableData;
 };
 export type EventOutcomeTriggerHotkey = { hotkey_id: Uuid };
 export type EventOutcomePlaySound = { sound_id: Uuid };

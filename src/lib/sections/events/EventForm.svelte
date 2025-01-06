@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { z } from "zod";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { type VEvent } from "$shared/dataV2";
   import reporterDom from "@felte/reporter-dom";
-  import { minMax } from "$lib/utils/validation";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
@@ -50,9 +48,17 @@
     EventOutcomeType,
     EventTriggerType,
     ThrowableDataType,
-    MinimumRequiredRole,
-    MINIMUM_REQUIRED_ROLE_VALUES,
   } from "$shared/appData";
+  import {
+    eventSchema,
+    getDefaultEvent,
+    type EventSchema,
+    getEventTriggerDefaults,
+    getEventOutcomeDefaults,
+    isEventTriggerWithInput,
+    getThrowableDataDefaults,
+    type EventTriggerTypeWithInput,
+  } from "$lib/schemas/event";
 
   import EventLogs from "./EventLogs.svelte";
   import SoundSelect from "./SoundSelect.svelte";
@@ -68,181 +74,38 @@
 
   const { existing }: Props = $props();
 
-  const triggerSchema = z.discriminatedUnion("type", [
-    z.object({
-      type: z.literal(EventTriggerType.Redeem),
-      reward_id: z.string(),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.Command),
-      message: z.string(),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.Follow),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.Subscription),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.GiftedSubscription),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.Bits),
-      min_bits: z.number(),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.Raid),
-      min_raiders: z.number(),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.Timer),
-      interval: z.number(),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.AdBreakBegin),
-    }),
-    z.object({
-      type: z.literal(EventTriggerType.ShoutoutReceive),
-      min_viewers: z.number(),
-    }),
-  ]);
+  const eventTriggerState = getEventTriggerDefaults();
+  const eventOutcomeState = getEventOutcomeDefaults();
+  const throwableDataState = getThrowableDataDefaults();
 
-  const inputAmountConfigSchema = z.object({
-    multiplier: z.number(),
-    range: minMax,
-  });
-  type TriggerSchema = z.infer<typeof triggerSchema>;
+  const { form, data, setFields, isDirty, setIsDirty } =
+    createForm<EventSchema>({
+      // Derive initial values
+      initialValues: existing ? existing : getDefaultEvent(),
 
-  const throwableDataSchema = z.discriminatedUnion("type", [
-    z.object({
-      type: z.literal(ThrowableDataType.Throw),
-      amount: z.number().default(1),
-      use_input_amount: z.boolean().default(false),
-      input_amount_config: inputAmountConfigSchema,
-    }),
-    z.object({
-      type: z.literal(ThrowableDataType.Barrage),
-      amount_per_throw: z.number(),
-      frequency: z.number(),
-      amount: z.number().default(1),
-      use_input_amount: z.boolean().default(false),
-      input_amount_config: inputAmountConfigSchema,
-    }),
-  ]);
+      // Validation and error reporting
+      extend: [validator({ schema: eventSchema }), reporterDom()],
 
-  type ThrowableDataSchema = z.infer<typeof throwableDataSchema>;
+      async onSubmit(values) {
+        await save(values);
 
-  const outcomeSchema = z.discriminatedUnion("type", [
-    z.object({
-      type: z.literal(EventOutcomeType.ThrowBits),
-      _1: z.string().nullable(),
-      _100: z.string().nullable(),
-      _1000: z.string().nullable(),
-      _5000: z.string().nullable(),
-      _10000: z.string().nullable(),
-      amount: throwableDataSchema,
-    }),
-    z.object({
-      type: z.literal(EventOutcomeType.Throwable),
-      throwable_ids: z.array(z.string()),
-      data: throwableDataSchema,
-    }),
-
-    z.object({
-      type: z.literal(EventOutcomeType.TriggerHotkey),
-      hotkey_id: z.string(),
-    }),
-    z.object({
-      type: z.literal(EventOutcomeType.PlaySound),
-      sound_id: z.string(),
-    }),
-    z.object({
-      type: z.literal(EventOutcomeType.SendChatMessage),
-      template: z.string(),
-    }),
-    z.object({
-      type: z.literal(EventOutcomeType.Script),
-      script: z.string(),
-    }),
-    z.object({
-      type: z.literal(EventOutcomeType.ChannelEmotes),
-      amount: throwableDataSchema,
-    }),
-  ]);
-
-  type OutcomeSchema = z.infer<typeof outcomeSchema>;
-
-  const cooldownSchema = z.object({
-    enabled: z.boolean(),
-    duration: z.number(),
-    per_user: z.boolean(),
-  });
-
-  const schema = z.object({
-    name: z.string().min(1, "Name is required"),
-    enabled: z.boolean(),
-
-    trigger: triggerSchema,
-    outcome: outcomeSchema,
-
-    require_role: z.enum(MINIMUM_REQUIRED_ROLE_VALUES),
-    cooldown: cooldownSchema,
-    outcome_delay: z.number(),
-  });
-
-  type Schema = z.infer<typeof schema>;
-
-  const createDefaults: Schema = {
-    name: "",
-    enabled: true,
-    trigger: {
-      type: EventTriggerType.Redeem,
-      reward_id: "",
-    },
-    outcome: {
-      type: EventOutcomeType.Throwable,
-      throwable_ids: [],
-      data: {
-        type: ThrowableDataType.Barrage,
-        amount: 15,
-        amount_per_throw: 5,
-        frequency: 100,
-        use_input_amount: false,
-        input_amount_config: {
-          multiplier: 1,
-          range: { min: 1, max: 100 },
-        },
+        if (!existing) {
+          goto("/events");
+        }
       },
-    },
-    require_role: MinimumRequiredRole.None,
-    cooldown: { enabled: true, duration: 0, per_user: false },
-    outcome_delay: 0,
-  };
+    });
 
-  function createFromExisting(config: VEvent): Partial<Schema> {
-    return {
-      ...config,
-    };
-  }
+  async function save(values: EventSchema) {
+    let savePromise: Promise<VEvent>;
 
-  const { form, data, setFields, isDirty, setIsDirty } = createForm<Schema>({
-    // Derive initial values
-    initialValues: existing ? createFromExisting(existing) : createDefaults,
-
-    // Validation and error reporting
-    extend: [validator({ schema }), reporterDom()],
-
-    async onSubmit(values) {
-      await saveWithToast(values);
-
-      if (!existing) {
-        goto("/events");
-      }
-    },
-  });
-
-  function saveWithToast(values: Schema) {
-    const savePromise = save(values);
+    if (existing) {
+      savePromise = updateEvent({
+        eventId: existing.id,
+        update: values,
+      });
+    } else {
+      savePromise = createEvent(values);
+    }
 
     toast.promise(
       savePromise,
@@ -259,148 +122,19 @@
           },
     );
 
-    return savePromise;
-  }
-
-  async function save(values: Schema) {
-    if (existing) {
-      await updateEvent({
-        eventId: existing.id,
-        update: {
-          name: values.name,
-          enabled: values.enabled,
-          trigger: values.trigger,
-          outcome: values.outcome,
-          cooldown: values.cooldown,
-          require_role: values.require_role,
-          outcome_delay: values.outcome_delay,
-        },
-      });
-    } else {
-      await createEvent({
-        name: values.name,
-        enabled: values.enabled,
-        trigger: values.trigger,
-        outcome: values.outcome,
-        cooldown: values.cooldown,
-        require_role: values.require_role,
-        outcome_delay: values.outcome_delay,
-      });
-    }
+    await savePromise;
 
     setIsDirty(false);
   }
 
-  function getTriggerDefaults(type: EventTriggerType): TriggerSchema {
-    switch (type) {
-      case EventTriggerType.Redeem:
-        return { type: EventTriggerType.Redeem, reward_id: "" };
-      case EventTriggerType.Command:
-        return { type: EventTriggerType.Command, message: "!test" };
-      case EventTriggerType.Follow:
-        return { type: EventTriggerType.Follow };
-      case EventTriggerType.Subscription:
-        return { type: EventTriggerType.Subscription };
-      case EventTriggerType.GiftedSubscription:
-        return { type: EventTriggerType.GiftedSubscription };
-      case EventTriggerType.Bits:
-        return { type: EventTriggerType.Bits, min_bits: 1 };
-      case EventTriggerType.Raid:
-        return { type: EventTriggerType.Raid, min_raiders: 1 };
-      case EventTriggerType.Timer:
-        return { type: EventTriggerType.Timer, interval: 60 };
-      case EventTriggerType.AdBreakBegin:
-        return { type: EventTriggerType.AdBreakBegin };
-      case EventTriggerType.ShoutoutReceive:
-        return { type: EventTriggerType.ShoutoutReceive, min_viewers: 1 };
-    }
-  }
+  type LabelWithDescription = {
+    label: string;
+    description: string;
+  };
 
-  function getOutcomeDefaults(type: EventOutcomeType): OutcomeSchema {
-    switch (type) {
-      case EventOutcomeType.ThrowBits:
-        return {
-          type: EventOutcomeType.ThrowBits,
-          _1: null,
-          _100: null,
-          _1000: null,
-          _10000: null,
-          _5000: null,
-          amount: {
-            type: ThrowableDataType.Barrage,
-            amount: 15,
-            amount_per_throw: 5,
-            frequency: 100,
-            use_input_amount: false,
-            input_amount_config: {
-              multiplier: 1,
-              range: { min: 1, max: 100 },
-            },
-          },
-        };
-      case EventOutcomeType.Throwable:
-        return {
-          type: EventOutcomeType.Throwable,
-          throwable_ids: [],
-          data: {
-            type: ThrowableDataType.Barrage,
-            amount: 15,
-            amount_per_throw: 5,
-            frequency: 100,
-            use_input_amount: false,
-            input_amount_config: {
-              multiplier: 1,
-              range: { min: 1, max: 100 },
-            },
-          },
-        };
-      case EventOutcomeType.TriggerHotkey:
-        return {
-          type: EventOutcomeType.TriggerHotkey,
-          hotkey_id: "",
-        };
-      case EventOutcomeType.PlaySound:
-        return {
-          type: EventOutcomeType.PlaySound,
-          sound_id: "",
-        };
-      case EventOutcomeType.SendChatMessage:
-        return {
-          type: EventOutcomeType.SendChatMessage,
-          template: "",
-        };
-      case EventOutcomeType.Script:
-        return {
-          type: EventOutcomeType.Script,
-          script: "",
-        };
-      case EventOutcomeType.ChannelEmotes:
-        return {
-          type: EventOutcomeType.ChannelEmotes,
-          amount: {
-            type: ThrowableDataType.Barrage,
-            amount: 15,
-            amount_per_throw: 5,
-            frequency: 100,
-            use_input_amount: false,
-            input_amount_config: {
-              multiplier: 1,
-              range: { min: 1, max: 100 },
-            },
-          },
-        };
-    }
-  }
-
-  const EVENT_TRIGGERS_WITH_INPUT = [
-    EventTriggerType.Bits,
-    EventTriggerType.GiftedSubscription,
-    EventTriggerType.Subscription,
-    EventTriggerType.Raid,
-  ];
-
-  const EVENT_TRIGGER_INPUT_LABEL: Partial<
-    Record<EventTriggerType, { label: string; description: string }>
+  const EVENT_TRIGGER_INPUT_LABEL: Record<
+    EventTriggerTypeWithInput,
+    LabelWithDescription
   > = {
     [EventTriggerType.Bits]: {
       label: "Use bits amount",
@@ -422,88 +156,67 @@
     },
   };
 
-  const isEventTriggerWithInput = $derived(
-    EVENT_TRIGGERS_WITH_INPUT.includes($data.trigger.type),
-  );
-
   function onChangeTriggerType(type: EventTriggerType) {
-    const defaults = getTriggerDefaults(type);
+    // Store current trigger data
+    eventTriggerState[$data.trigger.type] = $data.trigger;
 
-    // Reset invalid outcomes
+    // Swap with new state
+    const defaults = eventTriggerState[type];
+    setFields("trigger", defaults, true);
+
+    // Update the outcome state
+    onChangeTriggerTypeOutcome(type);
+  }
+
+  function onChangeTriggerTypeOutcome(type: EventTriggerType) {
+    // Change bits throw outcome to just "Throwable" when not using a bits trigger
     if (
       type !== EventTriggerType.Bits &&
       $data.outcome.type === EventOutcomeType.ThrowBits
     ) {
-      setFields(
-        "outcome",
-        getOutcomeDefaults(EventOutcomeType.Throwable),
-        true,
-      );
+      onChangeOutcomeType(EventOutcomeType.Throwable);
+      return;
     }
 
     // Disable "use_input_amount" when trigger becomes a trigger that
     // does not produce an input amount
     if (
       $data.outcome.type === EventOutcomeType.Throwable &&
-      !EVENT_TRIGGERS_WITH_INPUT.includes(type)
+      !isEventTriggerWithInput(type)
     ) {
-      const tData = $data.outcome.data;
+      const tData = $data.outcome.amount;
 
       if (
         (tData.type === ThrowableDataType.Throw ||
           tData.type === ThrowableDataType.Barrage) &&
         tData.use_input_amount
       ) {
-        setFields("outcome.data.use_input_amount", false, true);
+        setFields("outcome.amount.use_input_amount", false, true);
       }
     }
-
-    setFields("trigger", defaults, true);
   }
 
   function onChangeOutcomeType(type: EventOutcomeType) {
-    const defaults = getOutcomeDefaults(type);
+    // Store current trigger data
+    eventOutcomeState[$data.outcome.type] = $data.outcome;
+
+    // Swap with new state
+    const defaults = eventOutcomeState[type];
     setFields("outcome", defaults, true);
   }
 
-  function getThrowableDataDefaults(
-    type: ThrowableDataType,
-  ): ThrowableDataSchema {
-    switch (type) {
-      case ThrowableDataType.Throw:
-        return {
-          type: ThrowableDataType.Throw,
-          amount: 1,
-          use_input_amount: false,
-          input_amount_config: {
-            multiplier: 1,
-            range: { min: 1, max: 1000 },
-          },
-        };
-      case ThrowableDataType.Barrage:
-        return {
-          type: ThrowableDataType.Barrage,
-          amount: 50,
-          amount_per_throw: 5,
-          frequency: 100,
-          use_input_amount: false,
-          input_amount_config: {
-            multiplier: 1,
-            range: { min: 1, max: 1000 },
-          },
-        };
-    }
-  }
-
   function onChangeThrowableDataType(type: ThrowableDataType) {
-    if ($data.outcome.type === EventOutcomeType.Throwable) {
-      const defaults = getThrowableDataDefaults(type);
-      setFields("outcome.data", defaults, true);
-    } else if (
+    if (
+      $data.outcome.type === EventOutcomeType.Throwable ||
       $data.outcome.type === EventOutcomeType.ThrowBits ||
       $data.outcome.type === EventOutcomeType.ChannelEmotes
     ) {
-      const defaults = getThrowableDataDefaults(type);
+      // Store current trigger data
+      throwableDataState[$data.outcome.amount.type] = $data.outcome.amount;
+
+      // Swap with new state
+      const defaults = throwableDataState[type];
+
       setFields("outcome.amount", defaults, true);
     }
   }
@@ -592,6 +305,7 @@
       content: shoutoutReceiveContent,
     },
   ];
+
   const outcomeOptions = $derived([
     ...($data.trigger.type === EventTriggerType.Bits
       ? [
@@ -742,31 +456,23 @@
   {/if}
 {/snippet}
 
-{#snippet throwBitsOutcomeContent()}
-  {#if $data.outcome.type === EventOutcomeType.ThrowBits}
-    <ThrowableDataTypeSelect
-      id="outcome.data.type"
-      name="outcome.data.type"
-      label="Throwable Type"
-      selected={$data.outcome.amount.type}
-      onChangeSelected={(selected) => {
-        onChangeThrowableDataType(selected);
-      }}
-    />
+{#snippet outcomeThrowableAmount()}
+  {#if $data.outcome.type === EventOutcomeType.Throwable || $data.outcome.type === EventOutcomeType.ThrowBits || $data.outcome.type === EventOutcomeType.ChannelEmotes}
+    {#if isEventTriggerWithInput($data.trigger.type)}
+      {@const { label, description } =
+        EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
+      <!-- Option to use input amount -->
+      <FormBoundCheckbox
+        id="outcome.amount.use_input_amount"
+        name="outcome.amount.use_input_amount"
+        {label}
+        {description}
+      />
+    {/if}
 
-    {#if $data.outcome.amount.type === ThrowableDataType.Throw}
-      {#if isEventTriggerWithInput}
-        {@const { label, description } =
-          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
-        <FormBoundCheckbox
-          id="outcome.amount.use_input_amount"
-          name="outcome.amount.use_input_amount"
-          {label}
-          {description}
-        />
-      {/if}
-
-      {#if isEventTriggerWithInput && $data.outcome.amount.use_input_amount}
+    {#if isEventTriggerWithInput($data.trigger.type) && $data.outcome.amount.use_input_amount}
+      <!-- Config for picking from input -->
+      <div class="throwable-config-grid">
         <FormNumberInput
           id="outcome.amount.input_amount_config.multiplier"
           name="outcome.amount.input_amount_config.multiplier"
@@ -776,34 +482,52 @@
           step={0.1}
           max={100}
         />
-        <div class="throwable-config-grid">
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.min"
-            name="outcome.amount.input_amount_config.range.min"
-            label="Minimum Amount"
-            description="Minimum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.max"
-            name="outcome.amount.input_amount_config.range.max"
-            label="Maximum Amount"
-            description="Maximum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-        </div>
-      {:else}
         <FormNumberInput
-          id="outcome.amount.amount"
-          name="outcome.amount.amount"
-          label="Total number of items to throw"
+          id="outcome.amount.input_amount_config.range.min"
+          name="outcome.amount.input_amount_config.range.min"
+          label="Minimum Amount"
+          description="Minimum amount of items to throw"
           min={1}
+          step={1}
+          max={1000}
         />
-      {/if}
+        <FormNumberInput
+          id="outcome.amount.input_amount_config.range.max"
+          name="outcome.amount.input_amount_config.range.max"
+          label="Maximum Amount"
+          description="Maximum amount of items to throw"
+          min={1}
+          step={1}
+          max={1000}
+        />
+      </div>
+    {:else}
+      <!-- Single amount picker -->
+      <FormNumberInput
+        id="outcome.amount.amount"
+        name="outcome.amount.amount"
+        label="Total number of items to throw"
+        description="Total number of items to throw for the whole barrage"
+        min={1}
+      />
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet throwBitsOutcomeContent()}
+  {#if $data.outcome.type === EventOutcomeType.ThrowBits}
+    <ThrowableDataTypeSelect
+      id="outcome.amount.type"
+      name="outcome.amount.type"
+      label="Throwable Type"
+      selected={$data.outcome.amount.type}
+      onChangeSelected={(selected) => {
+        onChangeThrowableDataType(selected);
+      }}
+    />
+
+    {#if $data.outcome.amount.type === ThrowableDataType.Throw}
+      {@render outcomeThrowableAmount()}
 
       <p>
         {$data.outcome.amount.amount} random item{$data.outcome.amount.amount >
@@ -832,56 +556,7 @@
         />
       </div>
 
-      {#if isEventTriggerWithInput}
-        {@const { label, description } =
-          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
-        <FormBoundCheckbox
-          id="outcome.amount.use_input_amount"
-          name="outcome.amount.use_input_amount"
-          {label}
-          {description}
-        />
-      {/if}
-
-      {#if isEventTriggerWithInput && $data.outcome.amount.use_input_amount}
-        <div class="throwable-config-grid">
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.multiplier"
-            name="outcome.amount.input_amount_config.multiplier"
-            label="Multiplier"
-            description="Multiplier applied against the amount"
-            min={1}
-            step={0.1}
-            max={100}
-          />
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.min"
-            name="outcome.amount.input_amount_config.range.min"
-            label="Minimum Amount"
-            description="Minimum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.max"
-            name="outcome.amount.input_amount_config.range.max"
-            label="Maximum Amount"
-            description="Maximum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-        </div>
-      {:else}
-        <FormNumberInput
-          id="outcome.amount.amount"
-          name="outcome.amount.amount"
-          label="Total number of items to throw"
-          description="Total number of items to throw for the whole barrage"
-          min={1}
-        />
-      {/if}
+      {@render outcomeThrowableAmount()}
 
       <p>
         {$data.outcome.amount.amount_per_throw} bit{$data.outcome.amount
@@ -904,8 +579,8 @@
 {#snippet channelEmotesOutcomeContent()}
   {#if $data.outcome.type === EventOutcomeType.ChannelEmotes}
     <ThrowableDataTypeSelect
-      id="outcome.data.type"
-      name="outcome.data.type"
+      id="outcome.amount.type"
+      name="outcome.amount.type"
       label="Throwable Type"
       selected={$data.outcome.amount.type}
       onChangeSelected={(selected) => {
@@ -914,55 +589,7 @@
     />
 
     {#if $data.outcome.amount.type === ThrowableDataType.Throw}
-      {#if isEventTriggerWithInput}
-        {@const { label, description } =
-          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
-        <FormBoundCheckbox
-          id="outcome.amount.use_input_amount"
-          name="outcome.amount.use_input_amount"
-          {label}
-          {description}
-        />
-      {/if}
-
-      {#if isEventTriggerWithInput && $data.outcome.amount.use_input_amount}
-        <FormNumberInput
-          id="outcome.amount.input_amount_config.multiplier"
-          name="outcome.amount.input_amount_config.multiplier"
-          label="Multiplier"
-          description="Multiplier applied against the amount"
-          min={1}
-          step={0.1}
-          max={100}
-        />
-        <div class="throwable-config-grid">
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.min"
-            name="outcome.amount.input_amount_config.range.min"
-            label="Minimum Amount"
-            description="Minimum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.max"
-            name="outcome.amount.input_amount_config.range.max"
-            label="Maximum Amount"
-            description="Maximum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-        </div>
-      {:else}
-        <FormNumberInput
-          id="outcome.amount.amount"
-          name="outcome.amount.amount"
-          label="Total number of items to throw"
-          min={1}
-        />
-      {/if}
+      {@render outcomeThrowableAmount()}
 
       <p>
         {$data.outcome.amount.amount} random item{$data.outcome.amount.amount >
@@ -991,56 +618,7 @@
         />
       </div>
 
-      {#if isEventTriggerWithInput}
-        {@const { label, description } =
-          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
-        <FormBoundCheckbox
-          id="outcome.amount.use_input_amount"
-          name="outcome.amount.use_input_amount"
-          {label}
-          {description}
-        />
-      {/if}
-
-      {#if isEventTriggerWithInput && $data.outcome.amount.use_input_amount}
-        <div class="throwable-config-grid">
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.multiplier"
-            name="outcome.amount.input_amount_config.multiplier"
-            label="Multiplier"
-            description="Multiplier applied against the amount"
-            min={1}
-            step={0.1}
-            max={100}
-          />
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.min"
-            name="outcome.amount.input_amount_config.range.min"
-            label="Minimum Amount"
-            description="Minimum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-          <FormNumberInput
-            id="outcome.amount.input_amount_config.range.max"
-            name="outcome.amount.input_amount_config.range.max"
-            label="Maximum Amount"
-            description="Maximum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-        </div>
-      {:else}
-        <FormNumberInput
-          id="outcome.amount.amount"
-          name="outcome.amount.amount"
-          label="Total number of items to throw"
-          description="Total number of items to throw for the whole barrage"
-          min={1}
-        />
-      {/if}
+      {@render outcomeThrowableAmount()}
 
       <p>
         {$data.outcome.amount.amount_per_throw} emote{$data.outcome.amount
@@ -1063,84 +641,37 @@
 {#snippet throwableOutcomeContent()}
   {#if $data.outcome.type === EventOutcomeType.Throwable}
     <ThrowableDataTypeSelect
-      id="outcome.data.type"
-      name="outcome.data.type"
+      id="outcome.amount.type"
+      name="outcome.amount.type"
       label="Throwable Type"
-      selected={$data.outcome.data.type}
+      selected={$data.outcome.amount.type}
       onChangeSelected={(selected) => {
         onChangeThrowableDataType(selected);
       }}
     />
 
-    {#if $data.outcome.data.type === ThrowableDataType.Throw}
-      {#if isEventTriggerWithInput}
-        {@const { label, description } =
-          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
-        <FormBoundCheckbox
-          id="outcome.data.use_input_amount"
-          name="outcome.data.use_input_amount"
-          {label}
-          {description}
-        />
-      {/if}
-
-      {#if isEventTriggerWithInput && $data.outcome.data.use_input_amount}
-        <FormNumberInput
-          id="outcome.data.input_amount_config.multiplier"
-          name="outcome.data.input_amount_config.multiplier"
-          label="Multiplier"
-          description="Multiplier applied against the amount"
-          min={1}
-          step={0.1}
-          max={100}
-        />
-        <div class="throwable-config-grid">
-          <FormNumberInput
-            id="outcome.data.input_amount_config.range.min"
-            name="outcome.data.input_amount_config.range.min"
-            label="Minimum Amount"
-            description="Minimum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-          <FormNumberInput
-            id="outcome.data.input_amount_config.range.max"
-            name="outcome.data.input_amount_config.range.max"
-            label="Maximum Amount"
-            description="Maximum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-        </div>
-      {:else}
-        <FormNumberInput
-          id="outcome.data.amount"
-          name="outcome.data.amount"
-          label="Total number of items to throw"
-          min={1}
-        />
-      {/if}
+    {#if $data.outcome.amount.type === ThrowableDataType.Throw}
+      {@render outcomeThrowableAmount()}
 
       <p>
-        {$data.outcome.data.amount} random item{$data.outcome.data.amount > 1
+        {$data.outcome.amount.amount} random item{$data.outcome.amount.amount >
+        1
           ? "s"
           : ""} will be chosen from your selection below and thrown
       </p>
-    {:else if $data.outcome.data.type === ThrowableDataType.Barrage}
+    {:else if $data.outcome.amount.type === ThrowableDataType.Barrage}
       <div class="throwable-config-grid">
         <FormNumberInput
-          id="outcome.data.amount_per_throw"
-          name="outcome.data.amount_per_throw"
+          id="outcome.amount.amount_per_throw"
+          name="outcome.amount.amount_per_throw"
           label="Amount per throw"
           description="How many items to throw in each barrage"
           min={1}
         />
 
         <FormNumberInput
-          id="outcome.data.frequency"
-          name="outcome.data.frequency"
+          id="outcome.amount.frequency"
+          name="outcome.amount.frequency"
           label="Frequency"
           description="Time between each barrage of items (ms)"
           step={100}
@@ -1149,68 +680,19 @@
         />
       </div>
 
-      {#if isEventTriggerWithInput}
-        {@const { label, description } =
-          EVENT_TRIGGER_INPUT_LABEL[$data.trigger.type]!}
-        <FormBoundCheckbox
-          id="outcome.data.use_input_amount"
-          name="outcome.data.use_input_amount"
-          {label}
-          {description}
-        />
-      {/if}
-
-      {#if isEventTriggerWithInput && $data.outcome.data.use_input_amount}
-        <div class="throwable-config-grid">
-          <FormNumberInput
-            id="outcome.data.input_amount_config.multiplier"
-            name="outcome.data.input_amount_config.multiplier"
-            label="Multiplier"
-            description="Multiplier applied against the amount"
-            min={1}
-            step={0.1}
-            max={100}
-          />
-          <FormNumberInput
-            id="outcome.data.input_amount_config.range.min"
-            name="outcome.data.input_amount_config.range.min"
-            label="Minimum Amount"
-            description="Minimum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-          <FormNumberInput
-            id="outcome.data.input_amount_config.range.max"
-            name="outcome.data.input_amount_config.range.max"
-            label="Maximum Amount"
-            description="Maximum amount of items to throw"
-            min={1}
-            step={1}
-            max={1000}
-          />
-        </div>
-      {:else}
-        <FormNumberInput
-          id="outcome.data.amount"
-          name="outcome.data.amount"
-          label="Total number of items to throw"
-          description="Total number of items to throw for the whole barrage"
-          min={1}
-        />
-      {/if}
+      {@render outcomeThrowableAmount()}
 
       <p>
-        {$data.outcome.data.amount_per_throw} random item{$data.outcome.data
+        {$data.outcome.amount.amount_per_throw} random item{$data.outcome.amount
           .amount > 1
           ? "s"
           : ""} will be chosen from your selection below and thrown every {$data
-          .outcome.data.frequency}ms {$data.outcome.data.use_input_amount
+          .outcome.amount.frequency}ms {$data.outcome.amount.use_input_amount
           ? "until a maximum of " +
-            $data.outcome.data.input_amount_config.range.max +
+            $data.outcome.amount.input_amount_config.range.max +
             " have been thrown based on the input "
-          : "until a total of " + ($data.outcome.data.amount ?? 1)} item{$data
-          .outcome.data.amount > 1
+          : "until a total of " + ($data.outcome.amount.amount ?? 1)} item{$data
+          .outcome.amount.amount > 1
           ? "s"
           : ""} have been thrown
       </p>
@@ -1381,7 +863,7 @@
           setIsDirty(true);
         }}
         onUserSave={() => {
-          if (existing) saveWithToast($data);
+          if (existing) save($data);
         }}
       />
     </section>
@@ -1396,7 +878,7 @@
             setIsDirty(true);
           }}
           onUserSave={() => {
-            if (existing) saveWithToast($data);
+            if (existing) save($data);
           }}
           options={{
             wordWrap: "on",

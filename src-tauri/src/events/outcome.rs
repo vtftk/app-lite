@@ -315,7 +315,7 @@ async fn throwable_outcome(
 ) -> anyhow::Result<EventMessage> {
     let items = resolve_items(db, &data.throwable_ids).await?;
 
-    create_throwable_message(items, data.data, get_event_data_input_amount(&event_data))
+    create_throwable_message(items, data.amount, get_event_data_input_amount(&event_data))
 }
 
 /// Produce a hotkey trigger message

@@ -229,7 +229,8 @@ pub struct EventOutcomeThrowable {
     /// IDs of the throwables to throw
     pub throwable_ids: Vec<Uuid>,
     /// Throwable data
-    pub data: ThrowableAmountData,
+    #[serde(alias = "data")]
+    pub amount: ThrowableAmountData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
