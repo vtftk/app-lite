@@ -158,7 +158,7 @@
 
   function onChangeTriggerType(type: EventTriggerType) {
     // Already the current value
-    if ($data.trigger.type !== type) return;
+    if ($data.trigger.type === type) return;
 
     // Store current trigger data
     eventTriggerState[$data.trigger.type] = $data.trigger;
