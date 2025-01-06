@@ -14,10 +14,10 @@
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
+  import TemplateEditor from "$lib/components/TemplateEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
@@ -290,38 +290,27 @@ return message;
       />
     </section>
   {:else if $data.outcome.type === CommandOutcomeType.Template}
-    <div class="template-split">
-      <section class="editor">
-        <MonacoEditor
-          language="commandTemplateFormat"
-          value={$data.outcome.message}
-          onChange={(value) => {
-            setFields("outcome.message", value, true);
-            setIsDirty(true);
-          }}
-          onUserSave={() => {
-            if (existing) saveWithToast($data);
-          }}
-          options={{
-            wordWrap: "on",
-          }}
-        />
-      </section>
-
-      <div class="hints">
-        <h3>Templating</h3>
-        <p>The following templates will be replaced if they are found</p>
-        <ul class="templates">
-          <li class="template">
-            <span>$(user)</span> - Replaced with the name of the user using the command
-          </li>
-          <li class="template">
-            <span>$(touser)</span> - Replaced with the name of the user this command
-            is targeting (First provided twitch username)
-          </li>
-        </ul>
-      </div>
-    </div>
+    <TemplateEditor
+      value={$data.outcome.message}
+      onChange={(value) => {
+        setFields("outcome.message", value, true);
+        setIsDirty(true);
+      }}
+      onUserSave={() => {
+        if (existing) saveWithToast($data);
+      }}
+      templates={[
+        {
+          key: "user",
+          description: "Replaced with the name of the user using the command",
+        },
+        {
+          key: "touser",
+          description:
+            "Replaced with the name of the user this command is targeting (First provided twitch username)",
+        },
+      ]}
+    />
   {/if}
 {/snippet}
 
@@ -471,27 +460,10 @@ return message;
     height: 100%;
   }
 
-  .template-split {
-    display: flex;
-    flex-direction: row;
-    height: 100%;
-  }
-
-  .template-split .editor {
-    flex: auto;
-  }
-
   form {
     height: 100%;
     display: flex;
     flex-flow: column;
-  }
-
-  .hints {
-    max-width: 14rem;
-    padding: 1rem;
-    height: 100%;
-    overflow: auto;
   }
 
   .event-trigger-grid {
@@ -499,22 +471,5 @@ return message;
 
     grid-template-columns: 1fr;
     gap: 0.5rem;
-  }
-
-  .templates {
-    list-style: none;
-    display: flex;
-    flex-flow: column;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
-  .template {
-    padding: 0.5rem;
-    background-color: #1f1f1f;
-  }
-
-  .template > span {
-    color: #e4b654;
   }
 </style>

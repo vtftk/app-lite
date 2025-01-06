@@ -17,12 +17,12 @@
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
+  import TemplateEditor from "$lib/components/TemplateEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
-  import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
@@ -860,63 +860,62 @@
       />
     </section>
   {:else if $data.outcome.type === EventOutcomeType.SendChatMessage}
-    <div class="template-split">
-      <section class="editor">
-        <MonacoEditor
-          language="commandTemplateFormat"
-          value={$data.outcome.template}
-          onChange={(value) => {
-            setFields("outcome.template", value, true);
-            setIsDirty(true);
-          }}
-          onUserSave={() => {
-            if (existing) save($data);
-          }}
-          options={{
-            wordWrap: "on",
-          }}
-        />
-      </section>
-
-      <div class="hints">
-        <h3>Templating</h3>
-
-        <p>The following templates will be replaced if they are found</p>
-
-        <ul class="templates">
-          <li class="template">
-            <span>$(user)</span> - Replaced with the name of the user who triggered
-            the event. Replaced with "Anonymous" when no username is available
-          </li>
-
-          {#if $data.trigger.type === EventTriggerType.Redeem}
-            <li class="template">
-              <span>$(userInput)</span> - Replaced with the redeem message for redeems
-              that allow user input
-            </li>
-            <li class="template">
-              <span>$(rewardName)</span> - Replaced with the name of the redeemable
-            </li>
-            <li class="template">
-              <span>$(rewardCost)</span> - Replaced with the channel points cost
-              of the redeem
-            </li>
-          {:else if $data.trigger.type === EventTriggerType.Bits}
-            <li class="template">
-              <span>$(userInput)</span> - Replaced with the bits gift message
-            </li>
-            <li class="template">
-              <span>$(bits)</span> - Replaced with the number of bits gifted
-            </li>
-          {:else if $data.trigger.type === EventTriggerType.AdBreakBegin}
-            <li class="template">
-              <span>$(duration)</span> - Will be replaced with the ad break duration
-              in seconds
-            </li>
-          {/if}
-        </ul>
-      </div>
-    </div>
+    <TemplateEditor
+      value={$data.outcome.template}
+      onChange={(value) => {
+        setFields("outcome.template", value, true);
+        setIsDirty(true);
+      }}
+      onUserSave={() => {
+        if (existing) save($data);
+      }}
+      templates={[
+        {
+          key: "user",
+          description:
+            'Replaced with the name of the user who triggered the event. Replaced with "Anonymous" when no username is available',
+        },
+        ...($data.trigger.type === EventTriggerType.Redeem
+          ? [
+              {
+                key: "userInput",
+                description:
+                  "Replaced with the redeem message for redeems that allow user input",
+              },
+              {
+                key: "rewardName",
+                description: "Replaced with the name of the redeemable",
+              },
+              {
+                key: "rewardCost",
+                description:
+                  "Replaced with the channel points cost of the redeem",
+              },
+            ]
+          : []),
+        ...($data.trigger.type === EventTriggerType.Bits
+          ? [
+              {
+                key: "userInput",
+                description: "Replaced with the bits gift message",
+              },
+              {
+                key: "bits",
+                description: "Replaced with the number of bits gifted",
+              },
+            ]
+          : []),
+        ...($data.trigger.type === EventTriggerType.AdBreakBegin
+          ? [
+              {
+                key: "duration",
+                description:
+                  "Will be replaced with the ad break duration in seconds",
+              },
+            ]
+          : []),
+      ]}
+    />
   {/if}
 {/snippet}
 
@@ -1049,41 +1048,5 @@
     position: relative;
     overflow: hidden;
     height: 100%;
-  }
-
-  .template-split {
-    display: flex;
-    flex-direction: row;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .template-split .editor {
-    flex: auto;
-    height: 100%;
-  }
-
-  .hints {
-    max-width: 14rem;
-    padding: 1rem;
-    height: 100%;
-    overflow: auto;
-  }
-
-  .templates {
-    list-style: none;
-    display: flex;
-    flex-flow: column;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
-  .template {
-    padding: 0.5rem;
-    background-color: #1f1f1f;
-  }
-
-  .template > span {
-    color: #e4b654;
   }
 </style>
