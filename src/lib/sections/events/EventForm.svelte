@@ -157,6 +157,9 @@
   };
 
   function onChangeTriggerType(type: EventTriggerType) {
+    // Already the current value
+    if ($data.trigger.type !== type) return;
+
     // Store current trigger data
     eventTriggerState[$data.trigger.type] = $data.trigger;
 
@@ -197,6 +200,9 @@
   }
 
   function onChangeOutcomeType(type: EventOutcomeType) {
+    // Already the current time
+    if ($data.outcome.type === type) return;
+
     // Store current trigger data
     eventOutcomeState[$data.outcome.type] = $data.outcome;
 
@@ -220,158 +226,6 @@
       setFields("outcome.amount", defaults, true);
     }
   }
-
-  const eventTriggerOptions = [
-    {
-      icon: SolarBoltCircleBoldDuotone,
-      color: "purple",
-      value: EventTriggerType.Redeem,
-      label: "Redeem",
-      description:
-        "Event will be triggered when a specific channel points redeem is redeemed",
-      content: redeemContent,
-    },
-    {
-      icon: SolarTextSquareBoldDuotone,
-      color: "red",
-      value: EventTriggerType.Command,
-      label: "Command",
-      description:
-        "Event will be triggered when a specific phrase appears at the start of a message",
-      content: commandContent,
-    },
-    {
-      icon: SolarUsersGroupRoundedBoldDuotone,
-      color: "yellow",
-      value: EventTriggerType.Follow,
-      label: "Follow",
-      description:
-        "Event will be triggered when a user follows the twitch channel",
-    },
-    {
-      icon: SolarCard2BoldDuotone,
-      color: "green",
-      value: EventTriggerType.Subscription,
-      label: "Subscription",
-      description:
-        "Event will be triggered when a user purchases a subscription",
-    },
-    {
-      icon: SolarGiftBoldDuotone,
-      color: "blue",
-      value: EventTriggerType.GiftedSubscription,
-      label: "Gifted Subscription",
-      description:
-        "Event will be triggered when a user gifts any number of subscriptions",
-    },
-    {
-      icon: SolarHandMoneyBoldDuotone,
-      color: "purple",
-      value: EventTriggerType.Bits,
-      label: "Bits",
-      description: "Event will trigger when bits are gifted to the channel",
-      content: bitsContent,
-    },
-    {
-      icon: SolarSkateboardingBoldDuotone,
-      color: "red",
-      value: EventTriggerType.Raid,
-      label: "Raid",
-      description:
-        "Event will trigger when the channel is raided by another channel",
-      content: raidContent,
-    },
-    {
-      icon: SolarStopwatchBoldDuotone,
-      color: "green",
-      value: EventTriggerType.Timer,
-      label: "Timer",
-      description: "Event will trigger on a fixed timer",
-      content: timerContent,
-    },
-    {
-      icon: SolarMoneyBagBoldDuotone,
-      color: "blue",
-      value: EventTriggerType.AdBreakBegin,
-      label: "Ad Break Started",
-      description: "Event will trigger when an Ad break is started",
-    },
-    {
-      icon: SolarHandHeartBoldDuotone,
-      color: "purple",
-      value: EventTriggerType.ShoutoutReceive,
-      label: "Shoutout Received",
-      description: "Event will trigger when another channel gives a shoutout",
-      content: shoutoutReceiveContent,
-    },
-  ];
-
-  const outcomeOptions = $derived([
-    ...($data.trigger.type === EventTriggerType.Bits
-      ? [
-          {
-            icon: SolarHandMoneyBoldDuotone,
-            color: "green",
-            value: EventOutcomeType.ThrowBits,
-            label: "Throw Bits",
-            description:
-              "Only available when using the bits trigger, will throw bits",
-            content: throwBitsOutcomeContent,
-          },
-        ]
-      : []),
-    ...($data.trigger.type === EventTriggerType.Raid
-      ? [
-          {
-            icon: SolarEmojiFunnyCircleBoldDuotone,
-            color: "yellow",
-            value: EventOutcomeType.ChannelEmotes,
-            label: "Channel Emotes",
-            description:
-              "Only available when using the raid trigger, will throw the raiding channels emotes",
-            content: channelEmotesOutcomeContent,
-          },
-        ]
-      : []),
-    {
-      icon: SolarBasketballBoldDuotone,
-      color: "purple",
-      value: EventOutcomeType.Throwable,
-      label: "Throw Item",
-      description: "Throw a random item from the specified collection",
-      content: throwableOutcomeContent,
-    },
-    {
-      icon: SolarKeyboardBoldDuotone,
-      color: "red",
-      value: EventOutcomeType.TriggerHotkey,
-      label: "Trigger Hotkey",
-      description: "Trigger a VTube studio hotkey",
-      content: triggerHotkeyOutcomeContent,
-    },
-    {
-      icon: SolarHeadphonesRoundSoundBoldDuotone,
-      color: "yellow",
-      value: EventOutcomeType.PlaySound,
-      label: "Play Sound",
-      description: "Play a sound from the available sounds",
-      content: playSoundOutcomeContent,
-    },
-    {
-      icon: SolarChatSquareCodeBoldDuotone,
-      color: "green",
-      value: EventOutcomeType.SendChatMessage,
-      label: "Send chat message",
-      description: "Send a message template to chat",
-    },
-    {
-      icon: SolarCodeSquareBoldDuotone,
-      color: "purple",
-      value: EventOutcomeType.Script,
-      label: "Run script",
-      description: "Execute JavaScript code",
-    },
-  ]);
 
   function onTest() {
     if (existing === undefined) return;
@@ -754,39 +608,177 @@
 
 {#snippet triggerTabContent()}
   <div class="event-trigger-grid">
-    {#each eventTriggerOptions as option (option.value)}
-      <CardButton
-        icon={option.icon}
-        color={option.color}
-        label={option.label}
-        description={option.description}
-        selected={$data.trigger.type === option.value}
-        onclick={() =>
-          $data.trigger.type !== option.value &&
-          onChangeTriggerType(option.value)}
-        content={option.content}
-        contentVisible={$data.trigger.type === option.value}
-      />
-    {/each}
+    <CardButton
+      icon={SolarBoltCircleBoldDuotone}
+      color="purple"
+      label="Redeem"
+      description="Event will be triggered when a specific channel points redeem is redeemed"
+      selected={$data.trigger.type === EventTriggerType.Redeem}
+      onclick={() => onChangeTriggerType(EventTriggerType.Redeem)}
+      content={redeemContent}
+    />
+
+    <CardButton
+      icon={SolarTextSquareBoldDuotone}
+      color="red"
+      label="Command"
+      description="Event will be triggered when a specific phrase appears at the start of a message"
+      selected={$data.trigger.type === EventTriggerType.Command}
+      onclick={() => onChangeTriggerType(EventTriggerType.Command)}
+      content={commandContent}
+    />
+
+    <CardButton
+      icon={SolarUsersGroupRoundedBoldDuotone}
+      color="yellow"
+      label="Follow"
+      description="Event will be triggered when a user follows the twitch channel"
+      selected={$data.trigger.type === EventTriggerType.Follow}
+      onclick={() => onChangeTriggerType(EventTriggerType.Follow)}
+    />
+
+    <CardButton
+      icon={SolarCard2BoldDuotone}
+      color="green"
+      label="Subscription"
+      description="Event will be triggered when a user purchases a subscription"
+      selected={$data.trigger.type === EventTriggerType.Subscription}
+      onclick={() => onChangeTriggerType(EventTriggerType.Subscription)}
+    />
+
+    <CardButton
+      icon={SolarGiftBoldDuotone}
+      color="blue"
+      label="Gifted Subscription"
+      description="Event will be triggered when a user gifts any number of subscriptions"
+      selected={$data.trigger.type === EventTriggerType.GiftedSubscription}
+      onclick={() => onChangeTriggerType(EventTriggerType.GiftedSubscription)}
+    />
+
+    <CardButton
+      icon={SolarHandMoneyBoldDuotone}
+      color="purple"
+      label="Bits"
+      description="Event will trigger when bits are gifted to the channel"
+      selected={$data.trigger.type === EventTriggerType.Bits}
+      onclick={() => onChangeTriggerType(EventTriggerType.Bits)}
+      content={bitsContent}
+    />
+
+    <CardButton
+      icon={SolarSkateboardingBoldDuotone}
+      color="red"
+      label="Raid"
+      description="Event will trigger when the channel is raided by another channel"
+      selected={$data.trigger.type === EventTriggerType.Raid}
+      onclick={() => onChangeTriggerType(EventTriggerType.Raid)}
+      content={raidContent}
+    />
+
+    <CardButton
+      icon={SolarStopwatchBoldDuotone}
+      color="green"
+      label="Timer"
+      description="Event will trigger on a fixed timer"
+      selected={$data.trigger.type === EventTriggerType.Timer}
+      onclick={() => onChangeTriggerType(EventTriggerType.Timer)}
+      content={timerContent}
+    />
+
+    <CardButton
+      icon={SolarMoneyBagBoldDuotone}
+      color="blue"
+      label="Ad Break Started"
+      description="Event will trigger when an Ad break is started"
+      selected={$data.trigger.type === EventTriggerType.AdBreakBegin}
+      onclick={() => onChangeTriggerType(EventTriggerType.AdBreakBegin)}
+    />
+
+    <CardButton
+      icon={SolarHandHeartBoldDuotone}
+      color="purple"
+      label="Shoutout Received"
+      description="Event will trigger when another channel gives a shoutout"
+      selected={$data.trigger.type === EventTriggerType.ShoutoutReceive}
+      onclick={() => onChangeTriggerType(EventTriggerType.ShoutoutReceive)}
+      content={shoutoutReceiveContent}
+    />
   </div>
 {/snippet}
 
 {#snippet outcomeTabContent()}
   <div class="event-trigger-grid">
-    {#each outcomeOptions as option (option.value)}
+    {#if $data.trigger.type === EventTriggerType.Bits}
       <CardButton
-        icon={option.icon}
-        color={option.color}
-        label={option.label}
-        description={option.description}
-        selected={$data.outcome.type === option.value}
-        onclick={() =>
-          $data.outcome.type !== option.value &&
-          onChangeOutcomeType(option.value)}
-        content={option.content}
-        contentVisible={$data.outcome.type === option.value}
+        icon={SolarHandMoneyBoldDuotone}
+        color="green"
+        label="Throw Bits"
+        description="Only available when using the bits trigger, will throw bits"
+        selected={$data.outcome.type === EventOutcomeType.ThrowBits}
+        onclick={() => onChangeOutcomeType(EventOutcomeType.ThrowBits)}
+        content={throwBitsOutcomeContent}
       />
-    {/each}
+    {/if}
+
+    {#if $data.trigger.type === EventTriggerType.Raid}
+      <CardButton
+        icon={SolarEmojiFunnyCircleBoldDuotone}
+        color="yellow"
+        label="Channel Emotes"
+        description="Only available when using the raid trigger, will throw the raiding channels emotes"
+        selected={$data.outcome.type === EventOutcomeType.ChannelEmotes}
+        onclick={() => onChangeOutcomeType(EventOutcomeType.ChannelEmotes)}
+        content={channelEmotesOutcomeContent}
+      />
+    {/if}
+
+    <CardButton
+      icon={SolarBasketballBoldDuotone}
+      color="purple"
+      label="Throw Item"
+      description="Throw a random item from the specified collection"
+      selected={$data.outcome.type === EventOutcomeType.Throwable}
+      onclick={() => onChangeOutcomeType(EventOutcomeType.Throwable)}
+      content={throwableOutcomeContent}
+    />
+
+    <CardButton
+      icon={SolarKeyboardBoldDuotone}
+      color="red"
+      label="Trigger Hotkey"
+      description="Trigger a VTube studio hotkey"
+      selected={$data.outcome.type === EventOutcomeType.TriggerHotkey}
+      onclick={() => onChangeOutcomeType(EventOutcomeType.TriggerHotkey)}
+      content={triggerHotkeyOutcomeContent}
+    />
+
+    <CardButton
+      icon={SolarHeadphonesRoundSoundBoldDuotone}
+      color="yellow"
+      label="Play Sound"
+      description="Play a sound from the available sounds"
+      selected={$data.outcome.type === EventOutcomeType.PlaySound}
+      onclick={() => onChangeOutcomeType(EventOutcomeType.PlaySound)}
+      content={playSoundOutcomeContent}
+    />
+
+    <CardButton
+      icon={SolarChatSquareCodeBoldDuotone}
+      color="green"
+      label="Send chat message"
+      description="Send a message template to chat"
+      selected={$data.outcome.type === EventOutcomeType.SendChatMessage}
+      onclick={() => onChangeOutcomeType(EventOutcomeType.SendChatMessage)}
+    />
+
+    <CardButton
+      icon={SolarCodeSquareBoldDuotone}
+      color="purple"
+      label="Run script"
+      description="Execute JavaScript code"
+      selected={$data.outcome.type === EventOutcomeType.Script}
+      onclick={() => onChangeOutcomeType(EventOutcomeType.Script)}
+    />
   </div>
 {/snippet}
 

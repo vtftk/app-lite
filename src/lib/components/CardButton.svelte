@@ -20,7 +20,7 @@
     description,
     selected = false,
     content,
-    contentVisible,
+    contentVisible = selected,
     ...buttonProps
   }: Props = $props();
 </script>
