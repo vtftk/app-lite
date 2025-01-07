@@ -12,7 +12,7 @@ use crate::{
         events::{EventTrigger, EventTriggerType},
         CommandModel, EventModel,
     },
-    twitch::manager::{
+    twitch::models::{
         TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
         TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
         TwitchEventShoutoutReceive, TwitchEventSub, TwitchEventUser,

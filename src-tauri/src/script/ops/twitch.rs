@@ -4,7 +4,7 @@ use crate::{
         TwitchDeleteChatMessage, TwitchGetFollower, TwitchGetUserByUsername, TwitchIsMod,
         TwitchIsVip, TwitchSendChat, TwitchSendChatAnnouncement, TwitchSendShoutout,
     },
-    twitch::manager::TwitchUser,
+    twitch::models::TwitchUser,
 };
 use anyhow::Context;
 use deno_core::*;

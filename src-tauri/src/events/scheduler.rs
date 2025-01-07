@@ -1,30 +1,25 @@
-use std::{
-    collections::BinaryHeap, future::Future, pin::Pin, sync::Arc, task::Poll, time::Duration,
-};
-
-use anyhow::Context;
-use chrono::Local;
-use futures::future::BoxFuture;
-use log::error;
-use sea_orm::DatabaseConnection;
-use tokio::{
-    sync::{broadcast, mpsc},
-    time::{sleep_until, Instant},
-};
-
 use crate::{
     database::entity::{
         events::{EventTrigger, EventTriggerType},
         EventModel,
     },
+    events::{
+        matching::{EventData, EventInputData},
+        processing::execute_event,
+        EventMessage,
+    },
     script::runtime::ScriptExecutorHandle,
-    twitch::manager::TwitchManager,
+    twitch::manager::Twitch,
 };
-
-use super::{
-    matching::{EventData, EventInputData},
-    processing::execute_event,
-    EventMessage,
+use anyhow::Context;
+use chrono::Local;
+use futures::future::BoxFuture;
+use log::error;
+use sea_orm::DatabaseConnection;
+use std::{collections::BinaryHeap, future::Future, pin::Pin, task::Poll, time::Duration};
+use tokio::{
+    sync::{broadcast, mpsc},
+    time::{sleep_until, Instant},
 };
 
 pub struct ScheduledEvent {
@@ -66,7 +61,7 @@ impl SchedulerHandle {
 
 pub fn create_scheduler(
     db: DatabaseConnection,
-    twitch_manager: Arc<TwitchManager>,
+    twitch: Twitch,
     script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
 ) -> SchedulerHandle {
@@ -92,7 +87,7 @@ pub fn create_scheduler(
         events: BinaryHeap::new(),
         current_sleep: None,
         db,
-        twitch_manager,
+        twitch,
         script_handle,
         event_sender,
     });
@@ -112,7 +107,7 @@ struct SchedulerEventLoop {
     current_sleep: Option<BoxFuture<'static, ()>>,
 
     db: DatabaseConnection,
-    twitch_manager: Arc<TwitchManager>,
+    twitch: Twitch,
     script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
 }
@@ -120,19 +115,19 @@ struct SchedulerEventLoop {
 impl SchedulerEventLoop {
     fn execute_scheduled_event(&self, event: EventModel) {
         let db = self.db.clone();
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         let script_handle = self.script_handle.clone();
         let event_sender = self.event_sender.clone();
 
         tauri::async_runtime::spawn(async move {
             let db = db;
-            let twitch_manager = twitch_manager;
+            let twitch = twitch;
             let script_handle = script_handle;
             let event_sender = event_sender;
 
             if let Err(err) = execute_event(
                 &db,
-                &twitch_manager,
+                &twitch,
                 &script_handle,
                 &event_sender,
                 event,

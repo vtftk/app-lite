@@ -2,17 +2,15 @@
 //!
 //! Internal server for handling OAuth responses and serving the app overlay HTML
 
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::sync::Arc;
-
 use super::routes;
 use crate::database::entity::app_data::AppDataModel;
 use crate::events::EventRecvHandle;
 use crate::state::runtime_app_data::RuntimeAppDataStore;
-use crate::twitch::manager::TwitchManager;
+use crate::twitch::manager::Twitch;
 use anyhow::Context;
 use axum::Extension;
 use sea_orm::DatabaseConnection;
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use tauri::AppHandle;
 use tower_http::cors::CorsLayer;
 
@@ -20,7 +18,7 @@ pub async fn start(
     db: DatabaseConnection,
     event_handle: EventRecvHandle,
     app_handle: AppHandle,
-    twitch_manager: Arc<TwitchManager>,
+    twitch: Twitch,
     runtime_app_data: RuntimeAppDataStore,
 ) -> anyhow::Result<()> {
     let port = AppDataModel::get_http_port(&db).await?;
@@ -30,7 +28,7 @@ pub async fn start(
         .layer(Extension(db))
         .layer(Extension(event_handle))
         .layer(Extension(app_handle))
-        .layer(Extension(twitch_manager))
+        .layer(Extension(twitch))
         .layer(Extension(runtime_app_data))
         .layer(CorsLayer::very_permissive());
 

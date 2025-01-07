@@ -2,8 +2,6 @@
 //!
 //! Commands for interacting with events from the frontend
 
-use std::sync::Arc;
-
 use crate::database::entity::events::{EventTrigger, EventTriggerType};
 use crate::database::entity::shared::{ExecutionsQuery, LogsQuery, UpdateOrdering};
 use crate::database::entity::{EventExecutionModel, EventLogsModel};
@@ -11,7 +9,7 @@ use crate::events::outcome::produce_outcome_message;
 use crate::events::scheduler::SchedulerHandle;
 use crate::events::EventMessage;
 use crate::script::runtime::ScriptExecutorHandle;
-use crate::twitch::manager::TwitchManager;
+use crate::twitch::manager::Twitch;
 use crate::{
     database::entity::{
         events::{CreateEvent, UpdateEvent},
@@ -124,7 +122,7 @@ pub async fn test_event_by_id(
 
     db: State<'_, DatabaseConnection>,
     event_sender: State<'_, broadcast::Sender<EventMessage>>,
-    twitch_manager: State<'_, Arc<TwitchManager>>,
+    twitch: State<'_, Twitch>,
     script_handle: State<'_, ScriptExecutorHandle>,
 ) -> CmdResult<()> {
     let db = db.inner();
@@ -133,7 +131,7 @@ pub async fn test_event_by_id(
         .context("unknown event")?;
 
     if let Some(msg) =
-        produce_outcome_message(db, &twitch_manager, &script_handle, event, event_data).await?
+        produce_outcome_message(db, &twitch, &script_handle, event, event_data).await?
     {
         _ = event_sender.send(msg);
     }

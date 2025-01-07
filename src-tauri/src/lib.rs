@@ -11,9 +11,12 @@ use log::{debug, error, info};
 use script::{events::ScriptEventActor, runtime::create_script_executor};
 use sea_orm::{DatabaseConnection, ModelTrait};
 use state::runtime_app_data::RuntimeAppDataStore;
-use std::sync::Arc;
-use tauri::{async_runtime::block_on, AppHandle, Manager, RunEvent};
-use twitch::manager::TwitchManager;
+use std::error::Error;
+use tauri::{
+    async_runtime::{block_on, spawn},
+    App, AppHandle, Manager, RunEvent,
+};
+use twitch::manager::Twitch;
 
 mod commands;
 mod constants;
@@ -39,94 +42,7 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(
             handle_duplicate_instance,
         ))
-        .setup(move |app| {
-            let handle = app.handle().clone();
-
-            let app_data_path = app
-                .path()
-                .app_data_dir()
-                .context("failed to get app data dir")?;
-
-            let db_file = app_data_path.join("app.db");
-
-            let db =
-                block_on(database::connect_database(&db_file)).expect("failed to load database");
-
-            let (twitch_manager, twitch_event_rx) = TwitchManager::new(handle.clone());
-            let (event_tx, event_rx) = create_event_channel();
-
-            let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
-
-            let script_handle = create_script_executor(app_data_path.join("modules"));
-
-            // Add auto updater plugin if auto updating is allowed
-            {
-                let auto_updating = block_on(AppDataModel::is_auto_updating(&db))?;
-                if auto_updating {
-                    handle.plugin(tauri_plugin_updater::Builder::new().build())?;
-                }
-            }
-
-            // Run background cleanup
-            tauri::async_runtime::spawn(clean_old_data(db.clone()));
-
-            // Create background event scheduler
-            let scheduler_handle = create_scheduler(
-                db.clone(),
-                twitch_manager.clone(),
-                script_handle.clone(),
-                event_tx.clone(),
-            );
-
-            // Provide runtime app data stores
-            app.manage(runtime_app_data.clone());
-
-            // Provide access to the scheduler
-            app.manage(scheduler_handle);
-
-            // Provide access to twitch manager and event sender
-            app.manage(event_tx.clone());
-            app.manage(twitch_manager.clone());
-
-            // Provide access to script running and
-            app.manage(script_handle.clone());
-
-            // Provide database access
-            app.manage(db.clone());
-
-            // Attempt to authenticate with twitch using the saved token
-            _ = tauri::async_runtime::spawn(attempt_twitch_auth_existing_token(
-                db.clone(),
-                twitch_manager.clone(),
-            ));
-
-            // Initialize script actor
-            let actor = ScriptEventActor::new(event_tx.clone(), db.clone(), twitch_manager.clone());
-
-            block_on(script::events::init_global_script_event_actor(actor));
-
-            // Handle events triggered by twitch
-            _ = tauri::async_runtime::spawn(process_twitch_events(
-                db.clone(),
-                twitch_manager.clone(),
-                script_handle,
-                event_tx.clone(),
-                twitch_event_rx,
-            ));
-
-            // Run HTTP server
-            _ = tauri::async_runtime::spawn(http::server::start(
-                db,
-                event_rx,
-                handle,
-                twitch_manager,
-                runtime_app_data,
-            ));
-
-            tray::create_tray_menu(app)?;
-
-            Ok(())
-        })
+        .setup(setup)
         .invoke_handler(tauri::generate_handler![
             // Calibration commands
             commands::calibration::set_calibration_step,
@@ -196,6 +112,87 @@ pub fn run() {
         .run(handle_app_event);
 }
 
+fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
+    let handle = app.handle();
+
+    let app_data_path = app
+        .path()
+        .app_data_dir()
+        .context("failed to get app data dir")?;
+
+    let db = block_on(database::connect_database(app_data_path.join("app.db")))
+        .context("failed to load database")?;
+
+    let (twitch, twitch_event_rx) = Twitch::new(handle.clone());
+    let (event_tx, event_rx) = create_event_channel();
+
+    let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
+
+    let script_handle = create_script_executor(app_data_path.join("modules"));
+
+    // Create background event scheduler
+    let scheduler_handle = create_scheduler(
+        db.clone(),
+        twitch.clone(),
+        script_handle.clone(),
+        event_tx.clone(),
+    );
+
+    // Add auto updater plugin if auto updating is allowed
+    block_on(setup_auto_update(&db, handle))?;
+
+    // Run background cleanup
+    spawn(clean_old_data(db.clone()));
+
+    // Provide runtime app data stores
+    app.manage(runtime_app_data.clone());
+
+    // Provide access to the scheduler
+    app.manage(scheduler_handle);
+
+    // Provide access to twitch manager and event sender
+    app.manage(event_tx.clone());
+    app.manage(twitch.clone());
+
+    // Provide access to script running and
+    app.manage(script_handle.clone());
+
+    // Provide database access
+    app.manage(db.clone());
+
+    // Attempt to authenticate with twitch using the saved token
+    _ = spawn(attempt_twitch_auth_existing_token(
+        db.clone(),
+        twitch.clone(),
+    ));
+
+    // Initialize script actor
+    let actor = ScriptEventActor::new(event_tx.clone(), db.clone(), twitch.clone());
+    block_on(script::events::init_global_script_event_actor(actor));
+
+    // Handle events triggered by twitch
+    _ = spawn(process_twitch_events(
+        db.clone(),
+        twitch.clone(),
+        script_handle,
+        event_tx.clone(),
+        twitch_event_rx,
+    ));
+
+    // Run HTTP server
+    _ = spawn(http::server::start(
+        db,
+        event_rx,
+        handle.clone(),
+        twitch,
+        runtime_app_data,
+    ));
+
+    tray::create_tray_menu(app)?;
+
+    Ok(())
+}
+
 /// Handle initialization of a second app instance, focuses the main
 /// window instead of allowing multiple instances
 fn handle_duplicate_instance(app: &AppHandle, _args: Vec<String>, _cwd: String) {
@@ -218,11 +215,18 @@ fn handle_app_event(app: &AppHandle, event: RunEvent) {
     }
 }
 
+/// Initialize auto updating
+async fn setup_auto_update(db: &DatabaseConnection, app_handle: &AppHandle) -> anyhow::Result<()> {
+    let auto_updating = AppDataModel::is_auto_updating(db).await?;
+    if auto_updating {
+        app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
+    }
+
+    Ok(())
+}
+
 /// Attempts to authenticate with twitch using an existing access token
-async fn attempt_twitch_auth_existing_token(
-    db: DatabaseConnection,
-    twitch_manager: Arc<TwitchManager>,
-) {
+async fn attempt_twitch_auth_existing_token(db: DatabaseConnection, twitch: Twitch) {
     let access = match TwitchAccessModel::get(&db).await {
         Ok(Some(value)) => value,
         Ok(None) => {
@@ -248,10 +252,7 @@ async fn attempt_twitch_auth_existing_token(
         }
     }
 
-    if let Err(err) = twitch_manager
-        .attempt_auth_existing_token(access_token)
-        .await
-    {
+    if let Err(err) = twitch.attempt_auth_existing_token(access_token).await {
         error!("stored access token is invalid: {}", err);
 
         // Clear outdated / invalid access token

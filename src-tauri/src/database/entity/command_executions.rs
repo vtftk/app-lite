@@ -3,7 +3,7 @@ use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-use crate::twitch::manager::TwitchEventUser;
+use crate::twitch::models::TwitchEventUser;
 
 use super::shared::DbResult;
 

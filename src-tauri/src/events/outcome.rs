@@ -1,10 +1,7 @@
-use std::{collections::HashSet, sync::Arc};
-
-use anyhow::{anyhow, Context};
-use chrono::Utc;
-use sea_orm::DatabaseConnection;
-use uuid::Uuid;
-
+use super::{
+    matching::{EventData, EventInputData},
+    EventMessage, ThrowItemConfig, ThrowItemMessage,
+};
 use crate::{
     database::entity::{
         events::{
@@ -17,18 +14,18 @@ use crate::{
     },
     script::runtime::{RuntimeExecutionContext, ScriptExecutorHandle},
     state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
-    twitch::manager::TwitchManager,
+    twitch::manager::Twitch,
 };
-
-use super::{
-    matching::{EventData, EventInputData},
-    EventMessage, ThrowItemConfig, ThrowItemMessage,
-};
+use anyhow::{anyhow, Context};
+use chrono::Utc;
+use sea_orm::DatabaseConnection;
+use std::collections::HashSet;
+use uuid::Uuid;
 
 /// Produce a message for an outcome
 pub async fn produce_outcome_message(
     db: &DatabaseConnection,
-    twitch_manager: &Arc<TwitchManager>,
+    twitch: &Twitch,
     script_handle: &ScriptExecutorHandle,
 
     event: EventModel,
@@ -40,18 +37,16 @@ pub async fn produce_outcome_message(
         EventOutcome::TriggerHotkey(data) => trigger_hotkey_outcome(data).map(Some),
         EventOutcome::PlaySound(data) => play_sound_outcome(db, data).await.map(Some),
         EventOutcome::SendChatMessage(data) => {
-            send_chat_message(twitch_manager, event_data, data).await?;
+            send_chat_message(twitch, event_data, data).await?;
             Ok(None)
         }
         EventOutcome::Script(data) => {
             execute_script(script_handle, event.id, event_data, data).await?;
             Ok(None)
         }
-        EventOutcome::ChannelEmotes(data) => {
-            throw_channel_emotes_outcome(twitch_manager, event_data, data)
-                .await
-                .map(Some)
-        }
+        EventOutcome::ChannelEmotes(data) => throw_channel_emotes_outcome(twitch, event_data, data)
+            .await
+            .map(Some),
     }
 }
 
@@ -73,7 +68,7 @@ pub async fn execute_script(
 }
 
 async fn send_chat_message(
-    twitch_manager: &Arc<TwitchManager>,
+    twitch: &Twitch,
     event_data: EventData,
     data: EventOutcomeSendChat,
 ) -> anyhow::Result<()> {
@@ -112,7 +107,7 @@ async fn send_chat_message(
     }
 
     if message.len() < 500 {
-        twitch_manager.send_chat_message(&message).await?;
+        twitch.send_chat_message(&message).await?;
     } else {
         let mut chars = message.chars();
 
@@ -122,7 +117,7 @@ async fn send_chat_message(
                 break;
             }
 
-            twitch_manager.send_chat_message(&message).await?;
+            twitch.send_chat_message(&message).await?;
         }
     }
 
@@ -178,7 +173,7 @@ async fn throw_bits_outcome(
 
 /// Produce a channel emote throwing outcome message
 async fn throw_channel_emotes_outcome(
-    twitch_manager: &Arc<TwitchManager>,
+    twitch: &Twitch,
     event_data: EventData,
     data: EventOutcomeChannelEmotes,
 ) -> anyhow::Result<EventMessage> {
@@ -191,7 +186,7 @@ async fn throw_channel_emotes_outcome(
         }
     };
 
-    let emotes = twitch_manager.get_channel_emotes(user.id.clone()).await?;
+    let emotes = twitch.get_channel_emotes(user.id.clone()).await?;
 
     // Create sounds from builtins
     let impact_sounds: Vec<SoundModel> = create_default_impact_sounds();

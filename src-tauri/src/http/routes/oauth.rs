@@ -1,20 +1,13 @@
-use std::sync::Arc;
-
-use anyhow::Context;
+use crate::{
+    database::entity::{twitch_access::SetTwitchAccess, TwitchAccessModel},
+    http::error::HttpResult,
+    twitch::manager::Twitch,
+};
 use axum::{response::IntoResponse, Extension, Json};
 use reqwest::header::CONTENT_TYPE;
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
-use twitch_api::{
-    helix::Scope,
-    twitch_oauth2::{AccessToken, UserToken},
-};
-
-use crate::{
-    database::entity::{twitch_access::SetTwitchAccess, TwitchAccessModel},
-    http::error::HttpResult,
-    twitch::manager::TwitchManager,
-};
+use twitch_api::{helix::Scope, twitch_oauth2::AccessToken};
 
 /// Embedded oauth response page for handling sending the fragment
 static OAUTH_RESPONSE_PAGE: &str = include_str!("../resources/twitch-oauth-response.html");
@@ -41,18 +34,15 @@ pub struct OAuthComplete {
 /// the access token and authorized scopes
 pub async fn handle_oauth_complete(
     Extension(db): Extension<DatabaseConnection>,
-    Extension(twitch_manager): Extension<Arc<TwitchManager>>,
+    Extension(twitch): Extension<Twitch>,
     Json(req): Json<OAuthComplete>,
 ) -> HttpResult<()> {
-    let token =
-        UserToken::from_existing(&twitch_manager.helix_client, req.access_token, None, None)
-            .await
-            .context("failed to create user token")?;
+    let token = twitch.create_user_token(req.access_token).await?;
 
     let access_token = token.access_token.clone();
     let scopes = req.scopes;
 
-    twitch_manager.set_authenticated(token).await;
+    twitch.set_authenticated(token).await;
 
     TwitchAccessModel::set(
         &db,

@@ -2,7 +2,6 @@ use anyhow::Context;
 use interlink::prelude::*;
 use log::error;
 use sea_orm::{prelude::DateTimeUtc, DatabaseConnection, ModelTrait};
-use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use twitch_api::{
     helix::channels::Follower,
@@ -22,14 +21,13 @@ use crate::{
     events::{EventMessage, ThrowItemConfig, ThrowItemMessage},
     integrations::tts_monster::{TTSMonsterService, TTSMonsterVoice},
     state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
-    twitch::manager::{TwitchManager, TwitchUser},
+    twitch::{manager::Twitch, models::TwitchUser},
 };
 
 use super::runtime::RuntimeExecutionContext;
 
 /// Current global instance of the script event actor
-pub static GLOBAL_SCRIPT_EVENT_ACTOR: RwLock<Option<Link<ScriptEventActor>>> =
-    RwLock::const_new(None);
+static GLOBAL_SCRIPT_EVENT_ACTOR: RwLock<Option<Link<ScriptEventActor>>> = RwLock::const_new(None);
 
 pub async fn init_global_script_event_actor(actor: ScriptEventActor) {
     let link = actor.start();
@@ -67,19 +65,19 @@ pub struct ScriptEventActor {
     db: DatabaseConnection,
 
     /// Access to the twitch manager
-    twitch_manager: Arc<TwitchManager>,
+    twitch: Twitch,
 }
 
 impl ScriptEventActor {
     pub fn new(
         event_sender: broadcast::Sender<EventMessage>,
         db: DatabaseConnection,
-        twitch_manager: Arc<TwitchManager>,
+        twitch: Twitch,
     ) -> Self {
         Self {
             event_sender,
             db,
-            twitch_manager,
+            twitch,
         }
     }
 }
@@ -95,9 +93,9 @@ impl Handler<TwitchSendChat> for ScriptEventActor {
     type Response = Fr<TwitchSendChat>;
 
     fn handle(&mut self, msg: TwitchSendChat, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            _ = twitch_manager.send_chat_message(&msg.message).await?;
+            _ = twitch.send_chat_message(&msg.message).await?;
             Ok(())
         })
     }
@@ -118,9 +116,9 @@ impl Handler<TwitchDeleteChatMessage> for ScriptEventActor {
         msg: TwitchDeleteChatMessage,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            twitch_manager.delete_chat_message(msg.message_id).await?;
+            twitch.delete_chat_message(msg.message_id).await?;
             Ok(())
         })
     }
@@ -139,9 +137,9 @@ impl Handler<TwitchDeleteAllChatMessages> for ScriptEventActor {
         _msg: TwitchDeleteAllChatMessages,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            twitch_manager.delete_all_chat_messages().await?;
+            twitch.delete_all_chat_messages().await?;
             Ok(())
         })
     }
@@ -162,9 +160,9 @@ impl Handler<TwitchCreateStreamMarker> for ScriptEventActor {
         msg: TwitchCreateStreamMarker,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            twitch_manager.create_stream_marker(msg.description).await?;
+            twitch.create_stream_marker(msg.description).await?;
             Ok(())
         })
     }
@@ -181,9 +179,9 @@ impl Handler<TwitchIsMod> for ScriptEventActor {
     type Response = Fr<TwitchIsMod>;
 
     fn handle(&mut self, msg: TwitchIsMod, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            let mods = twitch_manager.get_moderator_list().await?;
+            let mods = twitch.get_moderator_list().await?;
             Ok(mods.iter().any(|vip| vip.user_id == msg.user_id))
         })
     }
@@ -200,9 +198,9 @@ impl Handler<TwitchIsVip> for ScriptEventActor {
     type Response = Fr<TwitchIsVip>;
 
     fn handle(&mut self, msg: TwitchIsVip, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            let vips = twitch_manager.get_vip_list().await?;
+            let vips = twitch.get_vip_list().await?;
             Ok(vips.iter().any(|vip| vip.user_id == msg.user_id))
         })
     }
@@ -224,9 +222,9 @@ impl Handler<TwitchSendChatAnnouncement> for ScriptEventActor {
         msg: TwitchSendChatAnnouncement,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            _ = twitch_manager
+            _ = twitch
                 .send_chat_announcement_message(msg.message, msg.color)
                 .await?;
             Ok(())
@@ -249,9 +247,9 @@ impl Handler<TwitchGetUserByUsername> for ScriptEventActor {
         msg: TwitchGetUserByUsername,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            let user = twitch_manager.get_user_by_username(&msg.username).await?;
+            let user = twitch.get_user_by_username(&msg.username).await?;
             Ok(user)
         })
     }
@@ -271,9 +269,9 @@ impl Handler<TwitchGetFollower> for ScriptEventActor {
         msg: TwitchGetFollower,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            let user = twitch_manager.get_follower_by_id(msg.user_id).await?;
+            let user = twitch.get_follower_by_id(msg.user_id).await?;
             Ok(user)
         })
     }
@@ -294,9 +292,9 @@ impl Handler<TwitchSendShoutout> for ScriptEventActor {
         msg: TwitchSendShoutout,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
-        let twitch_manager = self.twitch_manager.clone();
+        let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            _ = twitch_manager.send_shoutout(msg.user_id).await?;
+            _ = twitch.send_shoutout(msg.user_id).await?;
             Ok(())
         })
     }

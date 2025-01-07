@@ -1,13 +1,12 @@
-use std::{sync::Arc, time::Duration};
-
-use anyhow::{anyhow, Context};
-use chrono::TimeDelta;
-use futures::{future::BoxFuture, stream::FuturesUnordered};
-use log::{debug, error};
-use sea_orm::{prelude::DateTimeUtc, sqlx::types::chrono::Utc, DatabaseConnection};
-use tokio::{sync::broadcast, try_join};
-use twitch_api::types::UserId;
-
+use super::{
+    matching::{
+        match_chat_event, match_cheer_bits_event, match_follow_event,
+        match_gifted_subscription_event, match_re_subscription_event, match_redeem_event,
+        match_subscription_event, CommandWithContext, EventData, EventInputData, EventMatchingData,
+    },
+    outcome::produce_outcome_message,
+    EventMessage,
+};
 use crate::{
     database::entity::{
         command_executions::{
@@ -22,22 +21,23 @@ use crate::{
     script::runtime::{
         CommandContext, CommandContextUser, RuntimeExecutionContext, ScriptExecutorHandle,
     },
-    twitch::manager::{TwitchEvent, TwitchEventUser, TwitchManager},
-};
-
-use super::{
-    matching::{
-        match_chat_event, match_cheer_bits_event, match_follow_event,
-        match_gifted_subscription_event, match_re_subscription_event, match_redeem_event,
-        match_subscription_event, CommandWithContext, EventData, EventInputData, EventMatchingData,
+    twitch::{
+        manager::Twitch,
+        models::{TwitchEvent, TwitchEventUser},
     },
-    outcome::produce_outcome_message,
-    EventMessage,
 };
+use anyhow::{anyhow, Context};
+use chrono::TimeDelta;
+use futures::{future::BoxFuture, stream::FuturesUnordered};
+use log::{debug, error};
+use sea_orm::{prelude::DateTimeUtc, sqlx::types::chrono::Utc, DatabaseConnection};
+use std::time::Duration;
+use tokio::{sync::broadcast, try_join};
+use twitch_api::types::UserId;
 
 pub async fn process_twitch_events(
     db: DatabaseConnection,
-    twitch_manager: Arc<TwitchManager>,
+    twitch: Twitch,
     script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
 
@@ -48,14 +48,13 @@ pub async fn process_twitch_events(
 
         tokio::spawn({
             let db = db.clone();
-            let twitch_manager = twitch_manager.clone();
+            let twitch = twitch.clone();
             let script_handle = script_handle.clone();
             let event_sender = event_sender.clone();
 
             async move {
                 let result =
-                    process_twitch_event(db, twitch_manager, script_handle, event_sender, event)
-                        .await;
+                    process_twitch_event(db, twitch, script_handle, event_sender, event).await;
 
                 if let Err(err) = result {
                     debug!("failed to process twitch event: {err:?}",);
@@ -67,7 +66,7 @@ pub async fn process_twitch_events(
 
 async fn process_twitch_event(
     db: DatabaseConnection,
-    twitch_manager: Arc<TwitchManager>,
+    twitch: Twitch,
     script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
     event: TwitchEvent,
@@ -88,22 +87,22 @@ async fn process_twitch_event(
         // Internal events
         TwitchEvent::ModeratorsChanged => {
             debug!("reloading mods list");
-            twitch_manager.load_moderator_list().await?;
+            twitch.load_moderator_list().await?;
             return Ok(());
         }
         TwitchEvent::VipsChanged => {
             debug!("reloading vips list");
-            twitch_manager.load_vip_list().await?;
+            twitch.load_vip_list().await?;
             return Ok(());
         }
         TwitchEvent::RewardsChanged => {
             debug!("reloading rewards list");
-            twitch_manager.load_rewards_list().await?;
+            twitch.load_rewards_list().await?;
             return Ok(());
         }
         TwitchEvent::Reset => {
             debug!("resetting twitch manager");
-            twitch_manager.reset().await;
+            twitch.reset().await;
             return Ok(());
         }
     };
@@ -116,7 +115,7 @@ async fn process_twitch_event(
                 Box::pin(execute_command(
                     &db,
                     &script_handle,
-                    &twitch_manager,
+                    &twitch,
                     command,
                     match_data.event_data.clone(),
                 ))
@@ -129,7 +128,7 @@ async fn process_twitch_event(
             .map(|event| -> BoxFuture<'_, anyhow::Result<()>> {
                 Box::pin(execute_event(
                     &db,
-                    &twitch_manager,
+                    &twitch,
                     &script_handle,
                     &event_sender,
                     event,
@@ -234,7 +233,7 @@ pub async fn is_command_cooldown_elapsed(
 pub async fn execute_command(
     db: &DatabaseConnection,
     script_handle: &ScriptExecutorHandle,
-    twitch_manager: &Arc<TwitchManager>,
+    twitch: &Twitch,
     command: CommandWithContext,
     event_data: EventData,
 ) -> anyhow::Result<()> {
@@ -253,13 +252,7 @@ pub async fn execute_command(
     };
 
     // Ensure required role is present
-    if !has_required_role(
-        twitch_manager,
-        Some(user.id.clone()),
-        &command.command.require_role,
-    )
-    .await
-    {
+    if !has_required_role(twitch, Some(user.id.clone()), &command.command.require_role).await {
         debug!("skipping command: missing required role");
         return Ok(());
     }
@@ -293,7 +286,7 @@ pub async fn execute_command(
                 .replace("$(touser)", to_usr);
 
             if message.len() < 500 {
-                twitch_manager.send_chat_message(&message).await?;
+                twitch.send_chat_message(&message).await?;
             } else {
                 let mut chars = message.chars();
 
@@ -303,7 +296,7 @@ pub async fn execute_command(
                         break;
                     }
 
-                    twitch_manager.send_chat_message(&message).await?;
+                    twitch.send_chat_message(&message).await?;
                 }
             }
         }
@@ -425,7 +418,7 @@ pub async fn is_event_cooldown_elapsed(
 
 pub async fn execute_event(
     db: &DatabaseConnection,
-    twitch_manager: &Arc<TwitchManager>,
+    twitch: &Twitch,
     script_handle: &ScriptExecutorHandle,
 
     event_sender: &broadcast::Sender<EventMessage>,
@@ -434,7 +427,7 @@ pub async fn execute_event(
 ) -> anyhow::Result<()> {
     // Ensure required role is present
     if !has_required_role(
-        twitch_manager,
+        twitch,
         event_data.user.as_ref().map(|value| value.id.clone()),
         &event.require_role,
     )
@@ -468,8 +461,7 @@ pub async fn execute_event(
     let event_id = event.id;
 
     // Produce outcome message and send it
-    if let Some(msg) =
-        produce_outcome_message(db, twitch_manager, script_handle, event, event_data).await?
+    if let Some(msg) = produce_outcome_message(db, twitch, script_handle, event, event_data).await?
     {
         _ = event_sender.send(msg);
     }
@@ -490,7 +482,7 @@ pub async fn execute_event(
 }
 
 pub async fn has_required_role(
-    twitch_manager: &TwitchManager,
+    twitch: &Twitch,
     user_id: Option<UserId>,
     required_role: &MinimumRequireRole,
 ) -> bool {
@@ -506,7 +498,7 @@ pub async fn has_required_role(
     };
 
     // User is the broadcaster
-    if twitch_manager
+    if twitch
         .get_user_token()
         .await
         .is_some_and(|value| value.user_id == user)
@@ -516,19 +508,17 @@ pub async fn has_required_role(
 
     // Check VIP and moderator lists
     if let MinimumRequireRole::Vip = required_role {
-        return try_join!(
-            twitch_manager.get_vip_list(),
-            twitch_manager.get_moderator_list()
-        )
-        .is_ok_and(|(vips, mods)| {
-            vips.iter().any(|vip| vip.user_id == user)
-                || mods.iter().any(|mods| mods.user_id == user)
-        });
+        return try_join!(twitch.get_vip_list(), twitch.get_moderator_list()).is_ok_and(
+            |(vips, mods)| {
+                vips.iter().any(|vip| vip.user_id == user)
+                    || mods.iter().any(|mods| mods.user_id == user)
+            },
+        );
     }
 
     // Check just moderator list
     if let MinimumRequireRole::Mod = required_role {
-        return twitch_manager
+        return twitch
             .get_moderator_list()
             .await
             .is_ok_and(|mods| mods.iter().any(|mods| mods.user_id == user));
@@ -536,7 +526,7 @@ pub async fn has_required_role(
 
     // Check the user is a follower
     if let MinimumRequireRole::Follower = required_role {
-        return twitch_manager
+        return twitch
             .get_follower_by_id(user)
             .await
             .is_ok_and(|value| value.is_some());

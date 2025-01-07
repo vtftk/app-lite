@@ -1,4 +1,4 @@
-use super::manager::{
+use super::models::{
     TwitchEvent, TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits,
     TwitchEventFollow, TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
     TwitchEventShoutoutReceive, TwitchEventSub,
@@ -9,9 +9,9 @@ use futures::{
     future::{try_join_all, BoxFuture},
     StreamExt,
 };
-use log::warn;
+use log::{error, warn};
 use thiserror::Error;
-use tokio::{net::TcpStream, sync::broadcast};
+use tokio::{net::TcpStream, sync::broadcast, task::AbortHandle};
 use tokio_tungstenite::{
     tungstenite::{self, protocol::WebSocketConfig},
     MaybeTlsStream, WebSocketStream,
@@ -53,6 +53,37 @@ pub enum WebsocketError {
     /// Twitch gave back a bad payload
     #[error(transparent)]
     BadPayload(#[from] PayloadParseError),
+}
+
+/// Wrapper around a [WebsocketClient] that automatically
+/// aborts when dropped
+pub struct WebsocketManagedTask(AbortHandle);
+
+impl Drop for WebsocketManagedTask {
+    fn drop(&mut self) {
+        self.0.abort();
+    }
+}
+
+impl WebsocketManagedTask {
+    pub fn create(
+        client: HelixClient<'static, reqwest::Client>,
+        tx: broadcast::Sender<TwitchEvent>,
+        token: UserToken,
+    ) -> WebsocketManagedTask {
+        let abort_handle = tokio::spawn(async move {
+            let tx_2 = tx.clone();
+            let ws = WebsocketClient::new(client, tx, token);
+            if let Err(err) = ws.run().await {
+                error!("websocket error: {:?}", err);
+
+                _ = tx_2.send(TwitchEvent::Reset);
+            }
+        })
+        .abort_handle();
+
+        WebsocketManagedTask(abort_handle)
+    }
 }
 
 pub struct WebsocketClient {
