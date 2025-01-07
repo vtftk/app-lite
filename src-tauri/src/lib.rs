@@ -12,7 +12,7 @@ use script::{events::ScriptEventActor, runtime::create_script_executor};
 use sea_orm::{DatabaseConnection, ModelTrait};
 use state::runtime_app_data::RuntimeAppDataStore;
 use std::sync::Arc;
-use tauri::{async_runtime::block_on, Manager};
+use tauri::{async_runtime::block_on, AppHandle, Manager, RunEvent};
 use twitch::manager::TwitchManager;
 
 mod commands;
@@ -36,12 +36,9 @@ pub fn run() {
         // Shell access plugin
         .plugin(tauri_plugin_shell::init())
         // Don't allow creation of multiple windows, instead focus the existing window
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            let _ = app
-                .get_webview_window("main")
-                .expect("no main window")
-                .set_focus();
-        }))
+        .plugin(tauri_plugin_single_instance::init(
+            handle_duplicate_instance,
+        ))
         .setup(move |app| {
             let handle = app.handle().clone();
 
@@ -196,17 +193,29 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         // Prevent default exit handling, app exiting is done
-        .run(|app, event| {
-            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
-                let db = app.state::<DatabaseConnection>();
-                let main_config = block_on(AppDataModel::get_main_config(db.inner()));
-                let minimize_to_tray = main_config.is_ok_and(|value| value.minimize_to_tray);
+        .run(handle_app_event);
+}
 
-                if code.is_none() && minimize_to_tray {
-                    api.prevent_exit();
-                }
-            }
-        });
+/// Handle initialization of a second app instance, focuses the main
+/// window instead of allowing multiple instances
+fn handle_duplicate_instance(app: &AppHandle, _args: Vec<String>, _cwd: String) {
+    let _ = app
+        .get_webview_window("main")
+        .expect("no main window")
+        .set_focus();
+}
+
+/// Handles app events, used for the minimize to tray event
+fn handle_app_event(app: &AppHandle, event: RunEvent) {
+    if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+        let db = app.state::<DatabaseConnection>();
+        let main_config = block_on(AppDataModel::get_main_config(db.inner()));
+        let minimize_to_tray = main_config.is_ok_and(|value| value.minimize_to_tray);
+
+        if code.is_none() && minimize_to_tray {
+            api.prevent_exit();
+        }
+    }
 }
 
 /// Attempts to authenticate with twitch using an existing access token
