@@ -1,10 +1,13 @@
+use crate::{constants::TWITCH_REQUIRED_SCOPES, database::entity::TwitchAccessModel};
+
 use super::{
     models::{TwitchEvent, TwitchUser},
     websocket::WebsocketManagedTask,
 };
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
-use log::error;
+use log::{debug, error, info};
+use sea_orm::{DatabaseConnection, ModelTrait};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 use tokio::{
@@ -47,6 +50,41 @@ impl Twitch {
             },
             rx,
         )
+    }
+
+    /// Attempts to authenticate with twitch using an existing access token (From the database)
+    pub async fn attempt_auth_stored(&self, db: DatabaseConnection) {
+        let access = match TwitchAccessModel::get(&db).await {
+            Ok(Some(value)) => value,
+            Ok(None) => {
+                debug!("not authenticated, skipping login");
+                return;
+            }
+            Err(err) => {
+                error!("failed to load twitch access: {err:?}");
+                return;
+            }
+        };
+
+        let access_token = access.access_token.0.clone();
+        let scopes = &access.scopes.0;
+
+        for required_scope in TWITCH_REQUIRED_SCOPES {
+            if !scopes.contains(required_scope) {
+                info!("logging out current access token, missing required scope");
+
+                // Clear outdated / invalid access token
+                _ = access.delete(&db).await;
+                return;
+            }
+        }
+
+        if let Err(err) = self.attempt_auth_existing_token(access_token).await {
+            error!("stored access token is invalid: {}", err);
+
+            // Clear outdated / invalid access token
+            _ = access.delete(&db).await;
+        }
     }
 
     pub async fn attempt_auth_existing_token(

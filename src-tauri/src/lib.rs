@@ -1,15 +1,10 @@
 use anyhow::Context;
-use constants::TWITCH_REQUIRED_SCOPES;
-use database::{
-    clean_old_data,
-    entity::{app_data::AppDataModel, TwitchAccessModel},
-};
+use database::{clean_old_data, entity::app_data::AppDataModel};
 use events::{
     create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
 };
-use log::{debug, error, info};
 use script::{events::ScriptEventActor, runtime::create_script_executor};
-use sea_orm::{DatabaseConnection, ModelTrait};
+use sea_orm::DatabaseConnection;
 use state::runtime_app_data::RuntimeAppDataStore;
 use std::error::Error;
 use tauri::{
@@ -161,10 +156,12 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
     app.manage(db.clone());
 
     // Attempt to authenticate with twitch using the saved token
-    _ = spawn(attempt_twitch_auth_existing_token(
-        db.clone(),
-        twitch.clone(),
-    ));
+    _ = spawn({
+        let twitch = twitch.clone();
+        let db = db.clone();
+
+        async move { twitch.attempt_auth_stored(db).await }
+    });
 
     // Initialize script actor
     let actor = ScriptEventActor::new(event_tx.clone(), db.clone(), twitch.clone());
@@ -223,39 +220,4 @@ async fn setup_auto_update(db: &DatabaseConnection, app_handle: &AppHandle) -> a
     }
 
     Ok(())
-}
-
-/// Attempts to authenticate with twitch using an existing access token
-async fn attempt_twitch_auth_existing_token(db: DatabaseConnection, twitch: Twitch) {
-    let access = match TwitchAccessModel::get(&db).await {
-        Ok(Some(value)) => value,
-        Ok(None) => {
-            debug!("not authenticated, skipping login");
-            return;
-        }
-        Err(err) => {
-            error!("failed to load twitch access: {err:?}");
-            return;
-        }
-    };
-
-    let access_token = access.access_token.0.clone();
-    let scopes = &access.scopes.0;
-
-    for required_scope in TWITCH_REQUIRED_SCOPES {
-        if !scopes.contains(required_scope) {
-            info!("logging out current access token, missing required scope");
-
-            // Clear outdated / invalid access token
-            _ = access.delete(&db).await;
-            return;
-        }
-    }
-
-    if let Err(err) = twitch.attempt_auth_existing_token(access_token).await {
-        error!("stored access token is invalid: {}", err);
-
-        // Clear outdated / invalid access token
-        _ = access.delete(&db).await;
-    }
 }
