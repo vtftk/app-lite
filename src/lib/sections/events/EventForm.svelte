@@ -1011,7 +1011,11 @@
                 content: executionsTabContent,
                 disablePadding: true,
               },
-
+            ]
+          : []),
+        ...(existing !== undefined &&
+        existing.outcome.type === EventOutcomeType.Script
+          ? [
               {
                 value: "logs",
                 icon: SolarReorderBoldDuotone,
