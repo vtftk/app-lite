@@ -7,12 +7,7 @@ license = "MIT"
 authors = ["Jacobtread <jacobtread@gmail.com>"]
 repository = "https://github.com/vtftk/app"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "vtftk_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
@@ -22,8 +17,11 @@ tauri-build = { version = "2", features = [] }
 deno_core = "0.323.0"
 
 [dependencies]
-# Tauri for frontend UI
+# Tauri for frontend UI and its plugins
 tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2.2.0"
+tauri-plugin-single-instance = "2.2.0"
+tauri-plugin-updater = "2"
 
 # Twitch API for working with twitch
 twitch_api = { version = "0.7.0-rc.8", features = [
@@ -41,6 +39,7 @@ tokio-tungstenite = { version = "0.24.0", features = [
 # Serialization and JSON
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+serde_with = "3.12.0"
 
 # HTTP 
 reqwest = { version = "0.12.9", default-features = false, features = [
@@ -61,7 +60,9 @@ thiserror = "2"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3.31"
 tokio-stream = { version = "0.1.16", features = ["full"] }
+interlink = "0.1.6"
 
+# UUID
 uuid = { version = "1", features = ["v4", "serde"] }
 
 # Mime type guessing for file serving
@@ -73,10 +74,9 @@ env_logger = "0.11"
 
 # JavaScript runtime
 deno_core = "0.323.0"
-interlink = "0.1.6"
+
+# Date & Time
 chrono = { version = "0.4.39", features = ["serde"] }
-tauri-plugin-shell = "2.2.0"
-serde_with = "3.12.0"
 
 
 # App database
@@ -108,10 +108,3 @@ lto = true        # Enables link-time-optimizations.
 opt-level = "s"   # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort"   # Higher performance by disabling panic handlers.
 strip = true      # Ensures debug symbols are removed.
-
-# Prevent multiple instances
-[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
-tauri-plugin-single-instance = "2.2.0"
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-updater = "2"
