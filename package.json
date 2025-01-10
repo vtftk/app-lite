@@ -26,7 +26,6 @@
     "felte": "^1.3.0",
     "sass-embedded": "^1.81.0",
     "svelte-sonner": "^0.3.28",
-    "svelte-tiny-virtual-list": "^2.1.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -50,8 +49,7 @@
     "typescript": "^5.5.0",
     "typescript-eslint": "^8.18.0",
     "unplugin-icons": "^0.20.1",
-    "vite": "^5.4.10",
-    "vite-plugin-singlefile": "^2.0.3"
+    "vite": "^5.4.10"
   },
   "overrides": {
     "@sveltejs/kit": {
