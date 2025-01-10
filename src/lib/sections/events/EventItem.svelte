@@ -263,7 +263,7 @@
 
   .actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: center;
     flex-shrink: 0;
   }
