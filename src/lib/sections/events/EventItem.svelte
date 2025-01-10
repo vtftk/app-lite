@@ -1,10 +1,10 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
-  import { deleteEvent, updateEvent } from "$lib/api/vevents";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
+  import { deleteEvent, updateEvent } from "$lib/api/vevents";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";

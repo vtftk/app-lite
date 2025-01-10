@@ -2,17 +2,17 @@
   import type { Command } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
-  import { deleteCommand, updateCommand } from "$lib/api/commands";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
+  import { deleteCommand, updateCommand } from "$lib/api/commands";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
-  import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
 
   type Props = {
     config: Command;
