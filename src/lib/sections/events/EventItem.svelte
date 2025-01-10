@@ -1,6 +1,6 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
-  import { deleteEvent } from "$lib/api/vevents";
+  import { deleteEvent, updateEvent } from "$lib/api/vevents";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
@@ -8,6 +8,7 @@
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
+  import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
   import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
@@ -58,6 +59,23 @@
       error: toastErrorMessage("Failed to delete event"),
     });
   }
+
+  async function onChangeDisabled(value: boolean) {
+    const updatePromise = updateEvent({
+      eventId: config.id,
+      update: {
+        enabled: value,
+      },
+    });
+
+    toast.promise(updatePromise, {
+      loading: value ? "Enabling..." : "Disabling...",
+      success: value ? "Enabled " + config.name : "Disabled " + config.name,
+      error: toastErrorMessage(
+        value ? "Failed to enable" : "Failed to disable",
+      ),
+    });
+  }
 </script>
 
 {#snippet popoverContent()}
@@ -67,7 +85,7 @@
   <Button onclick={onDelete}><DeleteIcon /> Delete</Button>
 {/snippet}
 
-<div class="event">
+<div class="event" data-enabled={config.enabled}>
   <div class="event__base">
     <ControlledCheckbox checked={selected} onCheckedChange={onToggleSelected} />
 
@@ -77,7 +95,12 @@
       </a>
     </div>
 
-    <div class="action">
+    <div class="actions">
+      <EnabledSwitch
+        checked={config.enabled}
+        onCheckedChange={onChangeDisabled}
+      />
+
       <PopoverButton
         content={popoverContent}
         contentProps={{ align: "start", side: "left" }}
@@ -238,7 +261,10 @@
     overflow: hidden;
   }
 
-  .action {
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
     flex-shrink: 0;
   }
 
