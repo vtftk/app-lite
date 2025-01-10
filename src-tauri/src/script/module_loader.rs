@@ -41,7 +41,6 @@ impl AppModuleLoader {
             return Err(generic_error("Attempted to load JSON module without specifying \"type\": \"json\" attribute in the import statement."));
         }
 
-        dbg!(&path);
         let code = tokio::fs::read(path).await?;
         let module = ModuleSource::new(
             module_type,
