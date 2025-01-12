@@ -1,3 +1,7 @@
+//! # Tray
+//!
+//! Tray menu logic for the minimize to tray functionality
+
 use anyhow::Context;
 use tauri::{
     menu::{IconMenuItem, Menu, MenuItem},

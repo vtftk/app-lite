@@ -1,7 +1,14 @@
-use super::models::{
-    TwitchEvent, TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits,
-    TwitchEventFollow, TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
-    TwitchEventShoutoutReceive, TwitchEventSub,
+//! # Websocket
+//!
+//! Eventsub websocket connection to Twitch for receiving events from Twitch
+
+use super::{
+    models::{
+        TwitchEvent, TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits,
+        TwitchEventFollow, TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub,
+        TwitchEventRedeem, TwitchEventShoutoutReceive, TwitchEventSub,
+    },
+    TwitchClient,
 };
 use anyhow::Context;
 use axum::async_trait;
@@ -10,12 +17,8 @@ use futures::{
     StreamExt,
 };
 use log::{error, warn};
-use thiserror::Error;
 use tokio::{net::TcpStream, sync::broadcast, task::AbortHandle};
-use tokio_tungstenite::{
-    tungstenite::{self, protocol::WebSocketConfig},
-    MaybeTlsStream, WebSocketStream,
-};
+use tokio_tungstenite::{tungstenite, MaybeTlsStream, WebSocketStream};
 use tungstenite::{
     error::ProtocolError as WebsocketProtocolError, Error as TWebsocketError,
     Message as WebsocketMessage,
@@ -25,35 +28,11 @@ use twitch_api::{
         self,
         channel::ChannelRaidV1,
         event::websocket::{EventsubWebsocketData, SessionData},
-        Event, EventSubscription, PayloadParseError, Transport,
+        Event, EventSubscription, Transport,
     },
     twitch_oauth2::{TwitchToken, UserToken},
     HelixClient,
 };
-
-#[derive(Debug, Error)]
-pub enum WebsocketError {
-    #[error("token has expired")]
-    TokenExpired,
-
-    #[error("twitch access was revoked")]
-    Revocation,
-
-    #[error("unexpected message type")]
-    UnexpectedMessageType,
-
-    /// Generic error caught
-    #[error(transparent)]
-    General(#[from] anyhow::Error),
-
-    /// Error occurred in tungstite
-    #[error(transparent)]
-    Tungstenite(#[from] tungstenite::Error),
-
-    /// Twitch gave back a bad payload
-    #[error(transparent)]
-    BadPayload(#[from] PayloadParseError),
-}
 
 /// Wrapper around a [WebsocketClient] that automatically
 /// aborts when dropped
@@ -67,7 +46,7 @@ impl Drop for WebsocketManagedTask {
 
 impl WebsocketManagedTask {
     pub fn create(
-        client: HelixClient<'static, reqwest::Client>,
+        client: TwitchClient,
         tx: broadcast::Sender<TwitchEvent>,
         token: UserToken,
     ) -> WebsocketManagedTask {
@@ -88,31 +67,22 @@ impl WebsocketManagedTask {
 
 pub struct WebsocketClient {
     /// The session id of the websocket connection
-    pub session_id: Option<String>,
+    session_id: Option<String>,
     /// The token used to authenticate with the Twitch API
-    pub token: UserToken,
+    token: UserToken,
     /// The client used to make requests to the Twitch API
-    pub client: HelixClient<'static, reqwest::Client>,
+    client: TwitchClient,
     /// The url to use for websocket
-    pub connect_url: String,
+    connect_url: String,
     /// Sender for twitch events
-    pub tx: broadcast::Sender<TwitchEvent>,
+    tx: broadcast::Sender<TwitchEvent>,
 }
 
-fn websocket_config() -> WebSocketConfig {
-    WebSocketConfig {
-        max_message_size: Some(64 << 20), // 64 MiB
-        max_frame_size: Some(16 << 20),   // 16 MiB
-        accept_unmasked_frames: false,
-        ..WebSocketConfig::default()
-    }
-}
+type WsStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 /// Connect to the websocket and return the stream
-async fn websocket_connect(
-    connect_url: &str,
-) -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>, tungstenite::Error> {
-    tokio_tungstenite::connect_async_with_config(connect_url, Some(websocket_config()), false)
+async fn websocket_connect(connect_url: &str) -> tungstenite::Result<WsStream> {
+    tokio_tungstenite::connect_async(connect_url)
         .await
         // We only care about the socket
         .map(|(socket, _)| socket)
@@ -120,21 +90,17 @@ async fn websocket_connect(
 
 fn map_message<E: EventSubscription + Clone>(
     message: eventsub::Message<E>,
-) -> Result<E::Payload, WebsocketError> {
+) -> anyhow::Result<E::Payload> {
     match message {
-        eventsub::Message::Revocation() => Err(WebsocketError::Revocation),
+        eventsub::Message::Revocation() => Err(anyhow::anyhow!("revocation")),
         eventsub::Message::Notification(msg) => Ok(msg),
-        _ => Err(WebsocketError::UnexpectedMessageType),
+        _ => Err(anyhow::anyhow!("unexpected message type")),
     }
 }
 
 impl WebsocketClient {
     /// Create a new websocket client
-    pub fn new(
-        client: HelixClient<'static, reqwest::Client>,
-        tx: broadcast::Sender<TwitchEvent>,
-        token: UserToken,
-    ) -> Self {
+    pub fn new(client: TwitchClient, tx: broadcast::Sender<TwitchEvent>, token: UserToken) -> Self {
         Self {
             session_id: None,
             token,
@@ -145,7 +111,7 @@ impl WebsocketClient {
     }
 
     /// Run the websocket subscriber
-    pub async fn run(mut self) -> Result<(), WebsocketError> {
+    pub async fn run(mut self) -> anyhow::Result<()> {
         // Establish the stream
         let mut stream = websocket_connect(self.connect_url.as_str())
             .await
@@ -165,7 +131,7 @@ impl WebsocketClient {
                     continue;
                 }
                 // Other errors can be considered fatal
-                Err(err) => return Err(WebsocketError::Tungstenite(err)),
+                Err(err) => return Err(err.into()),
             };
 
             self.process_message(msg).await?
@@ -175,7 +141,7 @@ impl WebsocketClient {
     }
 
     /// Process a message from the websocket
-    async fn process_message(&mut self, msg: tungstenite::Message) -> Result<(), WebsocketError> {
+    async fn process_message(&mut self, msg: tungstenite::Message) -> anyhow::Result<()> {
         // Only process text messages
         let text = match msg {
             WebsocketMessage::Text(text) => text,
@@ -195,11 +161,11 @@ impl WebsocketClient {
             }
 
             // Handle revocation of permission
-            EventsubWebsocketData::Revocation { .. } => return Err(WebsocketError::Revocation),
+            EventsubWebsocketData::Revocation { .. } => return Err(anyhow::anyhow!("revocation")),
 
             // Handle expected messages
             EventsubWebsocketData::Notification { payload, .. } => {
-                self.handle_notification(payload).await?
+                self.handle_notification(payload)?
             }
 
             _ => {}
@@ -208,7 +174,7 @@ impl WebsocketClient {
         Ok(())
     }
 
-    async fn handle_notification(&mut self, event: Event) -> Result<(), WebsocketError> {
+    fn handle_notification(&mut self, event: Event) -> anyhow::Result<()> {
         match event {
             // Channel points are redeemed for reward
             Event::ChannelPointsCustomRewardRedemptionAddV1(payload) => {
@@ -383,7 +349,7 @@ impl WebsocketClient {
     }
 
     /// Initializes a session for the provided session data
-    async fn initialize_session(&mut self, data: SessionData<'_>) -> Result<(), WebsocketError> {
+    async fn initialize_session(&mut self, data: SessionData<'_>) -> anyhow::Result<()> {
         let session_id = data.id.to_string();
 
         self.session_id = Some(session_id.clone());
@@ -393,11 +359,11 @@ impl WebsocketClient {
         }
 
         if self.token.is_elapsed() {
-            return Err(WebsocketError::TokenExpired);
+            return Err(anyhow::anyhow!("token is expired"));
         }
 
         // Subscribe to the desired events
-        self.create_subscriptions()
+        Self::create_subscriptions(&session_id, &self.token, &self.client)
             .await
             .context("creating subscriptions")?;
 
@@ -406,7 +372,11 @@ impl WebsocketClient {
 
     /// Creates subscriptions to the desired events for the current
     /// websocket events session
-    async fn create_subscriptions(&self) -> anyhow::Result<()> {
+    async fn create_subscriptions(
+        session_id: &str,
+        token: &UserToken,
+        client: &TwitchClient,
+    ) -> anyhow::Result<()> {
         use eventsub::channel::{
             ChannelAdBreakBeginV1, ChannelChatMessageV1, ChannelCheerV1, ChannelFollowV2,
             ChannelModeratorAddV1, ChannelModeratorRemoveV1, ChannelPointsCustomRewardAddV1,
@@ -416,14 +386,8 @@ impl WebsocketClient {
             ChannelVipRemoveV1,
         };
 
-        let session_id = self.session_id.as_deref().context("no active session")?;
-
-        let token = &self.token;
         let user_id = token.user_id.clone();
-
         let transport = eventsub::Transport::websocket(session_id);
-
-        let client = &self.client;
 
         let subscriptions: Vec<Box<dyn EventSubTrait>> = vec![
             // Subscribe to reward redemptions
