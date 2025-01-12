@@ -90,7 +90,7 @@ version = "1.1.0"
 features = ["sqlx-sqlite", "runtime-tokio-rustls"]
 
 # Temporary dependency overrides until new eventsub payloads land
-# (https://github.com/twitch-rs/twitch_api/pull/457)
+# (https://github.com/twitch-rs/twitch_api/issues/434)
 [patch.crates-io.twitch_api]
 git = 'https://github.com/twitch-rs/twitch_api.git'
 rev = "866de1f"
