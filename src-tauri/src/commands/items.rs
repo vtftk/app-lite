@@ -103,6 +103,7 @@ pub async fn update_item(
     })
 }
 
+/// Updates the list orderings of items using the provided orderings
 #[tauri::command]
 pub async fn update_item_orderings(
     update: Vec<UpdateOrdering>,

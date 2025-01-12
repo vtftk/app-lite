@@ -2,30 +2,25 @@
 //!
 //! Commands for interacting with events from the frontend
 
-use crate::database::entity::events::{EventTrigger, EventTriggerType};
-use crate::database::entity::shared::{ExecutionsQuery, LogsQuery, UpdateOrdering};
-use crate::database::entity::{EventExecutionModel, EventLogsModel};
-use crate::events::outcome::produce_outcome_message;
-use crate::events::scheduler::SchedulerHandle;
-use crate::events::EventMessage;
-use crate::script::runtime::ScriptExecutorHandle;
-use crate::twitch::manager::Twitch;
+use super::CmdResult;
 use crate::{
     database::entity::{
-        events::{CreateEvent, UpdateEvent},
-        EventModel,
+        events::{CreateEvent, EventTrigger, EventTriggerType, UpdateEvent},
+        shared::{ExecutionsQuery, LogsQuery, UpdateOrdering},
+        EventExecutionModel, EventLogsModel, EventModel,
     },
-    events::matching::EventData,
+    events::{
+        matching::EventData, outcome::produce_outcome_message, scheduler::SchedulerHandle,
+        EventMessageChannel,
+    },
+    script::runtime::ScriptExecutorHandle,
+    twitch::manager::Twitch,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
 use tauri::State;
-use tokio::sync::broadcast;
 use uuid::Uuid;
 
-use super::CmdResult;
-
-/// Get all events
 #[tauri::command]
 pub async fn get_events(db: State<'_, DatabaseConnection>) -> CmdResult<Vec<EventModel>> {
     let db = db.inner();
@@ -33,7 +28,6 @@ pub async fn get_events(db: State<'_, DatabaseConnection>) -> CmdResult<Vec<Even
     Ok(events)
 }
 
-/// Get a specific event by ID
 #[tauri::command]
 pub async fn get_event_by_id(
     event_id: Uuid,
@@ -44,7 +38,6 @@ pub async fn get_event_by_id(
     Ok(event)
 }
 
-/// Create a new event
 #[tauri::command]
 pub async fn create_event(
     create: CreateEvent,
@@ -62,7 +55,6 @@ pub async fn create_event(
     Ok(event)
 }
 
-/// Update an existing event
 #[tauri::command]
 pub async fn update_event(
     event_id: Uuid,
@@ -84,7 +76,6 @@ pub async fn update_event(
     Ok(event)
 }
 
-/// Delete a event
 #[tauri::command]
 pub async fn delete_event(
     event_id: Uuid,
@@ -100,7 +91,7 @@ pub async fn delete_event(
 
     event.delete(db).await?;
 
-    // Update the event scheduler
+    // Update the event scheduler to handle deleted timer
     if is_timer_event {
         update_scheduler_events(db, scheduler.inner()).await;
     }
@@ -114,14 +105,12 @@ async fn update_scheduler_events(db: &DatabaseConnection, scheduler: &SchedulerH
     }
 }
 
-/// Get a specific event by ID
 #[tauri::command]
 pub async fn test_event_by_id(
     event_id: Uuid,
     event_data: EventData,
-
     db: State<'_, DatabaseConnection>,
-    event_sender: State<'_, broadcast::Sender<EventMessage>>,
+    event_sender: State<'_, EventMessageChannel>,
     twitch: State<'_, Twitch>,
     script_handle: State<'_, ScriptExecutorHandle>,
 ) -> CmdResult<()> {
@@ -146,7 +135,6 @@ pub async fn update_event_orderings(
 ) -> CmdResult<()> {
     let db = db.inner();
     EventModel::update_order(db, update).await?;
-
     Ok(())
 }
 
@@ -161,7 +149,6 @@ pub async fn get_event_executions(
         .await?
         .context("unknown event")?;
     let executions = event.get_executions(db, query).await?;
-
     Ok(executions)
 }
 
@@ -171,13 +158,10 @@ pub async fn delete_event_executions(
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();
-
     EventExecutionModel::delete_many(db, &execution_ids).await?;
-
     Ok(())
 }
 
-/// Get logs of a script
 #[tauri::command]
 pub async fn get_event_logs(
     event_id: Uuid,
@@ -189,7 +173,6 @@ pub async fn get_event_logs(
         .await?
         .context("event not found")?;
     let logs = event.get_logs(db, query).await?;
-
     Ok(logs)
 }
 
@@ -199,8 +182,6 @@ pub async fn delete_event_logs(
     db: State<'_, DatabaseConnection>,
 ) -> CmdResult<()> {
     let db = db.inner();
-
     EventLogsModel::delete_many(db, &log_ids).await?;
-
     Ok(())
 }

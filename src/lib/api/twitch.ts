@@ -1,10 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
 
 import type { CustomReward } from "./types";
 
 import { queryClient } from "./utils";
-import { listen } from "@tauri-apps/api/event";
 
 export const GET_REDEEMS_LIST_KEY = ["get-redeems-list"];
 
@@ -22,7 +22,7 @@ export function createGetRedeemsList(): CreateQueryResult<
 }
 
 export async function refreshRedeemsList() {
-  await invoke<boolean>("refresh_redeems_list");
+  await invoke("refresh_redeems_list");
 
   queryClient.cancelQueries({ queryKey: GET_REDEEMS_LIST_KEY });
   queryClient.invalidateQueries({ queryKey: GET_REDEEMS_LIST_KEY });

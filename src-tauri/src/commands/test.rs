@@ -5,14 +5,17 @@ use std::{
 
 use crate::{
     database::entity::SoundModel,
-    events::{outcome::resolve_items, EventMessage, ThrowItemConfig, ThrowItemMessage},
+    events::{
+        outcome::resolve_items, EventMessage, EventMessageChannel, ThrowItemConfig,
+        ThrowItemMessage,
+    },
 };
 use anyhow::Context;
 use log::debug;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use tokio::{net::UdpSocket, sync::broadcast, time::timeout};
+use tokio::{net::UdpSocket, time::timeout};
 use uuid::Uuid;
 
 use super::CmdResult;
@@ -23,7 +26,7 @@ pub async fn test_throw(
     item_ids: Vec<Uuid>,
     amount: Option<i64>,
     db: State<'_, DatabaseConnection>,
-    event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
+    event_sender: State<'_, EventMessageChannel>,
 ) -> CmdResult<()> {
     let db = db.inner();
     let items = resolve_items(db, &item_ids).await?;
@@ -46,7 +49,7 @@ pub async fn test_throw_barrage(
     amount: i64,
     frequency: u32,
     db: State<'_, DatabaseConnection>,
-    event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
+    event_sender: State<'_, EventMessageChannel>,
 ) -> CmdResult<()> {
     let db = db.inner();
     let items = resolve_items(db, &item_ids).await?;
@@ -67,7 +70,7 @@ pub async fn test_throw_barrage(
 #[tauri::command]
 pub fn test_sound(
     config: SoundModel,
-    event_sender: tauri::State<'_, broadcast::Sender<EventMessage>>,
+    event_sender: State<'_, EventMessageChannel>,
 ) -> Result<bool, ()> {
     event_sender
         .send(EventMessage::PlaySound { config })

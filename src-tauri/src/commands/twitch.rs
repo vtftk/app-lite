@@ -2,7 +2,6 @@ use crate::commands::CmdResult;
 use crate::database::entity::app_data::AppDataModel;
 use crate::twitch::manager::Twitch;
 use anyhow::Context;
-use log::debug;
 use reqwest::Url;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
@@ -23,10 +22,9 @@ pub async fn get_redeems_list(twitch: State<'_, Twitch>) -> CmdResult<Arc<[Custo
 
 /// Reloads the list of available redeems
 #[tauri::command]
-pub async fn refresh_redeems_list(twitch: State<'_, Twitch>) -> CmdResult<bool> {
-    debug!("reloading rewards list");
-    _ = twitch.load_rewards_list().await;
-    Ok(true)
+pub async fn refresh_redeems_list(twitch: State<'_, Twitch>) -> CmdResult<()> {
+    twitch.load_rewards_list().await?;
+    Ok(())
 }
 
 /// Obtain a URL for use logging into twitch using OAuth2
@@ -45,12 +43,12 @@ pub async fn get_twitch_oauth_uri(
 }
 
 #[tauri::command]
-pub async fn is_authenticated(twitch: tauri::State<'_, Twitch>) -> Result<bool, ()> {
+pub async fn is_authenticated(twitch: tauri::State<'_, Twitch>) -> CmdResult<bool> {
     Ok(twitch.is_authenticated().await)
 }
 
 #[tauri::command]
-pub async fn logout(twitch: tauri::State<'_, Twitch>) -> Result<(), ()> {
+pub async fn logout(twitch: tauri::State<'_, Twitch>) -> CmdResult<()> {
     twitch.reset().await;
     Ok(())
 }
