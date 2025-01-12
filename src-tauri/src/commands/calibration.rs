@@ -1,37 +1,34 @@
 use crate::{
-    commands::CmdResult, database::entity::ModelDataModel, events::EventMessage,
+    commands::CmdResult,
+    database::entity::ModelDataModel,
+    events::{EventMessage, EventMessageChannel},
     http::models::calibration::CalibrationStep,
 };
 use sea_orm::DatabaseConnection;
 use tauri::State;
-use tokio::sync::broadcast;
 
 /// Set the current calibration step
 #[tauri::command]
 pub fn set_calibration_step(
     step: CalibrationStep,
-    event_sender: State<'_, broadcast::Sender<EventMessage>>,
-) -> Result<(), ()> {
-    event_sender
-        .send(EventMessage::SetCalibrationStep { step })
-        .map_err(|_| ())?;
+    event_sender: State<'_, EventMessageChannel>,
+) -> CmdResult<()> {
+    event_sender.send(EventMessage::SetCalibrationStep { step })?;
     Ok(())
 }
 
-/// Move the model for calibration
+/// Moves the VTube Studio model by the provided relative amount
 #[tauri::command]
 pub fn calibration_move_model(
     x: f32,
     y: f32,
-    event_sender: State<'_, broadcast::Sender<EventMessage>>,
-) -> Result<(), ()> {
-    event_sender
-        .send(EventMessage::MoveModel { x, y })
-        .map_err(|_| ())?;
+    event_sender: State<'_, EventMessageChannel>,
+) -> CmdResult<()> {
+    event_sender.send(EventMessage::MoveModel { x, y })?;
     Ok(())
 }
 
-/// Get all model data
+/// Obtains the calibration data for all models
 #[tauri::command]
 pub async fn get_calibration_data(
     db: State<'_, DatabaseConnection>,

@@ -50,6 +50,8 @@ pub enum ThrowItemConfig {
     },
 }
 
+pub type EventMessageChannel = broadcast::Sender<EventMessage>;
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum EventMessage {
