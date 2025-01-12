@@ -596,3 +596,979 @@ pub async fn match_shoutout_receive_event(
         event_data,
     })
 }
+
+#[cfg(test)]
+mod test {
+    use super::{
+        match_ad_break_event, match_chat_event, match_cheer_bits_event, match_follow_event,
+        match_gifted_subscription_event, match_raid_event, match_re_subscription_event,
+        match_redeem_event, match_shoutout_receive_event, match_subscription_event,
+    };
+    use crate::{
+        database::{
+            entity::{
+                commands::{CommandAliases, CommandOutcome, CreateCommand},
+                events::{CreateEvent, EventOutcome, EventOutcomeSendChat, EventTrigger},
+                CommandModel, EventModel,
+            },
+            setup_database,
+        },
+        twitch::models::{
+            TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
+            TwitchEventGiftSub, TwitchEventRaid, TwitchEventReSub, TwitchEventRedeem,
+            TwitchEventShoutoutReceive, TwitchEventSub,
+        },
+    };
+    use sea_orm::Database;
+    use twitch_api::{
+        eventsub::channel::{
+            channel_points_custom_reward_redemption::Reward,
+            subscription::message::SubscriptionMessage,
+        },
+        types::{DisplayName, RedemptionId, SubscriptionTier, UserId, UserName},
+    };
+
+    /// Tests that a reward redemption event can successfully match using "match_redeem_event"
+    /// when the ID is the same as the stored database model
+    #[tokio::test]
+    async fn test_match_redeem_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Redeem {
+                    reward_id: "test-reward".to_string(),
+                },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let reward = serde_json::json!({
+            "cost": 0,
+            "id": "test-reward",
+            "prompt": "",
+            "title": "",
+        });
+
+        let reward: Reward = serde_json::from_value(reward).unwrap();
+
+        let found_event = match_redeem_event(
+            &db,
+            TwitchEventRedeem {
+                id: RedemptionId::from_static("mock-redemption-id"),
+                reward,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+                user_input: "test".to_string(),
+            },
+        )
+        .await
+        .expect("missing expected redeem event");
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    /// Tests that no events will be found if the required if "match_redeem_event" has no
+    /// matching database events
+    #[tokio::test]
+    async fn test_match_redeem_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let reward = serde_json::json!({
+            "cost": 0,
+            "id": "test-reward",
+            "prompt": "",
+            "title": "",
+        });
+
+        let reward: Reward = serde_json::from_value(reward).unwrap();
+
+        let found_event = match_redeem_event(
+            &db,
+            TwitchEventRedeem {
+                id: RedemptionId::from_static("mock-redemption-id"),
+                reward,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+                user_input: "test".to_string(),
+            },
+        )
+        .await
+        .expect("missing expected redeem event");
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    /// Tests that a cheer bits event can successfully match using "match_cheer_bits_event"
+    /// when the ID is the same as the stored database model
+    #[tokio::test]
+    async fn test_match_cheer_bits_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Bits { min_bits: 0 },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_cheer_bits_event(
+            &db,
+            TwitchEventCheerBits {
+                bits: 100,
+                anonymous: false,
+                user_id: Some(UserId::from_static("mock-user-id")),
+                user_name: Some(UserName::from_static("mockuser")),
+                user_display_name: Some(DisplayName::from_static("Mock User")),
+                message: "test".to_string(),
+            },
+        )
+        .await
+        .expect("missing expected redeem event");
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    /// Tests that a cheer bits event will not match using "match_cheer_bits_event"
+    /// when the amount of bits is not enough
+    #[tokio::test]
+    async fn test_match_cheer_bits_event_not_enough_bits() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Bits { min_bits: 500 },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_cheer_bits_event(
+            &db,
+            TwitchEventCheerBits {
+                bits: 100,
+                anonymous: false,
+                user_id: Some(UserId::from_static("mock-user-id")),
+                user_name: Some(UserName::from_static("mockuser")),
+                user_display_name: Some(DisplayName::from_static("Mock User")),
+                message: "test".to_string(),
+            },
+        )
+        .await
+        .expect("missing expected redeem event");
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    /// Tests that no events will be found if the required if "match_cheer_bits_event" has no
+    /// matching database events
+    #[tokio::test]
+    async fn test_match_cheer_bits_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_cheer_bits_event(
+            &db,
+            TwitchEventCheerBits {
+                bits: 100,
+                anonymous: false,
+                user_id: Some(UserId::from_static("mock-user-id")),
+                user_name: Some(UserName::from_static("mockuser")),
+                user_display_name: Some(DisplayName::from_static("Mock User")),
+                message: "test".to_string(),
+            },
+        )
+        .await
+        .expect("missing expected redeem event");
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_follow_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Follow,
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_follow_event(
+            &db,
+            TwitchEventFollow {
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_follow_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_follow_event(
+            &db,
+            TwitchEventFollow {
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_subscription_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Subscription,
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_subscription_event(
+            &db,
+            TwitchEventSub {
+                is_gift: false,
+                tier: SubscriptionTier::Tier1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_subscription_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_subscription_event(
+            &db,
+            TwitchEventSub {
+                is_gift: false,
+                tier: SubscriptionTier::Tier1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_gifted_subscription_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::GiftedSubscription,
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_gifted_subscription_event(
+            &db,
+            TwitchEventGiftSub {
+                anonymous: true,
+                total: 1,
+                cumulative_total: None,
+                tier: SubscriptionTier::Tier1,
+                user_id: Some(UserId::from_static("mock-user-id")),
+                user_name: Some(UserName::from_static("mockuser")),
+                user_display_name: Some(DisplayName::from_static("Mock User")),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_gifted_subscription_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_gifted_subscription_event(
+            &db,
+            TwitchEventGiftSub {
+                anonymous: true,
+                total: 1,
+                cumulative_total: None,
+                tier: SubscriptionTier::Tier1,
+                user_id: Some(UserId::from_static("mock-user-id")),
+                user_name: Some(UserName::from_static("mockuser")),
+                user_display_name: Some(DisplayName::from_static("Mock User")),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_re_subscription_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Subscription,
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let message = serde_json::json!({
+            "text": "",
+            "emotes": []
+        });
+        let message: SubscriptionMessage = serde_json::from_value(message).unwrap();
+
+        let found_event = match_re_subscription_event(
+            &db,
+            TwitchEventReSub {
+                cumulative_months: 1,
+                duration_months: 1,
+                message,
+                streak_months: Some(1),
+                tier: SubscriptionTier::Tier1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_re_subscription_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let message = serde_json::json!({
+            "text": "",
+            "emotes": []
+        });
+        let message: SubscriptionMessage = serde_json::from_value(message).unwrap();
+
+        let found_event = match_re_subscription_event(
+            &db,
+            TwitchEventReSub {
+                cumulative_months: 1,
+                duration_months: 1,
+                message,
+                streak_months: Some(1),
+                tier: SubscriptionTier::Tier1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_chat_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Command {
+                    message: "!test".to_string(),
+                },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let message = serde_json::json!({
+            "text": "!test",
+            "fragments": []
+        });
+        let message: twitch_api::eventsub::channel::chat::Message =
+            serde_json::from_value(message).unwrap();
+
+        let found_event = match_chat_event(
+            &db,
+            TwitchEventChatMsg {
+                message_id: "mock-message".into(),
+                message,
+                cheer: None,
+
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_chat_event_command() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_command = CommandModel::create(
+            &db,
+            CreateCommand {
+                enabled: true,
+                name: "Test Event".to_string(),
+                command: "!test".to_string(),
+                aliases: CommandAliases(Default::default()),
+                outcome: CommandOutcome::Template {
+                    message: "test".to_string(),
+                },
+                cooldown: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let message = serde_json::json!({
+            "text": "!test",
+            "fragments": []
+        });
+        let message: twitch_api::eventsub::channel::chat::Message =
+            serde_json::from_value(message).unwrap();
+
+        let found_event = match_chat_event(
+            &db,
+            TwitchEventChatMsg {
+                message_id: "mock-message".into(),
+                message,
+                cheer: None,
+
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let command = found_event
+            .commands
+            .first()
+            .expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(command.command.id, expected_command.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_chat_event_command_not_matching() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        CommandModel::create(
+            &db,
+            CreateCommand {
+                enabled: true,
+                name: "Test Event".to_string(),
+                command: "!test".to_string(),
+                aliases: CommandAliases(Default::default()),
+                outcome: CommandOutcome::Template {
+                    message: "test".to_string(),
+                },
+                cooldown: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let message = serde_json::json!({
+            "text": "!tes",
+            "fragments": []
+        });
+        let message: twitch_api::eventsub::channel::chat::Message =
+            serde_json::from_value(message).unwrap();
+
+        let found_event = match_chat_event(
+            &db,
+            TwitchEventChatMsg {
+                message_id: "mock-message".into(),
+                message,
+                cheer: None,
+
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(
+            found_event.commands.is_empty(),
+            "should not match any events"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_match_chat_event_not_matching() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Command {
+                    message: "!test".to_string(),
+                },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let message = serde_json::json!({
+            "text": "",
+            "fragments": []
+        });
+        let message: twitch_api::eventsub::channel::chat::Message =
+            serde_json::from_value(message).unwrap();
+
+        let found_event = match_chat_event(
+            &db,
+            TwitchEventChatMsg {
+                message_id: "mock-message".into(),
+                message,
+                cheer: None,
+
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_chat_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+        let message = serde_json::json!({
+            "text": "",
+            "fragments": []
+        });
+        let message: twitch_api::eventsub::channel::chat::Message =
+            serde_json::from_value(message).unwrap();
+
+        let found_event = match_chat_event(
+            &db,
+            TwitchEventChatMsg {
+                message_id: "mock-message".into(),
+                message,
+                cheer: None,
+
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_raid_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Raid { min_raiders: 1 },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_raid_event(
+            &db,
+            TwitchEventRaid {
+                viewers: 1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_raid_event_not_enough_raiders() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::Raid { min_raiders: 5 },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_raid_event(
+            &db,
+            TwitchEventRaid {
+                viewers: 1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_raid_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_raid_event(
+            &db,
+            TwitchEventRaid {
+                viewers: 1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_ad_break_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::AdBreakBegin,
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_ad_break_event(
+            &db,
+            TwitchEventAdBreakBegin {
+                duration_seconds: 1,
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_ad_break_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_ad_break_event(
+            &db,
+            TwitchEventAdBreakBegin {
+                duration_seconds: 1,
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_shoutout_receive_event() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let expected_event = EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::ShoutoutReceive { min_viewers: 1 },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_shoutout_receive_event(
+            &db,
+            TwitchEventShoutoutReceive {
+                viewer_count: 1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        let event = found_event.events.first().expect("missing matching event");
+
+        // Expect found event to match created
+        assert_eq!(event.id, expected_event.id);
+    }
+
+    #[tokio::test]
+    async fn test_match_shoutout_receive_event_not_enough_viewers() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        EventModel::create(
+            &db,
+            CreateEvent {
+                enabled: true,
+                name: "Test Event".to_string(),
+                trigger: EventTrigger::ShoutoutReceive { min_viewers: 5 },
+                cooldown: Default::default(),
+                outcome: EventOutcome::SendChatMessage(EventOutcomeSendChat {
+                    template: "test".to_string(),
+                }),
+                outcome_delay: Default::default(),
+                require_role: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        let found_event = match_shoutout_receive_event(
+            &db,
+            TwitchEventShoutoutReceive {
+                viewer_count: 1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+
+    #[tokio::test]
+    async fn test_match_shoutout_receive_event_non_existent() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        setup_database(&db).await.unwrap();
+
+        let found_event = match_shoutout_receive_event(
+            &db,
+            TwitchEventShoutoutReceive {
+                viewer_count: 1,
+                user_id: UserId::from_static("mock-user-id"),
+                user_name: UserName::from_static("mockuser"),
+                user_display_name: DisplayName::from_static("Mock User"),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(found_event.events.is_empty(), "should not match any events");
+    }
+}

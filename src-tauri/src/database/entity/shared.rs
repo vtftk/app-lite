@@ -4,10 +4,13 @@ use serde::{Deserialize, Serialize};
 
 pub type DbResult<T> = Result<T, DbErr>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[derive(
+    Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum MinimumRequireRole {
     #[sea_orm(string_value = "None")]
+    #[default]
     None,
     #[sea_orm(string_value = "Follower")]
     Follower,

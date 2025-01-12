@@ -36,12 +36,18 @@ pub async fn connect_database(path: PathBuf) -> anyhow::Result<DatabaseConnectio
     let options = sea_orm::ConnectOptions::new(path);
     let db = Database::connect(options).await?;
 
-    if let Err(err) = Migrator::up(&db, None).await {
+    setup_database(&db).await?;
+
+    Ok(db)
+}
+
+pub async fn setup_database(db: &DatabaseConnection) -> anyhow::Result<()> {
+    if let Err(err) = Migrator::up(db, None).await {
         warn!("failed to apply/check database migrations: {:?}", err);
         // TODO: Check for applied forward migrations, these are not always failing changes
     }
 
-    Ok(db)
+    Ok(())
 }
 
 pub async fn clean_old_data(db: DatabaseConnection) -> anyhow::Result<()> {
