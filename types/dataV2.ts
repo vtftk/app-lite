@@ -196,6 +196,7 @@ export type EventInputData =
 
 export type EventInputDataNone = object;
 export type EventInputDataRedeem = {
+  redemption_id: string;
   reward_id: string;
   reward_name: string;
   cost: number;

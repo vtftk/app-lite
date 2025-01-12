@@ -69,6 +69,7 @@ export function getEventTestingData(triggerType: EventTriggerType): VEventData {
     case EventTriggerType.Redeem:
       return {
         user,
+        redemption_id: "",
         reward_id: "0000-0000-0000-0000-0000",
         reward_name: randomArrayItem(REWARD_NAMES),
         cost: randomNumber(1, 10) * 100,
