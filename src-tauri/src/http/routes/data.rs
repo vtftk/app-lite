@@ -74,7 +74,9 @@ pub async fn update_runtime_data(
     StatusCode::OK
 }
 
-/// GET /content/:folder/:name
+/// GET /content/:folder/:name  
+///
+/// Retrieve the contents of a file from one of the content folders
 pub async fn get_content_file(
     Path((folder, name)): Path<(String, String)>,
     Extension(app): Extension<AppHandle>,
@@ -139,6 +141,8 @@ pub async fn get_defaults_file(
 }
 
 /// POST /data/set-auth-token
+///
+/// Set the current VTube Studio access token for the overlay
 pub async fn handle_set_auth_token(
     Extension(db): Extension<DatabaseConnection>,
     Json(req): Json<SetAuthTokenRequest>,
@@ -165,6 +169,8 @@ pub async fn handle_set_auth_token(
 }
 
 /// GET /data/get-auth-token
+///
+/// Retrieve the current VTube Studio access token for the overlay
 pub async fn handle_get_auth_token(
     Extension(db): Extension<DatabaseConnection>,
 ) -> HttpResult<GetAuthTokenResponse> {

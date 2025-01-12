@@ -24,13 +24,11 @@ pub async fn handle_sse(
     Extension(runtime_app_data): Extension<RuntimeAppDataStore>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     // Increase number of active overlays
-    {
-        runtime_app_data
-            .write(|app_data| {
-                app_data.active_overlay_count = app_data.active_overlay_count.saturating_add(1);
-            })
-            .await;
-    }
+    runtime_app_data
+        .write(|app_data| {
+            app_data.active_overlay_count = app_data.active_overlay_count.saturating_add(1);
+        })
+        .await;
 
     let stream = BroadcastStream::new(event_handle.0);
 
@@ -42,6 +40,9 @@ pub async fn handle_sse(
 }
 
 /// Wrapper around the event handle to receive events for the runtime  
+///
+/// Once the connection is dropped the number of active overlays is
+/// decreased and associated state is dropped if overlays reaches zero
 pub struct OverlayEventStream {
     runtime_app_data: RuntimeAppDataStore,
     stream: BroadcastStream<EventMessage>,
@@ -75,7 +76,7 @@ impl Drop for OverlayEventStream {
         let runtime_app_data = self.runtime_app_data.clone();
 
         // Decrease the counter of active streams
-        tokio::spawn(async move {
+        tauri::async_runtime::spawn(async move {
             let runtime_app_data = runtime_app_data;
 
             runtime_app_data

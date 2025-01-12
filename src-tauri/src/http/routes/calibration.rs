@@ -16,6 +16,9 @@ use crate::{
     },
 };
 
+/// GET /calibration-data
+///
+/// Requests the current calibration data for all models
 pub async fn handle_calibration_data(
     Extension(db): Extension<DatabaseConnection>,
 ) -> HttpResult<Vec<ModelDataModel>> {
@@ -26,6 +29,9 @@ pub async fn handle_calibration_data(
     ))
 }
 
+/// POST /calibration
+///
+/// Handles updating the calibration progress
 pub async fn handle_calibration_progress(
     Extension(db): Extension<DatabaseConnection>,
     Extension(app_handle): Extension<AppHandle>,

@@ -176,7 +176,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
     ));
 
     // Run HTTP server
-    _ = spawn(http::server::start(
+    _ = spawn(http::start_http_server(
         db,
         event_rx,
         handle.clone(),
