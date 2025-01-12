@@ -5,12 +5,29 @@ pub mod scheduler;
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
+use uuid::Uuid;
 
 use crate::{
-    database::entity::SoundModel,
+    database::entity::{app_data::AppData, ItemModel, SoundModel},
     http::models::calibration::CalibrationStep,
-    state::app_data::{AppData, ItemsWithSounds},
 };
+
+/// Collection of items along with the resolved impact
+/// sounds for the items
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ItemsWithSounds {
+    /// All the referenced items
+    pub items: Vec<ItemWithImpactSoundIds>,
+    /// All the referenced sounds
+    pub impact_sounds: Vec<SoundModel>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ItemWithImpactSoundIds {
+    #[serde(flatten)]
+    pub item: ItemModel,
+    pub impact_sound_ids: Vec<Uuid>,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ThrowItemMessage {

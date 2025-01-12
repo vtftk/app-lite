@@ -1,6 +1,6 @@
 use super::{
     matching::{EventData, EventInputData},
-    EventMessage, ThrowItemConfig, ThrowItemMessage,
+    EventMessage, ItemWithImpactSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage,
 };
 use crate::{
     database::entity::{
@@ -13,7 +13,6 @@ use crate::{
         EventModel, ItemModel, SoundModel,
     },
     script::runtime::{RuntimeExecutionContext, ScriptExecutorHandle},
-    state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
     twitch::manager::Twitch,
 };
 use anyhow::{anyhow, Context};

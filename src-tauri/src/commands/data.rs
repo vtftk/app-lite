@@ -1,11 +1,8 @@
 use crate::{
     commands::CmdResult,
-    database::entity::app_data::AppDataModel,
+    database::entity::app_data::{AppData, AppDataModel},
     events::EventMessage,
-    state::{
-        app_data::AppData,
-        runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
-    },
+    state::runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
 };
 use anyhow::Context;
 use log::{debug, error};
@@ -54,7 +51,7 @@ pub async fn set_app_data(
     let model = AppDataModel::set(db.inner(), app_data).await?;
 
     _ = event_sender.send(EventMessage::AppDataUpdated {
-        app_data: Box::new(model.data.0),
+        app_data: Box::new(model.data),
     });
 
     Ok(true)

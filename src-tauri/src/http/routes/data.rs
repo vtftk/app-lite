@@ -1,13 +1,14 @@
 use crate::{
-    database::entity::{app_data::AppDataModel, vt_access::SetVTAccess, VTAccessModel},
+    database::entity::{
+        app_data::{AppData, AppDataModel},
+        vt_access::SetVTAccess,
+        VTAccessModel,
+    },
     http::{
         error::{DynHttpError, HttpResult},
         models::{GetAuthTokenResponse, SetAuthTokenRequest},
     },
-    state::{
-        app_data::AppData,
-        runtime_app_data::{RuntimeAppData, RuntimeAppDataStore, UpdateRuntimeAppData},
-    },
+    state::runtime_app_data::{RuntimeAppData, RuntimeAppDataStore, UpdateRuntimeAppData},
 };
 use anyhow::Context;
 use axum::{

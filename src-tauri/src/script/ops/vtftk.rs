@@ -1,13 +1,12 @@
 use crate::{
     database::entity::SoundModel,
-    events::ThrowItemConfig,
+    events::{ItemWithImpactSoundIds, ItemsWithSounds, ThrowItemConfig},
     integrations::tts_monster::TTSMonsterVoice,
     script::events::{
         global_script_event, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs, GetSoundsByNames,
         PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices, ThrowItems,
         TriggerHotkey, TriggerHotkeyByName,
     },
-    state::app_data::{ItemWithImpactSoundIds, ItemsWithSounds},
 };
 use anyhow::Context;
 use chrono::Utc;
