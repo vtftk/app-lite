@@ -1,5 +1,4 @@
 use crate::commands::CmdResult;
-use crate::constants::{TWITCH_CLIENT_ID, TWITCH_REQUIRED_SCOPES};
 use crate::database::entity::app_data::AppDataModel;
 use crate::twitch::manager::Twitch;
 use anyhow::Context;
@@ -9,7 +8,6 @@ use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tauri::State;
 use twitch_api::helix::points::CustomReward;
-use twitch_api::twitch_oauth2::{ClientId, ImplicitUserTokenBuilder};
 
 /// Requests the list of available redeems from the broadcasters channel.
 ///
@@ -33,18 +31,17 @@ pub async fn refresh_redeems_list(twitch: State<'_, Twitch>) -> CmdResult<bool> 
 
 /// Obtain a URL for use logging into twitch using OAuth2
 #[tauri::command]
-pub async fn get_twitch_oauth_uri(db: tauri::State<'_, DatabaseConnection>) -> CmdResult<String> {
+pub async fn get_twitch_oauth_uri(
+    twitch: State<'_, Twitch>,
+    db: tauri::State<'_, DatabaseConnection>,
+) -> CmdResult<String> {
     let http_port = AppDataModel::get_http_port(db.inner()).await?;
 
     let redirect_url = format!("http://localhost:{http_port}/oauth",);
     let redirect_url = Url::parse(&redirect_url).context("invalid redirect_uri")?;
+    let url = twitch.create_oauth_uri(redirect_url)?;
 
-    let (url, _csrf) =
-        ImplicitUserTokenBuilder::new(ClientId::from_static(TWITCH_CLIENT_ID), redirect_url)
-            .set_scopes(TWITCH_REQUIRED_SCOPES.to_vec())
-            .generate_url();
-
-    Ok(url.to_string())
+    Ok(url)
 }
 
 #[tauri::command]

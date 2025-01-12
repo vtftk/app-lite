@@ -14,7 +14,6 @@ use tauri::{
 use twitch::manager::Twitch;
 
 mod commands;
-mod constants;
 mod database;
 mod events;
 mod http;
