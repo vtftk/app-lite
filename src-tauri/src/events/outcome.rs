@@ -19,6 +19,7 @@ use anyhow::{anyhow, Context};
 use chrono::Utc;
 use sea_orm::DatabaseConnection;
 use std::collections::HashSet;
+use twitch_api::types::SubscriptionTier;
 use uuid::Uuid;
 
 /// Produce a message for an outcome
@@ -66,6 +67,16 @@ pub async fn execute_script(
     Ok(())
 }
 
+fn format_subscription_tier(tier: SubscriptionTier) -> &'static str {
+    match tier {
+        SubscriptionTier::Tier1 => "Tier 1",
+        SubscriptionTier::Tier2 => "Tier 2",
+        SubscriptionTier::Tier3 => "Tier 3",
+        SubscriptionTier::Prime => "Prime",
+        SubscriptionTier::Other(_) => "Other",
+    }
+}
+
 async fn send_chat_message(
     twitch: &Twitch,
     event_data: EventData,
@@ -102,7 +113,41 @@ async fn send_chat_message(
         EventInputData::AdBreakBegin { duration_seconds } => {
             message = message.replace("$(duration)", duration_seconds.to_string().as_str());
         }
-        _ => {}
+        EventInputData::Subscription { tier, .. } => {
+            message = message.replace("$(tier)", format_subscription_tier(tier));
+        }
+        EventInputData::GiftedSubscription { total, tier, .. } => {
+            message = message.replace("$(tier)", format_subscription_tier(tier));
+            message = message.replace("$(total)", total.to_string().as_str());
+        }
+        EventInputData::ReSubscription {
+            cumulative_months,
+            duration_months,
+            message: user_input,
+            tier,
+            ..
+        } => {
+            message = message.replace("$(tier)", format_subscription_tier(tier));
+            message = message.replace("$(userInput)", user_input.as_str());
+            message = message.replace(
+                "$(cumulativeMonths)",
+                cumulative_months.to_string().as_str(),
+            );
+            message = message.replace("$(durationMonths)", duration_months.to_string().as_str());
+        }
+        EventInputData::Chat {
+            message: user_input,
+            ..
+        } => {
+            message = message.replace("$(userInput)", user_input.as_str());
+        }
+        EventInputData::Raid { viewers } => {
+            message = message.replace("$(viewers)", viewers.to_string().as_str());
+        }
+        EventInputData::ShoutoutReceive { viewer_count } => {
+            message = message.replace("$(viewers)", viewer_count.to_string().as_str());
+        }
+        EventInputData::None => {}
     }
 
     if message.len() < 500 {
