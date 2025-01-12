@@ -20,7 +20,6 @@ pub struct TwitchUser {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[allow(unused)]
 pub struct TwitchEventUser {
     pub id: UserId,
     pub name: UserName,
@@ -28,7 +27,6 @@ pub struct TwitchEventUser {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventRedeem {
     pub id: RedemptionId,
     pub reward: Reward,
@@ -39,7 +37,6 @@ pub struct TwitchEventRedeem {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventCheerBits {
     // Total bits gifted
     pub bits: i64,
@@ -55,7 +52,6 @@ pub struct TwitchEventCheerBits {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventFollow {
     pub user_id: UserId,
     pub user_name: UserName,
@@ -63,7 +59,6 @@ pub struct TwitchEventFollow {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventSub {
     pub is_gift: bool,
     pub tier: SubscriptionTier,
@@ -73,7 +68,6 @@ pub struct TwitchEventSub {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventGiftSub {
     pub anonymous: bool,
 
@@ -91,7 +85,6 @@ pub struct TwitchEventGiftSub {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventReSub {
     pub cumulative_months: i64,
     pub duration_months: i64,
@@ -104,7 +97,6 @@ pub struct TwitchEventReSub {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventChatMsg {
     pub message_id: MsgId,
     pub user_id: UserId,
@@ -115,7 +107,6 @@ pub struct TwitchEventChatMsg {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventRaid {
     /// The broadcaster ID that created the raid.
     pub user_id: UserId,
@@ -128,14 +119,12 @@ pub struct TwitchEventRaid {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventAdBreakBegin {
     /// Duration in seconds of the AD
     pub duration_seconds: i32,
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub struct TwitchEventShoutoutReceive {
     /// The broadcaster ID that gave the shoutout
     pub user_id: UserId,
@@ -148,7 +137,6 @@ pub struct TwitchEventShoutoutReceive {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub enum TwitchEvent {
     Redeem(TwitchEventRedeem),
     CheerBits(TwitchEventCheerBits),

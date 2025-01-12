@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::database::entity::{model_data::ModelId, ModelDataModel};
+use crate::database::entity::model_data::{ModelDataModel, ModelId};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "step")]

@@ -6,9 +6,8 @@ use tauri::{AppHandle, Emitter};
 
 use crate::{
     database::entity::{
-        model_data::{CreateModelData, ModelCalibration},
+        model_data::{CreateModelData, ModelCalibration, ModelDataModel},
         shared::MinMax,
-        ModelDataModel,
     },
     http::{
         error::HttpResult,

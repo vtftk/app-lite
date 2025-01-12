@@ -1,8 +1,5 @@
 use crate::{
-    database::entity::{
-        events::{EventTrigger, EventTriggerType},
-        EventModel,
-    },
+    database::entity::events::{EventModel, EventTrigger, EventTriggerType},
     events::{
         matching::{EventData, EventInputData},
         processing::execute_event,

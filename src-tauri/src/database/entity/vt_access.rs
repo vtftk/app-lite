@@ -6,9 +6,6 @@ use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
 pub type VTAccessModel = Model;
-pub type VTAccessEntity = Entity;
-pub type VTAccessActiveModel = ActiveModel;
-pub type VTAccessColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "vt_access")]

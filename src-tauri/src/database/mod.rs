@@ -1,15 +1,13 @@
 use anyhow::Context;
-use chrono::Days;
-use chrono::Utc;
-use entity::app_data::AppDataModel;
-use entity::CommandExecutionModel;
-use entity::CommandLogsModel;
-use entity::EventExecutionModel;
-use entity::EventLogsModel;
+use chrono::{Days, Utc};
+use entity::{
+    app_data::AppDataModel, command_executions::CommandExecutionModel,
+    command_logs::CommandLogsModel, event_executions::EventExecutionModel,
+    event_logs::EventLogsModel,
+};
 use log::warn;
 use migration::Migrator;
-use sea_orm::Database;
-use sea_orm::DatabaseConnection;
+use sea_orm::{Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 use std::path::PathBuf;
 use tokio::fs::{create_dir_all, File};

@@ -2,7 +2,7 @@ use super::{
     models::{TwitchEvent, TwitchUser},
     websocket::WebsocketManagedTask,
 };
-use crate::database::entity::TwitchAccessModel;
+use crate::database::entity::twitch_access::TwitchAccessModel;
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
 use log::{debug, error, info};

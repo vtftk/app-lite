@@ -10,9 +10,6 @@ use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
 pub type SoundModel = Model;
-pub type SoundEntity = Entity;
-pub type SoundActiveModel = ActiveModel;
-pub type SoundColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "sounds")]

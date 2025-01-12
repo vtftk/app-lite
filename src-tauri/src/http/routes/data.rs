@@ -1,8 +1,7 @@
 use crate::{
     database::entity::{
         app_data::{AppData, AppDataModel},
-        vt_access::SetVTAccess,
-        VTAccessModel,
+        vt_access::{SetVTAccess, VTAccessModel},
     },
     http::{
         error::{DynHttpError, HttpResult},

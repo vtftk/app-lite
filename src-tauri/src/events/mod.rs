@@ -8,7 +8,7 @@ use tokio::sync::broadcast;
 use uuid::Uuid;
 
 use crate::{
-    database::entity::{app_data::AppData, ItemModel, SoundModel},
+    database::entity::{app_data::AppData, items::ItemModel, sounds::SoundModel},
     http::models::calibration::CalibrationStep,
 };
 

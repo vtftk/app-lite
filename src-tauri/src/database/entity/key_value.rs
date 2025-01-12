@@ -10,9 +10,6 @@ use super::shared::DbResult;
 
 // Type alias helpers for the database entity types
 pub type KeyValueModel = Model;
-pub type KeyValueEntity = Entity;
-pub type KeyValueActiveModel = ActiveModel;
-pub type KeyValueColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "key_value")]
@@ -91,14 +88,5 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find_by_id(key).one(db).await
-    }
-
-    /// Find all key values
-    #[allow(unused)]
-    pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        Entity::find().all(db).await
     }
 }

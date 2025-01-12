@@ -3,10 +3,11 @@
 //! Commands for interacting with commands from the frontend
 
 use crate::database::entity::{
+    command_executions::CommandExecutionModel,
     command_logs::CommandLogsModel,
+    commands::CommandModel,
     commands::{CreateCommand, UpdateCommand},
     shared::{ExecutionsQuery, LogsQuery, UpdateOrdering},
-    CommandExecutionModel, CommandModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};

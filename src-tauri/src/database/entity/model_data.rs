@@ -5,9 +5,6 @@ use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
 pub type ModelDataModel = Model;
-pub type ModelDataEntity = Entity;
-pub type ModelDataActiveModel = ActiveModel;
-pub type ModelDataColumn = Column;
 
 pub type ModelId = String;
 

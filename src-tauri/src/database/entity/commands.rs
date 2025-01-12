@@ -14,9 +14,6 @@ use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
 pub type CommandModel = Model;
-pub type CommandEntity = Entity;
-pub type CommandActiveModel = ActiveModel;
-pub type CommandColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "commands")]

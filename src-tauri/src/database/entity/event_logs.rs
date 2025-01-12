@@ -5,8 +5,6 @@ use super::shared::{DbResult, LoggingLevelDb};
 
 // Type alias helpers for the database entity types
 pub type EventLogsModel = Model;
-pub type EventLogsEntity = Entity;
-pub type EventLogsActiveModel = ActiveModel;
 pub type EventLogsColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]

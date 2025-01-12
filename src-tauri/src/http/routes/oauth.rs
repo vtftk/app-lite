@@ -1,5 +1,5 @@
 use crate::{
-    database::entity::{twitch_access::SetTwitchAccess, TwitchAccessModel},
+    database::entity::twitch_access::{SetTwitchAccess, TwitchAccessModel},
     http::error::HttpResult,
     twitch::manager::Twitch,
 };

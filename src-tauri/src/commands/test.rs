@@ -1,10 +1,6 @@
-use std::{
-    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-    time::Duration,
-};
-
+use super::CmdResult;
 use crate::{
-    database::entity::SoundModel,
+    database::entity::sounds::SoundModel,
     events::{
         outcome::resolve_items, EventMessage, EventMessageChannel, ThrowItemConfig,
         ThrowItemMessage,
@@ -14,11 +10,13 @@ use anyhow::Context;
 use log::debug;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
+use std::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    time::Duration,
+};
 use tauri::State;
 use tokio::{net::UdpSocket, time::timeout};
 use uuid::Uuid;
-
-use super::CmdResult;
 
 /// Plays a test throw item event
 #[tauri::command]

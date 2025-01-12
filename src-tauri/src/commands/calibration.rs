@@ -1,6 +1,6 @@
 use crate::{
     commands::CmdResult,
-    database::entity::ModelDataModel,
+    database::entity::model_data::ModelDataModel,
     events::{EventMessage, EventMessageChannel},
     http::models::calibration::CalibrationStep,
 };

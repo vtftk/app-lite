@@ -3,9 +3,8 @@ use sea_orm_migration::prelude::*;
 use uuid::Uuid;
 
 use crate::database::entity::{
-    items::{CreateItem, ThrowableImageConfig},
-    sounds::CreateSound,
-    ItemModel, SoundModel,
+    items::{CreateItem, ItemModel, ThrowableImageConfig},
+    sounds::{CreateSound, SoundModel},
 };
 
 #[derive(DeriveMigrationName)]

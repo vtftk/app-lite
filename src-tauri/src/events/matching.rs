@@ -9,8 +9,9 @@ use twitch_api::{
 
 use crate::{
     database::entity::{
+        commands::CommandModel,
+        events::EventModel,
         events::{EventTrigger, EventTriggerType},
-        CommandModel, EventModel,
     },
     twitch::models::{
         TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
@@ -58,6 +59,8 @@ pub struct EventData {
 pub enum EventInputData {
     /// Redeems specific data
     Redeem {
+        /// Unique ID of the redemption itself
+        redemption_id: String,
         /// ID of the redeemed award
         reward_id: String,
         /// Name of the reward
@@ -187,6 +190,7 @@ pub async fn match_redeem_event(
 
     let event_data = EventData {
         input_data: EventInputData::Redeem {
+            redemption_id: event.id.to_string(),
             reward_id: event_reward_id,
             reward_name: event.reward.title.clone(),
             cost: event.reward.cost,
@@ -607,9 +611,10 @@ mod test {
     use crate::{
         database::{
             entity::{
-                commands::{CommandAliases, CommandOutcome, CreateCommand},
-                events::{CreateEvent, EventOutcome, EventOutcomeSendChat, EventTrigger},
-                CommandModel, EventModel,
+                commands::{CommandAliases, CommandModel, CommandOutcome, CreateCommand},
+                events::{
+                    CreateEvent, EventModel, EventOutcome, EventOutcomeSendChat, EventTrigger,
+                },
             },
             setup_database,
         },

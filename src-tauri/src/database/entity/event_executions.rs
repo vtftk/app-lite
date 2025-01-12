@@ -9,8 +9,6 @@ use super::shared::DbResult;
 
 // Type alias helpers for the database entity types
 pub type EventExecutionModel = Model;
-pub type EventExecutionEntity = Entity;
-pub type EventExecutionActiveModel = ActiveModel;
 pub type EventExecutionColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
@@ -92,15 +90,6 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find_by_id(id).one(db).await
-    }
-
-    /// Unused, may be used in future to display previous executions in the UI
-    #[allow(unused)]
-    pub async fn all<C>(db: &C) -> DbResult<Vec<Self>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        Entity::find().all(db).await
     }
 
     pub async fn delete_before<C>(db: &C, start_date: DateTimeUtc) -> DbResult<()>

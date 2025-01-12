@@ -4,8 +4,7 @@
 
 use crate::database::entity::{
     shared::UpdateOrdering,
-    sounds::{CreateSound, UpdateSound},
-    SoundModel,
+    sounds::{CreateSound, SoundModel, UpdateSound},
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};

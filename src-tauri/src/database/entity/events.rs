@@ -1,7 +1,7 @@
 use super::{
     event_executions::{EventExecutionColumn, EventExecutionModel},
+    event_logs::{EventLogsColumn, EventLogsModel},
     shared::{DbResult, ExecutionsQuery, LogsQuery, MinMax, MinimumRequireRole, UpdateOrdering},
-    EventLogsColumn, EventLogsModel,
 };
 use anyhow::Context;
 use chrono::Utc;
@@ -14,9 +14,6 @@ use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
 pub type EventModel = Model;
-pub type EventEntity = Entity;
-pub type EventActiveModel = ActiveModel;
-pub type EventColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize)]
 #[sea_orm(table_name = "events")]

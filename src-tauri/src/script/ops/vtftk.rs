@@ -1,5 +1,5 @@
 use crate::{
-    database::entity::SoundModel,
+    database::entity::sounds::SoundModel,
     events::{ItemWithImpactSoundIds, ItemsWithSounds, ThrowItemConfig},
     integrations::tts_monster::TTSMonsterVoice,
     script::events::{

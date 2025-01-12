@@ -7,9 +7,6 @@ use twitch_api::{helix::Scope, twitch_oauth2::AccessToken};
 
 // Type alias helpers for the database entity types
 pub type TwitchAccessModel = Model;
-pub type TwitchAccessEntity = Entity;
-pub type TwitchAccessActiveModel = ActiveModel;
-pub type TwitchAccessColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "twitch_access")]

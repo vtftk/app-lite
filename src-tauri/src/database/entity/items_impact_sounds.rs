@@ -2,7 +2,6 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
-pub type ItemImpactSoundsModel = Model;
 pub type ItemImpactSoundsEntity = Entity;
 pub type ItemImpactSoundsActiveModel = ActiveModel;
 pub type ItemImpactSoundsColumn = Column;

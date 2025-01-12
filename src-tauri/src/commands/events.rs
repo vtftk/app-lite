@@ -5,9 +5,10 @@
 use super::CmdResult;
 use crate::{
     database::entity::{
-        events::{CreateEvent, EventTrigger, EventTriggerType, UpdateEvent},
+        event_executions::EventExecutionModel,
+        event_logs::EventLogsModel,
+        events::{CreateEvent, EventModel, EventTrigger, EventTriggerType, UpdateEvent},
         shared::{ExecutionsQuery, LogsQuery, UpdateOrdering},
-        EventExecutionModel, EventLogsModel, EventModel,
     },
     events::{
         matching::EventData, outcome::produce_outcome_message, scheduler::SchedulerHandle,

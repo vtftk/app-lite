@@ -3,9 +3,9 @@
 //! Commands for interacting with items from the frontend
 
 use crate::database::entity::{
-    items::{CreateItem, ItemWithImpactSounds, UpdateItem},
+    items::{CreateItem, ItemModel, ItemWithImpactSounds, UpdateItem},
     shared::UpdateOrdering,
-    ItemModel, SoundModel,
+    sounds::SoundModel,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};

@@ -8,16 +8,16 @@ use sea_orm::{
 use serde::{Deserialize, Serialize};
 
 use super::{
+    items_impact_sounds::{
+        ItemImpactSoundsActiveModel, ItemImpactSoundsColumn, ItemImpactSoundsEntity,
+    },
     links::ItemImpactSounds,
     shared::{DbResult, UpdateOrdering},
-    ItemImpactSoundsActiveModel, ItemImpactSoundsColumn, ItemImpactSoundsEntity, SoundModel,
+    sounds::SoundModel,
 };
 
 // Type alias helpers for the database entity types
 pub type ItemModel = Model;
-pub type ItemEntity = Entity;
-pub type ItemActiveModel = ActiveModel;
-pub type ItemColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "items")]
@@ -123,18 +123,6 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find_by_id(id).one(db).await
-    }
-
-    /// Find items with IDs present in the provided list
-    #[allow(unused)]
-    pub async fn get_by_ids<C>(db: &C, id: &[Uuid]) -> DbResult<Vec<Self>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        Entity::find()
-            .filter(Column::Id.is_in(id.iter().copied()))
-            .all(db)
-            .await
     }
 
     /// Find items with IDs present in the provided list

@@ -5,12 +5,12 @@ use super::{
 use crate::{
     database::entity::{
         events::{
-            EventOutcome, EventOutcomeBits, EventOutcomeChannelEmotes, EventOutcomePlaySound,
-            EventOutcomeScript, EventOutcomeSendChat, EventOutcomeThrowable,
+            EventModel, EventOutcome, EventOutcomeBits, EventOutcomeChannelEmotes,
+            EventOutcomePlaySound, EventOutcomeScript, EventOutcomeSendChat, EventOutcomeThrowable,
             EventOutcomeTriggerHotkey, ThrowableAmountData,
         },
-        items::ThrowableImageConfig,
-        EventModel, ItemModel, SoundModel,
+        items::{ItemModel, ThrowableImageConfig},
+        sounds::SoundModel,
     },
     script::runtime::{RuntimeExecutionContext, ScriptExecutorHandle},
     twitch::manager::Twitch,
