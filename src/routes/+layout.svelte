@@ -6,7 +6,7 @@
   import { page } from "$app/stores";
   import { fly } from "svelte/transition";
   import { navigating } from "$app/stores";
-  import { queryClient } from "$lib/api/utils";
+  import { queryClient } from "$lib/api/client";
   import Sidebar from "$lib/components/nav/Sidebar.svelte";
   import AppToaster from "$lib/components/AppToaster.svelte";
   import { QueryClientProvider } from "@tanstack/svelte-query";
