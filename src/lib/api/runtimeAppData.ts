@@ -21,7 +21,7 @@ import type {
   VTubeStudioConfig,
 } from "./types";
 
-import { queryClient } from "./utils";
+import { queryClient } from "./client";
 
 export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
 export const RUNTIME_APP_DATA_CONTEXT = Symbol("runtime-app-data");

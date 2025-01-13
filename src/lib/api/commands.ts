@@ -15,7 +15,7 @@ import type {
 import { invoke } from "@tauri-apps/api/core";
 import { createQuery } from "@tanstack/svelte-query";
 
-import { queryClient } from "./utils";
+import { queryClient } from "./client";
 
 const COMMANDS_KEY = ["commands"];
 

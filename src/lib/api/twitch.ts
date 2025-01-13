@@ -4,7 +4,7 @@ import { createQuery, type CreateQueryResult } from "@tanstack/svelte-query";
 
 import type { CustomReward } from "./types";
 
-import { queryClient } from "./utils";
+import { queryClient } from "./client";
 
 export const GET_REDEEMS_LIST_KEY = ["get-redeems-list"];
 

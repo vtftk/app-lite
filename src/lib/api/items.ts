@@ -12,7 +12,7 @@ import type {
 import { invoke } from "@tauri-apps/api/core";
 import { createQuery, createMutation } from "@tanstack/svelte-query";
 
-import { queryClient } from "./utils";
+import { queryClient } from "./client";
 
 const ITEMS_KEY = ["items"];
 

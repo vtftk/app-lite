@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { createQuery } from "@tanstack/svelte-query";
 
-import { queryClient } from "./utils";
+import { queryClient } from "./client";
 
 export enum CalibrationStep {
   NotStarted = "NotStarted",
