@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import { createEventQuery } from "$lib/api/eventModel";
   import EventForm from "$lib/sections/events/EventForm.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
 
-  const id = $derived($page.params.id);
-  const eventQuery = $derived(createEventQuery(id));
+  const eventQuery = $derived(createEventQuery(page.params.id));
 </script>
 
 {#if $eventQuery.isLoading}

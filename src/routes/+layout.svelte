@@ -3,9 +3,8 @@
   import "$lib/styles/global.scss";
   // Font family for code editor
   import "@fontsource/jetbrains-mono";
-  import { page } from "$app/stores";
   import { fly } from "svelte/transition";
-  import { navigating } from "$app/stores";
+  import { page, navigating } from "$app/state";
   import { queryClient } from "$lib/api/client";
   import Sidebar from "$lib/components/nav/Sidebar.svelte";
   import AppToaster from "$lib/components/AppToaster.svelte";
@@ -21,9 +20,9 @@
     <main class="main">
       <Sidebar />
 
-      {#key $page.url}
+      {#key page.url}
         <div class="content" in:fly={{ y: -100, duration: 250 }}>
-          {#if $navigating}
+          {#if navigating.to}
             <div class="skeleton-list">
               <div class="skeleton" style="width: 90%; height: 1.5rem;"></div>
               <div class="skeleton" style="width: 70%; height: 1rem;"></div>

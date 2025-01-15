@@ -2,7 +2,7 @@
   import type { Component } from "svelte";
   import type { SvelteHTMLElements } from "svelte/elements";
 
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
 
   type Props = {
     icon: Component<SvelteHTMLElements["svg"]>;
@@ -18,8 +18,8 @@
   {href}
   class="button"
   class:button--selected={href === "/"
-    ? $page.route.id === href
-    : $page.route.id?.startsWith(href)}
+    ? page.route.id === href
+    : page.route.id?.startsWith(href)}
 >
   <Icon class="icon" />
   <div class="content">

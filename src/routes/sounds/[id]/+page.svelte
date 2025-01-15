@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
   import { createSoundQuery } from "$lib/api/soundModel";
   import SoundForm from "$lib/sections/sounds/SoundForm.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
 
-  const id = $derived($page.params.id);
-  const soundQuery = $derived(createSoundQuery(id));
+  const soundQuery = $derived(createSoundQuery(page.params.id));
 </script>
 
 {#if $soundQuery.isLoading}
