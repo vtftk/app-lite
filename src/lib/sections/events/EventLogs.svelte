@@ -7,7 +7,7 @@
     eventLogsQuery,
     deleteEventLogs,
     invalidateEventLogs,
-  } from "$lib/api/vevents";
+  } from "$lib/api/eventModel";
 
   type Props = {
     id: EventId;

@@ -7,8 +7,8 @@
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
-  import { deleteCommand, updateCommand } from "$lib/api/commands";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import { deleteCommand, updateCommand } from "$lib/api/commandModel";
   import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";

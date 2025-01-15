@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { createSoundQuery } from "$lib/api/sounds";
+  import { createSoundQuery } from "$lib/api/soundModel";
   import SoundForm from "$lib/sections/sounds/SoundForm.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
 

@@ -16,7 +16,7 @@
     deleteEvents,
     updateEventOrder,
     createEventsQuery,
-  } from "$lib/api/vevents";
+  } from "$lib/api/eventModel";
 
   const eventsQuery = createEventsQuery();
 

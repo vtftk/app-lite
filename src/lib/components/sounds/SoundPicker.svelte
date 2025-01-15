@@ -3,8 +3,8 @@
   import type { Sound, SoundId } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
-  import { createSoundsQuery } from "$lib/api/sounds";
   import { getAppData } from "$lib/api/runtimeAppData";
+  import { createSoundsQuery } from "$lib/api/soundModel";
 
   import Dialog from "../Dialog.svelte";
   import Button from "../input/Button.svelte";

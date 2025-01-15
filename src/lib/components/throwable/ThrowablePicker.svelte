@@ -2,7 +2,7 @@
   import type { Item } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
-  import { createItemsQuery } from "$lib/api/items";
+  import { createItemsQuery } from "$lib/api/itemModel";
 
   import Dialog from "../Dialog.svelte";
   import SearchInput from "../form/SearchInput.svelte";

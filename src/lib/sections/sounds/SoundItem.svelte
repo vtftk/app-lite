@@ -3,7 +3,7 @@
 
   import { toast } from "svelte-sonner";
   import getBackendURL from "$lib/utils/url";
-  import { deleteSound } from "$lib/api/sounds";
+  import { deleteSound } from "$lib/api/soundModel";
   import { toastErrorMessage } from "$lib/utils/error";
   import { getAppData } from "$lib/api/runtimeAppData";
   import SettingsIcon from "~icons/solar/settings-bold";

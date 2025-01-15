@@ -16,7 +16,7 @@
     updateCommandOrder,
     bulkDeleteCommands,
     createCommandsQuery,
-  } from "$lib/api/commands";
+  } from "$lib/api/commandModel";
 
   const commandsQuery = createCommandsQuery();
 

@@ -26,7 +26,7 @@
     bulkDeleteItems,
     createItemsQuery,
     bulkAppendItemSounds,
-  } from "$lib/api/items";
+  } from "$lib/api/itemModel";
 
   const runtimeAppData = getRuntimeAppData();
 

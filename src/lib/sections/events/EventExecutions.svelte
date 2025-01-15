@@ -10,7 +10,7 @@
     eventExecutionsQuery,
     deleteEventExecutions,
     invalidateEventExecutions,
-  } from "$lib/api/vevents";
+  } from "$lib/api/eventModel";
 
   type Props = {
     id: EventId;

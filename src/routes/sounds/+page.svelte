@@ -18,7 +18,7 @@
     deleteSounds,
     updateSoundOrder,
     createSoundsQuery,
-  } from "$lib/api/sounds";
+  } from "$lib/api/soundModel";
 
   const soundsQuery = createSoundsQuery();
 

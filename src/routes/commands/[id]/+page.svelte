@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { createCommandQuery } from "$lib/api/commands";
+  import { createCommandQuery } from "$lib/api/commandModel";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import CommandForm from "$lib/sections/commands/CommandForm.svelte";
 

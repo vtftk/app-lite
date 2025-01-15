@@ -4,10 +4,10 @@
   import { toast } from "svelte-sonner";
   import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
-  import { createSounds } from "$lib/api/sounds";
+  import { createSounds } from "$lib/api/soundModel";
   import { toastErrorMessage } from "$lib/utils/error";
 
-    import Button from "../input/Button.svelte";
+  import Button from "../input/Button.svelte";
 
   let inputElm: HTMLInputElement | undefined = $state();
 

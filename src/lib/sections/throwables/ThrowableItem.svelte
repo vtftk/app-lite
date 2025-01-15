@@ -3,10 +3,10 @@
 
   import { toast } from "svelte-sonner";
   import getBackendURL from "$lib/utils/url";
-  import { deleteItemMutation } from "$lib/api/items";
   import { toastErrorMessage } from "$lib/utils/error";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { deleteItemMutation } from "$lib/api/itemModel";
   import Button from "$lib/components/input/Button.svelte";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
   import LinkButton from "$lib/components/input/LinkButton.svelte";

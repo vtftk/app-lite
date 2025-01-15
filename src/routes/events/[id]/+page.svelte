@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { createEventQuery } from "$lib/api/vevents";
+  import { createEventQuery } from "$lib/api/eventModel";
   import EventForm from "$lib/sections/events/EventForm.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";

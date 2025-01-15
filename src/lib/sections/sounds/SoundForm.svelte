@@ -10,7 +10,7 @@
   import { getAppData } from "$lib/api/runtimeAppData";
   import { FileType, type Sound } from "$lib/api/types";
   import Button from "$lib/components/input/Button.svelte";
-  import { createSound, updateSound } from "$lib/api/sounds";
+  import { createSound, updateSound } from "$lib/api/soundModel";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSlider from "$lib/components/form/FormSlider.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";

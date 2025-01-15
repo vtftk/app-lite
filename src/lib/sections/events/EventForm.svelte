@@ -22,8 +22,8 @@
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import { testEvent, createEvent, updateEvent } from "$lib/api/vevents";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
+  import { testEvent, createEvent, updateEvent } from "$lib/api/eventModel";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";

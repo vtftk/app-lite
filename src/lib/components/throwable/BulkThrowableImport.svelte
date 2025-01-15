@@ -5,7 +5,7 @@
   import { toast } from "svelte-sonner";
   import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
-  import { bulkCreateItem } from "$lib/api/items";
+  import { bulkCreateItem } from "$lib/api/itemModel";
   import { toastErrorMessage } from "$lib/utils/error";
 
   import Button from "../input/Button.svelte";
