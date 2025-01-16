@@ -24,6 +24,7 @@
       installUpdate(update);
     } else {
       toast("An update is available v" + newVersion, {
+        duration: Infinity,
         action: {
           label: "Update",
           onClick: () => installUpdate(update),
