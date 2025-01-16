@@ -21,8 +21,6 @@
     contentProps?: Omit<PopoverContentProps, "asChild">;
   } & HTMLButtonAttributes;
 
-  let open = $state(false);
-
   const {
     content,
     children,
@@ -33,35 +31,16 @@
   }: Props = $props();
 </script>
 
-<Popover.Root controlledOpen {open} {...rootProps}>
+<Popover.Root {...rootProps}>
   <Popover.Trigger {...triggerProps}>
     {#snippet child({ props })}
-      <Button
-        {...props}
-        {...buttonProps}
-        type="button"
-        onclick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-          open = !open;
-        }}
-      >
+      <Button {...props} {...buttonProps} type="button">
         {@render children?.()}
       </Button>
     {/snippet}
   </Popover.Trigger>
   <Popover.Portal>
-    <Popover.Content
-      sideOffset={8}
-      onInteractOutside={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        open = false;
-      }}
-      {...contentProps}
-    >
+    <Popover.Content sideOffset={8} {...contentProps}>
       {#snippet child({ props, wrapperProps, open })}
         <div {...wrapperProps} class="wrapper">
           {#if open}
