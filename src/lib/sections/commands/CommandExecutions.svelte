@@ -10,7 +10,7 @@
     commandExecutionsQuery,
     deleteCommandExecutions,
     invalidateCommandExecutions,
-  } from "$lib/api/commands";
+  } from "$lib/api/commandModel";
 
   type Props = {
     id: CommandId;
