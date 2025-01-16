@@ -1,19 +1,17 @@
 <script lang="ts">
   import { createModelDataQuery } from "$lib/api/calibration";
   import { createIsAuthenticatedQuery } from "$lib/api/twitch";
-  import {
-    getRuntimeAppData,
-    isModelCalibrated,
-  } from "$lib/api/runtimeAppData";
+  import { getAppContext, isModelCalibrated } from "$lib/api/runtimeAppData";
 
-  const runtimeAppData = getRuntimeAppData();
+  const appContext = getAppContext();
+  const runtimeAppData = $derived(appContext.runtimeAppData);
+
   const isAuthenticated = createIsAuthenticatedQuery();
-
   const modelDataQuery = createModelDataQuery();
 
   // Model needs to be calibrated if not available here
   const modelCalibrated = $derived(
-    isModelCalibrated($modelDataQuery.data ?? [], $runtimeAppData.model_id),
+    isModelCalibrated($modelDataQuery.data ?? [], runtimeAppData.model_id),
   );
 </script>
 
@@ -22,8 +20,8 @@
     <div>VTube Studio</div>
     <div
       class="status-indicator"
-      data-status={$runtimeAppData.vtube_studio_connected
-        ? modelCalibrated && $runtimeAppData.vtube_studio_auth
+      data-status={runtimeAppData.vtube_studio_connected
+        ? modelCalibrated && runtimeAppData.vtube_studio_auth
           ? "green"
           : "orange"
         : "red"}
@@ -33,9 +31,9 @@
     <div>Active Overlay</div>
     <div
       class="status-indicator"
-      data-status={$runtimeAppData.active_overlay_count > 0 ? "green" : "red"}
+      data-status={runtimeAppData.active_overlay_count > 0 ? "green" : "red"}
     >
-      {$runtimeAppData.active_overlay_count}
+      {runtimeAppData.active_overlay_count}
     </div>
   </div>
   <div class="status-item">

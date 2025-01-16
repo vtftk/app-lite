@@ -6,8 +6,8 @@
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
-  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
@@ -28,7 +28,8 @@
     bulkAppendItemSounds,
   } from "$lib/api/itemModel";
 
-  const runtimeAppData = getRuntimeAppData();
+  const appContext = getAppContext();
+  const runtimeAppData = $derived(appContext.runtimeAppData);
 
   const itemsQuery = createItemsQuery();
 
@@ -50,8 +51,8 @@
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
-    $runtimeAppData.active_overlay_count > 0 &&
-      $runtimeAppData.vtube_studio_connected,
+    runtimeAppData.active_overlay_count > 0 &&
+      runtimeAppData.vtube_studio_connected,
   );
 
   function onToggleSelected(item: Item) {

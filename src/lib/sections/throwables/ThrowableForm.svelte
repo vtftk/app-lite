@@ -9,9 +9,9 @@
   import { toastErrorMessage } from "$lib/utils/error";
   import { createSoundsQuery } from "$lib/api/soundModel";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
+  import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
   import { createItem, updateItem } from "$lib/api/itemModel";
-  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSlider from "$lib/components/form/FormSlider.svelte";
@@ -40,15 +40,17 @@
 
   const { existing }: Props = $props();
 
-  const runtimeAppData = getRuntimeAppData();
+  const appContext = getAppContext();
+  const runtimeAppData = $derived(appContext.runtimeAppData);
+
   const soundsQuery = createSoundsQuery();
 
   const sounds = $derived($soundsQuery.data ?? []);
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
-    $runtimeAppData.active_overlay_count > 0 &&
-      $runtimeAppData.vtube_studio_connected,
+    runtimeAppData.active_overlay_count > 0 &&
+      runtimeAppData.vtube_studio_connected,
   );
 
   // When working with existing configs we allow the file to be a

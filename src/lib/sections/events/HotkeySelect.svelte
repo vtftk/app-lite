@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { getAppContext } from "$lib/api/runtimeAppData";
   import SolarRefreshBold from "~icons/solar/refresh-bold";
   import Button from "$lib/components/input/Button.svelte";
-  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
 
   type Props = {
@@ -25,14 +25,15 @@
     invoke("update_hotkeys");
   };
 
-  const runtimeAppData = getRuntimeAppData();
+  const appContext = getAppContext();
+  const runtimeAppData = $derived(appContext.runtimeAppData);
 
   onMount(() => {
     updateHotkeys();
   });
 
   const items = $derived(
-    $runtimeAppData.hotkeys.map((item) => ({
+    runtimeAppData.hotkeys.map((item) => ({
       value: item.hotkey_id,
       label: item.name,
     })),
@@ -66,7 +67,7 @@
     <p class="description">{description}</p>
   {/if}
 
-  {#if !$runtimeAppData.vtube_studio_connected}
+  {#if !runtimeAppData.vtube_studio_connected}
     <p class="error">
       Not connected to VTube studio... Connect to see available Hotkeys
     </p>

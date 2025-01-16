@@ -1,33 +1,20 @@
 import { getContext } from "svelte";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { get, derived, type Readable } from "svelte/store";
 import {
   createQuery,
   createMutation,
   type CreateQueryResult,
 } from "@tanstack/svelte-query";
 
-import type {
-  AppData,
-  ModelData,
-  MainConfig,
-  ModelConfig,
-  SoundsConfig,
-  PhysicsConfig,
-  RuntimeAppData,
-  ExternalsConfig,
-  ThrowablesConfig,
-  VTubeStudioConfig,
-} from "./types";
+import type { AppData, ModelData, RuntimeAppData } from "./types";
 
 import { queryClient } from "./client";
 
-export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
-export const RUNTIME_APP_DATA_CONTEXT = Symbol("runtime-app-data");
+export const APP_CONTEXT_KEY = Symbol("app-context");
 
+export const RUNTIME_APP_DATA_KEY = ["runtime-app-data"];
 export const APP_DATA_KEY = ["app-data"];
-export const APP_DATA_CONTEXT = Symbol("app-data");
 
 // Update the runtime app data when the change event is received
 listen<RuntimeAppData>("runtime_app_data_changed", ({ payload }) => {
@@ -35,12 +22,13 @@ listen<RuntimeAppData>("runtime_app_data_changed", ({ payload }) => {
   queryClient.setQueryData(RUNTIME_APP_DATA_KEY, payload);
 });
 
-export function getRuntimeAppData(): Readable<RuntimeAppData> {
-  return getContext(RUNTIME_APP_DATA_CONTEXT);
-}
+type AppContext = {
+  appData: AppData;
+  runtimeAppData: RuntimeAppData;
+};
 
-export function getAppData(): Readable<AppData> {
-  return getContext(APP_DATA_CONTEXT);
+export function getAppContext(): AppContext {
+  return getContext(APP_CONTEXT_KEY);
 }
 
 /**
@@ -113,73 +101,4 @@ export function isModelCalibrated(
 
   const data = modelData.find((data) => data.id === modelId);
   return data !== undefined;
-}
-
-type AppDataMutation = ReturnType<typeof createAppDateMutation>;
-type AppDataMutator<V> = (input: V) => Promise<boolean>;
-
-export function createAppDataMutator<V>(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation,
-  action: (appData: AppData, value: V) => AppData,
-): Readable<AppDataMutator<V>> {
-  return derived(
-    appDataMutation,
-    ($appDataMutation) => (input: V) =>
-      $appDataMutation.mutateAsync(action(get(appData), input)),
-  );
-}
-
-type UpdateSettingsMutation = {
-  throwables_config: Partial<ThrowablesConfig>;
-  model_config: Partial<ModelConfig>;
-  sounds_config: Partial<SoundsConfig>;
-  vtube_studio_config: Partial<VTubeStudioConfig>;
-  externals_config: Partial<ExternalsConfig>;
-  main_config: Partial<MainConfig>;
-  physics_config: Partial<PhysicsConfig>;
-};
-
-export function createUpdateSettingsMutation(
-  appData: Readable<AppData>,
-  appDataMutation: AppDataMutation,
-) {
-  return createAppDataMutator<UpdateSettingsMutation>(
-    appData,
-    appDataMutation,
-    (
-      appData,
-      {
-        throwables_config,
-        model_config,
-        sounds_config,
-        vtube_studio_config,
-        externals_config,
-        main_config,
-        physics_config,
-      },
-    ) => ({
-      ...appData,
-
-      throwables_config: { ...appData.throwables_config, ...throwables_config },
-      model_config: { ...appData.model_config, ...model_config },
-      sounds_config: { ...appData.sounds_config, ...sounds_config },
-      vtube_studio_config: {
-        ...appData.vtube_studio_config,
-        ...vtube_studio_config,
-      },
-      externals_config: {
-        ...appData.externals_config,
-        ...externals_config,
-      },
-      main_config: {
-        ...appData.main_config,
-        ...main_config,
-      },
-      physics_config: {
-        ...appData.physics_config,
-        ...physics_config,
-      },
-    }),
-  );
 }

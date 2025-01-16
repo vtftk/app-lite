@@ -1,30 +1,37 @@
 <script lang="ts">
   import type { AppData, RuntimeAppData } from "$lib/api/types";
 
-  import { setContext } from "svelte";
-  import { derived, type Readable } from "svelte/store";
+  import { setContext, type Snippet } from "svelte";
   import {
-    APP_DATA_CONTEXT,
+    APP_CONTEXT_KEY,
     createAppDataQuery,
-    RUNTIME_APP_DATA_CONTEXT,
     createRuntimeAppDataQuery,
   } from "$lib/api/runtimeAppData";
 
-  const runtimeAppData = createRuntimeAppDataQuery();
+  type Props = {
+    children: Snippet;
+  };
 
-  const runtimeAppDataStore: Readable<RuntimeAppData | undefined> = derived(
-    runtimeAppData,
-    ($runtimeAppData) => $runtimeAppData.data,
+  const { children }: Props = $props();
+
+  const runtimeAppData = createRuntimeAppDataQuery();
+  const runtimeAppDataStore: RuntimeAppData | undefined = $derived(
+    $runtimeAppData.data,
   );
 
   const appData = createAppDataQuery();
-  const appDataStore: Readable<AppData | undefined> = derived(
-    appData,
-    ($appData) => $appData.data,
-  );
+  const appDataStore: AppData | undefined = $derived($appData.data);
 
-  setContext(RUNTIME_APP_DATA_CONTEXT, runtimeAppDataStore);
-  setContext(APP_DATA_CONTEXT, appDataStore);
+  setContext(APP_CONTEXT_KEY, {
+    // Values within the context are guaranteed to be defined when the context is used
+    get appData() {
+      return appDataStore!;
+    },
+
+    get runtimeAppData() {
+      return runtimeAppDataStore!;
+    },
+  });
 </script>
 
 {#if $runtimeAppData.isLoading || $appData.isLoading}
@@ -33,8 +40,8 @@
     <div class="skeleton" style="width: 70%; height: 1rem;"></div>
     <div class="skeleton" style="width: 80%; height: 1rem;"></div>
   </div>
-{:else if $runtimeAppDataStore !== undefined || $appDataStore !== undefined}
-  <slot />
+{:else if appDataStore !== undefined || runtimeAppDataStore !== undefined}
+  {@render children()}
 {/if}
 
 <style>

@@ -3,8 +3,8 @@
   import type { Sound, SoundId } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
-  import { getAppData } from "$lib/api/runtimeAppData";
   import { createSoundsQuery } from "$lib/api/soundModel";
+  import { getAppContext } from "$lib/api/runtimeAppData";
 
   import Dialog from "../Dialog.svelte";
   import Button from "../input/Button.svelte";
@@ -42,7 +42,9 @@
     selected = initialSelected;
   });
 
-  const appData = getAppData();
+  const appContext = getAppContext();
+  const appData = $derived(appContext.appData);
+
   const soundsQuery = createSoundsQuery();
   const sounds = $derived(filterOptionsSearch($soundsQuery.data ?? [], search));
 
@@ -135,7 +137,7 @@
 
               <td class="sound-column sound-column--preview">
                 <SoundPreview
-                  volume={sound.volume * $appData.sounds_config.global_volume}
+                  volume={sound.volume * appData.sounds_config.global_volume}
                   src={getBackendURL(sound.src)}
                 />
               </td>

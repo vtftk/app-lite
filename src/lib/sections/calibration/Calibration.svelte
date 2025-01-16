@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { listen } from "@tauri-apps/api/event";
   import Aside from "$lib/components/Aside.svelte";
+  import { CalibrationStep } from "$lib/api/calibration";
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SolarSquareArrowUpBoldDuotone from "~icons/solar/square-arrow-up-bold-duotone";
   import SolarSquareArrowDownBoldDuotone from "~icons/solar/square-arrow-down-bold-duotone";
-  import {
-    CalibrationStep,
-    calibrationState as calibrationStep,
-  } from "$lib/api/calibration";
+
+  let calibrationStep = $state(CalibrationStep.NotStarted);
 
   let resetOnDestroy = false;
 
@@ -35,6 +35,21 @@
     setCalibrationStep(CalibrationStep.NotStarted);
   }
 
+  onMount(() => {
+    // Listen for calibration state changes
+    const unlistenPromise = listen<{ step: CalibrationStep }>(
+      "calibration_state",
+      ({ payload: { step } }) => {
+        calibrationStep = step;
+      },
+    );
+
+    // Remove event listener on unmount
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  });
+
   // Reset calibration state on component destroy if its not already been reset
   onDestroy(() => {
     if (resetOnDestroy) {
@@ -43,16 +58,16 @@
   });
 
   let currentStep: number = $derived.by(() => {
-    if ($calibrationStep === CalibrationStep.NotStarted) {
+    if (calibrationStep === CalibrationStep.NotStarted) {
       return 1;
     }
-    if ($calibrationStep === CalibrationStep.Smallest) {
+    if (calibrationStep === CalibrationStep.Smallest) {
       return 2;
     }
-    if ($calibrationStep === CalibrationStep.Largest) {
+    if (calibrationStep === CalibrationStep.Largest) {
       return 3;
     }
-    if ($calibrationStep === CalibrationStep.Complete) {
+    if (calibrationStep === CalibrationStep.Complete) {
       return 4;
     }
 
@@ -81,7 +96,7 @@
     </div>
 
     <div class="content">
-      {#if $calibrationStep == CalibrationStep.NotStarted}
+      {#if calibrationStep == CalibrationStep.NotStarted}
         <Aside title="IMPORTANT" severity="error">
           During the calibration process your model will shrink and grow.
           <br />
@@ -98,7 +113,7 @@
         <p>
           Press the <b>"Start"</b> button to begin calibrating the current model
         </p>
-      {:else if $calibrationStep == CalibrationStep.Smallest}
+      {:else if calibrationStep == CalibrationStep.Smallest}
         <div class="row">
           <div class="column" style="min-width: 14rem;">
             <p>
@@ -134,7 +149,7 @@
             </Aside>
           </div>
         </div>
-      {:else if $calibrationStep == CalibrationStep.Largest}
+      {:else if calibrationStep == CalibrationStep.Largest}
         <div class="row">
           <div class="column" style="min-width: 14rem;">
             <p>
@@ -170,7 +185,7 @@
             </Aside>
           </div>
         </div>
-      {:else if $calibrationStep == CalibrationStep.Complete}
+      {:else if calibrationStep == CalibrationStep.Complete}
         <Aside severity="success"
           >Calibration complete, you can now throw items at your model. Press
           the "Close" button to return to the Home tab or press any other tab on
@@ -180,7 +195,7 @@
     </div>
 
     <div class="actions">
-      {#if $calibrationStep == CalibrationStep.NotStarted}
+      {#if calibrationStep == CalibrationStep.NotStarted}
         <LinkButton href="/" onclick={onReset}>Cancel</LinkButton>
 
         <Button
@@ -191,7 +206,7 @@
         >
           Start
         </Button>
-      {:else if $calibrationStep == CalibrationStep.Smallest}
+      {:else if calibrationStep == CalibrationStep.Smallest}
         <LinkButton variant="warning" href="/" onclick={onReset}>
           Cancel
         </LinkButton>
@@ -206,7 +221,7 @@
         <Button onclick={() => setCalibrationStep(CalibrationStep.Largest)}>
           Done
         </Button>
-      {:else if $calibrationStep == CalibrationStep.Largest}
+      {:else if calibrationStep == CalibrationStep.Largest}
         <LinkButton variant="warning" href="/" onclick={onReset}>
           Cancel
         </LinkButton>
@@ -221,7 +236,7 @@
         <Button onclick={() => setCalibrationStep(CalibrationStep.Complete)}>
           Done
         </Button>
-      {:else if $calibrationStep == CalibrationStep.Complete}
+      {:else if calibrationStep == CalibrationStep.Complete}
         <LinkButton onclick={onReset} href="/">Close</LinkButton>
       {/if}
     </div>

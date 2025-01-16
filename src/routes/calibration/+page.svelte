@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { getRuntimeAppData } from "$lib/api/runtimeAppData";
+  import { getAppContext } from "$lib/api/runtimeAppData";
   import Calibration from "$lib/sections/calibration/Calibration.svelte";
 
-  const runtimeAppData = getRuntimeAppData();
+  const appContext = getAppContext();
+  const runtimeAppData = $derived(appContext.runtimeAppData);
 </script>
 
-{#if $runtimeAppData.vtube_studio_connected}
+{#if runtimeAppData.vtube_studio_connected}
   <Calibration />
 {:else}
   <div>

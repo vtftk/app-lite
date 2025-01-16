@@ -1,6 +1,5 @@
 import type { ModelData } from "$shared/appData";
 
-import { writable } from "svelte/store";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { createQuery } from "@tanstack/svelte-query";
@@ -21,16 +20,6 @@ export enum CalibrationStep {
   // Both positions are known
   Complete = "Complete",
 }
-
-export const calibrationState = writable(CalibrationStep.NotStarted);
-
-// Handle logout
-listen<{ step: CalibrationStep }>(
-  "calibration_state",
-  ({ payload: { step } }) => {
-    calibrationState.set(step);
-  },
-);
 
 const CALIBRATION_DATA_KEY = ["calibration-data"];
 

@@ -1,6 +1,4 @@
 <script module lang="ts">
-  import { writable } from "svelte/store";
-
   type ConfirmMessage = {
     title: string;
     description: string;
@@ -11,13 +9,11 @@
     resolve: (value: boolean) => void;
   };
 
-  const confirmStore = writable<ConfirmMessage[]>([]);
+  let confirmStore = $state<ConfirmMessage[]>([]);
 
   export function confirmDialog(message: Omit<ConfirmMessage, "resolve">) {
     return new Promise<boolean>((resolve) => {
-      confirmStore.update((value) => {
-        return [...value, { ...message, resolve }];
-      });
+      confirmStore = [...confirmStore, { ...message, resolve }];
     });
   }
 </script>
@@ -26,13 +22,11 @@
   import Dialog from "./Dialog.svelte";
   import Button from "./input/Button.svelte";
 
-  const currentMessage: ConfirmMessage | undefined = $derived($confirmStore[0]);
+  const currentMessage: ConfirmMessage | undefined = $derived(confirmStore[0]);
 
   function onResult(message: ConfirmMessage, value: boolean) {
     // Pop the message out of the store
-    confirmStore.update((value) => {
-      return value.filter((_, index) => index !== 0);
-    });
+    confirmStore = confirmStore.filter((_, index) => index !== 0);
 
     message.resolve(value);
   }

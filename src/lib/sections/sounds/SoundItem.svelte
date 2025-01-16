@@ -5,9 +5,9 @@
   import getBackendURL from "$lib/utils/url";
   import { deleteSound } from "$lib/api/soundModel";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { getAppData } from "$lib/api/runtimeAppData";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
+  import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
   import SolarMenuDotsBold from "~icons/solar/menu-dots-bold";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
@@ -23,7 +23,8 @@
     onToggleSelected: VoidFunction;
   };
 
-  const appData = getAppData();
+  const appContext = getAppContext();
+  const appData = $derived(appContext.appData);
 
   const { config, selected, onToggleSelected }: Props = $props();
 
@@ -51,7 +52,7 @@
   <SoundPlayButton
     showText
     src={getBackendURL(config.src)}
-    volume={config.volume * $appData.sounds_config.global_volume}
+    volume={config.volume * appData.sounds_config.global_volume}
   />
   <LinkButton href="/sounds/{config.id}">
     <SettingsIcon /> View

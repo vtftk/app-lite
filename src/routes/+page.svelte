@@ -14,13 +14,15 @@
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import {
-    getRuntimeAppData,
+    getAppContext,
     getTwitchOAuthURI,
     isModelCalibrated,
     createOverlayURLQuery,
   } from "$lib/api/runtimeAppData";
 
-  const runtimeAppData = getRuntimeAppData();
+  const appContext = getAppContext();
+  const runtimeAppData = $derived(appContext.runtimeAppData);
+
   const isAuthenticated = createIsAuthenticatedQuery();
 
   // Query for the overlay URL
@@ -30,7 +32,7 @@
 
   // Model needs to be calibrated if not available here
   const modelCalibrated = $derived(
-    isModelCalibrated($modelDataQuery.data ?? [], $runtimeAppData.model_id),
+    isModelCalibrated($modelDataQuery.data ?? [], runtimeAppData.model_id),
   );
 
   /**
@@ -163,7 +165,7 @@
             OBS Overlay
 
             <span class="labels">
-              {#if $runtimeAppData.active_overlay_count > 0}
+              {#if runtimeAppData.active_overlay_count > 0}
                 <Label color="green">Connected</Label>
               {:else}
                 <Label color="red">Not Connected</Label>
@@ -180,11 +182,11 @@
         </div>
         <div
           class="status-indicator"
-          data-status={$runtimeAppData.active_overlay_count > 0
+          data-status={runtimeAppData.active_overlay_count > 0
             ? "green"
             : "red"}
         >
-          {$runtimeAppData.active_overlay_count}
+          {runtimeAppData.active_overlay_count}
         </div>
       </div>
     </Card>
@@ -204,10 +206,10 @@
               VTube Studio
 
               <span class="labels">
-                {#if $runtimeAppData.vtube_studio_connected}
+                {#if runtimeAppData.vtube_studio_connected}
                   <Label color="green">Connected</Label>
 
-                  {#if $runtimeAppData.vtube_studio_auth}
+                  {#if runtimeAppData.vtube_studio_auth}
                     <Label color="green">Authorized</Label>
 
                     {#if modelCalibrated}
@@ -224,8 +226,8 @@
               </span>
             </h2>
 
-            {#if $runtimeAppData.vtube_studio_connected}
-              {#if $runtimeAppData.vtube_studio_auth}
+            {#if runtimeAppData.vtube_studio_connected}
+              {#if runtimeAppData.vtube_studio_auth}
                 {#if modelCalibrated}
                   <div class="actions">
                     <LinkButton href="/calibration"
@@ -260,8 +262,8 @@
 
           <div
             class="status-indicator"
-            data-status={$runtimeAppData.vtube_studio_connected
-              ? modelCalibrated && $runtimeAppData.vtube_studio_auth
+            data-status={runtimeAppData.vtube_studio_connected
+              ? modelCalibrated && runtimeAppData.vtube_studio_auth
                 ? "green"
                 : "orange"
               : "red"}

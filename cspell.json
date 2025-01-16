@@ -27,6 +27,7 @@
     "staticlib",
     "tauri",
     "tungstenite",
+    "unlisten",
     "vtftk",
     "vtube",
     "webbrowser"

@@ -23,23 +23,21 @@
   import SolarPeopleNearbyBoldDuotone from "~icons/solar/people-nearby-bold-duotone";
   import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
   import {
+    getAppContext,
+    createAppDateMutation,
+  } from "$lib/api/runtimeAppData";
+  import {
     type AppData,
     EYES_MODE_VALUES,
     THROW_DIRECTION_VALUES,
   } from "$lib/api/types";
-  import {
-    getAppData,
-    createAppDateMutation,
-    createUpdateSettingsMutation,
-  } from "$lib/api/runtimeAppData";
 
   import EyesModeSelect from "./EyesModeSelect.svelte";
   import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
 
-  const appData = getAppData();
+  const appContext = getAppContext();
+  const appData = $derived(appContext.appData);
   const appDataMutation = createAppDateMutation();
-
-  const updateSettings = createUpdateSettingsMutation(appData, appDataMutation);
 
   const schema = z.object({
     // Schema for throwables configuration
@@ -145,31 +143,36 @@
     };
   }
 
-  const { form, data, setFields } = createForm<z.infer<typeof schema>>({
-    initialValues: createFromExisting($appData),
+  const { form, data, setFields } = $derived(
+    createForm<z.infer<typeof schema>>({
+      initialValues: createFromExisting(appData),
 
-    // Validation and error reporting
-    extend: [validator({ schema }), reporterDom()],
+      // Validation and error reporting
+      extend: [validator({ schema }), reporterDom()],
 
-    async onSubmit(values) {
-      const savePromise = save(values);
+      async onSubmit(values) {
+        const savePromise = save(values);
 
-      toast.promise(savePromise, {
-        loading: "Saving settings...",
-        success: "Saved settings",
-        error: toastErrorMessage("Failed to save settings"),
-      });
+        toast.promise(savePromise, {
+          loading: "Saving settings...",
+          success: "Saved settings",
+          error: toastErrorMessage("Failed to save settings"),
+        });
 
-      await savePromise;
-    },
-  });
+        await savePromise;
+      },
+    }),
+  );
 
   async function save(values: Schema) {
     const { throwables, model, sounds, vtube_studio, external, main, physics } =
       values;
 
-    await $updateSettings({
+    await $appDataMutation.mutateAsync({
+      ...appData,
+
       throwables_config: {
+        ...appData.throwables_config,
         duration: throwables.duration,
         spin_speed: throwables.spin_speed,
         throw_angle: throwables.throw_angle,
@@ -178,23 +181,28 @@
         item_scale: throwables.item_scale,
       },
       model_config: {
+        ...appData.model_config,
         model_return_time: model.model_return_time,
         eyes_on_hit: model.eyes_on_hit,
       },
       sounds_config: {
+        ...appData.sounds_config,
         global_volume: sounds.global_volume,
       },
       vtube_studio_config: {
+        ...appData.vtube_studio_config,
         host: vtube_studio.host,
         port: vtube_studio.port,
       },
       externals_config: {
+        ...appData.externals_config,
         tts_monster_api_key:
           external.tts_monster_api_key.trim().length < 1
             ? null
             : external.tts_monster_api_key,
       },
       main_config: {
+        ...appData.main_config,
         minimize_to_tray: main.minimize_to_tray,
         clean_logs: main.clean_logs,
         clean_logs_days: main.clean_logs_days,
@@ -204,6 +212,7 @@
         http_port: main.http_port,
       },
       physics_config: {
+        ...appData.physics_config,
         enabled: physics.enabled,
         fps: physics.fps,
         gravity_multiplier: physics.gravity_multiplier,
