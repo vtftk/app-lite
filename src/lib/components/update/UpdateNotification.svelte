@@ -1,7 +1,6 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { relaunch } from "@tauri-apps/plugin-process";
   import { getAppContext } from "$lib/api/runtimeAppData";
   import { check, Update } from "@tauri-apps/plugin-updater";
 
@@ -34,22 +33,22 @@
   }
 
   async function installUpdate(update: Update) {
-    const updatePromise = update.downloadAndInstall();
+    const updatePromise = update.download();
 
     toast.promise(updatePromise, {
-      loading: `Downloading and installing update v${update.version}...`,
-      success: "Update and install complete",
-      error: toastErrorMessage("Failed to download and install update"),
+      loading: `Downloading update v${update.version}...`,
+      success: "Update downloaded",
+      error: toastErrorMessage("Failed to download update"),
     });
 
     await updatePromise;
 
-    toast("Restart to install the update", {
+    toast("Install the update (Will restart VTFTK)", {
       duration: Infinity,
       action: {
-        label: "Restart",
+        label: "Install",
         onClick: () => {
-          relaunch();
+          update.install();
         },
       },
     });

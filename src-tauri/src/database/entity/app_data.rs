@@ -343,14 +343,6 @@ impl Model {
         Ok(http_port)
     }
 
-    pub async fn is_auto_updating<C>(db: &C) -> anyhow::Result<bool>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        let main_config = Self::get_main_config(db).await?;
-        Ok(main_config.auto_updating)
-    }
-
     pub async fn get_main_config<C>(db: &C) -> anyhow::Result<MainConfig>
     where
         C: ConnectionTrait + Send + 'static,

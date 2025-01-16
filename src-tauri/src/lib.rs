@@ -30,7 +30,6 @@ pub fn run() {
     env_logger::init();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_process::init())
         // Shell access plugin
         .plugin(tauri_plugin_shell::init())
         // Don't allow creation of multiple windows, instead focus the existing window
