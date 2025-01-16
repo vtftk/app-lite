@@ -59,7 +59,7 @@ export function createRuntimeAppDataQuery(): CreateQueryResult<
 /**
  * Create a query to fetch the app data
  */
-export function createAppDataQuery(): CreateQueryResult<RuntimeAppData, Error> {
+export function createAppDataQuery(): CreateQueryResult<AppData, Error> {
   return createQuery({
     queryKey: APP_DATA_KEY,
     queryFn: () => invoke<AppData>("get_app_data"),

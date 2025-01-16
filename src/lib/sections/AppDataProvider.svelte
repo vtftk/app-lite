@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { RuntimeAppData } from "$lib/api/types";
+  import type { AppData, RuntimeAppData } from "$lib/api/types";
 
   import { setContext } from "svelte";
   import { derived, type Readable } from "svelte/store";
@@ -18,7 +18,7 @@
   );
 
   const appData = createAppDataQuery();
-  const appDataStore: Readable<RuntimeAppData | undefined> = derived(
+  const appDataStore: Readable<AppData | undefined> = derived(
     appData,
     ($appData) => $appData.data,
   );
