@@ -95,35 +95,24 @@ export function getTwitchOAuthURI() {
 }
 
 /**
- * Creates a derived store that can determine if the
- * current model is calibrated, uses the active model
- * ID from the runtime app data combined with the model
- * data in app data
+ * Checks if the current model is present in the
+ * provided model calibration data
  *
- * @param modelData Collection of model data
- * @param runtimeAppData Runtime app data for the current model
- * @returns Readable for whether the current model is calibrated
+ * @param modelData Available model data
+ * @param modelId ID of the current model or null when no model
+ * @returns Whether the model is calibrated
  */
-export function createDeriveModelCalibrated(
-  modelData: Readable<ModelData[]>,
-  runtimeAppData: Readable<RuntimeAppData>,
-): Readable<boolean> {
-  return derived(
-    [modelData, runtimeAppData],
-    ([$modelData, $runtimeAppData]) => {
-      console.log($runtimeAppData.model_id, $modelData);
+export function isModelCalibrated(
+  modelData: ModelData[],
+  modelId: string | null,
+): boolean {
+  // No model active or no model data
+  if (modelId === null || modelData.length < 1) {
+    return false;
+  }
 
-      // No model active
-      if ($runtimeAppData.model_id === null) {
-        return false;
-      }
-
-      const data = $modelData.find(
-        (data) => data.id === $runtimeAppData.model_id,
-      );
-      return data !== undefined;
-    },
-  );
+  const data = modelData.find((data) => data.id === modelId);
+  return data !== undefined;
 }
 
 type AppDataMutation = ReturnType<typeof createAppDateMutation>;

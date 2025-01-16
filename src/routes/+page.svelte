@@ -7,7 +7,6 @@
   import { setClipboard } from "$lib/utils/browser";
   import { toastErrorMessage } from "$lib/utils/error";
   import { debounce } from "$lib/utils/debounce.svelte";
-  import { derived as derivedStore } from "svelte/store";
   import Button from "$lib/components/input/Button.svelte";
   import { createModelDataQuery } from "$lib/api/calibration";
   import { createIsAuthenticatedQuery } from "$lib/api/twitch";
@@ -17,8 +16,8 @@
   import {
     getRuntimeAppData,
     getTwitchOAuthURI,
+    isModelCalibrated,
     createOverlayURLQuery,
-    createDeriveModelCalibrated,
   } from "$lib/api/runtimeAppData";
 
   const runtimeAppData = getRuntimeAppData();
@@ -28,15 +27,10 @@
   const overlayURLQuery = createOverlayURLQuery();
 
   const modelDataQuery = createModelDataQuery();
-  const modelData = derivedStore(
-    modelDataQuery,
-    ($modelDataQuery) => $modelDataQuery.data ?? [],
-  );
 
   // Model needs to be calibrated if not available here
-  const isModelCalibrated = createDeriveModelCalibrated(
-    modelData,
-    runtimeAppData,
+  const modelCalibrated = $derived(
+    isModelCalibrated($modelDataQuery.data ?? [], $runtimeAppData.model_id),
   );
 
   /**
@@ -216,7 +210,7 @@
                   {#if $runtimeAppData.vtube_studio_auth}
                     <Label color="green">Authorized</Label>
 
-                    {#if $isModelCalibrated}
+                    {#if modelCalibrated}
                       <Label color="green">Calibrated</Label>
                     {:else}
                       <Label color="red">Not Calibrated</Label>
@@ -232,7 +226,7 @@
 
             {#if $runtimeAppData.vtube_studio_connected}
               {#if $runtimeAppData.vtube_studio_auth}
-                {#if $isModelCalibrated}
+                {#if modelCalibrated}
                   <div class="actions">
                     <LinkButton href="/calibration"
                       >Recalibrate Model</LinkButton
@@ -267,7 +261,7 @@
           <div
             class="status-indicator"
             data-status={$runtimeAppData.vtube_studio_connected
-              ? $isModelCalibrated && $runtimeAppData.vtube_studio_auth
+              ? modelCalibrated && $runtimeAppData.vtube_studio_auth
                 ? "green"
                 : "orange"
               : "red"}

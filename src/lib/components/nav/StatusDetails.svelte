@@ -1,25 +1,19 @@
 <script lang="ts">
-  import { derived } from "svelte/store";
   import { createModelDataQuery } from "$lib/api/calibration";
   import { createIsAuthenticatedQuery } from "$lib/api/twitch";
   import {
     getRuntimeAppData,
-    createDeriveModelCalibrated,
+    isModelCalibrated,
   } from "$lib/api/runtimeAppData";
 
   const runtimeAppData = getRuntimeAppData();
   const isAuthenticated = createIsAuthenticatedQuery();
 
   const modelDataQuery = createModelDataQuery();
-  const modelData = derived(
-    modelDataQuery,
-    ($modelDataQuery) => $modelDataQuery.data ?? [],
-  );
 
   // Model needs to be calibrated if not available here
-  const isModelCalibrated = createDeriveModelCalibrated(
-    modelData,
-    runtimeAppData,
+  const modelCalibrated = $derived(
+    isModelCalibrated($modelDataQuery.data ?? [], $runtimeAppData.model_id),
   );
 </script>
 
@@ -29,7 +23,7 @@
     <div
       class="status-indicator"
       data-status={$runtimeAppData.vtube_studio_connected
-        ? $isModelCalibrated && $runtimeAppData.vtube_studio_auth
+        ? modelCalibrated && $runtimeAppData.vtube_studio_auth
           ? "green"
           : "orange"
         : "red"}
