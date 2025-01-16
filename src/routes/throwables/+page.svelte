@@ -16,9 +16,9 @@
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import ThrowableItem from "$lib/sections/throwables/ThrowableItem.svelte";
-  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import VirtualOrderableGrid from "$lib/components/VirtualOrderableGrid.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";
   import PopoverCloseButton from "$lib/components/popover/PopoverCloseButton.svelte";
   import BulkThrowableImport from "$lib/components/throwable/BulkThrowableImport.svelte";
   import {

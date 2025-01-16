@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createField } from "felte";
+  import Slider from "$lib/components/input/Slider.svelte";
   import { Slider as BitsSlider, type WithoutChildren } from "bits-ui";
 
-  import Slider from "../input/Slider.svelte";
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {
@@ -12,7 +12,10 @@
     description?: string;
     value: number;
     showTicks?: boolean;
-  } & Omit<WithoutChildren<BitsSlider.RootProps>, "value" | "onValueChange">;
+  } & Omit<
+    WithoutChildren<Omit<BitsSlider.RootProps & { type: "single" }, "type">>,
+    "value" | "onValueChange"
+  >;
 
   let {
     id,
@@ -39,11 +42,11 @@
   <div class="row">
     <div class="wrapper">
       <Slider
-        value={[value]}
+        {value}
         bind:ref
         {...restProps}
         onValueChange={(value) => {
-          onInput(value[0]);
+          onInput(value);
         }}
         {min}
         {max}

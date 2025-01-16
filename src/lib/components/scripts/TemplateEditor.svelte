@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MonacoEditor from "./scripts/MonacoEditor.svelte";
+  import MonacoEditor from "./MonacoEditor.svelte";
 
   type EditorTemplate = {
     key: string;

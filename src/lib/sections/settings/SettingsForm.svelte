@@ -15,10 +15,10 @@
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarBallsBoldDuotone from "~icons/solar/balls-bold-duotone";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
-  import DetectVTubeStudio from "$lib/components/DetectVTubeStudio.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import DetectVTubeStudio from "$lib/sections/settings/DetectVTubeStudio.svelte";
   import SolarShareCircleBoldDuotone from "~icons/solar/share-circle-bold-duotone";
   import SolarPeopleNearbyBoldDuotone from "~icons/solar/people-nearby-bold-duotone";
   import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";

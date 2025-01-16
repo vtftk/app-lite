@@ -3,11 +3,10 @@
 
   import getBackendURL from "$lib/utils/url";
   import { createItemsQuery } from "$lib/api/itemModel";
-
-  import Dialog from "../Dialog.svelte";
-  import SearchInput from "../form/SearchInput.svelte";
-  import DialogCloseButton from "../DialogCloseButton.svelte";
-  import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
+  import Dialog from "$lib/components/dialog/Dialog.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import DialogCloseButton from "$lib/components/dialog/DialogCloseButton.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
   type Props = {
     selected: string[];

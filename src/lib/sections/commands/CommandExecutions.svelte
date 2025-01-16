@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ExecutionsTable from "$lib/components/ExecutionsTable.svelte";
+  import ExecutionsTable from "$lib/sections/executions/ExecutionsTable.svelte";
   import {
     type CommandId,
     type ExecutionId,

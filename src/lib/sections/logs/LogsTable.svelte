@@ -3,30 +3,26 @@
   import { toastErrorMessage } from "$lib/utils/error";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import { formatDate, formatTime } from "$lib/utils/date";
-  import { type ExecutionId, type ExecutionData } from "$shared/dataV2";
+  import Button from "$lib/components/input/Button.svelte";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
-
-  import Button from "./input/Button.svelte";
-  import { confirmDialog } from "./GlobalConfirmDialog.svelte";
-  import ControlledCheckbox from "./input/ControlledCheckbox.svelte";
-  import ExecutionMetadataDialog from "./ExecutionMetadataDialog.svelte";
+  import { type LogId, type LogData, LoggingLevelStr } from "$shared/dataV2";
+  import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";
+  import SolarDangerTriangleBoldDuotone from "~icons/solar/danger-triangle-bold-duotone";
 
   type Props = {
-    executions: ExecutionData[];
+    logs: LogData[];
 
     onRefresh: VoidFunction;
-    onBulkDelete: (executionIds: ExecutionId[]) => Promise<void>;
+    onBulkDelete: (logs: LogId[]) => Promise<void>;
   };
 
-  const {
-    executions,
-    onRefresh,
-    onBulkDelete: _onBulkDelete,
-  }: Props = $props();
+  const { logs, onRefresh, onBulkDelete: _onBulkDelete }: Props = $props();
 
-  let selected: ExecutionId[] = $state([]);
+  let selected: LogId[] = $state([]);
 
-  function onToggleSelected(item: ExecutionId) {
+  function onToggleSelected(item: LogId) {
     if (selected.includes(item)) {
       selected = selected.filter((id) => id !== item);
     } else {
@@ -35,18 +31,17 @@
   }
 
   function onToggleAllSelected() {
-    if (executions.length > 0 && selected.length === executions.length) {
+    if (logs.length > 0 && selected.length === logs.length) {
       selected = [];
     } else {
-      selected = executions.map((item) => item.id);
+      selected = logs.map((item) => item.id);
     }
   }
 
   async function onBulkDelete() {
     const confirm = await confirmDialog({
       title: "Confirm Delete",
-      description:
-        "Are you sure you want to delete the selected execution entries?",
+      description: "Are you sure you want to delete the selected log entries?",
     });
 
     if (!confirm) {
@@ -56,9 +51,9 @@
     const deletePromise = _onBulkDelete(selected);
 
     toast.promise(deletePromise, {
-      loading: "Deleting execution entries...",
-      success: "Deleted execution entries",
-      error: toastErrorMessage("Failed to delete execution entries"),
+      loading: "Deleting log entries...",
+      success: "Deleted log entries",
+      error: toastErrorMessage("Failed to delete log entries"),
     });
 
     // Clear selection since all items are removed
@@ -94,49 +89,50 @@
           <th class="column--select">
             <div class="select-actions">
               <ControlledCheckbox
-                checked={executions.length > 0 &&
-                  selected.length === executions.length}
+                checked={logs.length > 0 && selected.length === logs.length}
                 onCheckedChange={() => onToggleAllSelected()}
               />
             </div>
           </th>
-          <th class="column--msg">User</th>
-          <th class="column--msg">Metadata</th>
+          <th class="column--level">Level</th>
+          <th class="column--msg">Message</th>
           <th class="column--date">Timestamp</th>
         </tr>
       </thead>
       <tbody>
-        {#each executions as exec}
+        {#each logs as log}
           <tr>
             <td class="column--select">
               <div class="select-actions">
                 <ControlledCheckbox
-                  checked={selected.includes(exec.id)}
-                  onCheckedChange={() => onToggleSelected(exec.id)}
+                  checked={selected.includes(log.id)}
+                  onCheckedChange={() => onToggleSelected(log.id)}
                 />
               </div>
             </td>
-
-            <td class="column--user">
-              {#if exec.metadata.user}
-                <a
-                  class="user-link"
-                  target="_blank"
-                  href="https://twitch.tv/{exec.metadata.user.name}"
-                >
-                  {exec.metadata.user.display_name}
-                </a>
-              {/if}
+            <td class="column--level" data-level={log.level} title={log.level}>
+              <span>
+                {#if log.level == LoggingLevelStr.Debug}
+                  <SolarInfoCircleBoldDuotone />
+                {:else if log.level == LoggingLevelStr.Info}
+                  <SolarInfoCircleBoldDuotone />
+                {:else if log.level == LoggingLevelStr.Warn}
+                  <SolarDangerTriangleBoldDuotone />
+                {:else if log.level == LoggingLevelStr.Error}
+                  <SolarDangerTriangleBoldDuotone />
+                {/if}
+              </span>
+              <span class="log-level">{log.level}</span>
             </td>
-            <td class="column--meta">
-              <ExecutionMetadataDialog metadata={exec.metadata} />
+            <td class="column--msg">
+              <p class="message">{log.message}</p>
             </td>
             <td class="column--date">
               <span class="date-date">
-                {formatDate(new Date(exec.created_at))}
+                {formatDate(new Date(log.created_at))}
               </span>
               <span class="date-time">
-                {formatTime(new Date(exec.created_at))}
+                {formatTime(new Date(log.created_at))}
               </span>
             </td>
           </tr>
@@ -147,10 +143,6 @@
 </div>
 
 <style>
-  .user-link {
-    color: #55c0e0;
-  }
-
   .wrapper {
     width: 100%;
     overflow-x: hidden;
@@ -198,6 +190,41 @@
     vertical-align: center;
   }
 
+  .column--level {
+    width: 4rem;
+    text-align: center;
+    color: #fff;
+  }
+
+  .column--level > span {
+    margin: 0.5rem auto;
+    margin-bottom: 0;
+    font-size: 1.5rem;
+    display: inline-block;
+    line-height: 1;
+  }
+
+  .column--level > .log-level {
+    font-size: 0.9rem;
+    margin-top: 0rem;
+  }
+
+  .column--level[data-level="Info"] > span {
+    color: #91d7ff;
+  }
+
+  .column--level[data-level="Debug"] > span {
+    color: #c491ff;
+  }
+
+  .column--level[data-level="Warn"] > span {
+    color: #ffc391;
+  }
+
+  .column--level[data-level="Error"] > span {
+    color: #ff9191;
+  }
+
   .column--msg {
     text-align: left;
   }
@@ -212,6 +239,15 @@
 
   .date-time {
     color: #ccc;
+    font-size: 0.9rem;
+  }
+
+  .message {
+    position: relative;
+    display: block;
+    color: #ccc;
+    overflow: hidden;
+    font-family: "Jetbrains Mono";
     font-size: 0.9rem;
   }
 

@@ -11,7 +11,6 @@
   import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
-  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import SolarMoneyBagBoldDuotone from "~icons/solar/money-bag-bold-duotone";
   import SolarStopwatchBoldDuotone from "~icons/solar/stopwatch-bold-duotone";
   import SolarHandMoneyBoldDuotone from "~icons/solar/hand-money-bold-duotone";
@@ -22,6 +21,7 @@
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarArrowRightBoldDuotone from "~icons/solar/arrow-right-bold-duotone";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";
   import SolarSkateboardingBoldDuotone from "~icons/solar/skateboarding-bold-duotone";
   import SolarChatSquareCodeBoldDuotone from "~icons/solar/chat-square-code-bold-duotone";
   import SolarEmojiFunnyCircleBoldDuotone from "~icons/solar/emoji-funny-circle-bold-duotone";

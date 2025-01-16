@@ -2,7 +2,7 @@
   import type { LogId, EventId, LogsQuery } from "$shared/dataV2";
 
   import { onMount } from "svelte";
-  import LogsTable from "$lib/components/LogsTable.svelte";
+  import LogsTable from "$lib/sections/logs/LogsTable.svelte";
   import {
     eventLogsQuery,
     deleteEventLogs,

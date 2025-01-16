@@ -1,18 +1,18 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
   import { invoke } from "@tauri-apps/api/core";
-  import Card from "$lib/components/Card.svelte";
   import { getVersion } from "@tauri-apps/api/app";
   import Label from "$lib/components/Label.svelte";
   import { setClipboard } from "$lib/utils/browser";
+  import Card from "$lib/components/card/Card.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import { debounce } from "$lib/utils/debounce.svelte";
   import Button from "$lib/components/input/Button.svelte";
   import { createModelDataQuery } from "$lib/api/calibration";
   import { createIsAuthenticatedQuery } from "$lib/api/twitch";
-  import CardSkeleton from "$lib/components/CardSkeleton.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
+  import CardSkeleton from "$lib/components/card/CardSkeleton.svelte";
   import {
     getAppContext,
     getTwitchOAuthURI,

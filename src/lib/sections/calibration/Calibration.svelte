@@ -270,10 +270,6 @@
     font-weight: bold;
   }
 
-  .step--current .step__line {
-    background: linear-gradient(90deg, #6ed86e 70%, #ffffff);
-  }
-
   .step:not(:last-of-type) {
     flex: auto;
   }

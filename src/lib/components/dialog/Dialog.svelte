@@ -4,7 +4,7 @@
   import { fade, scale } from "svelte/transition";
   import { Dialog, type WithoutChild } from "bits-ui";
 
-  import Button from "./input/Button.svelte";
+  import Button from "../input/Button.svelte";
 
   type Props = Dialog.RootProps & {
     buttonLabel?: { text?: string; icon?: Component };

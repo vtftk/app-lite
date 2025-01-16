@@ -10,7 +10,7 @@
   import AppToaster from "$lib/components/AppToaster.svelte";
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
-  import GlobalConfirmDialog from "$lib/components/GlobalConfirmDialog.svelte";
+  import GlobalConfirmDialog from "$lib/components/dialog/GlobalConfirmDialog.svelte";
 </script>
 
 <!-- Global query client context -->

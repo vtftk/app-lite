@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import LogsTable from "$lib/components/LogsTable.svelte";
+  import LogsTable from "$lib/sections/logs/LogsTable.svelte";
   import { type LogId, type CommandId, type LogsQuery } from "$shared/dataV2";
   import {
     commandLogsQuery,

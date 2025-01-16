@@ -8,12 +8,11 @@
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
-  import CardButton from "$lib/components/CardButton.svelte";
+  import CardButton from "$lib/components/card/CardButton.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
-  import TemplateEditor from "$lib/components/TemplateEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import { createCommand, updateCommand } from "$lib/api/commandModel";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
@@ -21,6 +20,7 @@
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import TemplateEditor from "$lib/components/scripts/TemplateEditor.svelte";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";

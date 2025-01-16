@@ -10,8 +10,8 @@
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
-  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";
   import {
     deleteEvents,
     updateEventOrder,

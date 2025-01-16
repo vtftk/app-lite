@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Dialog from "./Dialog.svelte";
-  import MonacoEditor from "./scripts/MonacoEditor.svelte";
-  import DialogCloseButton from "./DialogCloseButton.svelte";
+  import Dialog from "$lib/components/dialog/Dialog.svelte";
+  import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
+  import DialogCloseButton from "$lib/components/dialog/DialogCloseButton.svelte";
 
   type Props = {
     metadata: unknown;

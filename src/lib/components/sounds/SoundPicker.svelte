@@ -5,13 +5,12 @@
   import getBackendURL from "$lib/utils/url";
   import { createSoundsQuery } from "$lib/api/soundModel";
   import { getAppContext } from "$lib/api/runtimeAppData";
-
-  import Dialog from "../Dialog.svelte";
-  import Button from "../input/Button.svelte";
-  import SoundPreview from "./SoundPreview.svelte";
-  import SearchInput from "../form/SearchInput.svelte";
-  import DialogCloseButton from "../DialogCloseButton.svelte";
-  import ControlledCheckbox from "../input/ControlledCheckbox.svelte";
+  import Button from "$lib/components/input/Button.svelte";
+  import Dialog from "$lib/components/dialog/Dialog.svelte";
+  import SearchInput from "$lib/components/form/SearchInput.svelte";
+  import SoundPreview from "$lib/components/sounds/SoundPreview.svelte";
+  import DialogCloseButton from "$lib/components/dialog/DialogCloseButton.svelte";
+  import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
   type Props = {
     disabled?: boolean;

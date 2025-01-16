@@ -1,7 +1,9 @@
 <script lang="ts">
   import { Slider, type WithoutChildren } from "bits-ui";
 
-  type Props = { showTicks?: boolean } & WithoutChildren<Slider.RootProps>;
+  type Props = { showTicks?: boolean } & WithoutChildren<
+    Omit<Slider.RootProps & { type: "single" }, "type">
+  >;
 
   let {
     value = $bindable(),
@@ -12,7 +14,7 @@
 </script>
 
 <div class="wrapper">
-  <Slider.Root bind:value bind:ref {...restProps}>
+  <Slider.Root type="single" bind:value bind:ref {...restProps}>
     {#snippet child({ props, thumbs, ticks })}
       <span {...props} class="root">
         <Slider.Range>

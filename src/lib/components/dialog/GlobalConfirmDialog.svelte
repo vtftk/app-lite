@@ -19,8 +19,8 @@
 </script>
 
 <script lang="ts">
-  import Dialog from "./Dialog.svelte";
-  import Button from "./input/Button.svelte";
+  import Button from "$lib/components/input/Button.svelte";
+  import Dialog from "$lib/components/dialog/Dialog.svelte";
 
   const currentMessage: ConfirmMessage | undefined = $derived(confirmStore[0]);
 

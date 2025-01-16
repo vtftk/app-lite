@@ -2,8 +2,7 @@
   import type { Snippet, Component } from "svelte";
 
   import { Dialog, type DialogCloseProps } from "bits-ui";
-
-  import Button from "./input/Button.svelte";
+  import Button from "$lib/components/input/Button.svelte";
 
   type Props = {
     buttonLabel?: { text?: string; icon?: Component };

@@ -8,16 +8,15 @@
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
-  import CardButton from "$lib/components/CardButton.svelte";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import { getEventTestingData } from "$lib/utils/eventTestData";
+  import CardButton from "$lib/components/card/CardButton.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
   import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
-  import TemplateEditor from "$lib/components/TemplateEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
@@ -26,6 +25,7 @@
   import { testEvent, createEvent, updateEvent } from "$lib/api/eventModel";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarKeyboardBoldDuotone from "~icons/solar/keyboard-bold-duotone";
+  import TemplateEditor from "$lib/components/scripts/TemplateEditor.svelte";
   import SolarCardSendBoldDuotone from "~icons/solar/card-send-bold-duotone";
   import SolarMoneyBagBoldDuotone from "~icons/solar/money-bag-bold-duotone";
   import SolarStopwatchBoldDuotone from "~icons/solar/stopwatch-bold-duotone";

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Dialog from "./Dialog.svelte";
-  import Button from "./input/Button.svelte";
+  import Button from "../input/Button.svelte";
 
   type Props = {
     open?: boolean;

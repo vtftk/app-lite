@@ -11,8 +11,8 @@
   import { deleteCommand, updateCommand } from "$lib/api/commandModel";
   import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
-  import { confirmDialog } from "$lib/components/GlobalConfirmDialog.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
+  import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";
 
   type Props = {
     config: Command;

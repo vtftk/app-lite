@@ -3,11 +3,10 @@
 
   import { detectVTubeStudio } from "$lib/api/data";
   import { getErrorMessage } from "$lib/utils/error";
+  import Button from "$lib/components/input/Button.svelte";
+  import Dialog from "$lib/components/dialog/Dialog.svelte";
   import SolarCardSearchBoldDuotone from "~icons/solar/card-search-bold-duotone";
-
-  import Dialog from "./Dialog.svelte";
-  import Button from "./input/Button.svelte";
-  import DialogCloseButton from "./DialogCloseButton.svelte";
+  import DialogCloseButton from "$lib/components/dialog/DialogCloseButton.svelte";
 
   type Props = {
     onChoosePort: (port: number) => void;
