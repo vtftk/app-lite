@@ -10,8 +10,14 @@
   import AppToaster from "$lib/components/AppToaster.svelte";
   import { QueryClientProvider } from "@tanstack/svelte-query";
   import AppDataProvider from "$lib/sections/AppDataProvider.svelte";
+  import UpdateNotification from "$lib/components/update/UpdateNotification.svelte";
   import GlobalConfirmDialog from "$lib/components/dialog/GlobalConfirmDialog.svelte";
 </script>
+
+<!-- Toast popup provider -->
+<AppToaster />
+
+<GlobalConfirmDialog />
 
 <!-- Global query client context -->
 <QueryClientProvider client={queryClient}>
@@ -34,13 +40,10 @@
         </div>
       {/key}
     </main>
+
+    <UpdateNotification />
   </AppDataProvider>
 </QueryClientProvider>
-
-<!-- Toast popup provider -->
-<AppToaster />
-
-<GlobalConfirmDialog />
 
 <style>
   .main {

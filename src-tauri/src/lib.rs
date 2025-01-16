@@ -30,12 +30,14 @@ pub fn run() {
     env_logger::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
         // Shell access plugin
         .plugin(tauri_plugin_shell::init())
         // Don't allow creation of multiple windows, instead focus the existing window
         .plugin(tauri_plugin_single_instance::init(
             handle_duplicate_instance,
         ))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(setup)
         .invoke_handler(tauri::generate_handler![
             // Calibration commands
@@ -132,9 +134,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
         event_tx.clone(),
     );
 
-    // Add auto updater plugin if auto updating is allowed
-    block_on(setup_auto_update(&db, handle))?;
-
     // Run background cleanup
     spawn(clean_old_data(db.clone()));
 
@@ -209,14 +208,4 @@ fn handle_app_event(app: &AppHandle, event: RunEvent) {
             api.prevent_exit();
         }
     }
-}
-
-/// Initialize auto updating
-async fn setup_auto_update(db: &DatabaseConnection, app_handle: &AppHandle) -> anyhow::Result<()> {
-    let auto_updating = AppDataModel::is_auto_updating(db).await?;
-    if auto_updating {
-        app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
-    }
-
-    Ok(())
 }
