@@ -8,6 +8,7 @@ use crate::{
         models::{GetAuthTokenResponse, SetAuthTokenRequest},
     },
     state::runtime_app_data::{RuntimeAppData, RuntimeAppDataStore, UpdateRuntimeAppData},
+    storage::Storage,
 };
 use anyhow::Context;
 use axum::{
@@ -78,33 +79,24 @@ pub async fn update_runtime_data(
 /// Retrieve the contents of a file from one of the content folders
 pub async fn get_content_file(
     Path((folder, name)): Path<(String, String)>,
-    Extension(app): Extension<AppHandle>,
+    Extension(storage): Extension<Storage>,
 ) -> Result<Response<Body>, DynHttpError> {
-    let app_data_path = app
-        .path()
-        .app_data_dir()
-        .context("failed to get app data dir")?;
-    let content_path = app_data_path.join("content");
-    let file_path = content_path.join(folder).join(name);
-
-    if !file_path.exists() {
-        return Ok(Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(vec![].into())
-            .context("failed to make response")?);
-    }
-
-    let mime = mime_guess::from_path(&file_path);
-
-    let file_bytes = tokio::fs::read(file_path)
-        .await
-        .context("failed to read content file")?;
+    let file = storage.get_file(folder, name).await?;
+    let file = match file {
+        Some(file) => file,
+        None => {
+            return Ok(Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(vec![].into())
+                .context("failed to make response")?)
+        }
+    };
 
     Ok(Response::builder()
         .status(StatusCode::OK)
-        .header(CONTENT_TYPE, mime.first_or_octet_stream().essence_str())
+        .header(CONTENT_TYPE, file.mime.essence_str())
         .header(CACHE_CONTROL, "public, max-age=31536000, immutable")
-        .body(file_bytes.into())
+        .body(file.content.into())
         .context("failed to make response")?)
 }
 

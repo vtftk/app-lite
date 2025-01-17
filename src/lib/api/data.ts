@@ -1,25 +1,25 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { FileType, VTubeStudioBroadcast } from "./types";
+import type { StorageFolder, VTubeStudioBroadcast } from "./types";
 
 /**
  * Upload a file to the backend file API
  *
- * @param fileType Type of file (Determines the file path)
+ * @param folder Type of file (Determines the file path)
  * @param file The file to upload
  * @returns URL pointing to the uploaded file
  */
 export async function uploadFile(
-  fileType: FileType,
+  folder: StorageFolder,
   file: File,
 ): Promise<string> {
-  const fileName = file.name;
-  const fileData = await file.arrayBuffer();
+  const name = file.name;
+  const data = await file.arrayBuffer();
 
   return invoke<string>("upload_file", {
-    fileType,
-    fileName,
-    fileData,
+    folder,
+    name,
+    data,
   });
 }
 

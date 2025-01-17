@@ -7,9 +7,9 @@
   import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { FileType, type Sound } from "$lib/api/types";
   import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
+  import { type Sound, StorageFolder } from "$lib/api/types";
   import { createSound, updateSound } from "$lib/api/soundModel";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSlider from "$lib/components/form/FormSlider.svelte";
@@ -99,7 +99,7 @@
   function saveSound(sound: string | File) {
     if (sound instanceof File) {
       // Upload new sound
-      return uploadFile(FileType.Sound, sound);
+      return uploadFile(StorageFolder.Sound, sound);
     }
 
     // Using existing uploaded sound

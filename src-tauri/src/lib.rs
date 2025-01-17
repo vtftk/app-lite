@@ -7,6 +7,7 @@ use script::{events::ScriptEventActor, runtime::create_script_executor};
 use sea_orm::DatabaseConnection;
 use state::runtime_app_data::RuntimeAppDataStore;
 use std::error::Error;
+use storage::Storage;
 use tauri::{
     async_runtime::{block_on, spawn},
     App, AppHandle, Manager, RunEvent,
@@ -20,6 +21,7 @@ mod http;
 mod integrations;
 mod script;
 mod state;
+mod storage;
 mod tray;
 mod twitch;
 
@@ -133,6 +135,8 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
         event_tx.clone(),
     );
 
+    let storage = Storage::new_fs(handle)?;
+
     // Run background cleanup
     spawn(clean_old_data(db.clone()));
 
@@ -151,6 +155,8 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
 
     // Provide database access
     app.manage(db.clone());
+
+    app.manage(storage.clone());
 
     // Attempt to authenticate with twitch using the saved token
     _ = spawn({
@@ -180,6 +186,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
         handle.clone(),
         twitch,
         runtime_app_data,
+        storage.clone(),
     ));
 
     tray::create_tray_menu(app)?;

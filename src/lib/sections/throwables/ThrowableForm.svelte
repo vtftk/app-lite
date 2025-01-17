@@ -28,8 +28,8 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import {
-    FileType,
     type Sound,
+    StorageFolder,
     type ItemWithImpactSounds,
     type ThrowableImageConfig,
   } from "$lib/api/types";
@@ -147,7 +147,7 @@
   function saveImage(image: string | File) {
     if (image instanceof File) {
       // Upload new image
-      return uploadFile(FileType.ThrowableImage, image);
+      return uploadFile(StorageFolder.ThrowableImage, image);
     }
 
     // Using existing uploaded image

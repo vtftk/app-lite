@@ -3,7 +3,7 @@ export * from "$shared/appData";
 export * from "$shared/runtimeAppData";
 
 // File types for file uploads
-export enum FileType {
+export enum StorageFolder {
   ThrowableImage = "ThrowableImage",
   ImpactSound = "ImpactSound",
   ImpactImage = "ImpactImage",

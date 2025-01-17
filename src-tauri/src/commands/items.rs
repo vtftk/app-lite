@@ -2,17 +2,19 @@
 //!
 //! Commands for interacting with items from the frontend
 
-use crate::database::entity::{
-    items::{CreateItem, ItemModel, ItemWithImpactSounds, UpdateItem},
-    shared::UpdateOrdering,
-    sounds::SoundModel,
+use super::CmdResult;
+use crate::{
+    database::entity::{
+        items::{CreateItem, ItemModel, ItemWithImpactSounds, UpdateItem},
+        shared::UpdateOrdering,
+        sounds::SoundModel,
+    },
+    storage::Storage,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
-use tauri::{AppHandle, State};
+use tauri::State;
 use uuid::Uuid;
-
-use super::{data::delete_src_file, CmdResult};
 
 /// Get all items
 #[tauri::command]
@@ -79,8 +81,8 @@ pub async fn create_item(
 pub async fn update_item(
     item_id: Uuid,
     update: UpdateItem,
-    app_handle: AppHandle,
     db: State<'_, DatabaseConnection>,
+    storage: State<'_, Storage>,
 ) -> CmdResult<ItemWithImpactSounds> {
     let db = db.inner();
     let item = ItemModel::get_by_id(db, item_id)
@@ -94,7 +96,7 @@ pub async fn update_item(
 
     // Delete previous image file when changed
     if item.image.src != original_item_url {
-        delete_src_file(original_item_url, app_handle).await?;
+        storage.try_delete_file(original_item_url).await?;
     }
 
     Ok(ItemWithImpactSounds {
@@ -134,8 +136,8 @@ pub async fn append_item_impact_sounds(
 #[tauri::command]
 pub async fn delete_item(
     item_id: Uuid,
-    app_handle: AppHandle,
     db: State<'_, DatabaseConnection>,
+    storage: State<'_, Storage>,
 ) -> CmdResult<()> {
     let db = db.inner();
     let item = ItemModel::get_by_id(db, item_id)
@@ -146,7 +148,7 @@ pub async fn delete_item(
 
     item.delete(db).await?;
 
-    delete_src_file(item_url, app_handle).await?;
+    storage.try_delete_file(item_url).await?;
 
     Ok(())
 }

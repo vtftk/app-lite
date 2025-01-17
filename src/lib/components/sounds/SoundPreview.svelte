@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { toast } from "svelte-sonner";
   import PlayIcon from "~icons/solar/play-bold";
   import StopIcon from "~icons/solar/stop-bold";
+  import { toastErrorMessage } from "$lib/utils/error";
 
   type Props = {
     src: string;
@@ -15,14 +17,20 @@
   let progress = $state(0);
 
   // Play / Pause toggle
-  function togglePlay() {
+  async function togglePlay() {
     if (!audio) return;
     if (isPlaying) {
       audio.pause();
       audio.currentTime = 0;
     } else {
       audio.volume = volume ?? 1;
-      audio.play();
+
+      try {
+        await audio.play();
+      } catch (error) {
+        toast(toastErrorMessage("failed to play sound")(error));
+        return;
+      }
     }
     isPlaying = !isPlaying;
   }

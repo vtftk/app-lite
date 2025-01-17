@@ -2,10 +2,10 @@
 //!
 //! Internal server for handling OAuth responses and serving the app overlay HTML
 
-use crate::database::entity::app_data::AppDataModel;
 use crate::events::EventRecvHandle;
 use crate::state::runtime_app_data::RuntimeAppDataStore;
 use crate::twitch::manager::Twitch;
+use crate::{database::entity::app_data::AppDataModel, storage::Storage};
 use anyhow::Context;
 use axum::Extension;
 use sea_orm::DatabaseConnection;
@@ -23,6 +23,7 @@ pub async fn start_http_server(
     app_handle: AppHandle,
     twitch: Twitch,
     runtime_app_data: RuntimeAppDataStore,
+    storage: Storage,
 ) -> anyhow::Result<()> {
     let port = AppDataModel::get_http_port(&db).await?;
 
@@ -33,6 +34,7 @@ pub async fn start_http_server(
         .layer(Extension(app_handle))
         .layer(Extension(twitch))
         .layer(Extension(runtime_app_data))
+        .layer(Extension(storage))
         .layer(CorsLayer::very_permissive());
 
     let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port));

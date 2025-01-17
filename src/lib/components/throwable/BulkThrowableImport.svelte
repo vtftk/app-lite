@@ -3,8 +3,8 @@
   import type { ThrowableImageConfig } from "$shared/appData";
 
   import { toast } from "svelte-sonner";
-  import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
+  import { StorageFolder } from "$lib/api/types";
   import { bulkCreateItem } from "$lib/api/itemModel";
   import { toastErrorMessage } from "$lib/utils/error";
 
@@ -22,7 +22,7 @@
 
     const createItems = await Promise.all(
       images.map(async (image) => {
-        const imageURL = await uploadFile(FileType.ThrowableImage, image);
+        const imageURL = await uploadFile(StorageFolder.ThrowableImage, image);
         const imageConfig: ThrowableImageConfig = {
           src: imageURL,
           pixelate: false,

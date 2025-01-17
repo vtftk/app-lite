@@ -2,16 +2,19 @@
 //!
 //! Commands for interacting with sounds from the frontend
 
-use crate::database::entity::{
-    shared::UpdateOrdering,
-    sounds::{CreateSound, SoundModel, UpdateSound},
+use crate::{
+    database::entity::{
+        shared::UpdateOrdering,
+        sounds::{CreateSound, SoundModel, UpdateSound},
+    },
+    storage::Storage,
 };
 use anyhow::Context;
 use sea_orm::{DatabaseConnection, ModelTrait};
-use tauri::{AppHandle, State};
+use tauri::State;
 use uuid::Uuid;
 
-use super::{data::delete_src_file, CmdResult};
+use super::CmdResult;
 
 /// Get all sounds
 #[tauri::command]
@@ -48,8 +51,8 @@ pub async fn create_sound(
 pub async fn update_sound(
     sound_id: Uuid,
     update: UpdateSound,
-    app_handle: AppHandle,
     db: State<'_, DatabaseConnection>,
+    storage: State<'_, Storage>,
 ) -> CmdResult<SoundModel> {
     let db = db.inner();
     let sound = SoundModel::get_by_id(db, sound_id)
@@ -60,7 +63,7 @@ pub async fn update_sound(
 
     // Delete previous sound file when changed
     if sound.src != original_sound_url {
-        delete_src_file(original_sound_url, app_handle).await?;
+        storage.try_delete_file(original_sound_url).await?;
     }
 
     Ok(sound)
@@ -70,8 +73,8 @@ pub async fn update_sound(
 #[tauri::command]
 pub async fn delete_sound(
     sound_id: Uuid,
-    app_handle: AppHandle,
     db: State<'_, DatabaseConnection>,
+    storage: State<'_, Storage>,
 ) -> CmdResult<()> {
     let db = db.inner();
     let sound = SoundModel::get_by_id(db, sound_id)
@@ -82,7 +85,7 @@ pub async fn delete_sound(
 
     sound.delete(db).await?;
 
-    delete_src_file(sound_url, app_handle).await?;
+    storage.try_delete_file(sound_url).await?;
 
     Ok(())
 }

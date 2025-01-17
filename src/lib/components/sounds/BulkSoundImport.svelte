@@ -2,8 +2,8 @@
   import type { CreateSound } from "$shared/dataV2";
 
   import { toast } from "svelte-sonner";
-  import { FileType } from "$lib/api/types";
   import { uploadFile } from "$lib/api/data";
+  import { StorageFolder } from "$lib/api/types";
   import { createSounds } from "$lib/api/soundModel";
   import { toastErrorMessage } from "$lib/utils/error";
 
@@ -21,7 +21,7 @@
 
     const creates = await Promise.all(
       sounds.map(async (sound) => {
-        const soundURL = await uploadFile(FileType.Sound, sound);
+        const soundURL = await uploadFile(StorageFolder.Sound, sound);
         const createSound: CreateSound = {
           src: soundURL,
           volume: 1,
