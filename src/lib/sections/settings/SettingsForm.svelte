@@ -233,22 +233,22 @@
         description="Automatically download and install the latest version when a new version is available"
       />
 
-      <p class="helper">
-        Enabling "Minimize to tray" allows you to close the app when you're not
-        managing your throwables while streaming to greatly reduce its resource
-        usage. When minimized it can be re-opened or quit fully from the tray
-        icon.
-        <br />
-        <br />
-        Turn off this setting if you want the app to close fully when close is pushed.
-      </p>
-
       <FormBoundCheckbox
         id="main.minimize_to_tray"
         name="main.minimize_to_tray"
         label="Minimize to tray"
-        description="Enable minimizing to tray on close instead of closing the app"
+        description="Enable minimizing to tray on close instead of closing the app."
       />
+
+      <Aside severity="info">
+        "Minimize to tray" allows you to close the app when you're not managing
+        to greatly reduce its resource usage. Instead of closing the app the
+        close button will minimize the app to your tray menu (The little arrow
+        on the bottom right of your screen)
+        <br />
+        <br />
+        Turn off this setting if you want the app to close fully when close is pushed.
+      </Aside>
     </FormSection>
     <FormSection
       title="Logging"
