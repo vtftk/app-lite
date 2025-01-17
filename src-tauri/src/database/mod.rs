@@ -39,6 +39,13 @@ pub async fn connect_database(path: PathBuf) -> anyhow::Result<DatabaseConnectio
     Ok(db)
 }
 
+#[cfg(test)]
+pub async fn mock_database() -> DatabaseConnection {
+    let db = Database::connect("sqlite::memory:").await.unwrap();
+    setup_database(&db).await.unwrap();
+    db
+}
+
 pub async fn setup_database(db: &DatabaseConnection) -> anyhow::Result<()> {
     if let Err(err) = Migrator::up(db, None).await {
         warn!("failed to apply/check database migrations: {:?}", err);

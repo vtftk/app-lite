@@ -46,22 +46,6 @@ impl Storage {
         Ok(Storage::Fs(Arc::new(fs)))
     }
 
-    /// Create a new mocked storage implementation
-    #[cfg(test)]
-    #[allow(unused)]
-    pub fn new_mock() -> Self {
-        Self::Mock(Default::default())
-    }
-
-    /// Access the underlying mocked storage variant
-    #[cfg(test)]
-    pub fn mocked(&self) -> &test::MockStorage {
-        match self {
-            Storage::Fs(_) => panic!("expected mock storage"),
-            Storage::Mock(mock_storage) => mock_storage,
-        }
-    }
-
     /// Uploads a file to the provided storage folder returning a
     /// URL for accessing the file
     pub async fn upload_file(
@@ -224,9 +208,26 @@ impl FsStorage {
 #[cfg(test)]
 #[allow(unused)]
 mod test {
-    use super::{StorageFile, StorageFolder};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use super::{Storage, StorageFile, StorageFolder};
     use anyhow::Context;
     use tokio::sync::Mutex;
+
+    impl Storage {
+        /// Create a new mocked storage implementation
+        pub fn new_mock() -> Self {
+            Self::Mock(Default::default())
+        }
+
+        /// Access the underlying mocked storage variant
+        pub fn mocked(&self) -> &MockStorage {
+            match self {
+                Storage::Fs(_) => panic!("expected mock storage"),
+                Storage::Mock(mock_storage) => mock_storage,
+            }
+        }
+    }
 
     /// Mocked storage implementation
     #[derive(Default)]
@@ -236,6 +237,10 @@ mod test {
 
         /// Next file the mock storage should return
         next_storage_file: Mutex<Option<StorageFile>>,
+
+        upload_file_calls: Mutex<Vec<(StorageFolder, String, Vec<u8>)>>,
+        try_delete_file_calls: Mutex<Vec<String>>,
+        get_file_calls: Mutex<Vec<(String, String)>>,
     }
 
     impl MockStorage {
@@ -247,12 +252,40 @@ mod test {
             *self.next_storage_file.blocking_lock() = value;
         }
 
+        pub fn upload_file_count(&self) -> usize {
+            self.upload_file_calls.blocking_lock().len()
+        }
+
+        pub fn try_delete_file_count(&self) -> usize {
+            self.try_delete_file_calls.blocking_lock().len()
+        }
+
+        pub fn get_file_count(&self) -> usize {
+            self.get_file_calls.blocking_lock().len()
+        }
+
+        pub fn upload_file_last(&self) -> Option<(StorageFolder, String, Vec<u8>)> {
+            self.upload_file_calls.blocking_lock().pop()
+        }
+
+        pub fn try_delete_file_last(&self) -> Option<String> {
+            self.try_delete_file_calls.blocking_lock().pop()
+        }
+
+        pub fn get_file_last(&self) -> Option<(String, String)> {
+            self.get_file_calls.blocking_lock().pop()
+        }
+
         pub async fn upload_file(
             &self,
-            _folder: StorageFolder,
-            _name: String,
-            _data: Vec<u8>,
+            folder: StorageFolder,
+            name: String,
+            data: Vec<u8>,
         ) -> anyhow::Result<String> {
+            self.upload_file_calls
+                .lock()
+                .await
+                .push((folder, name, data));
             let url = self
                 .next_url
                 .lock()
@@ -263,7 +296,8 @@ mod test {
             Ok(url)
         }
 
-        pub async fn try_delete_file(&self, _url: String) -> anyhow::Result<()> {
+        pub async fn try_delete_file(&self, url: String) -> anyhow::Result<()> {
+            self.try_delete_file_calls.lock().await.push(url);
             Ok(())
         }
 
@@ -272,6 +306,7 @@ mod test {
             folder: String,
             name: String,
         ) -> anyhow::Result<Option<StorageFile>> {
+            self.get_file_calls.lock().await.push((folder, name));
             let storage_file = self.next_storage_file.lock().await.take();
 
             Ok(storage_file)

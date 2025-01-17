@@ -616,7 +616,7 @@ mod test {
                     CreateEvent, EventModel, EventOutcome, EventOutcomeSendChat, EventTrigger,
                 },
             },
-            setup_database,
+            mock_database,
         },
         twitch::models::{
             TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
@@ -624,7 +624,6 @@ mod test {
             TwitchEventShoutoutReceive, TwitchEventSub,
         },
     };
-    use sea_orm::Database;
     use twitch_api::{
         eventsub::channel::{
             channel_points_custom_reward_redemption::Reward,
@@ -637,8 +636,7 @@ mod test {
     /// when the ID is the same as the stored database model
     #[tokio::test]
     async fn test_match_redeem_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -692,8 +690,7 @@ mod test {
     /// matching database events
     #[tokio::test]
     async fn test_match_redeem_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let reward = serde_json::json!({
             "cost": 0,
@@ -725,8 +722,7 @@ mod test {
     /// when the ID is the same as the stored database model
     #[tokio::test]
     async fn test_match_cheer_bits_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -769,8 +765,7 @@ mod test {
     /// when the amount of bits is not enough
     #[tokio::test]
     async fn test_match_cheer_bits_event_not_enough_bits() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         EventModel::create(
             &db,
@@ -810,8 +805,7 @@ mod test {
     /// matching database events
     #[tokio::test]
     async fn test_match_cheer_bits_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_cheer_bits_event(
             &db,
@@ -832,8 +826,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_follow_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -871,8 +864,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_follow_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_follow_event(
             &db,
@@ -890,8 +882,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_subscription_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -931,8 +922,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_subscription_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_subscription_event(
             &db,
@@ -952,8 +942,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_gifted_subscription_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -995,8 +984,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_gifted_subscription_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_gifted_subscription_event(
             &db,
@@ -1018,8 +1006,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_re_subscription_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -1068,8 +1055,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_re_subscription_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let message = serde_json::json!({
             "text": "",
@@ -1098,8 +1084,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_chat_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -1150,8 +1135,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_chat_event_command() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_command = CommandModel::create(
             &db,
@@ -1203,8 +1187,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_chat_event_command_not_matching() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         CommandModel::create(
             &db,
@@ -1253,8 +1236,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_chat_event_not_matching() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         EventModel::create(
             &db,
@@ -1302,8 +1284,8 @@ mod test {
 
     #[tokio::test]
     async fn test_match_chat_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
+
         let message = serde_json::json!({
             "text": "",
             "fragments": []
@@ -1331,8 +1313,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_raid_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -1371,8 +1352,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_raid_event_not_enough_raiders() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         EventModel::create(
             &db,
@@ -1408,8 +1388,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_raid_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_raid_event(
             &db,
@@ -1428,8 +1407,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_ad_break_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -1465,8 +1443,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_ad_break_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_ad_break_event(
             &db,
@@ -1482,8 +1459,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_shoutout_receive_event() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let expected_event = EventModel::create(
             &db,
@@ -1522,8 +1498,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_shoutout_receive_event_not_enough_viewers() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         EventModel::create(
             &db,
@@ -1559,8 +1534,7 @@ mod test {
 
     #[tokio::test]
     async fn test_match_shoutout_receive_event_non_existent() {
-        let db = Database::connect("sqlite::memory:").await.unwrap();
-        setup_database(&db).await.unwrap();
+        let db = mock_database().await;
 
         let found_event = match_shoutout_receive_event(
             &db,
