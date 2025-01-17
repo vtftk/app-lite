@@ -23,28 +23,49 @@ import "./commandContext";
 import "./arrayExt";
 import * as integrations from "./integrations";
 
-/**
- * API provided for scripting functionality
- *
- * @interface API
- * @member twitch Twitch related APIs
- * @member kv Key value store APIs
- * @member http HTTP request APIs
- * @member logging Logging helpers
- * @member vtftk VTFTK specific helpers (Sounds, Throwables, VTube Studio Hotkeys)
- * @member integrations Integrations with external services (TTS Monster)
- * @member random Random generators (Numbers, Booleans, Array Items)
- * @member internal Internal VTFTK logic (Not intended for scripting use, used internally by the runtime)
- */
+type TwitchAPI = typeof twitch;
+type KeyValueAPI = typeof kv;
+type HttpAPI = typeof http;
+type LoggingAPI = typeof logging;
+type VTFTKAPI = typeof vtftk;
+type IntegrationsAPI = typeof integrations;
+type RandomAPI = typeof random;
+type InternalAPI = typeof internal;
+
 interface API {
-  twitch: typeof twitch;
-  kv: typeof kv;
-  http: typeof http;
-  logging: typeof logging;
-  vtftk: typeof vtftk;
-  integrations: typeof integrations;
-  random: typeof random;
-  internal: typeof internal;
+  /**
+   * Twitch - Work with twitch related functionality. Access chat, get user details
+   */
+  twitch: TwitchAPI;
+  /**
+   * Key Value Store - Store and access persisted data like counters.
+   */
+  kv: KeyValueAPI;
+  /**
+   * HTTP - Work with HTTP requests, send HTTP requests
+   */
+  http: HttpAPI;
+  /**
+   * Logging - Log information to the persisted logging data
+   */
+  logging: LoggingAPI;
+  /**
+   * VTFTK - Access VTFTK functionality like throwing items, and playing sounds
+   */
+  vtftk: VTFTKAPI;
+  /**
+   * Integrations - Access external integrations like TTS Monster
+   */
+  integrations: IntegrationsAPI;
+  /**
+   * Random - Helpers for working with randomness such as getting random numbers or random array items
+   */
+  random: RandomAPI;
+  /**
+   * Internal - Internals used by VTFTK, not intended for use
+   * @internal
+   */
+  internal: InternalAPI;
 }
 
 /**
@@ -114,6 +135,9 @@ Object.defineProperties(globalThis, {
 });
 
 declare global {
+  /**
+   * API provided for scripting functionality
+   */
   export const api: API;
   export const console: typeof _console;
   export const module: typeof _module;
