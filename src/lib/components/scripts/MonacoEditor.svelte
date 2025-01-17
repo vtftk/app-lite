@@ -55,6 +55,7 @@
       tabSize: 2,
       detectIndentation: false,
       fontLigatures: true,
+      fixedOverflowWidgets: true,
       fontFamily: "JetBrains Mono",
       readOnly,
       minimap: {
