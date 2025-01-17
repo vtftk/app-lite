@@ -26,6 +26,9 @@
     icon: SolarCardSearchBoldDuotone,
     text: "Detect VTube Studio",
   }}
+  onOpenChange={(value) => {
+    promise = null;
+  }}
 >
   <!-- Title -->
   {#snippet title()}
@@ -51,6 +54,11 @@
 
           <p>Ensure that VTube Studio is running on this computer</p>
         {/await}
+      {:else}
+        <p>
+          VTFTK can automatically detect which port VTube Studio is running on.
+          Press "Start" to begin searching
+        </p>
       {/if}
     </div>
   {/snippet}
