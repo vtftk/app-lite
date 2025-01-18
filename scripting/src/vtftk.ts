@@ -1,19 +1,35 @@
 /**
  * Sound stored within VTFTK
- *
- * @member id Unique ID of the sound
- * @member name Name of the sound
- * @member src URL to the sound src
- * @member volume Base volume for the sound
- * @member order Order the sound appears in the UI
- * @member created_at When the sound was created
  */
 export interface SoundModel {
+  /**
+   * Unique ID of the sound
+   */
   id: string;
+
+  /**
+   * Name of the sound
+   */
   name: string;
+
+  /**
+   * URL to the sound src
+   */
   src: string;
+
+  /**
+   * Base volume for the sound
+   */
   volume: number;
+
+  /**
+   * Order the sound appears in the UI
+   */
   order: number;
+
+  /**
+   * When the sound was created
+   */
   created_at: string;
 }
 
@@ -34,9 +50,13 @@ export function playSound(src: string, volume: number = 1): Promise<void> {
 }
 
 interface SoundSeq {
-  // The src URL for the sound file
+  /**
+   * The src URL for the sound file
+   */
   src: string;
-  // The volume to play the sound at
+  /**
+   * The volume to play the sound at
+   */
   volume: number;
 }
 
@@ -146,42 +166,65 @@ export async function getSoundByID(id: string): Promise<SoundModel | null> {
   return sounds[0];
 }
 
+/**
+ * Find a collection of sounds using their IDs
+ *
+ * @param ids The IDs of the sounds
+ * @returns Promise resolved to the list of sounds found
+ */
 export function getSoundsByIDs(ids: string[]): Promise<SoundModel[]> {
   return Deno.core.ops.op_vtftk_get_sounds_by_ids(ids);
 }
 
 /**
  * Item stored within VTFTK
- *
- * @member id Unique ID of the item
- * @member name Name of the item
- * @member image Configuration for the item image
- * @member order Order of the item within the UI
- * @member created_at Date time when the item was created
- * @member impact_sound_ids List of IDs for sounds this item can play on impact
  */
 export interface ItemModel {
+  /**
+   * Unique ID of the item
+   */
   id: string;
+  /**
+   * Name of the item
+   */
   name: string;
+  /**
+   * Configuration for the item image
+   */
   image: ItemModelImage;
+  /**
+   * Order of the item within the UI
+   */
   order: number;
+  /**
+   * Date time when the item was created
+   */
   created_at: string;
+  /**
+   * List of IDs for sounds this item can play on impact
+   */
   impact_sound_ids: string[];
 }
 
 /**
  * Item image config
- *
- * @member src URL for the image source
- * @member weight Weight the item has on impact (Affects how much the model flinches, Default: 1)
- * @member scale Scale of the image (Default: 1)
- * @member pixelate Whether to pixelate the image when scaling (Use to make pixel art scale properly)
- *
  */
 export interface ItemModelImage {
+  /**
+   * URL for the image source
+   */
   src: string;
+  /**
+   * Weight the item has on impact (Affects how much the model flinches, Default: 1)
+   */
   weight: number;
+  /**
+   * Scale of the image (Default: 1)
+   */
   scale: number;
+  /**
+   * Whether to pixelate the image when scaling (Use to make pixel art scale properly)
+   */
   pixelate: boolean;
 }
 
@@ -346,14 +389,19 @@ export function throwAll(
 
 /**
  * Configuration for how to throw a barrage
- *
- * @member totalAmount The total amount of items to throw
- * @member amountPerThrow The amount of items to throw per barrage
- * @member frequency The time between each barrage (ms)
  */
 interface BarrageConfig {
+  /**
+   * The total amount of items to throw
+   */
   totalAmount?: number;
+  /**
+   * The amount of items to throw per barrage
+   */
   amountPerThrow?: number;
+  /**
+   * The time between each barrage (ms)
+   */
   frequency?: number;
 }
 

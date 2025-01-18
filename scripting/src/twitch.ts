@@ -19,6 +19,9 @@ export function sendChat(message: string): Promise<void> {
   return Deno.core.ops.op_twitch_send_chat(message);
 }
 
+/**
+ * Color for the twitch announcement banner
+ */
 export type TwitchAnnouncementColor =
   | "blue"
   | "green"
@@ -45,9 +48,21 @@ export type TwitchUserId = string;
 export type TwitchUsername = string;
 
 export interface TwitchUser {
+  /**
+   * ID of the user
+   */
   id: TwitchUserId;
+  /**
+   * Twitch username
+   */
   name: string;
+  /**
+   * Twitch display name
+   */
   displayName: string;
+  /**
+   * URL for the twitch user profile image
+   */
   profileImageUrl: string;
 }
 
@@ -116,16 +131,24 @@ export async function isFollower(userId: TwitchUserId): Promise<boolean> {
 }
 
 export interface TwitchFollower {
-  // ID of the user
+  /**
+   * ID of the user
+   */
   id: TwitchUserId;
 
-  // User twitch username
+  /**
+   *  User twitch username
+   */
   name: TwitchUsername;
 
-  // User display name
+  /**
+   * User display name
+   */
   displayName: string;
 
-  // Date time when the user followed the broadcaster
+  /**
+   * Date time when the user followed the broadcaster
+   */
   followedAt: Date;
 }
 
