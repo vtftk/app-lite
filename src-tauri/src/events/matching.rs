@@ -56,9 +56,9 @@ pub struct EventData {
 /// Additional event-specific input data
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-#[serde(rename_all = "camelCase")]
 pub enum EventInputData {
     /// Redeems specific data
+    #[serde(rename_all = "camelCase")]
     Redeem {
         /// Unique ID of the redemption itself
         redemption_id: String,
@@ -73,6 +73,7 @@ pub enum EventInputData {
     },
 
     /// Bits specific data
+    #[serde(rename_all = "camelCase")]
     Bits {
         /// Number of bits given
         bits: i64,
@@ -83,6 +84,7 @@ pub enum EventInputData {
     },
 
     /// Subscription specific data
+    #[serde(rename_all = "camelCase")]
     Subscription {
         /// Tier subscribed at
         tier: SubscriptionTier,
@@ -91,6 +93,7 @@ pub enum EventInputData {
     },
 
     /// Gifted Subscription specific data
+    #[serde(rename_all = "camelCase")]
     GiftedSubscription {
         /// Gifted subscription tier
         tier: SubscriptionTier,
@@ -103,6 +106,7 @@ pub enum EventInputData {
     },
 
     /// Re-Subscription specific data
+    #[serde(rename_all = "camelCase")]
     ReSubscription {
         /// The total number of months the user has been subscribed to the channel.
         cumulative_months: i64,
@@ -118,6 +122,7 @@ pub enum EventInputData {
     },
 
     /// Chat message specific data
+    #[serde(rename_all = "camelCase")]
     Chat {
         /// ID of the chat message
         message_id: MsgId,
@@ -133,18 +138,21 @@ pub enum EventInputData {
     },
 
     /// Raid specific data
+    #[serde(rename_all = "camelCase")]
     Raid {
         /// The number of viewers in the raid.
         viewers: i64,
     },
 
     /// Ad break specific data
+    #[serde(rename_all = "camelCase")]
     AdBreakBegin {
         /// Duration of the ad break in seconds
         duration_seconds: i32,
     },
 
     /// Shoutout specific data
+    #[serde(rename_all = "camelCase")]
     ShoutoutReceive {
         /// Number of viewers in the shoutout
         viewer_count: i64,

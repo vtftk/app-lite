@@ -35,7 +35,7 @@ export function getEventTestingData(triggerType: EventTriggerType): VEventData {
   const user = {
     id: "12826",
     name: userName,
-    display_name: userDisplayname,
+    displayName: userDisplayname,
   };
 
   switch (triggerType) {
@@ -43,14 +43,14 @@ export function getEventTestingData(triggerType: EventTriggerType): VEventData {
       return {
         user,
         tier: SubscriptionTier.Tier1,
-        is_gift: randomBool(),
+        isGift: randomBool(),
       };
 
     case EventTriggerType.GiftedSubscription:
       return {
         user,
         tier: SubscriptionTier.Tier1,
-        cumulative_total: randomNumber(1, 12),
+        cumulativeTotal: randomNumber(1, 12),
         anonymous: randomBool(),
         total: randomNumber(1, 100),
       };
@@ -69,11 +69,11 @@ export function getEventTestingData(triggerType: EventTriggerType): VEventData {
     case EventTriggerType.Redeem:
       return {
         user,
-        redemption_id: "",
-        reward_id: "0000-0000-0000-0000-0000",
-        reward_name: randomArrayItem(REWARD_NAMES),
+        redemptionId: "",
+        rewardId: "0000-0000-0000-0000-0000",
+        rewardName: randomArrayItem(REWARD_NAMES),
         cost: randomNumber(1, 10) * 100,
-        user_input: randomArrayItem(REWARD_MESSAGES),
+        userInput: randomArrayItem(REWARD_MESSAGES),
       };
     default:
       return { user };
