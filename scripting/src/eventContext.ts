@@ -3,28 +3,33 @@ import { runWithContext } from "./context";
 export interface TwitchEventUser {
   id: string;
   name: string;
-  display_name: string;
+  displayName: string;
 }
 
 export type SubscriptionTier = "1000" | "2000" | "3000" | "Prime" | string;
 
 export type EventData = {
-  user: TwitchEventUser;
+  /**
+   * User the event was triggered by.
+   *
+   * Some events do not have a user those events will have null instead
+   */
+  user: TwitchEventUser | null;
 };
 
 interface RedeemInputData {
   /**
    * Unique ID for the specific redemption event
    */
-  redemption_id: string;
+  redemptionId: string;
   /**
    * Name of the redeem
    */
-  reward_name: string;
+  rewardName: string;
   /**
    * Unique ID for the redeem
    */
-  reward_id: string;
+  rewardId: string;
   /**
    * Channel points cost for the redeem
    */
@@ -33,7 +38,7 @@ interface RedeemInputData {
    * User provided message if the redeem
    * requests a message
    */
-  user_input: string;
+  userInput: string;
 }
 
 interface BitsInputData {
@@ -51,7 +56,8 @@ interface BitsInputData {
   message: string;
 }
 
-type FollowInputData = unknown;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface FollowInputData {}
 
 interface SubscriptionInputData {
   /**
@@ -61,7 +67,7 @@ interface SubscriptionInputData {
   /**
    * Whether the subscription was gifted
    */
-  is_gift: boolean;
+  isGift: boolean;
 }
 
 interface GiftedSubscriptionInputData {
@@ -73,7 +79,7 @@ interface GiftedSubscriptionInputData {
    * The number of subscriptions gifted by this user in the channel.
    * Null when anonymous gifter
    */
-  cumulative_total: number | null;
+  cumulativeTotal: number | null;
   /**
    * Whether it was gifted anonymously
    */
@@ -88,11 +94,11 @@ interface ResubscriptionInputData {
   /**
    * The total number of months the user has been subscribed to the channel.
    */
-  cumulative_months: number;
+  cumulativeMonths: number;
   /**
    * The month duration of the subscription. (The gifted amount)
    */
-  duration_months: number;
+  durationMonths: number;
   /**
    * User message attached to the resubscription
    */
@@ -101,7 +107,7 @@ interface ResubscriptionInputData {
    * The number of consecutive months the user’s current subscription has been active.
    * This value is null if the user has opted out of sharing this information.
    */
-  streak_months: number | null;
+  streakMonths: number | null;
   /**
    * Tier resubscribed at
    */
@@ -112,7 +118,7 @@ interface ChatInputData {
   /**
    * ID of the chat message
    */
-  message_id: string;
+  messageId: string;
   /**
    * The chat message content
    */
@@ -203,32 +209,29 @@ interface AdBreakBeginInputData {
   /**
    * Duration in seconds for the ad break that is starting
    */
-  duration_sections: number;
+  durationSeconds: number;
 }
 
 interface ShoutoutReceiveInputData {
   /**
    * Number of viewers that have seen the shoutout
    */
-  viewer_count: number;
+  viewerCount: number;
 }
 
-export type EventInputData = {
-  redeem: RedeemInputData;
-  cheerBits: BitsInputData;
-  follow: FollowInputData;
-  subscription: SubscriptionInputData;
-  giftSubscription: GiftedSubscriptionInputData;
-  reSubscription: ResubscriptionInputData;
-  chat: ChatInputData;
-  raid: RaidInputData;
-  adBreakBegin: AdBreakBeginInputData;
-  shoutoutReceive: ShoutoutReceiveInputData;
-};
+type EventInputData =
+  | RedeemInputData
+  | BitsInputData
+  | FollowInputData
+  | SubscriptionInputData
+  | GiftedSubscriptionInputData
+  | ResubscriptionInputData
+  | ChatInputData
+  | RaidInputData
+  | AdBreakBeginInputData
+  | ShoutoutReceiveInputData;
 
-export type EventInputValue = EventInputData[keyof EventInputData];
-
-export type EventContext = EventData & EventInputValue;
+export type EventContext = EventData & EventInputData;
 
 declare global {
   /**

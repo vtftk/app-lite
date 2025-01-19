@@ -20,6 +20,7 @@ pub struct TwitchUser {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct TwitchEventUser {
     pub id: UserId,
     pub name: UserName,

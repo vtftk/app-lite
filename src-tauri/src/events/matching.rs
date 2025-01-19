@@ -56,6 +56,7 @@ pub struct EventData {
 /// Additional event-specific input data
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
+#[serde(rename_all = "camelCase")]
 pub enum EventInputData {
     /// Redeems specific data
     Redeem {

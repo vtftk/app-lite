@@ -1,17 +1,25 @@
 import { runWithContext } from "./context";
 
 export interface CommandContext {
-  // ID of the message
+  /**
+   * ID of the message
+   */
   messageId: string;
 
-  // Full original message
+  /**
+   * Full original message, contains the command prefix
+   */
   fullMessage: string;
 
-  // Message with the command prefix stripped
+  /**
+   * Message without the command prefix
+   */
   message: string;
 
-  // User who executed the command
-  user: CommandUser;
+  /**
+   * User who executed the command
+   */
+  user: TwitchCommandUser;
 
   /**
    * Message split into the individual arguments split by space.
@@ -68,16 +76,28 @@ function extendCommandContext(baseContext: BaseCommandContext): CommandContext {
   };
 }
 
-export type CommandUser = {
+export type TwitchCommandUser = {
+  /**
+   * ID of the twitch user
+   */
   id: string;
+  /**
+   * Username of the twitch user
+   */
   name: string;
+  /**
+   * Display name of the twitch user
+   */
   displayName: string;
 };
 
 declare global {
   /**
    * Context for the current command execution, only available within
-   * command scripts
+   * command scripts.
+   *
+   * With this you can access details about who triggered the command
+   * along with the message itself and its arguments.
    */
   const ctx: CommandContext;
 }
