@@ -11,7 +11,7 @@ export function debounce<T>(
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       value = newValue;
-    }, delay);
+    }, delay) as unknown as number;
     return () => clearTimeout(timer);
   });
 
