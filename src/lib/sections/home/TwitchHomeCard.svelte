@@ -1,9 +1,9 @@
 <script lang="ts">
+  import { Debounced } from "runed";
   import { toast } from "svelte-sonner";
   import Label from "$lib/components/Label.svelte";
   import Card from "$lib/components/card/Card.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { debounce } from "$lib/utils/debounce.svelte";
   import Button from "$lib/components/input/Button.svelte";
   import { getTwitchOAuthURI } from "$lib/api/runtimeAppData";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
@@ -16,9 +16,7 @@
   const isAuthenticated = createIsAuthenticatedQuery();
 
   // Consistent loading times to prevent flickering
-  const isTwitchLoading = $derived.by(
-    debounce(() => $isAuthenticated.isLoading, 300, true),
-  );
+  const isTwitchLoading = new Debounced(() => $isAuthenticated.isLoading, 300);
 
   /**
    * Handle logging out from Twitch
@@ -46,7 +44,7 @@
   });
 </script>
 
-{#if isTwitchLoading}
+{#if isTwitchLoading.current}
   <CardSkeleton />
 {:else}
   <Card>

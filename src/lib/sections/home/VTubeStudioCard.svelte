@@ -1,7 +1,7 @@
 <script lang="ts">
+  import { Debounced } from "runed";
   import Label from "$lib/components/Label.svelte";
   import Card from "$lib/components/card/Card.svelte";
-  import { debounce } from "$lib/utils/debounce.svelte";
   import { createModelDataQuery } from "$lib/api/calibration";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import CardSkeleton from "$lib/components/card/CardSkeleton.svelte";
@@ -18,12 +18,13 @@
     isModelCalibrated($modelDataQuery.data ?? [], runtimeAppData.model_id),
   );
 
-  const isCalibrationLoading = $derived.by(
-    debounce(() => $modelDataQuery.isLoading, 300, true),
+  const isCalibrationLoading = new Debounced(
+    () => $modelDataQuery.isLoading,
+    300,
   );
 </script>
 
-{#if isCalibrationLoading}
+{#if isCalibrationLoading.current}
   <CardSkeleton />
 {:else}
   <Card>
