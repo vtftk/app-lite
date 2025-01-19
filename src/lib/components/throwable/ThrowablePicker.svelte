@@ -55,7 +55,7 @@
 </script>
 
 {#if $itemsQuery.isLoading}
-  Loading items...
+  <div class="skeleton" style="width: 90%; height: 1.5rem; padding: 1rem"></div>
 {/if}
 
 <Dialog
