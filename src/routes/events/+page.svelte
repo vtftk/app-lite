@@ -1,11 +1,13 @@
 <script lang="ts">
-  import type { VEvent, EventId } from "$shared/dataV2";
+  import type { VEvent } from "$shared/dataV2";
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { filterNameSearch } from "$lib/utils/search";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import EventItem from "$lib/sections/events/EventItem.svelte";
+  import { createSelection } from "$lib/utils/selection.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
@@ -21,36 +23,10 @@
   const eventsQuery = createEventsQuery();
 
   let search = $state("");
-  let selected: string[] = $state([]);
 
-  const events = $derived(filterItemsSearch($eventsQuery.data ?? [], search));
-
-  function filterItemsSearch(options: VEvent[], search: string) {
-    search = search.trim().toLowerCase();
-
-    if (search.length < 1) return options;
-
-    return options.filter((option) => {
-      const name = option.name.trim().toLowerCase();
-      return name.startsWith(search) || name.includes(search);
-    });
-  }
-
-  function onToggleSelected(item: EventId) {
-    if (selected.includes(item)) {
-      selected = selected.filter((id) => id !== item);
-    } else {
-      selected = [...selected, item];
-    }
-  }
-
-  function onToggleAllSelected() {
-    if (events.length > 0 && selected.length === events.length) {
-      selected = [];
-    } else {
-      selected = events.map((item) => item.id);
-    }
-  }
+  const events = $derived($eventsQuery.data ?? []);
+  const selection = createSelection(() => events);
+  const filteredEvents = $derived(filterNameSearch(events, search));
 
   async function onBulkDelete() {
     const confirm = await confirmDialog({
@@ -62,71 +38,65 @@
       return;
     }
 
-    const deletePromise = deleteEvents(selected);
+    const deletePromise = deleteEvents(selection.take());
 
     toast.promise(deletePromise, {
       loading: "Deleting events...",
       success: "Deleted events",
       error: toastErrorMessage("Failed to delete events"),
     });
-
-    // Clear selection since all items are removed
-    selected = [];
   }
 </script>
-
-{#snippet actions()}
-  <LinkButton href="/events/create">Create</LinkButton>
-{/snippet}
-
-{#snippet beforeContent()}
-  <div class="selection">
-    <ControlledCheckbox
-      checked={selected.length > 0 && selected.length === events.length}
-      onCheckedChange={onToggleAllSelected}
-    />
-
-    <div class="search-wrapper">
-      <SearchInput bind:value={search} placeholder="Search..." />
-    </div>
-
-    {#if selected.length > 0}
-      <div class="selection__count">
-        {selected.length} Selected
-      </div>
-    {/if}
-
-    <div class="selection__gap"></div>
-
-    <div class="selection__actions">
-      <Button onclick={onBulkDelete} disabled={selected.length < 1}>
-        <DeleteIcon /> Delete
-      </Button>
-    </div>
-  </div>
-{/snippet}
-
-<!-- Snippet for rendering items within the grid -->
-{#snippet item(event: VEvent)}
-  <EventItem
-    config={event}
-    selected={selected.includes(event.id)}
-    onToggleSelected={() => onToggleSelected(event.id)}
-  />
-{/snippet}
 
 <PageLayoutList
   title="Events"
   description="Setup specific triggers for events, such as throwing when a specific redeem is redeemed"
-  {actions}
-  {beforeContent}
 >
+  {#snippet actions()}
+    <LinkButton href="/events/create">Create</LinkButton>
+  {/snippet}
+
+  {#snippet beforeContent()}
+    <div class="selection">
+      <ControlledCheckbox
+        checked={selection.isAll()}
+        onCheckedChange={() => selection.toggleAll()}
+      />
+
+      <div class="search-wrapper">
+        <SearchInput bind:value={search} placeholder="Search..." />
+      </div>
+
+      {#if !selection.isEmpty()}
+        <div class="selection__count">
+          {selection.total()} Selected
+        </div>
+      {/if}
+
+      <div class="selection__gap"></div>
+
+      <div class="selection__actions">
+        <Button onclick={onBulkDelete} disabled={selection.isEmpty()}>
+          <DeleteIcon /> Delete
+        </Button>
+      </div>
+    </div>
+  {/snippet}
+
   <OrderableGrid
-    items={events}
-    {item}
+    items={filteredEvents}
     onUpdateOrder={updateEventOrder}
     disableOrdering={search.length > 0}
-  />
+  >
+    <!-- Snippet for rendering items within the grid -->
+    {#snippet item(event: VEvent)}
+      <EventItem
+        config={event}
+        selected={selection.includes(event.id)}
+        onToggleSelected={() => selection.toggle(event.id)}
+      />
+    {/snippet}
+  </OrderableGrid>
 </PageLayoutList>
 
 <style>

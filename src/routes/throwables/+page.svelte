@@ -3,12 +3,14 @@
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { filterNameSearch } from "$lib/utils/search";
   import SettingsIcon from "~icons/solar/settings-bold";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
+  import { createSelection } from "$lib/utils/selection.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
@@ -34,42 +36,16 @@
   const itemsQuery = createItemsQuery();
 
   let search = $state("");
-  let selected: string[] = $state([]);
 
-  const items = $derived(filterItemsSearch($itemsQuery.data ?? [], search));
-
-  function filterItemsSearch(options: Item[], search: string) {
-    search = search.trim().toLowerCase();
-
-    if (search.length < 1) return options;
-
-    return options.filter((option) => {
-      const name = option.name.trim().toLowerCase();
-      return name.startsWith(search) || name.includes(search);
-    });
-  }
+  const items = $derived($itemsQuery.data ?? []);
+  const selection = createSelection(() => items);
+  const filteredItems = $derived(filterNameSearch(items, search));
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
     runtimeAppData.active_overlay_count > 0 &&
       runtimeAppData.vtube_studio_connected,
   );
-
-  function onToggleSelected(item: Item) {
-    if (selected.includes(item.id)) {
-      selected = selected.filter((id) => id !== item.id);
-    } else {
-      selected = [...selected, item.id];
-    }
-  }
-
-  function onToggleAllSelected() {
-    if (selected.length > 0 && selected.length === items.length) {
-      selected = [];
-    } else {
-      selected = items.map((item) => item.id);
-    }
-  }
 
   async function onBulkDelete() {
     const confirm = await confirmDialog({
@@ -81,15 +57,13 @@
       return;
     }
 
-    const deletePromise = bulkDeleteItems(selected);
+    const deletePromise = bulkDeleteItems(selection.take());
 
     toast.promise(deletePromise, {
       loading: "Deleting items...",
       success: "Deleted items",
       error: toastErrorMessage("Failed to delete items"),
     });
-
-    selected = [];
   }
 
   async function onBulkAddSounds(sounds: Sound[]) {
@@ -105,7 +79,10 @@
 
     const impactSoundIds = sounds.map((sound) => sound.id);
 
-    const addPromise = bulkAppendItemSounds(selected, impactSoundIds);
+    const addPromise = bulkAppendItemSounds(
+      selection.selection,
+      impactSoundIds,
+    );
 
     toast.promise(addPromise, {
       loading: "Adding impact sounds...",
@@ -115,7 +92,7 @@
   }
 
   function onTestThrow() {
-    const throwPromise = testThrow(selected, 1);
+    const throwPromise = testThrow(selection.selection, 1);
 
     toast.promise(throwPromise, {
       loading: "Sending throw...",
@@ -125,7 +102,7 @@
   }
 
   function onTestBarrage() {
-    const throwPromise = testThrowBarrage(selected, 20, 2, 100);
+    const throwPromise = testThrowBarrage(selection.selection, 20, 2, 100);
 
     toast.promise(throwPromise, {
       loading: "Sending barrage...",
@@ -135,95 +112,86 @@
   }
 </script>
 
-<!-- Actions in the titlebar -->
-{#snippet actions()}
-  <PopoverButton content={createPopoverContent}>Create</PopoverButton>
-{/snippet}
+<PageLayoutList title="Throwables" description="Items that can be thrown.">
+  <!-- Actions in the titlebar -->
+  {#snippet actions()}
+    <PopoverButton>
+      Create
 
-<!-- Content for the "Test" button popover -->
-{#snippet createPopoverContent()}
-  <LinkButton href="/throwables/create">Create Throwable</LinkButton>
-  <BulkThrowableImport />
-{/snippet}
+      <!-- Content for the "Test" button popover -->
+      {#snippet content()}
+        <LinkButton href="/throwables/create">Create Throwable</LinkButton>
+        <BulkThrowableImport />
+      {/snippet}
+    </PopoverButton>
+  {/snippet}
 
-<!-- Content for the "Test" button popover -->
-{#snippet testPopoverContent()}
-  <PopoverCloseButton onclick={onTestThrow}>
-    <BallIcon /> Test One
-  </PopoverCloseButton>
+  <!-- Section before the content -->
+  {#snippet beforeContent()}
+    <div class="selection">
+      <ControlledCheckbox
+        checked={selection.isAll()}
+        onCheckedChange={selection.toggleAll}
+      />
 
-  <PopoverCloseButton onclick={onTestBarrage}>
-    <BallsIcon /> Test Barrage
-  </PopoverCloseButton>
-{/snippet}
-
-<!-- Section before the content -->
-{#snippet beforeContent()}
-  <div class="selection">
-    <ControlledCheckbox
-      checked={selected.length > 0 && selected.length === items.length}
-      onCheckedChange={onToggleAllSelected}
-    />
-
-    <div class="search-wrapper">
-      <SearchInput bind:value={search} placeholder="Search..." />
-    </div>
-
-    {#if selected.length > 0}
-      <div class="selection__count">
-        {selected.length} Selected
+      <div class="search-wrapper">
+        <SearchInput bind:value={search} placeholder="Search..." />
       </div>
-    {/if}
 
-    <div class="selection__gap"></div>
+      {#if !selection.isEmpty()}
+        <div class="selection__count">
+          {selection.total()} Selected
+        </div>
+      {/if}
 
-    <div class="selection__actions">
-      <PopoverButton
-        content={testPopoverContent}
-        disabled={!testingEnabled || selected.length < 1}
-      >
-        <BallIcon /> Test
-      </PopoverButton>
+      <div class="selection__gap"></div>
 
-      <SoundPicker
-        disabled={selected.length < 1}
-        description="Choose which impact sounds you'd like to add the the selected throwables."
-        selected={[]}
-        onChangeSelected={onBulkAddSounds}
-      >
-        {#snippet buttonContent()}
-          <SettingsIcon /> Add Impact Sounds
-        {/snippet}
-      </SoundPicker>
+      <div class="selection__actions">
+        <PopoverButton disabled={!testingEnabled || selection.isEmpty()}>
+          <BallIcon /> Test
 
-      <Button onclick={onBulkDelete} disabled={selected.length < 1}>
-        <DeleteIcon /> Delete
-      </Button>
+          {#snippet content()}
+            <PopoverCloseButton onclick={onTestThrow}>
+              <BallIcon /> Test One
+            </PopoverCloseButton>
+
+            <PopoverCloseButton onclick={onTestBarrage}>
+              <BallsIcon /> Test Barrage
+            </PopoverCloseButton>
+          {/snippet}
+        </PopoverButton>
+
+        <SoundPicker
+          disabled={selection.isEmpty()}
+          description="Choose which impact sounds you'd like to add the the selected throwables."
+          selected={[]}
+          onChangeSelected={onBulkAddSounds}
+        >
+          {#snippet buttonContent()}
+            <SettingsIcon /> Add Impact Sounds
+          {/snippet}
+        </SoundPicker>
+
+        <Button onclick={onBulkDelete} disabled={selection.isEmpty()}>
+          <DeleteIcon /> Delete
+        </Button>
+      </div>
     </div>
-  </div>
-{/snippet}
+  {/snippet}
 
-<!-- Snippet for rendering items within the grid -->
-{#snippet item(item: Item)}
-  <ThrowableItem
-    config={item}
-    selected={selected.includes(item.id)}
-    onToggleSelected={() => onToggleSelected(item)}
-  />
-{/snippet}
-
-<PageLayoutList
-  title="Throwables"
-  description="Items that can be thrown."
-  {actions}
-  {beforeContent}
->
   <VirtualOrderableGrid
-    {items}
-    {item}
+    items={filteredItems}
     onUpdateOrder={updateItemOrder}
     disableOrdering={search.length > 0}
-  />
+  >
+    {#snippet item(item: Item)}
+      <ThrowableItem
+        config={item}
+        selected={selection.includes(item.id)}
+        onToggleSelected={() => selection.toggle(item.id)}
+      />
+    {/snippet}
+  </VirtualOrderableGrid>
 </PageLayoutList>
 
 <style>

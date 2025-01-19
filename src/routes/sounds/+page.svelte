@@ -3,9 +3,11 @@
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";
+  import { filterNameSearch } from "$lib/utils/search";
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import SoundItem from "$lib/sections/sounds/SoundItem.svelte";
+  import { createSelection } from "$lib/utils/selection.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import OrderableGrid from "$lib/components/OrderableGrid.svelte";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
@@ -23,38 +25,10 @@
   const soundsQuery = createSoundsQuery();
 
   let search = $state("");
-  let selected: string[] = $state([]);
 
-  const sounds: Sound[] = $derived(
-    filterItemsSearch($soundsQuery.data ?? [], search),
-  );
-
-  function filterItemsSearch(options: Sound[], search: string) {
-    search = search.trim().toLowerCase();
-
-    if (search.length < 1) return options;
-
-    return options.filter((option) => {
-      const name = option.name.trim().toLowerCase();
-      return name.startsWith(search) || name.includes(search);
-    });
-  }
-
-  function onToggleSelected(item: Sound) {
-    if (selected.includes(item.id)) {
-      selected = selected.filter((id) => id !== item.id);
-    } else {
-      selected = [...selected, item.id];
-    }
-  }
-
-  function onToggleAllSelected() {
-    if (selected.length > 0 && selected.length === sounds.length) {
-      selected = [];
-    } else {
-      selected = sounds.map((item) => item.id);
-    }
-  }
+  const sounds = $derived($soundsQuery.data ?? []);
+  const selection = createSelection(() => sounds);
+  const filteredSounds: Sound[] = $derived(filterNameSearch(sounds, search));
 
   async function onBulkDelete() {
     const confirm = await confirmDialog({
@@ -66,75 +40,71 @@
       return;
     }
 
-    const deletePromise = deleteSounds(selected);
+    const deletePromise = deleteSounds(selection.take());
 
     toast.promise(deletePromise, {
       loading: "Deleting sounds...",
       success: "Deleted sounds",
       error: toastErrorMessage("Failed to delete sounds"),
     });
-
-    selected = [];
   }
 </script>
-
-{#snippet actions()}
-  <PopoverButton content={createPopoverContent}>Create</PopoverButton>
-{/snippet}
-
-{#snippet createPopoverContent()}
-  <LinkButton href="/sounds/create">Create Sound</LinkButton>
-  <BulkSoundImport />
-{/snippet}
-
-{#snippet beforeContent()}
-  <div class="selection">
-    <ControlledCheckbox
-      checked={selected.length > 0 && selected.length === sounds.length}
-      onCheckedChange={onToggleAllSelected}
-    />
-
-    <div class="search-wrapper">
-      <SearchInput bind:value={search} placeholder="Search..." />
-    </div>
-
-    {#if selected.length > 0}
-      <div class="selection__count">
-        {selected.length} Selected
-      </div>
-    {/if}
-
-    <div class="selection__gap"></div>
-
-    <div class="selection__actions">
-      <Button onclick={onBulkDelete} disabled={selected.length < 1}>
-        <DeleteIcon /> Delete
-      </Button>
-    </div>
-  </div>
-{/snippet}
-
-<!-- Snippet for rendering items within the grid -->
-{#snippet item(sound: Sound)}
-  <SoundItem
-    config={sound}
-    selected={selected.includes(sound.id)}
-    onToggleSelected={() => onToggleSelected(sound)}
-  />
-{/snippet}
 
 <PageLayoutList
   title="Sounds"
   description="Create sounds that can be used for events or use as impact sounds"
-  {actions}
-  {beforeContent}
 >
+  {#snippet actions()}
+    <PopoverButton>
+      Create
+
+      {#snippet content()}
+        <LinkButton href="/sounds/create">Create Sound</LinkButton>
+        <BulkSoundImport />
+      {/snippet}
+    </PopoverButton>
+  {/snippet}
+
+  {#snippet beforeContent()}
+    <div class="selection">
+      <ControlledCheckbox
+        checked={selection.isAll()}
+        onCheckedChange={selection.toggleAll}
+      />
+
+      <div class="search-wrapper">
+        <SearchInput bind:value={search} placeholder="Search..." />
+      </div>
+
+      {#if !selection.isEmpty()}
+        <div class="selection__count">
+          {selection.total()} Selected
+        </div>
+      {/if}
+
+      <div class="selection__gap"></div>
+
+      <div class="selection__actions">
+        <Button onclick={onBulkDelete} disabled={selection.isEmpty()}>
+          <DeleteIcon /> Delete
+        </Button>
+      </div>
+    </div>
+  {/snippet}
+
   <OrderableGrid
-    items={sounds}
-    {item}
+    items={filteredSounds}
     onUpdateOrder={updateSoundOrder}
     disableOrdering={search.length > 0}
-  />
+  >
+    {#snippet item(sound: Sound)}
+      <SoundItem
+        config={sound}
+        selected={selection.includes(sound.id)}
+        onToggleSelected={() => selection.toggle(sound.id)}
+      />
+    {/snippet}
+  </OrderableGrid>
 </PageLayoutList>
 
 <style>
