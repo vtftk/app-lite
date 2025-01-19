@@ -43,6 +43,10 @@ export function createIsAuthenticatedQuery(): CreateQueryResult<
   });
 }
 
+export function logout() {
+  return invoke<void>("logout");
+}
+
 // Handle authenticating
 listen("authenticated", () => {
   queryClient.cancelQueries({ queryKey: IS_AUTHENTICATED_KEY });
