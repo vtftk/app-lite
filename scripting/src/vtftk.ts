@@ -379,7 +379,7 @@ export function throwAllByNames(
  */
 export function throwAll(
   items: ItemsWithSounds,
-  amount: number,
+  amount: number = 10,
 ): Promise<void> {
   return throwItems(items, {
     type: "All",
@@ -390,7 +390,7 @@ export function throwAll(
 /**
  * Configuration for how to throw a barrage
  */
-interface BarrageConfig {
+export interface BarrageConfig {
   /**
    * The total amount of items to throw
    */
@@ -517,7 +517,7 @@ export function throwItems(
  * @param hotkeyID The ID of the hotkey to trigger
  * @returns Promise resolved when the hotkey is triggered
  */
-export function triggerVTHotkey(hotkeyID: string) {
+export function triggerVTHotkey(hotkeyID: string): Promise<void> {
   return Deno.core.ops.op_vtftk_trigger_vt_hotkey(hotkeyID);
 }
 
@@ -531,7 +531,7 @@ export function triggerVTHotkey(hotkeyID: string) {
 export function triggerVTHotkeyByName(
   hotkeyName: string,
   ignoreCase: boolean = false,
-) {
+): Promise<void> {
   return Deno.core.ops.op_vtftk_trigger_vt_hotkey_by_name(
     hotkeyName,
     ignoreCase,

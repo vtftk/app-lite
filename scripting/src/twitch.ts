@@ -74,7 +74,7 @@ export interface TwitchUser {
  */
 export function getUserByUsername(
   username: TwitchUsername,
-): Promise<TwitchUser> {
+): Promise<TwitchUser | null> {
   // Validate username before calling API
   if (!isValidUsernameStrict(username)) {
     throw new Error("username is invalid");
@@ -84,7 +84,7 @@ export function getUserByUsername(
 }
 
 /**
- * Triggers a twitch shoutout for the provided use
+ * Triggers a twitch shoutout for the provided user
  *
  * @param userId The ID of the user to shoutout
  * @returns Promise resolved when the shoutout is complete
