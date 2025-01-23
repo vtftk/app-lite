@@ -24,7 +24,7 @@ tauri-plugin-single-instance = "2.2.0"
 tauri-plugin-updater = "2"
 
 # Twitch API for working with twitch
-twitch_api = { version = "0.7.0-rc.8", features = [
+twitch_api = { version = "0.7.0", features = [
     "helix",
     "eventsub",
     "all",
@@ -87,16 +87,6 @@ features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"]
 [dependencies.sea-orm-migration]
 version = "1.1.0"
 features = ["sqlx-sqlite", "runtime-tokio-rustls"]
-
-# Temporary dependency overrides until new eventsub payloads land
-# (https://github.com/twitch-rs/twitch_api/issues/434)
-[patch.crates-io.twitch_api]
-git = 'https://github.com/twitch-rs/twitch_api.git'
-rev = "866de1f"
-
-[patch.crates-io.twitch_types]
-git = 'https://github.com/twitch-rs/twitch_api.git'
-rev = "866de1f"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
