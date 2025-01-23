@@ -15,7 +15,9 @@ use twitch_api::{
 pub struct TwitchUser {
     pub id: UserId,
     pub name: UserName,
+    #[serde(alias = "display_name")]
     pub display_name: DisplayName,
+    #[serde(alias = "profile_image_url")]
     pub profile_image_url: Option<String>,
 }
 
@@ -24,6 +26,7 @@ pub struct TwitchUser {
 pub struct TwitchEventUser {
     pub id: UserId,
     pub name: UserName,
+    #[serde(alias = "display_name")]
     pub display_name: DisplayName,
 }
 
