@@ -474,7 +474,7 @@ export type UnstableExecutionMetadata = Partial<{
   user: {
     id: string;
     name: string;
-    display_name: string;
+    displayName: string;
   } | null;
   input_data: Partial<EventInputData>;
 }>;

@@ -123,7 +123,7 @@
                   target="_blank"
                   href="https://twitch.tv/{exec.metadata.user.name}"
                 >
-                  {exec.metadata.user.display_name}
+                  {exec.metadata.user.displayName}
                 </a>
               {/if}
             </td>
