@@ -316,6 +316,10 @@ impl Twitch {
         }
     }
 
+    pub async fn get_user_id(&self) -> Option<UserId> {
+        self.get_user_token().await.map(|token| token.user_id)
+    }
+
     pub async fn set_authenticated(&self, token: UserToken) {
         {
             let lock = &mut *self.state_mut().await;

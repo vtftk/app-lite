@@ -152,6 +152,7 @@ export type EventTrigger =
   | {
       type: EventTriggerType.Timer;
       interval: number;
+      min_chat_messages: number;
     }
   | {
       type: EventTriggerType.AdBreakBegin;

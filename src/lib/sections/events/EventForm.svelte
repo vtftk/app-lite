@@ -284,6 +284,7 @@
       name="trigger.min_raiders"
       label="Minimum Raiders"
       description="Minimum number of people that must be apart of the raid to trigger"
+      min={0}
     />
   {/if}
 {/snippet}
@@ -295,6 +296,14 @@
       name="trigger.interval"
       label="Interval"
       description="Time in seconds between each trigger of the timer"
+      min={1}
+    />
+    <FormNumberInput
+      id="trigger.min_chat_messages"
+      name="trigger.min_chat_messages"
+      label="Minimum Chat messages"
+      description="Minimum chat messages that must come before the event will trigger (Excludes streamer messages)"
+      min={0}
     />
   {/if}
 {/snippet}

@@ -74,6 +74,10 @@ pub struct MainConfig {
     pub clean_executions: bool,
     /// Number of days of execution data to retain when cleaning executions
     pub clean_executions_days: u64,
+    /// Clean old chat history data on start
+    pub clean_chat_history: bool,
+    /// Number of days of chat history data to retain when cleaning executions
+    pub clean_chat_history_days: u64,
     /// Allow automatic updates
     pub auto_updating: bool,
     /// Port for the HTTP server
@@ -103,6 +107,8 @@ impl Default for MainConfig {
             clean_logs_days: 30,
             clean_executions: true,
             clean_executions_days: 30,
+            clean_chat_history: true,
+            clean_chat_history_days: 1,
             auto_updating: true,
             http_port: default_http_port(),
         }

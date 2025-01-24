@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use anyhow::Context;
+use chrono::Utc;
 use log::error;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -6,12 +10,13 @@ use twitch_api::{
     eventsub::channel::chat::Fragment,
     types::{MsgId, SubscriptionTier},
 };
+use uuid::Uuid;
 
 use crate::{
     database::entity::{
+        chat_history::{ChatHistoryModel, CreateChatHistory},
         commands::CommandModel,
-        events::EventModel,
-        events::{EventTrigger, EventTriggerType},
+        events::{EventModel, EventTrigger, EventTriggerType},
     },
     twitch::models::{
         TwitchEventAdBreakBegin, TwitchEventChatMsg, TwitchEventCheerBits, TwitchEventFollow,
@@ -404,10 +409,35 @@ pub async fn match_re_subscription_event(
     })
 }
 
+async fn store_chat_event(
+    db: &DatabaseConnection,
+    event: &TwitchEventChatMsg,
+) -> anyhow::Result<()> {
+    let id = Uuid::from_str(event.message_id.as_str()).context("invalid message ID")?;
+
+    ChatHistoryModel::create(
+        db,
+        CreateChatHistory {
+            id,
+            user_id: event.user_id.to_string(),
+            message: event.message.text.clone(),
+            cheer: event.cheer.as_ref().map(|value| value.bits as u32),
+            created_at: Utc::now(),
+        },
+    )
+    .await?;
+
+    Ok(())
+}
+
 pub async fn match_chat_event(
     db: &DatabaseConnection,
     event: TwitchEventChatMsg,
 ) -> anyhow::Result<EventMatchingData> {
+    if let Err(err) = store_chat_event(db, &event).await {
+        error!("failed to log chat message history: {err}");
+    }
+
     let message = event.message.text.clone();
     let mut args: Vec<String> = message
         .split_whitespace()

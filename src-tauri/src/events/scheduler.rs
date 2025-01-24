@@ -1,5 +1,8 @@
 use crate::{
-    database::entity::events::{EventModel, EventTrigger, EventTriggerType},
+    database::entity::{
+        chat_history::ChatHistoryModel,
+        events::{EventModel, EventTrigger, EventTriggerType},
+    },
     events::{
         matching::{EventData, EventInputData},
         processing::execute_event,
@@ -11,13 +14,15 @@ use crate::{
 use anyhow::Context;
 use chrono::Local;
 use futures::future::BoxFuture;
-use log::error;
+use log::{debug, error};
 use sea_orm::DatabaseConnection;
 use std::{collections::BinaryHeap, future::Future, pin::Pin, task::Poll, time::Duration};
 use tokio::{
     sync::{broadcast, mpsc},
     time::{sleep_until, Instant},
 };
+
+use super::EventMessageChannel;
 
 pub struct ScheduledEvent {
     pub event: EventModel,
@@ -109,37 +114,61 @@ struct SchedulerEventLoop {
     event_sender: broadcast::Sender<EventMessage>,
 }
 
-impl SchedulerEventLoop {
-    fn execute_scheduled_event(&self, event: EventModel) {
-        let db = self.db.clone();
-        let twitch = self.twitch.clone();
-        let script_handle = self.script_handle.clone();
-        let event_sender = self.event_sender.clone();
+async fn execute_scheduled_event(
+    db: DatabaseConnection,
+    twitch: Twitch,
+    script_handle: ScriptExecutorHandle,
+    event_sender: EventMessageChannel,
+    event: EventModel,
+) -> anyhow::Result<()> {
+    let min_chat_messages = match &event.trigger {
+        EventTrigger::Timer {
+            min_chat_messages, ..
+        } => *min_chat_messages,
+        _ => {
+            return Err(anyhow::anyhow!(
+                "attempted to execute timer event that was not a timer event"
+            ));
+        }
+    };
 
-        tauri::async_runtime::spawn(async move {
-            let db = db;
-            let twitch = twitch;
-            let script_handle = script_handle;
-            let event_sender = event_sender;
+    let user_id = twitch.get_user_id().await;
 
-            if let Err(err) = execute_event(
-                &db,
-                &twitch,
-                &script_handle,
-                &event_sender,
-                event,
-                EventData {
-                    user: None,
-                    input_data: EventInputData::None,
-                },
-            )
+    // Ensure minimum chat messages has been reached
+    if min_chat_messages > 0 {
+        let last_execution = event
+            .last_execution(&db, 0)
             .await
-            {
-                error!("error while executing event outcome (in timer): {err:?}");
+            .context("failed to get last execution")?;
+
+        if let Some(last_execution) = last_execution {
+            let message_count =
+                ChatHistoryModel::count_since(&db, last_execution.created_at, user_id).await?;
+
+            if message_count < min_chat_messages as u64 {
+                debug!("skipping timer execution, not enough chat messages since last execution");
+                return Ok(());
             }
-        });
+        }
     }
 
+    execute_event(
+        &db,
+        &twitch,
+        &script_handle,
+        &event_sender,
+        event,
+        EventData {
+            user: None,
+            input_data: EventInputData::None,
+        },
+    )
+    .await?;
+
+    Ok(())
+}
+
+impl SchedulerEventLoop {
     fn poll_inner(&mut self, cx: &mut std::task::Context<'_>) -> Poll<()> {
         // Accept messages to update the events list
         while let Poll::Ready(Some(events)) = self.rx.poll_recv(cx) {
@@ -169,7 +198,22 @@ impl SchedulerEventLoop {
             };
 
             // Trigger the event
-            self.execute_scheduled_event(event.event.clone());
+            tauri::async_runtime::spawn({
+                let event = event.event.clone();
+                let db = self.db.clone();
+                let twitch = self.twitch.clone();
+                let script_handle = self.script_handle.clone();
+                let event_sender = self.event_sender.clone();
+
+                async move {
+                    if let Err(err) =
+                        execute_scheduled_event(db, twitch, script_handle, event_sender, event)
+                            .await
+                    {
+                        error!("error while executing event outcome (in timer): {err:?}");
+                    }
+                }
+            });
 
             if let Some(event) = create_scheduled_event(event.event) {
                 self.events.push(event);
@@ -211,7 +255,7 @@ impl Future for SchedulerEventLoop {
 
 fn create_scheduled_event(event: EventModel) -> Option<ScheduledEvent> {
     let interval = match &event.trigger {
-        EventTrigger::Timer { interval } => *interval,
+        EventTrigger::Timer { interval, .. } => *interval,
         _ => return None,
     };
 

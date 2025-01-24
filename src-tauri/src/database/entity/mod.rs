@@ -1,4 +1,5 @@
 pub mod app_data;
+pub mod chat_history;
 pub mod command_executions;
 pub mod command_logs;
 pub mod commands;

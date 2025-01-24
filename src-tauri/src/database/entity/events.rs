@@ -142,6 +142,11 @@ pub enum EventTrigger {
     Timer {
         /// Interval in seconds to run
         interval: u64,
+
+        /// Minimum chat messages that must have been received between each interval
+        /// for the timer to trigger to prevent spamming when nobody is chatting
+        #[serde(default)]
+        min_chat_messages: u32,
     },
 
     /// Ad break started

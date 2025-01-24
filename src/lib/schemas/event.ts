@@ -37,6 +37,7 @@ export const eventTriggerSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(EventTriggerType.Timer),
     interval: z.number(),
+    min_chat_messages: z.number(),
   }),
   z.object({
     type: z.literal(EventTriggerType.AdBreakBegin),
@@ -326,7 +327,11 @@ export function getEventTriggerDefault(
     case EventTriggerType.Raid:
       return { type: EventTriggerType.Raid, min_raiders: 1 };
     case EventTriggerType.Timer:
-      return { type: EventTriggerType.Timer, interval: 60 };
+      return {
+        type: EventTriggerType.Timer,
+        interval: 60,
+        min_chat_messages: 2,
+      };
     case EventTriggerType.AdBreakBegin:
       return { type: EventTriggerType.AdBreakBegin };
     case EventTriggerType.ShoutoutReceive:
