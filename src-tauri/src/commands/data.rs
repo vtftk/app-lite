@@ -1,12 +1,20 @@
 use crate::{
     commands::CmdResult,
-    database::entity::app_data::{AppData, AppDataModel},
+    database::entity::{
+        app_data::{AppData, AppDataModel},
+        chat_history::ChatHistoryModel,
+        command_executions::CommandExecutionModel,
+        command_logs::CommandLogsModel,
+        event_executions::EventExecutionModel,
+        event_logs::EventLogsModel,
+    },
     events::{EventMessage, EventMessageChannel},
     state::runtime_app_data::{RuntimeAppData, RuntimeAppDataStore},
     storage::{Storage, StorageFolder},
 };
 use sea_orm::DatabaseConnection;
 use tauri::State;
+use tokio::try_join;
 
 /// Requests that an active overlay update the current list
 /// of hotkeys from VTube Studio
@@ -63,4 +71,36 @@ pub async fn upload_file(
 ) -> CmdResult<String> {
     let url = storage.upload_file(folder, name, data).await?;
     Ok(url)
+}
+
+/// Get the estimated size of chat history in bytes
+#[tauri::command]
+pub async fn get_chat_history_estimate_size(
+    db: tauri::State<'_, DatabaseConnection>,
+) -> CmdResult<u32> {
+    Ok(ChatHistoryModel::estimate_size(db.inner()).await?)
+}
+
+/// Get the estimated size of executions in bytes
+#[tauri::command]
+pub async fn get_executions_estimate_size(
+    db: tauri::State<'_, DatabaseConnection>,
+) -> CmdResult<u32> {
+    let (command_size, event_size) = try_join!(
+        CommandExecutionModel::estimate_size(db.inner()),
+        EventExecutionModel::estimate_size(db.inner())
+    )?;
+
+    Ok(command_size.saturating_add(event_size))
+}
+
+/// Get the estimated size of logs in bytes
+#[tauri::command]
+pub async fn get_logs_estimate_size(db: tauri::State<'_, DatabaseConnection>) -> CmdResult<u32> {
+    let (command_size, event_size) = try_join!(
+        CommandLogsModel::estimate_size(db.inner()),
+        EventLogsModel::estimate_size(db.inner())
+    )?;
+
+    Ok(command_size.saturating_add(event_size))
 }

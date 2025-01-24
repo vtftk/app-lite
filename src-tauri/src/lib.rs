@@ -57,6 +57,9 @@ pub fn run() {
             commands::data::upload_file,
             commands::data::update_hotkeys,
             commands::data::get_overlay_url,
+            commands::data::get_chat_history_estimate_size,
+            commands::data::get_executions_estimate_size,
+            commands::data::get_logs_estimate_size,
             // Twitch commands
             commands::twitch::get_twitch_oauth_uri,
             commands::twitch::is_authenticated,

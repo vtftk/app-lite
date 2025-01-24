@@ -4,6 +4,7 @@
   import { toast } from "svelte-sonner";
   import reporterDom from "@felte/reporter-dom";
   import { minMax } from "$lib/utils/validation";
+  import { formatBytes } from "$lib/utils/format";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import Aside from "$lib/components/Aside.svelte";
@@ -31,6 +32,11 @@
     EYES_MODE_VALUES,
     THROW_DIRECTION_VALUES,
   } from "$lib/api/types";
+  import {
+    getLogsEstimateSize,
+    getExecutionsEstimateSize,
+    getChatHistoryEstimateSize,
+  } from "$lib/api/data";
 
   import EyesModeSelect from "./EyesModeSelect.svelte";
   import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
@@ -279,6 +285,16 @@
         description="Number of days logs will be retained for"
         min={0}
       />
+      <p class="size-estimate">
+        {#await getLogsEstimateSize()}
+          Loading Estimate...
+        {:then sizeBytes}
+          Estimated Size:
+          <span class="size-estimate__size">
+            {formatBytes(sizeBytes)}
+          </span>
+        {/await}
+      </p>
     </FormSection>
     <FormSection
       title="Executions"
@@ -298,6 +314,17 @@
         description="Number of days executions will be retained for"
         min={0}
       />
+
+      <p class="size-estimate">
+        {#await getExecutionsEstimateSize()}
+          Loading Estimate...
+        {:then sizeBytes}
+          Estimated Size:
+          <span class="size-estimate__size">
+            {formatBytes(sizeBytes)}
+          </span>
+        {/await}
+      </p>
     </FormSection>
     <FormSection
       title="Chat History"
@@ -317,6 +344,17 @@
         description="Number of days chat history will be retained for"
         min={0}
       />
+
+      <p class="size-estimate">
+        {#await getChatHistoryEstimateSize()}
+          Loading Estimate...
+        {:then sizeBytes}
+          Estimated Size:
+          <span class="size-estimate__size">
+            {formatBytes(sizeBytes)}
+          </span>
+        {/await}
+      </p>
     </FormSection>
 
     <FormSection
@@ -671,5 +709,13 @@
 
   .row-ll {
     grid-template-columns: 3fr 1fr;
+  }
+
+  .size-estimate {
+    font-size: 0.9rem;
+  }
+
+  .size-estimate__size {
+    color: #63b4c9;
   }
 </style>

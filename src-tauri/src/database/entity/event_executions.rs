@@ -1,5 +1,8 @@
 use anyhow::Context;
-use sea_orm::{entity::prelude::*, ActiveValue::Set, FromJsonQueryResult};
+use sea_orm::{
+    entity::prelude::*, sea_query::Func, ActiveValue::Set, FromJsonQueryResult, FromQueryResult,
+    QuerySelect,
+};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
@@ -112,5 +115,31 @@ impl Model {
             .exec(db)
             .await?;
         Ok(())
+    }
+
+    pub async fn estimate_size<C>(db: &C) -> DbResult<u32>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        #[derive(Default, FromQueryResult)]
+        struct PartialModel {
+            total_message_length: u32,
+        }
+
+        let result = Entity::find()
+            .expr_as(
+                Func::sum(Func::char_length(Expr::col(Column::Metadata))),
+                "total_message_length",
+            )
+            .into_model::<PartialModel>()
+            .one(db)
+            .await?;
+
+        let result = match result {
+            Some(result) => result,
+            None => return Ok(0),
+        };
+
+        Ok(result.total_message_length)
     }
 }

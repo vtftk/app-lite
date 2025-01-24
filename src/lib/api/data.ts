@@ -26,3 +26,15 @@ export async function uploadFile(
 export function detectVTubeStudio() {
   return invoke<VTubeStudioBroadcast>("detect_vtube_studio");
 }
+
+export function getChatHistoryEstimateSize() {
+  return invoke<number>("get_chat_history_estimate_size");
+}
+
+export function getExecutionsEstimateSize() {
+  return invoke<number>("get_executions_estimate_size");
+}
+
+export function getLogsEstimateSize() {
+  return invoke<number>("get_logs_estimate_size");
+}
