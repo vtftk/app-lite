@@ -19,9 +19,7 @@ use crate::{
         shared::LoggingLevelDb,
         sounds::SoundModel,
     },
-    events::{
-        EventMessage, ItemWithImpactSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage,
-    },
+    events::{EventMessage, ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage},
     integrations::tts_monster::{TTSMonsterService, TTSMonsterVoice},
     twitch::{manager::Twitch, models::TwitchUser},
 };
@@ -415,7 +413,7 @@ impl Handler<GetSoundsByIDs> for ScriptEventActor {
 
 /// Message to get sounds with a matching name
 #[derive(Message)]
-#[msg(rtype = "anyhow::Result<Vec<ItemWithImpactSoundIds>>")]
+#[msg(rtype = "anyhow::Result<Vec<ItemWithSoundIds>>")]
 pub struct GetItemsByNames {
     pub names: Vec<String>,
     pub ignore_case: bool,
@@ -427,11 +425,11 @@ impl Handler<GetItemsByNames> for ScriptEventActor {
     fn handle(&mut self, msg: GetItemsByNames, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let db = self.db.clone();
         Fr::new_box(async move {
-            let items: Vec<ItemWithImpactSoundIds> =
+            let items: Vec<ItemWithSoundIds> =
                 ItemModel::get_by_names_with_impact_sounds(&db, &msg.names, msg.ignore_case)
                     .await?
                     .into_iter()
-                    .map(|(item, impact_sounds)| ItemWithImpactSoundIds {
+                    .map(|(item, impact_sounds)| ItemWithSoundIds {
                         item,
                         impact_sound_ids: impact_sounds
                             .into_iter()
@@ -447,7 +445,7 @@ impl Handler<GetItemsByNames> for ScriptEventActor {
 
 /// Message to get a sound by ID
 #[derive(Message)]
-#[msg(rtype = "anyhow::Result<Vec<ItemWithImpactSoundIds>>")]
+#[msg(rtype = "anyhow::Result<Vec<ItemWithSoundIds>>")]
 pub struct GetItemsByIDs {
     pub ids: Vec<Uuid>,
 }
@@ -458,11 +456,11 @@ impl Handler<GetItemsByIDs> for ScriptEventActor {
     fn handle(&mut self, msg: GetItemsByIDs, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let db = self.db.clone();
         Fr::new_box(async move {
-            let items: Vec<ItemWithImpactSoundIds> =
+            let items: Vec<ItemWithSoundIds> =
                 ItemModel::get_by_ids_with_impact_sounds(&db, &msg.ids)
                     .await?
                     .into_iter()
-                    .map(|(item, impact_sounds)| ItemWithImpactSoundIds {
+                    .map(|(item, impact_sounds)| ItemWithSoundIds {
                         item,
                         impact_sound_ids: impact_sounds
                             .into_iter()

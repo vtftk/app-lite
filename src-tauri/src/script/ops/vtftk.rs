@@ -1,6 +1,6 @@
 use crate::{
     database::entity::sounds::SoundModel,
-    events::{ItemWithImpactSoundIds, ItemsWithSounds, ThrowItemConfig},
+    events::{ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig},
     integrations::tts_monster::TTSMonsterVoice,
     script::events::{
         global_script_event, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs, GetSoundsByNames,
@@ -54,7 +54,7 @@ pub async fn op_vtftk_throw_items(
 pub async fn op_vtftk_get_items_by_names(
     #[serde] names: Vec<String>,
     ignore_case: bool,
-) -> anyhow::Result<Vec<ItemWithImpactSoundIds>> {
+) -> anyhow::Result<Vec<ItemWithSoundIds>> {
     global_script_event(GetItemsByNames { names, ignore_case })
         .await
         .context("failed to send event")?
@@ -65,7 +65,7 @@ pub async fn op_vtftk_get_items_by_names(
 #[serde]
 pub async fn op_vtftk_get_items_by_ids(
     #[serde] ids: Vec<Uuid>,
-) -> anyhow::Result<Vec<ItemWithImpactSoundIds>> {
+) -> anyhow::Result<Vec<ItemWithSoundIds>> {
     global_script_event(GetItemsByIDs { ids })
         .await
         .context("failed to send event")?

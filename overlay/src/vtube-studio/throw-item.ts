@@ -16,8 +16,8 @@ import {
   ModelId,
   ThrowDirection,
   ModelCalibration,
+  ItemWithSoundIds,
   ThrowableImageConfig,
-  ItemWithImpactSoundIds,
 } from "../vtftk/types";
 
 const HORIZONTAL_PHYSICS_SCALE = 3;
@@ -76,7 +76,7 @@ export async function throwItem(
   appData: AppData,
   modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
-  config: ItemWithImpactSoundIds,
+  config: ItemWithSoundIds,
   image: HTMLImageElement,
   impactAudio: LoadedSoundData | null,
 ) {
@@ -256,7 +256,7 @@ function handleThrowableImpact(
   socket: VTubeStudioWebSocket,
   appData: AppData,
   modelParameters: ModelParameters,
-  config: ItemWithImpactSoundIds,
+  config: ItemWithSoundIds,
   impactAudio: LoadedSoundData | null,
   angle: number,
   leftSide: boolean,

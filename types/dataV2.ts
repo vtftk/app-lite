@@ -21,7 +21,7 @@ export type UpdateOrdering = {
   order: number;
 };
 
-export type ItemWithImpactSoundIds = Item & {
+export type ItemWithSoundIds = Item & {
   impact_sound_ids: SoundId[];
 };
 
@@ -44,8 +44,8 @@ export type UpdateItem = {
 };
 
 export type ItemWithSounds = {
-  items: ItemWithImpactSoundIds[];
-  impact_sounds: Sound[];
+  items: ItemWithSoundIds[];
+  sounds: Sound[];
 };
 
 export const enum ThrowItemConfigType {

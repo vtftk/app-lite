@@ -22,8 +22,8 @@ import {
   ItemWithSounds,
   ThrowItemConfig,
   ModelCalibration,
+  ItemWithSoundIds,
   ThrowItemConfigType,
-  ItemWithImpactSoundIds,
 } from "./types";
 
 export type EventSourceData = {
@@ -258,7 +258,7 @@ async function onThrowItemEvent(
 ) {
   const [loadedItems, loadedSounds] = await Promise.all([
     loadItems(items.items),
-    loadSounds(items.impact_sounds),
+    loadSounds(items.sounds),
   ]);
 
   if (config.type === ThrowItemConfigType.All) {
@@ -293,7 +293,7 @@ async function onThrowItemEvent(
 }
 
 function pickRandomSound(
-  item: ItemWithImpactSoundIds,
+  item: ItemWithSoundIds,
   sounds: LoadedSoundMap,
   clone: boolean = false,
 ) {
@@ -313,10 +313,7 @@ function pickRandomSound(
   return null;
 }
 
-function pickRandomItem(
-  items: ItemWithImpactSoundIds[],
-  images: LoadedItemMap,
-) {
+function pickRandomItem(items: ItemWithSoundIds[], images: LoadedItemMap) {
   if (items.length === 1) {
     const item = items[0];
     const image = images.get(item.id);
@@ -344,7 +341,7 @@ function throwRandomItem(
   modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
 
-  items: ItemWithImpactSoundIds[],
+  items: ItemWithSoundIds[],
   loadedItems: LoadedItemMap,
   loadedSounds: LoadedSoundMap,
 ): Promise<void> {
@@ -373,7 +370,7 @@ async function throwItemMany(
   modelCalibration: Map<ModelId, ModelCalibration>,
   modelParameters: ModelParameters,
 
-  items: ItemWithImpactSoundIds[],
+  items: ItemWithSoundIds[],
   loadedItems: LoadedItemMap,
   loadedSounds: LoadedSoundMap,
   amount: number,

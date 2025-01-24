@@ -17,13 +17,13 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ItemsWithSounds {
     /// All the referenced items
-    pub items: Vec<ItemWithImpactSoundIds>,
+    pub items: Vec<ItemWithSoundIds>,
     /// All the referenced sounds
-    pub impact_sounds: Vec<SoundModel>,
+    pub sounds: Vec<SoundModel>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ItemWithImpactSoundIds {
+pub struct ItemWithSoundIds {
     #[serde(flatten)]
     pub item: ItemModel,
     pub impact_sound_ids: Vec<Uuid>,

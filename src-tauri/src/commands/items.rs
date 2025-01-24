@@ -5,7 +5,7 @@
 use super::CmdResult;
 use crate::{
     database::entity::{
-        items::{CreateItem, ItemModel, ItemWithImpactSounds, UpdateItem},
+        items::{CreateItem, ItemModel, ItemWithSounds, UpdateItem},
         shared::UpdateOrdering,
         sounds::SoundModel,
     },
@@ -30,7 +30,7 @@ pub async fn get_items(db: State<'_, DatabaseConnection>) -> CmdResult<Vec<ItemM
 pub async fn get_item_by_id(
     item_id: Uuid,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<Option<ItemWithImpactSounds>> {
+) -> CmdResult<Option<ItemWithSounds>> {
     let db = db.inner();
     let item = match ItemModel::get_by_id(db, item_id).await? {
         Some(value) => value,
@@ -39,7 +39,7 @@ pub async fn get_item_by_id(
 
     let impact_sounds = item.get_impact_sounds(db).await?;
 
-    Ok(Some(ItemWithImpactSounds {
+    Ok(Some(ItemWithSounds {
         item,
         impact_sounds,
     }))
@@ -65,12 +65,12 @@ pub async fn get_item_sounds(
 pub async fn create_item(
     create: CreateItem,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<ItemWithImpactSounds> {
+) -> CmdResult<ItemWithSounds> {
     let db = db.inner();
     let item = ItemModel::create(db, create).await?;
     let impact_sounds = item.get_impact_sounds(db).await?;
 
-    Ok(ItemWithImpactSounds {
+    Ok(ItemWithSounds {
         item,
         impact_sounds,
     })
@@ -83,7 +83,7 @@ pub async fn update_item(
     update: UpdateItem,
     db: State<'_, DatabaseConnection>,
     storage: State<'_, Storage>,
-) -> CmdResult<ItemWithImpactSounds> {
+) -> CmdResult<ItemWithSounds> {
     let db = db.inner();
     let item = ItemModel::get_by_id(db, item_id)
         .await?
@@ -99,7 +99,7 @@ pub async fn update_item(
         storage.try_delete_file(original_item_url).await?;
     }
 
-    Ok(ItemWithImpactSounds {
+    Ok(ItemWithSounds {
         item,
         impact_sounds,
     })

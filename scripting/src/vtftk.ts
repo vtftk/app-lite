@@ -230,7 +230,7 @@ export interface ItemModelImage {
 
 export interface ItemsWithSounds {
   items: ItemModel[];
-  impact_sounds: SoundModel[];
+  sounds: SoundModel[];
 }
 
 type ThrowItemConfig =
@@ -264,7 +264,7 @@ export async function getItemsWithSounds(
   const sounds = await getSoundsByIDs(Array.from(impactSoundIds));
   return {
     items,
-    impact_sounds: sounds,
+    sounds,
   };
 }
 

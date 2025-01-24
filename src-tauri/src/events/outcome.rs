@@ -1,6 +1,6 @@
 use super::{
     matching::{EventData, EventInputData},
-    EventMessage, ItemWithImpactSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage,
+    EventMessage, ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage,
 };
 use crate::{
     database::entity::{
@@ -233,8 +233,8 @@ async fn throw_channel_emotes_outcome(
     let emotes = twitch.get_channel_emotes(user.id.clone()).await?;
 
     // Create sounds from builtins
-    let impact_sounds: Vec<SoundModel> = create_default_impact_sounds();
-    let impact_sound_ids: Vec<Uuid> = impact_sounds.iter().map(|sound| sound.id).collect();
+    let sounds: Vec<SoundModel> = create_default_impact_sounds();
+    let impact_sound_ids: Vec<Uuid> = sounds.iter().map(|sound| sound.id).collect();
 
     let items = emotes
         .into_iter()
@@ -252,17 +252,14 @@ async fn throw_channel_emotes_outcome(
                 created_at: Utc::now(),
             };
 
-            ItemWithImpactSoundIds {
+            ItemWithSoundIds {
                 item,
                 impact_sound_ids: impact_sound_ids.clone(),
             }
         })
         .collect();
 
-    let items = ItemsWithSounds {
-        items,
-        impact_sounds,
-    };
+    let items = ItemsWithSounds { items, sounds };
 
     create_throwable_message(items, data.amount, None)
 }
@@ -380,10 +377,10 @@ pub async fn resolve_items(
     db: &DatabaseConnection,
     item_ids: &[Uuid],
 ) -> anyhow::Result<ItemsWithSounds> {
-    let items: Vec<ItemWithImpactSoundIds> = ItemModel::get_by_ids_with_impact_sounds(db, item_ids)
+    let items: Vec<ItemWithSoundIds> = ItemModel::get_by_ids_with_impact_sounds(db, item_ids)
         .await?
         .into_iter()
-        .map(|(item, impact_sounds)| ItemWithImpactSoundIds {
+        .map(|(item, impact_sounds)| ItemWithSoundIds {
             item,
             impact_sound_ids: impact_sounds
                 .into_iter()
@@ -402,12 +399,9 @@ pub async fn resolve_items(
         .into_iter()
         .collect::<Vec<Uuid>>();
 
-    let impact_sounds = SoundModel::get_by_ids(db, &impact_sound_ids).await?;
+    let sounds = SoundModel::get_by_ids(db, &impact_sound_ids).await?;
 
-    Ok(ItemsWithSounds {
-        items,
-        impact_sounds,
-    })
+    Ok(ItemsWithSounds { items, sounds })
 }
 
 // Default sound file names
@@ -475,7 +469,7 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
         created_at: Utc::now(),
     };
 
-    let item = ItemWithImpactSoundIds {
+    let item = ItemWithSoundIds {
         item,
         impact_sound_ids,
     };
@@ -484,6 +478,6 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
 
     ItemsWithSounds {
         items,
-        impact_sounds,
+        sounds: impact_sounds,
     }
 }

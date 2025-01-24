@@ -81,7 +81,7 @@ pub struct CreateItem {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct ItemWithImpactSounds {
+pub struct ItemWithSounds {
     #[serde(flatten)]
     pub item: ItemModel,
     pub impact_sounds: Vec<SoundModel>,
