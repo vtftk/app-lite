@@ -31,6 +31,8 @@ export type MainConfig = {
   clean_logs_days: number;
   clean_executions: boolean;
   clean_executions_days: number;
+  clean_chat_history: boolean;
+  clean_chat_history_days: number;
   auto_updating: boolean;
   http_port: number;
 };

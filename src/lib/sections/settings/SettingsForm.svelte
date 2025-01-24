@@ -75,6 +75,8 @@
       clean_logs_days: z.number(),
       clean_executions: z.boolean(),
       clean_executions_days: z.number(),
+      clean_chat_history: z.boolean(),
+      clean_chat_history_days: z.number(),
       auto_updating: z.boolean(),
       http_port: z.number(),
     }),
@@ -130,6 +132,8 @@
         clean_logs_days: main_config.clean_logs_days,
         clean_executions: main_config.clean_executions,
         clean_executions_days: main_config.clean_executions_days,
+        clean_chat_history: main_config.clean_chat_history,
+        clean_chat_history_days: main_config.clean_chat_history_days,
         auto_updating: main_config.auto_updating,
         http_port: main_config.http_port,
       },
@@ -208,6 +212,8 @@
         clean_logs_days: main.clean_logs_days,
         clean_executions: main.clean_executions,
         clean_executions_days: main.clean_executions_days,
+        clean_chat_history: main.clean_chat_history,
+        clean_chat_history_days: main.clean_chat_history_days,
         auto_updating: main.auto_updating,
         http_port: main.http_port,
       },
@@ -276,7 +282,7 @@
     </FormSection>
     <FormSection
       title="Executions"
-      description="VTFTK keeps tracks executions of commands and events, this allows it to keep track of cooldown and show you who's triggered a command or event"
+      description="VTFTK tracks executions of commands and events, this allows it to keep track of cooldown and show you who's triggered a command or event"
     >
       <FormBoundCheckbox
         id="main.clean_executions"
@@ -290,6 +296,25 @@
         name="main.clean_executions_days"
         label="Retain days"
         description="Number of days executions will be retained for"
+        min={0}
+      />
+    </FormSection>
+    <FormSection
+      title="Chat History"
+      description="VTFTK tracks chat history, this allows timers to check if the right number of chat messages have happened before running"
+    >
+      <FormBoundCheckbox
+        id="main.clean_chat_history"
+        name="main.clean_chat_history"
+        label="Automatically clean chat history"
+        description="Disable this to prevent automatic chat history clearing"
+      />
+
+      <FormNumberInput
+        id="main.clean_chat_history_days"
+        name="main.clean_chat_history_days"
+        label="Retain days"
+        description="Number of days chat history will be retained for"
         min={0}
       />
     </FormSection>
