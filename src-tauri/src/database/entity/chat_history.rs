@@ -71,7 +71,7 @@ impl Model {
     {
         #[derive(Default, FromQueryResult)]
         struct PartialModel {
-            total_message_length: u32,
+            total_message_length: Option<u32>,
         }
 
         let result = Entity::find()
@@ -88,7 +88,7 @@ impl Model {
             None => return Ok(0),
         };
 
-        Ok(result.total_message_length)
+        Ok(result.total_message_length.unwrap_or_default())
     }
 
     pub async fn count_since<C>(
