@@ -2,6 +2,7 @@
   import type { Item } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
+  import { filterNameSearch } from "$lib/utils/search";
   import { createItemsQuery } from "$lib/api/itemModel";
   import Dialog from "$lib/components/dialog/Dialog.svelte";
   import SearchInput from "$lib/components/form/SearchInput.svelte";
@@ -20,21 +21,11 @@
   const itemsQuery = createItemsQuery();
 
   const items = $derived($itemsQuery.data ?? []);
-  const filteredItems = $derived(filterOptionsSearch(items, search));
+  const filteredItems = $derived(filterNameSearch(items, search));
   const selectedOptions = $derived(filterOptionsSelected(items, selected));
 
   function filterOptionsSelected(options: Item[], selected: string[]) {
     return options.filter((option) => selected.includes(option.id));
-  }
-
-  function filterOptionsSearch(options: Item[], search: string) {
-    search = search.trim().toLowerCase();
-    if (search.length < 1) return options;
-
-    return options.filter((option) => {
-      const name = option.name.trim().toLowerCase();
-      return name.startsWith(search) || name.includes(search);
-    });
   }
 
   const onSelectItem = (item: Item) => {

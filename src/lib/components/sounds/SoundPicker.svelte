@@ -3,6 +3,7 @@
   import type { Sound, SoundId } from "$shared/dataV2";
 
   import getBackendURL from "$lib/utils/url";
+  import { filterNameSearch } from "$lib/utils/search";
   import { createSoundsQuery } from "$lib/api/soundModel";
   import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
@@ -45,17 +46,7 @@
   const appData = $derived(appContext.appData);
 
   const soundsQuery = createSoundsQuery();
-  const sounds = $derived(filterOptionsSearch($soundsQuery.data ?? [], search));
-
-  function filterOptionsSearch(options: Sound[], search: string) {
-    search = search.trim().toLowerCase();
-    if (search.length < 1) return options;
-
-    return options.filter((option) => {
-      const name = option.name.trim().toLowerCase();
-      return name.startsWith(search) || name.includes(search);
-    });
-  }
+  const sounds = $derived(filterNameSearch($soundsQuery.data ?? [], search));
 
   const onSelectSound = (sound: Sound) => {
     if (selected.includes(sound.id)) {
