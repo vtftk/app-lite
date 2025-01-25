@@ -9,6 +9,12 @@
 
   import Button from "../input/Button.svelte";
 
+  type Props = {
+    label?: string;
+  };
+
+  const { label = "Bulk Create Sounds" }: Props = $props();
+
   let inputElm: HTMLInputElement | undefined = $state();
 
   async function onChangeSound() {
@@ -48,7 +54,7 @@
     inputElm?.click();
   }}
 >
-  Bulk Create Sounds
+  {label}
 </Button>
 
 <input

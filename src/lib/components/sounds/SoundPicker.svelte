@@ -13,6 +13,8 @@
   import DialogCloseButton from "$lib/components/dialog/DialogCloseButton.svelte";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
 
+  import BulkSoundImport from "./BulkSoundImport.svelte";
+
   type Props = {
     disabled?: boolean;
     buttonContent?: Snippet;
@@ -139,6 +141,8 @@
   {/snippet}
 
   {#snippet actions()}
+    <BulkSoundImport label="Import Sounds" />
+
     <DialogCloseButton buttonLabel={{ text: "Close" }} />
     <DialogCloseButton
       buttonLabel={{ text: addButtonLabel }}
