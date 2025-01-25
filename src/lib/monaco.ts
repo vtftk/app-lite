@@ -1,12 +1,4 @@
 import * as monaco from "monaco-editor";
-// Import the workers in a production-safe way.
-// This is different than in Monaco's documentation for Vite,
-// but avoids a weird error ("Unexpected usage") at runtime
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
-import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
 import libraryDefinition from "../../scripting/dist/runtime.d.ts?raw";
 import builtinLibraryDefinition from "../../scripting/types/builtin.d.ts?raw";
@@ -55,23 +47,45 @@ monaco.languages.setLanguageConfiguration("commandTemplateFormat", {
 });
 
 self.MonacoEnvironment = {
-  getWorker: function (_: string, label: string) {
+  getWorker: async function (_: string, label: string) {
     switch (label) {
-      case "json":
-        return new jsonWorker();
+      case "json": {
+        const jsonWorker = await import(
+          "monaco-editor/esm/vs/language/json/json.worker?worker"
+        );
+        return new jsonWorker.default();
+      }
       case "css":
       case "scss":
-      case "less":
-        return new cssWorker();
+      case "less": {
+        const cssWorker = await import(
+          "monaco-editor/esm/vs/language/css/css.worker?worker"
+        );
+
+        return new cssWorker.default();
+      }
       case "html":
       case "handlebars":
-      case "razor":
-        return new htmlWorker();
+      case "razor": {
+        const htmlWorker = await import(
+          "monaco-editor/esm/vs/language/html/html.worker?worker"
+        );
+
+        return new htmlWorker.default();
+      }
       case "typescript":
-      case "javascript":
-        return new tsWorker();
-      default:
-        return new editorWorker();
+      case "javascript": {
+        const tsWorker = await import(
+          "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
+        );
+        return new tsWorker.default();
+      }
+      default: {
+        const editorWorker = await import(
+          "monaco-editor/esm/vs/editor/editor.worker?worker"
+        );
+        return new editorWorker.default();
+      }
     }
   },
 };
