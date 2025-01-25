@@ -204,10 +204,7 @@
 {/snippet}
 
 {#snippet imageTab()}
-  <FormSection
-    title="Image"
-    description="The image to use and its configuration"
-  >
+  <FormSection>
     <div class="row-group">
       <div class="column">
         <ImageUpload
@@ -220,7 +217,7 @@
         <FormErrorLabel name="image" />
       </div>
 
-      <div class="column">
+      <div class="column" style="flex: auto;">
         <FormNumberInput
           id="scale"
           name="scale"
@@ -334,9 +331,8 @@
 
 <style>
   .column {
-    display: grid;
-    grid-template-columns: 1fr;
-    flex: auto;
+    display: flex;
+    flex-flow: column;
     gap: 1rem;
   }
 
