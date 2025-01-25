@@ -75,8 +75,8 @@
       {#if buttonContent}
         {@render buttonContent()}
       {:else}
-        {selected.length > 0
-          ? `${selected.length} Sounds selected`
+        {initialSelected.length > 0
+          ? `${initialSelected.length} Sounds selected`
           : "Select Sounds"}
       {/if}
     </Button>
