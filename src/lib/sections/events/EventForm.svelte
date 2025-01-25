@@ -404,7 +404,7 @@
         <FormNumberInput
           id="outcome.amount.amount_per_throw"
           name="outcome.amount.amount_per_throw"
-          label="Amount per throw"
+          label="Amount per barrage"
           description="How many items to throw in each barrage"
           min={1}
         />
@@ -466,7 +466,7 @@
         <FormNumberInput
           id="outcome.amount.amount_per_throw"
           name="outcome.amount.amount_per_throw"
-          label="Amount per throw"
+          label="Amount per barrage"
           description="How many items to throw in each barrage"
           min={1}
         />
@@ -528,7 +528,7 @@
         <FormNumberInput
           id="outcome.amount.amount_per_throw"
           name="outcome.amount.amount_per_throw"
-          label="Amount per throw"
+          label="Amount per barrage"
           description="How many items to throw in each barrage"
           min={1}
         />
