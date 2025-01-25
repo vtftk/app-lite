@@ -32,12 +32,21 @@
     updateHotkeys();
   });
 
-  const items = $derived(
-    runtimeAppData.hotkeys.map((item) => ({
+  const items = $derived.by(() => {
+    const options = runtimeAppData.hotkeys.map((item) => ({
       value: item.hotkey_id,
       label: item.name,
-    })),
-  );
+    }));
+
+    if (options.length === 0) {
+      options.push({
+        value: selected,
+        label: `Unknown Hotkey (${selected})`,
+      });
+    }
+
+    return options;
+  });
 </script>
 
 {#snippet item(item: (typeof items)[0])}
@@ -63,14 +72,14 @@
     </Button>
   </div>
 
-  {#if description}
-    <p class="description">{description}</p>
-  {/if}
-
   {#if !runtimeAppData.vtube_studio_connected}
     <p class="error">
       Not connected to VTube studio... Connect to see available Hotkeys
     </p>
+  {/if}
+
+  {#if description}
+    <p class="description">{description}</p>
   {/if}
 </div>
 
@@ -84,6 +93,8 @@
 
   .error {
     color: #dba33a;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
   }
 
   .description {
