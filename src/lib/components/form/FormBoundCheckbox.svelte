@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { HTMLInputAttributes } from "svelte/elements";
+
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {
@@ -7,13 +9,15 @@
 
     label: string;
     description?: string;
-  };
+  } & Omit<HTMLInputAttributes, "name" | "id" | "type" | "hidden">;
 
-  const { id, name, label, description }: Props = $props();
+  const { id, name, label, description, ...props }: Props = $props();
 </script>
 
 <div class="form-input">
+  <!-- Hidden element -->
   <input
+    {...props}
     data-felte-keep-on-remove
     hidden
     type="checkbox"
@@ -21,19 +25,22 @@
     {name}
     aria-labelledby="{name}-label"
   />
+
+  <!-- Checkbox -->
   <label for={id} class="checkbox">
     <span class="checkbox__indicator">&#10003; </span>
   </label>
 
-  <div>
-    <label for={id}>{label}</label>
-
+  <!-- Label -->
+  <label for={id}>
+    <span class="label">{label}</span>
     {#if description}
       <p class="description">{description}</p>
     {/if}
+  </label>
 
-    <FormErrorLabel {name} />
-  </div>
+  <!-- Validation -->
+  <FormErrorLabel {name} />
 </div>
 
 <style>
@@ -44,10 +51,9 @@
     align-items: center;
   }
 
-  .form-input label {
+  .label {
     font-size: 1rem;
     color: #fff;
-    margin-bottom: 0.25rem;
     display: block;
   }
 

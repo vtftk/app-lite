@@ -1,8 +1,6 @@
 <script lang="ts">
   import getBackendURL from "$lib/utils/url";
 
-  import FormErrorLabel from "./FormErrorLabel.svelte";
-
   type Props = {
     id: string;
     name: string;
@@ -87,7 +85,8 @@
     width: 400px;
     background-color: #000;
     overflow: hidden;
-    border: none;
+    border: 1px solid #666;
+    border-radius: 0.25rem;
     cursor: pointer;
   }
 

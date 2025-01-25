@@ -20,12 +20,14 @@
     placeholder,
     description,
     type = "text",
+    ...props
   }: Props = $props();
 </script>
 
 <div class="form-input">
   <label for={id}>{label}</label>
   <input
+    {...props}
     data-felte-keep-on-remove
     {type}
     {id}

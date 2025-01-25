@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { HTMLInputAttributes } from "svelte/elements";
+
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {
@@ -6,25 +8,19 @@
     name: string;
     label: string;
     description?: string;
+  } & Omit<HTMLInputAttributes, "name" | "id" | "type">;
 
-    min?: number;
-    max?: number;
-    step?: number;
-  };
-
-  const { id, name, label, description, min, max, step }: Props = $props();
+  const { id, name, label, description, ...props }: Props = $props();
 </script>
 
 <div class="form-input">
   <label for={id}>{label}</label>
   <input
+    {...props}
     data-felte-keep-on-remove
     type="number"
     {id}
     {name}
-    {min}
-    {max}
-    {step}
     aria-describedby="{name}-validation"
   />
   {#if description}
