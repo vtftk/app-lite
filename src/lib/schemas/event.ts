@@ -346,7 +346,7 @@ export function getDefaultEvent(): EventSchema {
     trigger: getEventTriggerDefault(EventTriggerType.Redeem),
     outcome: getEventOutcomeDefault(EventOutcomeType.Throwable),
     require_role: MinimumRequiredRole.None,
-    cooldown: { enabled: true, duration: 0, per_user: false },
+    cooldown: { enabled: false, duration: 0, per_user: false },
     outcome_delay: 0,
   };
 }
