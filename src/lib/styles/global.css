@@ -120,8 +120,8 @@ h6 {
 }
 
 *::-webkit-scrollbar {
-  width: 1rem;
-  height: 1rem;
+  width: 0.65rem;
+  height: 0.65rem;
   background-color: #444;
 }
 
@@ -129,4 +129,5 @@ h6 {
 *::-webkit-scrollbar-thumb {
   background: #999;
   border-radius: 0.1rem;
+  cursor: grab;
 }
