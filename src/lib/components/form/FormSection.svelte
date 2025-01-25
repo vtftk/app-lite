@@ -1,32 +1,49 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
+  import { slide } from "svelte/transition";
+
   type Props = {
     title?: string;
     description?: string;
+    empty?: boolean;
+
+    action?: Snippet;
 
     children?: Snippet;
   };
 
-  const { title, description, children }: Props = $props();
+  const { title, description, empty, action, children }: Props = $props();
 </script>
 
 <section class="section">
-  {#if title || description}
-    <div class="section__head">
-      {#if title}
-        <h2>{title}</h2>
+  {#if title || description || action}
+    <div class="section__head" class:section__head--no-content={empty}>
+      {#if title || description}
+        <div class="section__head__text">
+          {#if title}
+            <h2>{title}</h2>
+          {/if}
+
+          {#if description}
+            <p>{description}</p>
+          {/if}
+        </div>
       {/if}
 
-      {#if description}
-        <p>{description}</p>
+      {#if action}
+        <div class="actions">
+          {@render action?.()}
+        </div>
       {/if}
     </div>
   {/if}
 
-  <div class="section__content">
-    {@render children?.()}
-  </div>
+  {#if !empty}
+    <div class="section__content" transition:slide={{ duration: 200 }}>
+      {@render children?.()}
+    </div>
+  {/if}
 </section>
 
 <style>
@@ -42,9 +59,20 @@
     border-radius: 0.5rem;
   }
 
+  .section__head__text {
+    flex: auto;
+  }
+
   .section__head {
+    display: flex;
+    align-items: center;
     padding-bottom: 1rem;
     border-bottom: 1px solid #333;
+  }
+
+  .section__head--no-content {
+    padding-bottom: 0;
+    border-bottom: none;
   }
 
   .section__head h2 {

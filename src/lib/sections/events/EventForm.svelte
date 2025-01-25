@@ -21,6 +21,7 @@
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import { testEvent, createEvent, updateEvent } from "$lib/api/eventModel";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
@@ -599,7 +600,7 @@
 
 {#snippet detailsTabContent()}
   <!-- Base options -->
-  <FormSection title="Details" description="Basic details about the event">
+  <FormSection>
     <FormTextInput
       id="name"
       name="name"
@@ -812,13 +813,15 @@
     <FormSection
       title="Cooldown "
       description="Configure cooldown between each trigger of the event"
+      empty={!$data.cooldown.enabled}
     >
-      <FormBoundCheckbox
-        id="cooldown.enabled"
-        name="cooldown.enabled"
-        label="Enabled"
-        description="Whether the cooldown is enabled"
-      />
+      {#snippet action()}
+        <EnabledSwitch
+          checked={$data.cooldown.enabled}
+          onCheckedChange={(value) =>
+            setFields("cooldown.enabled", value, true)}
+        />
+      {/snippet}
 
       <FormNumberInput
         id="cooldown.duration"

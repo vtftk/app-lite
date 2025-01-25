@@ -17,6 +17,7 @@
   import { createCommand, updateCommand } from "$lib/api/commandModel";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
@@ -230,31 +231,29 @@ return message;
 </script>
 
 {#snippet settingsTabContent()}
-  <FormSections>
-    <FormSection title="Details" description="Basic details about the command">
-      <FormTextInput
-        id="name"
-        name="name"
-        label="Name"
-        description="Name for the command"
-        placeholder="Test Command"
-      />
-      <FormTextInput
-        id="command"
-        name="command"
-        label="Command"
-        description="Message that will trigger this command"
-        placeholder="!test"
-      />
+  <FormSection>
+    <FormTextInput
+      id="name"
+      name="name"
+      label="Name"
+      description="Name for the command"
+      placeholder="Test Command"
+    />
+    <FormTextInput
+      id="command"
+      name="command"
+      label="Command"
+      description="Message that will trigger this command"
+      placeholder="!test"
+    />
 
-      <FormBoundCheckbox
-        id="enabled"
-        name="enabled"
-        label="Enabled"
-        description="Whether this command can be used"
-      />
-    </FormSection>
-  </FormSections>
+    <FormBoundCheckbox
+      id="enabled"
+      name="enabled"
+      label="Enabled"
+      description="Whether this command can be used"
+    />
+  </FormSection>
 {/snippet}
 
 {#snippet typeTabContent()}
@@ -328,20 +327,22 @@ return message;
         selected={$data.require_role}
         onChangeSelected={(selected) =>
           setFields("require_role", selected, true)}
-        description="Minimum required role the user triggering the event must have in order for the event to trigger"
+        description="Minimum required rol1e the user triggering the event must have in order for the event to trigger"
       />
     </FormSection>
 
     <FormSection
       title="Cooldown"
       description="Configure cooldown between each use of the command"
+      empty={!$data.cooldown.enabled}
     >
-      <FormBoundCheckbox
-        id="cooldown.enabled"
-        name="cooldown.enabled"
-        label="Enabled"
-        description="Whether the cooldown is enabled"
-      />
+      {#snippet action()}
+        <EnabledSwitch
+          checked={$data.cooldown.enabled}
+          onCheckedChange={(value) =>
+            setFields("cooldown.enabled", value, true)}
+        />
+      {/snippet}
 
       <FormNumberInput
         id="cooldown.duration"
