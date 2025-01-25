@@ -109,7 +109,7 @@
 
   .tab-button {
     padding: 0.5rem 0.75rem;
-    background-color: #333;
+    background-color: #222;
     border: none;
     border-bottom: 1px solid #666;
     color: #fff;
