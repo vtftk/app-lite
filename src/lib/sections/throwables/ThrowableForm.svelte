@@ -209,13 +209,16 @@
     description="The image to use and its configuration"
   >
     <div class="row-group">
-      <ImageUpload
-        id="image"
-        name="image"
-        value={$data.image ?? existing?.image?.src}
-        scale={$data.scale * 0.5}
-        pixelated={$data.pixelate}
-      />
+      <div class="column">
+        <ImageUpload
+          id="image"
+          name="image"
+          value={$data.image ?? existing?.image?.src}
+          scale={$data.scale * 0.5}
+          pixelated={$data.pixelate}
+        />
+        <FormErrorLabel name="image" />
+      </div>
 
       <div class="column">
         <FormNumberInput
@@ -343,7 +346,7 @@
 
   .row-group {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: flex-start;
   }
 </style>

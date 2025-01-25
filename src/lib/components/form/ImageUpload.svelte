@@ -80,15 +80,12 @@
   </span>
 </button>
 
-<FormErrorLabel {name} />
-
 <style>
   .container {
     position: relative;
     height: 300px;
-    width: 300px;
+    width: 400px;
     background-color: #000;
-    margin: 1rem 0;
     overflow: hidden;
     border: none;
     cursor: pointer;

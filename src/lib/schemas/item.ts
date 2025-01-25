@@ -2,12 +2,18 @@ import { z } from "zod";
 
 // When working with existing configs we allow the file to be a
 // string to account for already uploaded file URLs
-export const throwableImageSchema = z
-  .instanceof(File, {
-    message: "Image file is required",
-    fatal: true,
-  })
-  .or(z.string());
+export const throwableImageSchema = z.union(
+  [
+    z.instanceof(File, {
+      message: "Image file is required",
+      fatal: true,
+    }),
+    z.string(),
+  ],
+  {
+    message: "Image is required",
+  },
+);
 
 export type ThrowableImageSchema = z.infer<typeof throwableImageSchema>;
 
