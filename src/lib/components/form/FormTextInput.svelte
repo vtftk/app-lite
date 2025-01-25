@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { HTMLInputAttributes } from "svelte/elements";
+
   import FormErrorLabel from "./FormErrorLabel.svelte";
 
   type Props = {
@@ -9,7 +11,7 @@
     placeholder?: string;
 
     type?: "text" | "password";
-  };
+  } & Omit<HTMLInputAttributes, "name" | "placeholder" | "id" | "type">;
 
   const {
     id,

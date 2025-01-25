@@ -194,7 +194,14 @@
 
 {#snippet detailsTab()}
   <FormSection>
-    <FormTextInput id="name" name="name" label="Name" />
+    <FormTextInput
+      id="name"
+      name="name"
+      label="Name"
+      placeholder="Example Throwable..."
+      minlength={1}
+      required
+    />
 
     <FormSlider
       id="weight"
