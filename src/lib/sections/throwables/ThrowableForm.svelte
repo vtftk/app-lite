@@ -5,6 +5,7 @@
   import { uploadFile } from "$lib/api/data";
   import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
+  import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import { createSoundsQuery } from "$lib/api/soundModel";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
@@ -26,7 +27,10 @@
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
+  import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
+  import SolarGalleryRoundBoldDuotone from "~icons/solar/gallery-round-bold-duotone";
+  import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
   import {
     type Sound,
     StorageFolder,
@@ -188,6 +192,92 @@
   }
 </script>
 
+{#snippet detailsTab()}
+  <FormSection>
+    <FormTextInput id="name" name="name" label="Name" />
+
+    <FormSlider
+      id="weight"
+      name="weight"
+      label="Weight"
+      min={0}
+      max={4}
+      step={0.1}
+      value={$data.weight}
+      description="Weight affects how much force your model is hit with when the item impacts (Default: 1)"
+      showTicks
+    />
+  </FormSection>
+{/snippet}
+
+{#snippet imageTab()}
+  <FormSection
+    title="Image"
+    description="The image to use and its configuration"
+  >
+    <div class="row-group">
+      <ImageUpload
+        id="image"
+        name="image"
+        value={$data.image ?? existing?.image?.src}
+        scale={$data.scale * 0.5}
+        pixelated={$data.pixelate}
+      />
+
+      <div class="column">
+        <FormNumberInput
+          id="scale"
+          name="scale"
+          label="Scale"
+          min={0.1}
+          max={10}
+          step={0.1}
+        />
+
+        <FormBoundCheckbox
+          id="pixelate"
+          name="pixelate"
+          label="Pixelate"
+          description="Use this option if your image is pixel art"
+        />
+      </div>
+    </div>
+  </FormSection>
+{/snippet}
+
+{#snippet soundsTab()}
+  <FormSection
+    title="Impact Sounds"
+    description="Choose selection of sounds that can play when the item impacts"
+  >
+    <SoundPicker
+      description="Choose which sounds should play when this item impacts"
+      selected={$data.impactSoundIds}
+      onChangeSelected={(soundIds) => {
+        setFields(
+          "impactSoundIds",
+          soundIds.map((sound) => sound.id),
+          true,
+        );
+      }}
+    />
+
+    <div class="sounds">
+      <p class="sounds__title">Selected Sounds</p>
+
+      <div class="sounds__grid">
+        {#each selectedOptions as option}
+          <li class="sound-item">
+            <p class="sound-item__name">{option.name}</p>
+          </li>
+        {/each}
+      </div>
+    </div>
+
+    <FormErrorLabel name="impactSoundIds" />
+  </FormSection>
+{/snippet}
+
 <form use:form>
   <PageLayoutList
     title={existing ? "Edit Throwable" : "Create Throwable"}
@@ -230,87 +320,30 @@
       <Button type="submit">{existing ? "Save" : "Create"}</Button>
     {/snippet}
 
-    <FormSections>
-      <FormSection>
-        <FormTextInput id="name" name="name" label="Name" />
-      </FormSection>
+    <HTabs
+      tabs={[
+        {
+          value: "details",
+          icon: SolarSettingsBoldDuotone,
+          label: "Details",
+          content: detailsTab,
+        },
+        {
+          value: "image",
+          icon: SolarGalleryRoundBoldDuotone,
+          label: "Image",
+          content: imageTab,
+        },
+        {
+          value: "sounds",
+          icon: SolarHeadphonesRoundBoldDuotone,
+          label: "Sounds",
+          content: soundsTab,
+        },
+      ]}
+    />
 
-      <FormSection
-        title="Image"
-        description="The image to use and its configuration"
-      >
-        <div class="row-group">
-          <ImageUpload
-            id="image"
-            name="image"
-            value={$data.image ?? existing?.image?.src}
-            scale={$data.scale * 0.5}
-            pixelated={$data.pixelate}
-          />
-
-          <div class="column">
-            <FormNumberInput
-              id="scale"
-              name="scale"
-              label="Scale"
-              min={0.1}
-              max={10}
-              step={0.1}
-            />
-
-            <FormSlider
-              id="weight"
-              name="weight"
-              label="Weight"
-              min={0}
-              max={4}
-              step={0.1}
-              value={$data.weight}
-              description="Weight affects how much force your model is hit with when the item impacts (Default: 1)"
-              showTicks
-            />
-
-            <FormBoundCheckbox
-              id="pixelate"
-              name="pixelate"
-              label="Pixelate"
-              description="Use this option if your image is pixel art"
-            />
-          </div>
-        </div>
-      </FormSection>
-
-      <FormSection
-        title="Impact Sounds"
-        description="Choose selection of sounds that can play when the item impacts"
-      >
-        <SoundPicker
-          description="Choose which sounds should play when this item impacts"
-          selected={$data.impactSoundIds}
-          onChangeSelected={(soundIds) => {
-            setFields(
-              "impactSoundIds",
-              soundIds.map((sound) => sound.id),
-              true,
-            );
-          }}
-        />
-
-        <div class="sounds">
-          <p class="sounds__title">Selected Sounds</p>
-
-          <div class="sounds__grid">
-            {#each selectedOptions as option}
-              <li class="sound-item">
-                <p class="sound-item__name">{option.name}</p>
-              </li>
-            {/each}
-          </div>
-        </div>
-
-        <FormErrorLabel name="impactSoundIds" />
-      </FormSection>
-    </FormSections>
+    <FormSections></FormSections>
   </PageLayoutList>
 </form>
 
@@ -360,6 +393,6 @@
   .row-group {
     display: flex;
     gap: 0.5rem;
-    align-items: center;
+    align-items: flex-start;
   }
 </style>

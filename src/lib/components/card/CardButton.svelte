@@ -64,14 +64,13 @@
 <style>
   .item {
     background-color: #222;
-    border: 2px solid #111;
     color: #ccc;
     text-align: left;
 
     display: flex;
     flex-flow: column;
     padding: 0.75rem;
-    border: 2px solid #333;
+    border: 1px solid #333;
 
     transition: all 0.25s;
     cursor: pointer;

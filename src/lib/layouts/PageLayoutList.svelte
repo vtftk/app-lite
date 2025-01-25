@@ -60,7 +60,7 @@
     color: #fff;
     margin-bottom: 0.25rem;
     line-height: 1;
-    font-size: 1.75rem;
+    font-size: 1.25rem;
   }
 
   .text {

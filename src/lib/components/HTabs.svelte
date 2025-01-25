@@ -120,7 +120,8 @@
     font-size: 1em;
     text-decoration: none;
     transition: all 0.25s ease;
-    flex: auto;
+    max-width: 100%;
+    white-space: nowrap;
   }
 
   .tab-button:first-of-type {
@@ -132,7 +133,7 @@
   }
 
   .tab-button--active {
-    background-color: #555;
+    background-color: #444;
     border-bottom-color: #888;
   }
 </style>

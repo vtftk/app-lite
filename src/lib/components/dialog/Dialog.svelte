@@ -91,12 +91,7 @@
   {/if}
 </Dialog.Root>
 
-<style lang="scss">
-  $borderWidth: 0.1rem;
-  $borderStyle: solid;
-  $borderColor: #dfe3e8;
-  $border: $borderWidth $borderStyle $borderColor;
-
+<style>
   .overlay {
     position: fixed;
     left: 0;
@@ -104,7 +99,7 @@
     width: 100vw;
     height: 100vh;
     background-color: #f4f6f8;
-    background-color: rgba($color: #000000, $alpha: 0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
     z-index: 49;
   }

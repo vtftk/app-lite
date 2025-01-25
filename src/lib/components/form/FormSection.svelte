@@ -34,9 +34,13 @@
     display: flex;
     flex-flow: column;
 
-    border: 1px solid #333;
     padding: 1rem;
     gap: 1rem;
+
+    background-color: #1a1a1a;
+    border: 1px solid #2f2f2f;
+    padding: 1rem;
+    border-radius: 0.5rem;
   }
 
   .section__head {
