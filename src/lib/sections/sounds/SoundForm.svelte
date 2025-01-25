@@ -4,8 +4,8 @@
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { uploadFile } from "$lib/api/data";
-  import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
+  import { reporter } from "@felte/reporter-svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
@@ -68,7 +68,7 @@
       initialValues: existing ? createFromExisting(existing) : createDefaults,
 
       // Validation and error reporting
-      extend: [validator({ schema }), reporterDom()],
+      extend: [validator({ schema }), reporter()],
 
       async onSubmit(values) {
         const savePromise = save(values);

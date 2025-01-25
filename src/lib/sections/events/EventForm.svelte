@@ -3,9 +3,9 @@
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { type VEvent } from "$shared/dataV2";
-  import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
+  import { reporter } from "@felte/reporter-svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
   import BallIcon from "~icons/solar/basketball-bold-duotone";
@@ -84,7 +84,7 @@
       initialValues: existing ? existing : getDefaultEvent(),
 
       // Validation and error reporting
-      extend: [validator({ schema: eventSchema }), reporterDom()],
+      extend: [validator({ schema: eventSchema }), reporter()],
 
       async onSubmit(values) {
         await save(values);

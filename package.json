@@ -15,7 +15,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@felte/reporter-dom": "^1.1.10",
     "@felte/validator-zod": "^1.0.18",
     "@fontsource/jetbrains-mono": "^5.1.1",
     "@tanstack/svelte-query": "^5.60.6",
@@ -30,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@felte/reporter-svelte": "^1.2.0",
     "@iconify-json/solar": "^1.2.1",
     "@sveltejs/adapter-static": "^3.0.5",
     "@sveltejs/kit": "^2.7.0",

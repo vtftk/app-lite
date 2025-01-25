@@ -2,12 +2,12 @@
   import { z } from "zod";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
-  import reporterDom from "@felte/reporter-dom";
   import { minMax } from "$lib/utils/validation";
   import { formatBytes } from "$lib/utils/format";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import Aside from "$lib/components/Aside.svelte";
+  import { reporter } from "@felte/reporter-svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -158,7 +158,7 @@
       initialValues: createFromExisting(appData),
 
       // Validation and error reporting
-      extend: [validator({ schema }), reporterDom()],
+      extend: [validator({ schema }), reporter()],
 
       async onSubmit(values) {
         const savePromise = save(values);

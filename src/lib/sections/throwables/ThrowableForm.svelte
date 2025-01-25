@@ -3,9 +3,9 @@
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { uploadFile } from "$lib/api/data";
-  import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
+  import { reporter } from "@felte/reporter-svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import { getAppContext } from "$lib/api/runtimeAppData";
@@ -79,7 +79,7 @@
     initialValues: existing ? createFromExisting(existing) : createDefaults,
 
     // Validation and error reporting
-    extend: [validator({ schema: itemSchema }), reporterDom()],
+    extend: [validator({ schema: itemSchema }), reporter()],
 
     async onSubmit(values) {
       const savePromise = save(values);
@@ -256,10 +256,8 @@
     />
 
     {#if $data.impactSoundIds.length > 0}
-      <div>
-        <SelectedSounds soundIds={$data.impactSoundIds} />
-        <FormErrorLabel name="impactSoundIds" />
-      </div>
+      <SelectedSounds soundIds={$data.impactSoundIds} />
+      <FormErrorLabel name="impactSoundIds" />
     {/if}
   </FormSection>
 {/snippet}

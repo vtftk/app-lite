@@ -3,9 +3,9 @@
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
-  import reporterDom from "@felte/reporter-dom";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
+  import { reporter } from "@felte/reporter-svelte";
   import { toastErrorMessage } from "$lib/utils/error";
   import Button from "$lib/components/input/Button.svelte";
   import CardButton from "$lib/components/card/CardButton.svelte";
@@ -119,7 +119,7 @@ return message;
     initialValues: existing ? createFromExisting(existing) : createDefaults,
 
     // Validation and error reporting
-    extend: [validator({ schema }), reporterDom()],
+    extend: [validator({ schema }), reporter()],
 
     onSubmit(values) {
       saveWithToast(values);
