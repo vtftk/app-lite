@@ -7,7 +7,6 @@
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { toastErrorMessage } from "$lib/utils/error";
-  import { createSoundsQuery } from "$lib/api/soundModel";
   import BallsIcon from "~icons/solar/balls-bold-duotone";
   import { getAppContext } from "$lib/api/runtimeAppData";
   import Button from "$lib/components/input/Button.svelte";
@@ -21,18 +20,17 @@
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
-  import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import SolarSettingsBoldDuotone from "~icons/solar/settings-bold-duotone";
+  import SelectedSounds from "$lib/components/sounds/SelectedSounds.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarGalleryRoundBoldDuotone from "~icons/solar/gallery-round-bold-duotone";
   import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
   import {
-    type Sound,
     StorageFolder,
     type ItemWithImpactSounds,
     type ThrowableImageConfig,
@@ -46,10 +44,6 @@
 
   const appContext = getAppContext();
   const runtimeAppData = $derived(appContext.runtimeAppData);
-
-  const soundsQuery = createSoundsQuery();
-
-  const sounds = $derived($soundsQuery.data ?? []);
 
   // Testing is only available when an overlay and vtube studio is connected
   const testingEnabled = $derived(
@@ -121,14 +115,6 @@
       $touched.impactSoundIds = true;
     }
   });
-
-  const selectedOptions = $derived(
-    filterOptionsSelected(sounds, $data.impactSoundIds),
-  );
-
-  function filterOptionsSelected(options: Sound[], selected: string[]) {
-    return options.filter((option) => selected.includes(option.id));
-  }
 
   function saveImage(image: string | File) {
     if (image instanceof File) {
@@ -269,19 +255,12 @@
       }}
     />
 
-    <div class="sounds">
-      <p class="sounds__title">Selected Sounds</p>
-
-      <div class="sounds__grid">
-        {#each selectedOptions as option}
-          <li class="sound-item">
-            <p class="sound-item__name">{option.name}</p>
-          </li>
-        {/each}
+    {#if $data.impactSoundIds.length > 0}
+      <div>
+        <SelectedSounds soundIds={$data.impactSoundIds} />
+        <FormErrorLabel name="impactSoundIds" />
       </div>
-    </div>
-
-    <FormErrorLabel name="impactSoundIds" />
+    {/if}
   </FormSection>
 {/snippet}
 
@@ -349,48 +328,15 @@
         },
       ]}
     />
-
-    <FormSections></FormSections>
   </PageLayoutList>
 </form>
 
 <style>
-  .sounds {
-    display: flex;
-    gap: 1rem;
-    flex-flow: column;
-  }
-
-  .sounds__title {
-    color: #fff;
-    font-weight: bold;
-  }
-
-  .sounds__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    overflow: hidden;
-  }
-
   .column {
     display: grid;
     grid-template-columns: 1fr;
     flex: auto;
     gap: 1rem;
-  }
-
-  .sound-item {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .sound-item__name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   form {

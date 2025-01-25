@@ -34,7 +34,6 @@
     display: flex;
     flex-flow: column;
 
-    padding: 1rem;
     gap: 1rem;
 
     background-color: #1a1a1a;
