@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { z } from "zod";
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
@@ -15,6 +14,7 @@
   import BallIcon from "~icons/solar/basketball-bold-duotone";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
   import FormSlider from "$lib/components/form/FormSlider.svelte";
+  import { itemSchema, type ItemSchema } from "$lib/schemas/item";
   import LinkButton from "$lib/components/input/LinkButton.svelte";
   import ImageUpload from "$lib/components/form/ImageUpload.svelte";
   import { testThrow, testThrowBarrage } from "$lib/api/throwables";
@@ -53,28 +53,8 @@
       runtimeAppData.vtube_studio_connected,
   );
 
-  // When working with existing configs we allow the file to be a
-  // string to account for already uploaded file URLs
-  const imageSchema = z
-    .instanceof(File, {
-      message: "Image file is required",
-      fatal: true,
-    })
-    .or(z.string());
-
-  const schema = z.object({
-    name: z.string().min(1, "You must specify a name"),
-    image: imageSchema,
-    scale: z.number(),
-    weight: z.number(),
-    pixelate: z.boolean(),
-    impactSoundIds: z.array(z.string()),
-  });
-
-  type Schema = z.infer<typeof schema>;
-
   // Defaults when creating a new throwable
-  const createDefaults: Partial<Schema> = {
+  const createDefaults: Partial<ItemSchema> = {
     name: "",
     image: undefined,
     scale: 1,
@@ -83,7 +63,9 @@
     impactSoundIds: [],
   };
 
-  function createFromExisting(config: ItemWithImpactSounds): Partial<Schema> {
+  function createFromExisting(
+    config: ItemWithImpactSounds,
+  ): Partial<ItemSchema> {
     return {
       name: config.name,
       image: config.image.src,
@@ -94,12 +76,12 @@
     };
   }
 
-  const { form, data, touched, setFields } = createForm<Schema>({
+  const { form, data, touched, setFields } = createForm<ItemSchema>({
     // Derive initial values
     initialValues: existing ? createFromExisting(existing) : createDefaults,
 
     // Validation and error reporting
-    extend: [validator({ schema }), reporterDom()],
+    extend: [validator({ schema: itemSchema }), reporterDom()],
 
     async onSubmit(values) {
       const savePromise = save(values);
@@ -154,7 +136,7 @@
     return Promise.resolve(image);
   }
 
-  async function save(values: Schema) {
+  async function save(values: ItemSchema) {
     const imageURL: string = await saveImage(values.image);
     const imageConfig: ThrowableImageConfig = {
       src: imageURL,
@@ -249,10 +231,7 @@
     {/snippet}
 
     <FormSections>
-      <FormSection
-        title="Details"
-        description="Choose selection of sounds that can play when the item impacts"
-      >
+      <FormSection>
         <FormTextInput id="name" name="name" label="Name" />
       </FormSection>
 
