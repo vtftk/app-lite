@@ -1,6 +1,6 @@
 <script lang="ts">
   // Apply global styling
-  import "$lib/styles/global.scss";
+  import "$lib/styles/global.css";
   // Font family for code editor
   import "@fontsource/jetbrains-mono";
   import { fly } from "svelte/transition";
