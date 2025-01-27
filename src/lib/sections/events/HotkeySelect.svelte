@@ -38,7 +38,7 @@
       label: item.name,
     }));
 
-    if (options.length === 0) {
+    if (options.length === 0 && selected) {
       options.push({
         value: selected,
         label: `Unknown Hotkey (${selected})`,
