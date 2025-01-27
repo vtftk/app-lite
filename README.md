@@ -48,6 +48,7 @@ Inspired by [KBonk](https://github.com/typeou/karasubonk), this project aims to 
 - 🚀 **Raids** - Run when another Twitch channel raids you
 - ⏲️ **Timers** - Run automatically at some fixed time in seconds
 - 📢 **Ads Starting** - Run whenever an ad break starts 
+- 👋 **Shoutout Received** - Run whenever a shoutout is received
 
 **Outcomes:** You can trigger these:  
 - 🪶 Throw items at your avatar  
