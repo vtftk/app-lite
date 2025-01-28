@@ -1,13 +1,8 @@
 <script lang="ts">
-  import type { LogId, EventId, LogsQuery } from "$shared/dataV2";
+  import type { LogId, EventId, EventLog, LogsQuery } from "$shared/dataV2";
 
-  import { onMount } from "svelte";
   import LogsTable from "$lib/sections/logs/LogsTable.svelte";
-  import {
-    eventLogsQuery,
-    deleteEventLogs,
-    invalidateEventLogs,
-  } from "$lib/api/eventModel";
+  import { getEventLogs, deleteEventLogs } from "$lib/api/eventModel";
 
   type Props = {
     id: EventId;
@@ -17,24 +12,28 @@
 
   const query: LogsQuery = $state({});
 
-  const logsQuery = $derived(eventLogsQuery(id, query));
-  const logs = $derived($logsQuery.data ?? []);
-
-  onMount(() => {
-    onRefresh();
-  });
-
   async function onBulkDelete(logIds: LogId[]) {
     await deleteEventLogs(id, logIds);
   }
 
+  let logsPromise: Promise<EventLog[]> | undefined = $state();
+
   function onRefresh() {
-    invalidateEventLogs(id, query);
+    logsPromise = getEventLogs(id, query);
   }
+
+  $effect(() => {
+    onRefresh();
+  });
 </script>
 
-{#if $logsQuery.isPending}
-  <div class="skeleton" style="width: 90%; height: 1.5rem; padding: 1rem"></div>
+{#if logsPromise}
+  {#await logsPromise}
+    <div
+      class="skeleton"
+      style="width: 90%; height: 1.5rem; padding: 1rem"
+    ></div>
+  {:then logs}
+    <LogsTable {onRefresh} {onBulkDelete} {logs} />
+  {/await}
 {/if}
-
-<LogsTable {onRefresh} {onBulkDelete} {logs} />
