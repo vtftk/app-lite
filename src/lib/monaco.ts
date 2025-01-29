@@ -17,11 +17,13 @@ monaco.languages.typescript.javascriptDefaults.addExtraLib(
   "file:///lib.d.ts",
 );
 
+// VTFTK scripting library
 monaco.languages.typescript.javascriptDefaults.addExtraLib(
   libraryDefinition,
   "file:///global.d.ts",
 );
 
+// Disable errors about top level await
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
