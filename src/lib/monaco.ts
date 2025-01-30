@@ -66,15 +66,15 @@ self.MonacoEnvironment = {
 
         return new cssWorker.default();
       }
-      case "html":
-      case "handlebars":
-      case "razor": {
-        const htmlWorker = await import(
-          "monaco-editor/esm/vs/language/html/html.worker?worker"
-        );
+      // case "html":
+      // case "handlebars":
+      // case "razor": {
+      //   const htmlWorker = await import(
+      //     "monaco-editor/esm/vs/language/html/html.worker?worker"
+      //   );
 
-        return new htmlWorker.default();
-      }
+      //   return new htmlWorker.default();
+      // }
       case "typescript":
       case "javascript": {
         const tsWorker = await import(
