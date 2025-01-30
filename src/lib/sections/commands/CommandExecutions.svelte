@@ -5,7 +5,7 @@
     type CommandId,
     type ExecutionId,
     type ExecutionsQuery,
-  } from "$shared/dataV2";
+  } from "$lib/api/types";
   import {
     commandExecutionsQuery,
     deleteCommandExecutions,

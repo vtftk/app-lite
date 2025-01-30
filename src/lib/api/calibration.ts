@@ -1,4 +1,4 @@
-import type { ModelData } from "$shared/appData";
+import type { ModelData } from "$lib/api/types";
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";

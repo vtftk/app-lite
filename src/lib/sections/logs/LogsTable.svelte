@@ -5,7 +5,7 @@
   import { formatDate, formatTime } from "$lib/utils/date";
   import Button from "$lib/components/input/Button.svelte";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
-  import { type LogId, type LogData, LoggingLevelStr } from "$shared/dataV2";
+  import { type LogId, type LogData, LoggingLevelStr } from "$lib/api/types";
   import SolarInfoCircleBoldDuotone from "~icons/solar/info-circle-bold-duotone";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";

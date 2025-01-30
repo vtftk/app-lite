@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Item, Sound } from "$shared/dataV2";
+  import type { Item, Sound } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";

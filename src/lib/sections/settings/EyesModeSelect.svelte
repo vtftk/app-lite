@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { EyesMode } from "$shared/appData";
+  import { EyesMode } from "$lib/api/types";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
 
   type Props = {

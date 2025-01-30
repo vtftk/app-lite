@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ThrowDirection } from "$shared/appData";
+  import { ThrowDirection } from "$lib/api/types";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
 
   type Props = {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CreateSound } from "$shared/dataV2";
+  import type { CreateSound } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
   import { uploadFile } from "$lib/api/data";

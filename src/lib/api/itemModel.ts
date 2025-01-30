@@ -7,7 +7,7 @@ import type {
   UpdateItem,
   UpdateOrdering,
   ItemWithImpactSounds,
-} from "$shared/dataV2";
+} from "$lib/api/types";
 
 import { invoke } from "@tauri-apps/api/core";
 import { createQuery, createMutation } from "@tanstack/svelte-query";

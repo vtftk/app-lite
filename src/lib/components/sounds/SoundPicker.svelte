@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import type { Sound, SoundId } from "$shared/dataV2";
+  import type { Sound, SoundId } from "$lib/api/types";
 
   import getBackendURL from "$lib/utils/url";
   import { filterNameSearch } from "$lib/utils/search";

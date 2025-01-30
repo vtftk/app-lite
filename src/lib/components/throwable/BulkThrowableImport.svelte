@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { CreateItem } from "$shared/dataV2";
-  import type { ThrowableImageConfig } from "$shared/appData";
+  import type { CreateItem, ThrowableImageConfig } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
   import { uploadFile } from "$lib/api/data";

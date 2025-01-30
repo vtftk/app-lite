@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Item } from "$shared/dataV2";
+  import type { Item } from "$lib/api/types";
 
   import getBackendURL from "$lib/utils/url";
   import { filterNameSearch } from "$lib/utils/search";

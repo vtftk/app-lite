@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { VEvent } from "$shared/dataV2";
+  import type { VEvent } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Command } from "$shared/dataV2";
+  import type { Command } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
   import { toastErrorMessage } from "$lib/utils/error";

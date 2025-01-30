@@ -6,7 +6,7 @@ import {
   ThrowableDataType,
   MinimumRequiredRole,
   MINIMUM_REQUIRED_ROLE_VALUES,
-} from "$shared/appData";
+} from "$lib/api/types";
 
 export const eventTriggerSchema = z.discriminatedUnion("type", [
   z.object({

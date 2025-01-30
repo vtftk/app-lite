@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SoundId } from "$shared/dataV2";
+  import type { SoundId } from "$lib/api/types";
 
   import { createSoundsQuery } from "$lib/api/soundModel";
   import FormSelect from "$lib/components/form/FormSelect.svelte";

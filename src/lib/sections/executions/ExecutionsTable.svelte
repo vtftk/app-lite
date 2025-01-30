@@ -4,7 +4,7 @@
   import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import { formatDate, formatTime } from "$lib/utils/date";
   import Button from "$lib/components/input/Button.svelte";
-  import { type ExecutionId, type ExecutionData } from "$shared/dataV2";
+  import { type ExecutionId, type ExecutionData } from "$lib/api/types";
   import SolarRefreshBoldDuotone from "~icons/solar/refresh-bold-duotone";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";

@@ -11,7 +11,7 @@ import type {
   EventExecution,
   VEvent as Event,
   ExecutionsQuery,
-} from "$shared/dataV2";
+} from "$lib/api/types";
 
 import { invoke } from "@tauri-apps/api/core";
 import { createQuery } from "@tanstack/svelte-query";

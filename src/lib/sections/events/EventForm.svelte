@@ -2,7 +2,7 @@
   import { createForm } from "felte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
-  import { type VEvent } from "$shared/dataV2";
+  import { type VEvent } from "$lib/api/types";
   import { validator } from "@felte/validator-zod";
   import HTabs from "$lib/components/HTabs.svelte";
   import { reporter } from "@felte/reporter-svelte";
@@ -49,7 +49,7 @@
     EventOutcomeType,
     EventTriggerType,
     ThrowableDataType,
-  } from "$shared/appData";
+  } from "$lib/api/types";
   import {
     eventSchema,
     getDefaultEvent,

@@ -6,7 +6,7 @@
     type CommandId,
     type LogsQuery,
     type CommandLog,
-  } from "$shared/dataV2";
+  } from "$lib/api/types";
 
   type Props = {
     id: CommandId;

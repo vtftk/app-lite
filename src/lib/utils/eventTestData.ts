@@ -1,5 +1,8 @@
-import { EventTriggerType } from "$shared/appData";
-import { type VEventData, SubscriptionTier } from "$shared/dataV2";
+import {
+  type VEventData,
+  SubscriptionTier,
+  EventTriggerType,
+} from "$lib/api/types";
 
 function randomNumber(min: number, max: number) {
   return Math.floor(Math.random() * (max - min)) + min;

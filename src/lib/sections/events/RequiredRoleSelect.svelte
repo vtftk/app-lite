@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MinimumRequiredRole } from "$shared/appData";
+  import { MinimumRequiredRole } from "$lib/api/types";
   import FormSelect from "$lib/components/form/FormSelect.svelte";
 
   type Props = {

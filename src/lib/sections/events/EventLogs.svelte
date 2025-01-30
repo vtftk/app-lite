@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LogId, EventId, EventLog, LogsQuery } from "$shared/dataV2";
+  import type { LogId, EventId, EventLog, LogsQuery } from "$lib/api/types";
 
   import LogsTable from "$lib/sections/logs/LogsTable.svelte";
   import { getEventLogs, deleteEventLogs } from "$lib/api/eventModel";
