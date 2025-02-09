@@ -1,4 +1,5 @@
 use super::{
+    command_aliases::{CommandAliasActiveModel, CommandAliasColumn, CommandWithAliases},
     command_executions::{CommandExecutionColumn, CommandExecutionModel},
     command_logs::{CommandLogsColumn, CommandLogsModel},
     shared::{DbResult, ExecutionsQuery, LogsQuery, MinimumRequireRole, UpdateOrdering},
@@ -7,8 +8,8 @@ use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
-    entity::prelude::*, ActiveValue::Set, FromJsonQueryResult, IntoActiveModel, QueryOrder,
-    QuerySelect, UpdateResult,
+    entity::prelude::*, sea_query::Func, ActiveValue::Set, Condition, FromJsonQueryResult,
+    IntoActiveModel, QueryOrder, QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -72,6 +73,9 @@ pub enum Relation {
     /// Command can have many logs
     #[sea_orm(has_many = "super::command_logs::Entity")]
     Logs,
+    /// Command can have many aliases
+    #[sea_orm(has_many = "super::command_aliases::Entity")]
+    Aliases,
 }
 
 impl Related<super::command_executions::Entity> for Entity {
@@ -86,6 +90,12 @@ impl Related<super::command_logs::Entity> for Entity {
     }
 }
 
+impl Related<super::command_aliases::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Aliases.def()
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(Debug, Deserialize)]
@@ -96,6 +106,7 @@ pub struct CreateCommand {
     pub outcome: CommandOutcome,
     pub cooldown: CommandCooldown,
     pub require_role: MinimumRequireRole,
+    pub aliases: Vec<String>,
 }
 
 #[derive(Default, Deserialize)]
@@ -107,6 +118,7 @@ pub struct UpdateCommand {
     pub cooldown: Option<CommandCooldown>,
     pub require_role: Option<MinimumRequireRole>,
     pub order: Option<u32>,
+    pub aliases: Vec<String>,
 }
 
 impl Model {
@@ -136,6 +148,8 @@ impl Model {
             .await?
             .context("model was not inserted")?;
 
+        model.set_aliases(db, create.aliases).await?;
+
         Ok(model)
     }
 
@@ -145,9 +159,15 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        // TODO: Join against future aliases table
         Entity::find()
-            .filter(Column::Command.eq(command).and(Column::Enabled.eq(true)))
+            .left_join(super::command_aliases::Entity)
+            .filter(
+                Condition::any()
+                    .add(Expr::expr(Func::lower(Expr::col(Column::Command))).eq(command))
+                    .add(Expr::expr(Func::lower(Expr::col(CommandAliasColumn::Alias))).eq(command)),
+            )
+            .filter(Column::Enabled.eq(true))
+            .group_by(Column::Id)
             .all(db)
             .await
     }
@@ -174,6 +194,20 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find_by_id(id).one(db).await
+    }
+    /// Find a specific sound by ID
+    pub async fn get_by_id_with_aliases<C>(db: &C, id: Uuid) -> DbResult<Option<CommandWithAliases>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let command = match Entity::find_by_id(id).one(db).await? {
+            Some(value) => value,
+            None => return Ok(None),
+        };
+
+        let aliases = command.get_aliases(db).await?;
+
+        Ok(Some(CommandWithAliases { command, aliases }))
     }
 
     /// Find all sounds
@@ -204,6 +238,9 @@ impl Model {
         this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
+
+        this.set_aliases(db, data.aliases).await?;
+
         Ok(this)
     }
 
@@ -237,6 +274,42 @@ impl Model {
             .order_by(CommandLogsColumn::CreatedAt, sea_orm::Order::Desc)
             .all(db)
             .await
+    }
+
+    pub async fn get_aliases<C>(&self, db: &C) -> DbResult<Vec<String>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        self.find_related(super::command_aliases::Entity)
+            .order_by(CommandAliasColumn::Order, sea_orm::Order::Asc)
+            .all(db)
+            .await
+            .map(|aliases| aliases.into_iter().map(|alias| alias.alias).collect())
+    }
+
+    pub async fn set_aliases<C>(&self, db: &C, aliases: Vec<String>) -> DbResult<()>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        // Delete all command aliases for the command
+        super::command_aliases::Entity::delete_many()
+            .filter(CommandAliasColumn::CommandId.eq(self.id))
+            .exec(db)
+            .await?;
+
+        super::command_aliases::Entity::insert_many(aliases.into_iter().enumerate().map(
+            |(index, alias)| CommandAliasActiveModel {
+                id: Set(Uuid::new_v4()),
+                command_id: Set(self.id),
+                alias: Set(alias),
+                order: Set(index as u32),
+            },
+        ))
+        .on_conflict_do_nothing()
+        .exec_without_returning(db)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn get_executions<C>(

@@ -47,6 +47,10 @@ export type Command = {
   order: number;
 };
 
+export type CommandWithAliases = Command & {
+  aliases: string[];
+};
+
 export type CommandCooldown = {
   enabled: boolean;
   duration: number;
@@ -60,6 +64,7 @@ export type CreateCommand = {
   outcome: CommandOutcome;
   cooldown: CommandCooldown;
   require_role: MinimumRequiredRole;
+  aliases: string[];
 };
 
 export type UpdateCommand = {
@@ -72,6 +77,7 @@ export type UpdateCommand = {
     cooldown: CommandCooldown;
     require_role: MinimumRequiredRole;
     order: number;
+    aliases: string[];
   }>;
 };
 

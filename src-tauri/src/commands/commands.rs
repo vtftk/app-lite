@@ -3,10 +3,10 @@
 //! Commands for interacting with commands from the frontend
 
 use crate::database::entity::{
+    command_aliases::CommandWithAliases,
     command_executions::CommandExecutionModel,
     command_logs::CommandLogsModel,
-    commands::CommandModel,
-    commands::{CreateCommand, UpdateCommand},
+    commands::{CommandModel, CreateCommand, UpdateCommand},
     shared::{ExecutionsQuery, LogsQuery, UpdateOrdering},
 };
 use anyhow::Context;
@@ -29,9 +29,9 @@ pub async fn get_commands(db: State<'_, DatabaseConnection>) -> CmdResult<Vec<Co
 pub async fn get_command_by_id(
     command_id: Uuid,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<Option<CommandModel>> {
+) -> CmdResult<Option<CommandWithAliases>> {
     let db = db.inner();
-    let command = CommandModel::get_by_id(db, command_id).await?;
+    let command = CommandModel::get_by_id_with_aliases(db, command_id).await?;
     Ok(command)
 }
 
@@ -40,10 +40,12 @@ pub async fn get_command_by_id(
 pub async fn create_command(
     create: CreateCommand,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<CommandModel> {
+) -> CmdResult<CommandWithAliases> {
     let db = db.inner();
     let command = CommandModel::create(db, create).await?;
-    Ok(command)
+    let aliases = command.get_aliases(db).await?;
+
+    Ok(CommandWithAliases { command, aliases })
 }
 
 /// Update an existing command
@@ -52,13 +54,14 @@ pub async fn update_command(
     command_id: Uuid,
     update: UpdateCommand,
     db: State<'_, DatabaseConnection>,
-) -> CmdResult<CommandModel> {
+) -> CmdResult<CommandWithAliases> {
     let db = db.inner();
     let command = CommandModel::get_by_id(db, command_id)
         .await?
         .context("command not found")?;
     let command = command.update(db, update).await?;
-    Ok(command)
+    let aliases = command.get_aliases(db).await?;
+    Ok(CommandWithAliases { command, aliases })
 }
 
 /// Delete a command

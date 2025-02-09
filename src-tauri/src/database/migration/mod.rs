@@ -16,6 +16,7 @@ mod m20250104_053253_create_twitch_access_table;
 mod m20250104_060420_create_vt_access_table;
 mod m20250104_071851_create_app_data_table;
 mod m20250124_082703_create_chat_history_table;
+mod m20250209_101257_create_command_aliases_table;
 
 pub struct Migrator;
 
@@ -39,6 +40,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250104_060420_create_vt_access_table::Migration),
             Box::new(m20250104_071851_create_app_data_table::Migration),
             Box::new(m20250124_082703_create_chat_history_table::Migration),
+            Box::new(m20250209_101257_create_command_aliases_table::Migration),
         ]
     }
 }

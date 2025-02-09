@@ -7,6 +7,7 @@
   import HTabs from "$lib/components/HTabs.svelte";
   import { reporter } from "@felte/reporter-svelte";
   import { toastErrorMessage } from "$lib/utils/error";
+  import DeleteIcon from "~icons/solar/trash-bin-2-bold";
   import Button from "$lib/components/input/Button.svelte";
   import CardButton from "$lib/components/card/CardButton.svelte";
   import PageLayoutList from "$lib/layouts/PageLayoutList.svelte";
@@ -17,6 +18,7 @@
   import { createCommand, updateCommand } from "$lib/api/commandModel";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import TextInputBase from "$lib/components/form/TextInputBase.svelte";
   import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import SolarReorderBoldDuotone from "~icons/solar/reorder-bold-duotone";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
@@ -27,9 +29,9 @@
   import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarChecklistMinimalisticBoldDuotone from "~icons/solar/checklist-minimalistic-bold-duotone";
   import {
-    type Command,
     CommandOutcomeType,
     MinimumRequiredRole,
+    type CommandWithAliases,
     MINIMUM_REQUIRED_ROLE_VALUES,
   } from "$lib/api/types";
 
@@ -50,7 +52,7 @@ return message;
   `;
 
   type Props = {
-    existing?: Command;
+    existing?: CommandWithAliases;
   };
 
   const { existing }: Props = $props();
@@ -81,6 +83,7 @@ return message;
     outcome: outcomeSchema,
     require_role: z.enum(MINIMUM_REQUIRED_ROLE_VALUES),
     cooldown: cooldownSchema,
+    aliases: z.array(z.string()),
   });
 
   type Schema = z.infer<typeof schema>;
@@ -95,7 +98,7 @@ return message;
     [CommandOutcomeType.Script]: getOutcomeDefaults(CommandOutcomeType.Script),
   };
 
-  function createFromExisting(config: Command): Partial<Schema> {
+  function createFromExisting(config: CommandWithAliases): Partial<Schema> {
     return {
       name: config.name,
       command: config.command,
@@ -103,6 +106,7 @@ return message;
       outcome: config.outcome,
       require_role: config.require_role,
       cooldown: config.cooldown,
+      aliases: config.aliases.length < 1 ? [""] : config.aliases,
     };
   }
 
@@ -113,6 +117,7 @@ return message;
     outcome: getOutcomeDefaults(CommandOutcomeType.Template),
     require_role: MinimumRequiredRole.None,
     cooldown: { enabled: true, duration: 1000, per_user: false },
+    aliases: [""],
   };
 
   const { form, data, setFields, isDirty, setIsDirty } = createForm<Schema>({
@@ -154,6 +159,9 @@ return message;
 
   async function save(values: Schema) {
     const command = values.command.toLowerCase().trim();
+    const aliases = values.aliases
+      .map((alias) => alias.toLowerCase().trim())
+      .filter((alias) => alias.length > 0);
 
     if (existing !== undefined) {
       await updateCommand({
@@ -165,6 +173,7 @@ return message;
           outcome: values.outcome,
           cooldown: values.cooldown,
           require_role: values.require_role,
+          aliases,
         },
       });
     } else {
@@ -175,6 +184,7 @@ return message;
         outcome: values.outcome,
         cooldown: values.cooldown,
         require_role: values.require_role,
+        aliases,
       });
     }
 
@@ -226,10 +236,26 @@ return message;
         "Create a command using scripting with JavaScript code. For powerful interactive messages",
     },
   ];
+
+  function handleAddAlias() {
+    setFields("aliases", (value) => [...value, ""]);
+  }
+  function handleRemoveAlias(index: number) {
+    setFields("aliases", (value) =>
+      value.filter((_, itemIndex) => itemIndex !== index),
+    );
+  }
 </script>
 
 {#snippet settingsTabContent()}
   <FormSection>
+    <FormBoundCheckbox
+      id="enabled"
+      name="enabled"
+      label="Enabled"
+      description="Whether this command can be used"
+    />
+
     <FormTextInput
       id="name"
       name="name"
@@ -245,12 +271,27 @@ return message;
       placeholder="!test"
     />
 
-    <FormBoundCheckbox
-      id="enabled"
-      name="enabled"
-      label="Enabled"
-      description="Whether this command can be used"
-    />
+    <div>
+      <h2 class="aliases-title">Aliases</h2>
+      <p class="aliases-description">
+        Any of the following alias messages will also trigger the command
+      </p>
+    </div>
+
+    {#if $data.aliases.length > 0}
+      <ul class="aliases">
+        {#each $data.aliases as _alias, index}
+          <li class="alias">
+            <TextInputBase name={`aliases.${index}`} placeholder="!alias" />
+            <Button onclick={() => handleRemoveAlias(index)}>
+              <DeleteIcon />
+            </Button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+
+    <Button onclick={handleAddAlias}>Add Alias</Button>
   </FormSection>
 {/snippet}
 
@@ -470,5 +511,35 @@ return message;
 
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  .aliases {
+    display: flex;
+    flex-flow: column;
+    gap: 1rem;
+    list-style: none;
+    width: 100%;
+  }
+
+  .alias {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .alias :global(.form-input) {
+    flex: auto;
+  }
+
+  .aliases-title {
+    font-weight: normal;
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .aliases-description {
+    color: #ccc;
+    font-size: 0.8rem;
   }
 </style>

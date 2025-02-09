@@ -1187,6 +1187,7 @@ mod test {
                 },
                 cooldown: Default::default(),
                 require_role: Default::default(),
+                aliases: Vec::new(),
             },
         )
         .await
@@ -1238,6 +1239,7 @@ mod test {
                 },
                 cooldown: Default::default(),
                 require_role: Default::default(),
+                aliases: Vec::new(),
             },
         )
         .await

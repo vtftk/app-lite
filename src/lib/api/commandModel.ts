@@ -10,6 +10,7 @@ import type {
   UpdateOrdering,
   ExecutionsQuery,
   CommandExecution,
+  CommandWithAliases,
 } from "$lib/api/types";
 
 import { invoke } from "@tauri-apps/api/core";
@@ -28,7 +29,7 @@ function createCommandKey(id: CommandId) {
 }
 
 export function getCommandById(commandId: CommandId) {
-  return invoke<Command | null>("get_command_by_id", { commandId });
+  return invoke<CommandWithAliases | null>("get_command_by_id", { commandId });
 }
 
 function invalidateCommandsList() {
@@ -39,7 +40,9 @@ export async function createCommand(
   create: CreateCommand,
   invalidateList = true,
 ) {
-  const command = await invoke<Command>("create_command", { create });
+  const command = await invoke<CommandWithAliases>("create_command", {
+    create,
+  });
   const commandKey = createCommandKey(command.id);
   queryClient.setQueryData(commandKey, command);
   if (invalidateList) invalidateCommandsList();
@@ -47,11 +50,14 @@ export async function createCommand(
 }
 
 export async function updateCommand(update: UpdateCommand) {
-  const command = await invoke<Command>("update_command", update);
+  const command = await invoke<CommandWithAliases>("update_command", update);
 
   // Invalidate the specific item query
   const itemKey = createCommandKey(command.id);
-  queryClient.setQueryData(itemKey, command);
+  queryClient.setQueryData(itemKey, {
+    ...command,
+    aliases: update.update.aliases,
+  });
 
   invalidateCommandsList();
 
