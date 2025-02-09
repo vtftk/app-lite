@@ -17,13 +17,28 @@ export const throwableImageSchema = z.union(
 
 export type ThrowableImageSchema = z.infer<typeof throwableImageSchema>;
 
-export const itemSchema = z.object({
-  name: z.string().min(1, "You must specify a name"),
+export const itemImageConfigSchema = z.object({
   image: throwableImageSchema,
   scale: z.number(),
   weight: z.number(),
   pixelate: z.boolean(),
+});
+
+export const itemWindupConfigSchema = z.object({
+  enabled: z.boolean(),
+  duration: z.number(),
+});
+
+export const itemConfigSchema = z.object({
+  image: itemImageConfigSchema,
+  windup: itemWindupConfigSchema,
+});
+
+export const itemSchema = z.object({
+  name: z.string().min(1, "You must specify a name"),
+  config: itemConfigSchema,
   impactSoundIds: z.array(z.string()),
+  windupSoundIds: z.array(z.string()),
 });
 
 export type ItemSchema = z.infer<typeof itemSchema>;

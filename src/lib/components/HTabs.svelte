@@ -86,7 +86,7 @@
   .tabs-list {
     display: flex;
     flex-flow: row;
-    justify-content: stretch;
+    justify-content: flex-start;
   }
 
   .content {

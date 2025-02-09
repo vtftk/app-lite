@@ -15,6 +15,7 @@ use crate::{
         command_logs::{CommandLogsModel, CreateCommandLog},
         event_logs::{CreateEventLog, EventLogsModel},
         items::ItemModel,
+        items_sounds::SoundType,
         key_value::{CreateKeyValue, KeyValueModel, KeyValueType},
         shared::LoggingLevelDb,
         sounds::SoundModel,
@@ -426,15 +427,25 @@ impl Handler<GetItemsByNames> for ScriptEventActor {
         let db = self.db.clone();
         Fr::new_box(async move {
             let items: Vec<ItemWithSoundIds> =
-                ItemModel::get_by_names_with_impact_sounds(&db, &msg.names, msg.ignore_case)
+                ItemModel::get_by_names_with_sounds(&db, &msg.names, msg.ignore_case)
                     .await?
                     .into_iter()
-                    .map(|(item, impact_sounds)| ItemWithSoundIds {
-                        item,
-                        impact_sound_ids: impact_sounds
-                            .into_iter()
-                            .map(|impact_sound| impact_sound.sound_id)
-                            .collect(),
+                    .map(|(item, sounds)| {
+                        let mut impact_sound_ids = Vec::new();
+                        let mut windup_sound_ids = Vec::new();
+
+                        for sound in sounds {
+                            match sound.sound_type {
+                                SoundType::Impact => impact_sound_ids.push(sound.sound_id),
+                                SoundType::Windup => windup_sound_ids.push(sound.sound_id),
+                            }
+                        }
+
+                        ItemWithSoundIds {
+                            item,
+                            impact_sound_ids,
+                            windup_sound_ids,
+                        }
                     })
                     .collect();
 
@@ -456,18 +467,27 @@ impl Handler<GetItemsByIDs> for ScriptEventActor {
     fn handle(&mut self, msg: GetItemsByIDs, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let db = self.db.clone();
         Fr::new_box(async move {
-            let items: Vec<ItemWithSoundIds> =
-                ItemModel::get_by_ids_with_impact_sounds(&db, &msg.ids)
-                    .await?
-                    .into_iter()
-                    .map(|(item, impact_sounds)| ItemWithSoundIds {
+            let items: Vec<ItemWithSoundIds> = ItemModel::get_by_ids_with_sounds(&db, &msg.ids)
+                .await?
+                .into_iter()
+                .map(|(item, sounds)| {
+                    let mut impact_sound_ids = Vec::new();
+                    let mut windup_sound_ids = Vec::new();
+
+                    for sound in sounds {
+                        match sound.sound_type {
+                            SoundType::Impact => impact_sound_ids.push(sound.sound_id),
+                            SoundType::Windup => windup_sound_ids.push(sound.sound_id),
+                        }
+                    }
+
+                    ItemWithSoundIds {
                         item,
-                        impact_sound_ids: impact_sounds
-                            .into_iter()
-                            .map(|impact_sound| impact_sound.sound_id)
-                            .collect(),
-                    })
-                    .collect();
+                        impact_sound_ids,
+                        windup_sound_ids,
+                    }
+                })
+                .collect();
 
             Ok(items)
         })

@@ -3,8 +3,8 @@ use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
-    entity::prelude::*, sea_query::Func, ActiveValue::Set, IntoActiveModel, QueryOrder,
-    UpdateResult,
+    entity::prelude::*, sea_query::Func, ActiveValue::Set, FromQueryResult, IntoActiveModel,
+    QueryOrder, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,16 +29,29 @@ pub struct Model {
     pub created_at: DateTimeUtc,
 }
 
+/// Partial chunk of the sound model used for compute
+/// purposes, excludes fields used by the UI
+#[derive(Debug, DerivePartialModel, FromQueryResult, Clone, Serialize, Deserialize)]
+#[sea_orm(entity = "Entity")]
+pub struct PartialSoundModel {
+    /// Unique ID for the sound
+    pub id: Uuid,
+    /// Src URL for the image
+    pub src: String,
+    /// Volume of the sound 0-1
+    pub volume: f32,
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     /// Item can have many impact sounds
-    #[sea_orm(has_many = "super::items_impact_sounds::Entity")]
-    ImpactSounds,
+    #[sea_orm(has_many = "super::items_sounds::Entity")]
+    ItemSounds,
 }
 
-impl Related<super::items_impact_sounds::Entity> for Entity {
+impl Related<super::items_sounds::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::ImpactSounds.def()
+        Relation::ItemSounds.def()
     }
 }
 
@@ -100,6 +113,17 @@ impl Model {
     {
         Entity::find()
             .filter(Column::Id.is_in(ids.iter().copied()))
+            .all(db)
+            .await
+    }
+    /// Find sounds with IDs present in the provided list
+    pub async fn get_by_ids_partial<C>(db: &C, ids: &[Uuid]) -> DbResult<Vec<PartialSoundModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find()
+            .filter(Column::Id.is_in(ids.iter().copied()))
+            .into_partial_model()
             .all(db)
             .await
     }

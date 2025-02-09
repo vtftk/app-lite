@@ -6,8 +6,8 @@ use super::CmdResult;
 use crate::{
     database::entity::{
         items::{CreateItem, ItemModel, ItemWithSounds, UpdateItem},
+        items_sounds::SoundType,
         shared::UpdateOrdering,
-        sounds::SoundModel,
     },
     storage::Storage,
 };
@@ -37,27 +37,9 @@ pub async fn get_item_by_id(
         None => return Ok(None),
     };
 
-    let impact_sounds = item.get_impact_sounds(db).await?;
+    let item_with_sounds = item.with_sounds(db).await?;
 
-    Ok(Some(ItemWithSounds {
-        item,
-        impact_sounds,
-    }))
-}
-/// Get a specific item by ID, provides both the item itself
-/// and any associated impact sounds
-#[tauri::command]
-pub async fn get_item_sounds(
-    item_id: Uuid,
-    db: State<'_, DatabaseConnection>,
-) -> CmdResult<Vec<SoundModel>> {
-    let db = db.inner();
-    let item = ItemModel::get_by_id(db, item_id)
-        .await?
-        .context("item not found")?;
-    let impact_sounds = item.get_impact_sounds(db).await?;
-
-    Ok(impact_sounds)
+    Ok(Some(item_with_sounds))
 }
 
 /// Create a new item
@@ -68,12 +50,9 @@ pub async fn create_item(
 ) -> CmdResult<ItemWithSounds> {
     let db = db.inner();
     let item = ItemModel::create(db, create).await?;
-    let impact_sounds = item.get_impact_sounds(db).await?;
+    let item_with_sounds = item.with_sounds(db).await?;
 
-    Ok(ItemWithSounds {
-        item,
-        impact_sounds,
-    })
+    Ok(item_with_sounds)
 }
 
 /// Update an existing item
@@ -89,20 +68,17 @@ pub async fn update_item(
         .await?
         .context("item not found")?;
 
-    let original_item_url = item.image.src.clone();
+    let original_item_url = item.config.image.src.clone();
 
     let item = item.update(db, update).await?;
-    let impact_sounds = item.get_impact_sounds(db).await?;
 
     // Delete previous image file when changed
-    if item.image.src != original_item_url {
+    if item.config.image.src != original_item_url {
         storage.try_delete_file(original_item_url).await?;
     }
 
-    Ok(ItemWithSounds {
-        item,
-        impact_sounds,
-    })
+    let item_with_sounds = item.with_sounds(db).await?;
+    Ok(item_with_sounds)
 }
 
 /// Updates the list orderings of items using the provided orderings
@@ -128,7 +104,7 @@ pub async fn append_item_impact_sounds(
     let item = ItemModel::get_by_id(db, item_id)
         .await?
         .context("item not found")?;
-    item.append_impact_sounds(db, &sounds).await?;
+    item.append_sounds(db, &sounds, SoundType::Impact).await?;
     Ok(())
 }
 
@@ -144,7 +120,7 @@ pub async fn delete_item(
         .await?
         .context("item not found")?;
 
-    let item_url = item.image.src.clone();
+    let item_url = item.config.image.src.clone();
 
     item.delete(db).await?;
 

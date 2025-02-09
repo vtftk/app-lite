@@ -15,9 +15,9 @@ import {
   AppData,
   ModelId,
   ThrowDirection,
+  ItemImageConfig,
   ModelCalibration,
   ItemWithSoundIds,
-  ThrowableImageConfig,
 } from "../vtftk/types";
 
 const HORIZONTAL_PHYSICS_SCALE = 3;
@@ -41,7 +41,7 @@ export function setPhysicsEngineConfig(config: PhysicsEngineConfig) {
  * @returns The loaded resources
  */
 export async function loadThrowableResources(
-  imageConfig: ThrowableImageConfig,
+  imageConfig: ItemImageConfig,
   soundConfig: Sound | null,
 ): Promise<{ image: HTMLImageElement | null; audio: HTMLAudioElement | null }> {
   // Load the image and audio if present
@@ -69,6 +69,7 @@ export async function loadThrowableResources(
  * @param config Configuration for the thrown item
  * @param image Image element to use for the thrown item
  * @param impactAudio Audio element to play when the item impacts the target
+ * @param windupAudio Audio element to play when the item is winding up
  * @returns Promise that completes after the item has been completely thrown and removed
  */
 export async function throwItem(
@@ -79,6 +80,7 @@ export async function throwItem(
   config: ItemWithSoundIds,
   image: HTMLImageElement,
   impactAudio: LoadedSoundData | null,
+  windupAudio: LoadedSoundData | null,
 ) {
   const { modelID, modelPosition } = await requestCurrentModel(socket);
 
@@ -112,11 +114,28 @@ export async function throwItem(
     throwables.item_scale.max,
   );
 
-  const scaledImageWidth = image.width * config.image.scale * itemScale;
-  const scaledImageHeight = image.height * config.image.scale * itemScale;
+  const { image: imageConfig, windup } = config.config;
+
+  if (windup.enabled) {
+    // Play the windup sound
+    if (windupAudio !== null) {
+      try {
+        windupAudio.sound.volume =
+          appData.sounds_config.global_volume * windupAudio.config.volume;
+        windupAudio.sound.play();
+      } catch (err) {
+        console.error("failed to play windup audio", err);
+      }
+    }
+
+    await sleep(windup.duration);
+  }
+
+  const scaledImageWidth = image.width * imageConfig.scale * itemScale;
+  const scaledImageHeight = image.height * imageConfig.scale * itemScale;
 
   const thrown = createThrownImage(
-    config.image,
+    imageConfig,
     image,
     scaledImageWidth,
     scaledImageHeight,
@@ -273,11 +292,13 @@ function handleThrowableImpact(
     }
   }
 
+  const { image } = config.config;
+
   // Make the VTuber model flinch from the impact
   flinch(socket, modelParameters, {
     angle,
     eyeState: appData.model_config.eyes_on_hit,
-    magnitude: config.image.weight,
+    magnitude: image.weight,
     leftSide,
     returnSpeed: 0.3,
   });
@@ -314,7 +335,7 @@ function createRootContainer(modelPosition: ModelPosition) {
  * @returns The image element
  */
 function createThrownImage(
-  config: ThrowableImageConfig,
+  config: ItemImageConfig,
   image: HTMLImageElement,
 
   scaledWidth: number,

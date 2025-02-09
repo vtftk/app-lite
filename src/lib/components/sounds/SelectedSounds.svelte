@@ -28,7 +28,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     overflow: hidden;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .item {

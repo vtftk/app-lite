@@ -2,12 +2,13 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // Type alias helpers for the database entity types
-pub type ItemImpactSoundsEntity = Entity;
-pub type ItemImpactSoundsActiveModel = ActiveModel;
-pub type ItemImpactSoundsColumn = Column;
+pub type ItemsSoundsEntity = Entity;
+pub type ItemsSoundsModel = Model;
+pub type ItemsSoundsActiveModel = ActiveModel;
+pub type ItemsSoundsColumn = Column;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "items_impact_sounds")]
+#[sea_orm(table_name = "items_sounds")]
 pub struct Model {
     /// ID of the item
     #[sea_orm(primary_key)]
@@ -15,6 +16,18 @@ pub struct Model {
     /// ID of the sound
     #[sea_orm(primary_key)]
     pub sound_id: Uuid,
+    /// Type of sound
+    #[sea_orm(primary_key)]
+    pub sound_type: SoundType,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum SoundType {
+    #[sea_orm(string_value = "Impact")]
+    Impact,
+    #[sea_orm(string_value = "Windup")]
+    Windup,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

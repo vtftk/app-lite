@@ -3,7 +3,7 @@ use sea_orm_migration::prelude::*;
 use uuid::Uuid;
 
 use crate::database::entity::{
-    items::{CreateItem, ItemModel, ThrowableImageConfig},
+    items::{CreateItem, ItemConfig, ItemImageConfig, ItemModel},
     sounds::{CreateSound, SoundModel},
 };
 
@@ -40,13 +40,17 @@ impl MigrationTrait for Migration {
                 &db,
                 CreateItem {
                     name: name.to_string(),
-                    image: ThrowableImageConfig {
-                        src: format!("backend://defaults/throwable_images/{file_name}"),
-                        pixelate: *pixelate,
-                        scale: *scale,
-                        weight: 1.0,
+                    config: ItemConfig {
+                        image: ItemImageConfig {
+                            src: format!("backend://defaults/throwable_images/{file_name}"),
+                            pixelate: *pixelate,
+                            scale: *scale,
+                            weight: 1.0,
+                        },
+                        windup: Default::default(),
                     },
                     impact_sounds: impact_sounds.clone(),
+                    windup_sounds: Vec::new(),
                 },
             )
             .await

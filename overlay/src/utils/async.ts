@@ -1,6 +1,7 @@
-import { Item, Sound } from "$shared/dataV2";
+import { Item } from "$shared/dataV2";
 
 import getBackendURL from "./url";
+import { PartialSoundModel } from "../vtftk/types";
 
 export async function sleep(duration: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, duration));
@@ -56,7 +57,7 @@ export async function loadAudio(src: string): Promise<HTMLAudioElement> {
 export type LoadedItemMap = Map<string, HTMLImageElement>;
 export type LoadedSoundMap = Map<string, LoadedSoundData>;
 export type LoadedSoundData = {
-  config: Sound;
+  config: PartialSoundModel;
   sound: HTMLAudioElement;
 };
 
@@ -64,7 +65,7 @@ export async function loadItems(items: Item[]): Promise<LoadedItemMap> {
   const results = await Promise.allSettled(
     items.map(async (item) => ({
       id: item.id,
-      image: await loadImage(item.image.src),
+      image: await loadImage(item.config.image.src),
     })),
   );
 
@@ -81,7 +82,9 @@ export async function loadItems(items: Item[]): Promise<LoadedItemMap> {
   return output;
 }
 
-export async function loadSounds(sounds: Sound[]): Promise<LoadedSoundMap> {
+export async function loadSounds(
+  sounds: PartialSoundModel[],
+): Promise<LoadedSoundMap> {
   const results = await Promise.allSettled(
     sounds.map(async (config) => ({
       sound: await loadAudio(config.src),

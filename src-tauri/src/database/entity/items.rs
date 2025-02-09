@@ -1,3 +1,9 @@
+use super::{
+    items_sounds::{
+        ItemsSoundsActiveModel, ItemsSoundsColumn, ItemsSoundsEntity, ItemsSoundsModel, SoundType,
+    },
+    shared::{DbResult, UpdateOrdering},
+};
 use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
@@ -6,15 +12,6 @@ use sea_orm::{
     QueryOrder, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
-
-use super::{
-    items_impact_sounds::{
-        ItemImpactSoundsActiveModel, ItemImpactSoundsColumn, ItemImpactSoundsEntity,
-    },
-    links::ItemImpactSounds,
-    shared::{DbResult, UpdateOrdering},
-    sounds::SoundModel,
-};
 
 // Type alias helpers for the database entity types
 pub type ItemModel = Model;
@@ -28,16 +25,23 @@ pub struct Model {
     /// Name of the throwable item
     pub name: String,
     /// Image to use for the throwable item
-    pub image: ThrowableImageConfig,
+    pub config: ItemConfig,
     /// Ordering
     pub order: u32,
     // Date time of creation
     pub created_at: DateTimeUtc,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+pub struct ItemConfig {
+    pub image: ItemImageConfig,
+    #[serde(default)]
+    pub windup: ItemWindupConfig,
+}
+
 /// Configuration for a throwable image
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
-pub struct ThrowableImageConfig {
+pub struct ItemImageConfig {
     /// Src URL for the image
     pub src: String,
     /// Weight of impact the image has
@@ -49,14 +53,23 @@ pub struct ThrowableImageConfig {
     pub pixelate: bool,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+#[serde(default)]
+pub struct ItemWindupConfig {
+    /// Whether a windup is enabled
+    pub enabled: bool,
+    /// Duration of the windup
+    pub duration: u32,
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     /// Item can have many impact sounds
-    #[sea_orm(has_many = "super::items_impact_sounds::Entity")]
+    #[sea_orm(has_many = "super::items_sounds::Entity")]
     ImpactSounds,
 }
 
-impl Related<super::items_impact_sounds::Entity> for Entity {
+impl Related<super::items_sounds::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ImpactSounds.def()
     }
@@ -68,23 +81,26 @@ impl ActiveModelBehavior for ActiveModel {}
 #[derive(Default, Deserialize)]
 pub struct UpdateItem {
     pub name: Option<String>,
-    pub image: Option<ThrowableImageConfig>,
+    pub config: Option<ItemConfig>,
     pub impact_sounds: Option<Vec<Uuid>>,
+    pub windup_sounds: Option<Vec<Uuid>>,
     pub order: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CreateItem {
     pub name: String,
-    pub image: ThrowableImageConfig,
+    pub config: ItemConfig,
     pub impact_sounds: Vec<Uuid>,
+    pub windup_sounds: Vec<Uuid>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ItemWithSounds {
     #[serde(flatten)]
     pub item: ItemModel,
-    pub impact_sounds: Vec<SoundModel>,
+    pub impact_sounds: Vec<Uuid>,
+    pub windup_sounds: Vec<Uuid>,
 }
 
 impl Model {
@@ -97,7 +113,7 @@ impl Model {
         let active_model = ActiveModel {
             id: Set(id),
             name: Set(create.name),
-            image: Set(create.image),
+            config: Set(create.config),
             order: Set(0),
             created_at: Set(Utc::now()),
         };
@@ -111,7 +127,11 @@ impl Model {
             .context("model was not inserted")?;
 
         model
-            .append_impact_sounds(db, &create.impact_sounds)
+            .append_sounds(db, &create.impact_sounds, SoundType::Impact)
+            .await?;
+
+        model
+            .append_sounds(db, &create.windup_sounds, SoundType::Windup)
             .await?;
 
         Ok(model)
@@ -126,26 +146,26 @@ impl Model {
     }
 
     /// Find items with IDs present in the provided list
-    pub async fn get_by_ids_with_impact_sounds<C>(
+    pub async fn get_by_ids_with_sounds<C>(
         db: &C,
-        id: &[Uuid],
-    ) -> DbResult<Vec<(Self, Vec<super::items_impact_sounds::Model>)>>
+        ids: &[Uuid],
+    ) -> DbResult<Vec<(Self, Vec<ItemsSoundsModel>)>>
     where
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find()
-            .filter(Column::Id.is_in(id.iter().copied()))
-            .find_with_related(super::items_impact_sounds::Entity)
+            .find_with_related(super::items_sounds::Entity)
+            .filter(Column::Id.is_in(ids.iter().copied()))
             .all(db)
             .await
     }
 
     /// Find items with names present in the provided list
-    pub async fn get_by_names_with_impact_sounds<C>(
+    pub async fn get_by_names_with_sounds<C>(
         db: &C,
         names: &[String],
         ignore_case: bool,
-    ) -> DbResult<Vec<(Self, Vec<super::items_impact_sounds::Model>)>>
+    ) -> DbResult<Vec<(Self, Vec<ItemsSoundsModel>)>>
     where
         C: ConnectionTrait + Send + 'static,
     {
@@ -163,7 +183,7 @@ impl Model {
         }
 
         select
-            .find_with_related(super::items_impact_sounds::Entity)
+            .find_with_related(super::items_sounds::Entity)
             .all(db)
             .await
     }
@@ -187,20 +207,20 @@ impl Model {
     {
         let mut this = self.into_active_model();
 
-        if let Some(name) = data.name {
-            this.name = Set(name);
-        }
-
-        if let Some(image) = data.image {
-            this.image = Set(image);
-        }
-
+        this.name = data.name.map(Set).unwrap_or(this.name);
+        this.config = data.config.map(Set).unwrap_or(this.config);
         this.order = data.order.map(Set).unwrap_or(this.order);
 
         let this = this.update(db).await?;
 
         if let Some(impact_sounds) = data.impact_sounds {
-            this.set_impact_sounds(db, &impact_sounds).await?;
+            this.set_sounds(db, &impact_sounds, SoundType::Impact)
+                .await?;
+        }
+
+        if let Some(windup_sounds) = data.windup_sounds {
+            this.set_sounds(db, &windup_sounds, SoundType::Windup)
+                .await?;
         }
 
         Ok(this)
@@ -228,36 +248,46 @@ impl Model {
     }
 
     /// Sets the impact sounds for this item
-    pub async fn set_impact_sounds<C>(&self, db: &C, impact_sound_ids: &[Uuid]) -> DbResult<()>
+    pub async fn set_sounds<C>(
+        &self,
+        db: &C,
+        sound_ids: &[Uuid],
+        sound_type: SoundType,
+    ) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {
         // Delete any impact sounds not in the provided list
-        ItemImpactSoundsEntity::delete_many()
+        ItemsSoundsEntity::delete_many()
             .filter(
-                ItemImpactSoundsColumn::ItemId.eq(self.id).and(
-                    ItemImpactSoundsColumn::SoundId.is_not_in(impact_sound_ids.iter().copied()),
-                ),
+                ItemsSoundsColumn::ItemId
+                    .eq(self.id)
+                    .and(ItemsSoundsColumn::SoundId.is_not_in(sound_ids.iter().copied()))
+                    .and(ItemsSoundsColumn::SoundType.eq(sound_type)),
             )
             .exec(db)
             .await?;
 
-        self.append_impact_sounds(db, impact_sound_ids).await?;
+        self.append_sounds(db, sound_ids, sound_type).await?;
 
         Ok(())
     }
 
     /// Append impact sounds to the item
-    pub async fn append_impact_sounds<C>(&self, db: &C, impact_sound_ids: &[Uuid]) -> DbResult<()>
+    pub async fn append_sounds<C>(
+        &self,
+        db: &C,
+        sound_ids: &[Uuid],
+        sound_type: SoundType,
+    ) -> DbResult<()>
     where
         C: ConnectionTrait + Send + 'static,
     {
         // Insert the new connections
-        ItemImpactSoundsEntity::insert_many(impact_sound_ids.iter().map(|sound_id| {
-            ItemImpactSoundsActiveModel {
-                item_id: Set(self.id),
-                sound_id: Set(*sound_id),
-            }
+        ItemsSoundsEntity::insert_many(sound_ids.iter().map(|sound_id| ItemsSoundsActiveModel {
+            item_id: Set(self.id),
+            sound_id: Set(*sound_id),
+            sound_type: Set(sound_type),
         }))
         // Ignore already existing connections
         .on_conflict_do_nothing()
@@ -268,11 +298,29 @@ impl Model {
     }
 
     /// Finds all sounds connected to this item
-    pub async fn get_impact_sounds<C>(&self, db: &C) -> DbResult<Vec<super::sounds::SoundModel>>
+    pub async fn with_sounds<C>(self, db: &C) -> DbResult<ItemWithSounds>
     where
         C: ConnectionTrait + Send + 'static,
     {
-        let impact_sounds = self.find_linked(ItemImpactSounds).all(db).await?;
-        Ok(impact_sounds)
+        let sounds = self
+            .find_related(super::items_sounds::Entity)
+            .all(db)
+            .await?;
+
+        let mut impact_sounds = Vec::new();
+        let mut windup_sounds = Vec::new();
+
+        for sound in sounds {
+            match sound.sound_type {
+                SoundType::Impact => impact_sounds.push(sound.sound_id),
+                SoundType::Windup => windup_sounds.push(sound.sound_id),
+            }
+        }
+
+        Ok(ItemWithSounds {
+            item: self,
+            impact_sounds,
+            windup_sounds,
+        })
     }
 }

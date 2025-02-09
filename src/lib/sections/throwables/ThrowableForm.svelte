@@ -22,6 +22,7 @@
   import SoundPicker from "$lib/components/sounds/SoundPicker.svelte";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
   import FormTextInput from "$lib/components/form/FormTextInput.svelte";
+  import EnabledSwitch from "$lib/components/input/EnabledSwitch.svelte";
   import FormErrorLabel from "$lib/components/form/FormErrorLabel.svelte";
   import PopoverButton from "$lib/components/popover/PopoverButton.svelte";
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
@@ -30,16 +31,16 @@
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import SolarGalleryRoundBoldDuotone from "~icons/solar/gallery-round-bold-duotone";
   import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
+  import SolarMultipleForwardRightBoldDuotone from "~icons/solar/multiple-forward-right-bold-duotone";
   import {
     StorageFolder,
+    type ItemConfig,
     type ItemWithImpactSounds,
-    type ThrowableImageConfig,
   } from "$lib/api/types";
 
   type Props = {
     existing?: ItemWithImpactSounds;
   };
-
   const { existing }: Props = $props();
 
   const appContext = getAppContext();
@@ -54,23 +55,42 @@
   // Defaults when creating a new throwable
   const createDefaults: Partial<ItemSchema> = {
     name: "",
-    image: undefined,
-    scale: 1,
-    weight: 1,
-    pixelate: false,
+    config: {
+      image: {
+        image: undefined!,
+        scale: 1,
+        weight: 1,
+        pixelate: false,
+      },
+      windup: {
+        enabled: false,
+        duration: 1000,
+      },
+    },
     impactSoundIds: [],
+    windupSoundIds: [],
   };
 
   function createFromExisting(
     config: ItemWithImpactSounds,
   ): Partial<ItemSchema> {
+    const { image, windup } = config.config;
     return {
       name: config.name,
-      image: config.image.src,
-      scale: config.image.scale,
-      weight: config.image.weight,
-      pixelate: config.image.pixelate,
-      impactSoundIds: config.impact_sounds.map((sound) => sound.id),
+      config: {
+        image: {
+          image: image.src,
+          scale: image.scale,
+          weight: image.weight,
+          pixelate: image.pixelate,
+        },
+        windup: {
+          enabled: windup.enabled,
+          duration: windup.duration,
+        },
+      },
+      impactSoundIds: config.impact_sounds,
+      windupSoundIds: config.windup_sounds,
     };
   }
 
@@ -127,12 +147,20 @@
   }
 
   async function save(values: ItemSchema) {
-    const imageURL: string = await saveImage(values.image);
-    const imageConfig: ThrowableImageConfig = {
-      src: imageURL,
-      pixelate: values.pixelate,
-      scale: values.scale,
-      weight: values.weight,
+    const { image, windup } = values.config;
+    const imageURL: string = await saveImage(image.image);
+
+    const config: ItemConfig = {
+      image: {
+        src: imageURL,
+        pixelate: image.pixelate,
+        scale: image.scale,
+        weight: image.weight,
+      },
+      windup: {
+        enabled: windup.enabled,
+        duration: windup.duration,
+      },
     };
 
     if (existing) {
@@ -140,15 +168,17 @@
         itemId: existing.id,
         update: {
           name: values.name,
-          image: imageConfig,
+          config,
           impact_sounds: values.impactSoundIds,
+          windup_sounds: values.windupSoundIds,
         },
       });
     } else {
       await createItem({
         name: values.name,
-        image: imageConfig,
+        config,
         impact_sounds: values.impactSoundIds,
+        windup_sounds: values.windupSoundIds,
       });
     }
   }
@@ -190,13 +220,13 @@
     />
 
     <FormSlider
-      id="weight"
-      name="weight"
+      id="config.image.weight"
+      name="config.image.weight"
       label="Weight"
       min={0}
       max={4}
       step={0.1}
-      value={$data.weight}
+      value={$data.config.image.weight}
       description="Weight affects how much force your model is hit with when the item impacts (Default: 1)"
       showTicks
     />
@@ -208,19 +238,19 @@
     <div class="row-group">
       <div class="column">
         <ImageUpload
-          id="image"
-          name="image"
-          value={$data.image ?? existing?.image?.src}
-          scale={$data.scale * 0.5}
-          pixelated={$data.pixelate}
+          id="config.image.image"
+          name="config.image.image"
+          value={$data.config.image.image ?? existing?.config.image?.src}
+          scale={$data.config.image.scale * 0.5}
+          pixelated={$data.config.image.pixelate}
         />
-        <FormErrorLabel name="image" />
+        <FormErrorLabel name="config.image.image" />
       </div>
 
       <div class="column" style="flex: auto;">
         <FormNumberInput
-          id="scale"
-          name="scale"
+          id="config.image.scale"
+          name="config.image.scale"
           label="Scale"
           min={0.1}
           max={10}
@@ -228,8 +258,8 @@
         />
 
         <FormBoundCheckbox
-          id="pixelate"
-          name="pixelate"
+          id="config.image.pixelate"
+          name="config.image.pixelate"
           label="Pixelate"
           description="Use this option if your image is pixel art"
         />
@@ -258,6 +288,48 @@
     {#if $data.impactSoundIds.length > 0}
       <SelectedSounds soundIds={$data.impactSoundIds} />
       <FormErrorLabel name="impactSoundIds" />
+    {/if}
+  </FormSection>
+{/snippet}
+
+{#snippet windupTab()}
+  <FormSection
+    title="Windup"
+    description="Add a windup delay and sound before the item is thrown"
+    empty={!$data.config.windup.enabled}
+  >
+    {#snippet action()}
+      <EnabledSwitch
+        checked={$data.config.windup.enabled}
+        onCheckedChange={(value) =>
+          setFields("config.windup.enabled", value, true)}
+      />
+    {/snippet}
+
+    <FormNumberInput
+      id="config.windup.duration"
+      name="config.windup.duration"
+      label="Duration"
+      description="How long the windup should take (ms)"
+      min={0}
+      step={100}
+    />
+
+    <SoundPicker
+      description="Choose which sounds can play for the windup (Randomly chosen from the selection)"
+      selected={$data.windupSoundIds}
+      onChangeSelected={(soundIds) => {
+        setFields(
+          "windupSoundIds",
+          soundIds.map((sound) => sound.id),
+          true,
+        );
+      }}
+    />
+
+    {#if $data.windupSoundIds.length > 0}
+      <SelectedSounds soundIds={$data.windupSoundIds} />
+      <FormErrorLabel name="windupSoundIds" />
     {/if}
   </FormSection>
 {/snippet}
@@ -323,6 +395,12 @@
           icon: SolarHeadphonesRoundBoldDuotone,
           label: "Sounds",
           content: soundsTab,
+        },
+        {
+          value: "windup",
+          icon: SolarMultipleForwardRightBoldDuotone,
+          label: "Windup",
+          content: windupTab,
         },
       ]}
     />

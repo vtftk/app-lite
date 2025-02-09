@@ -3,17 +3,14 @@ export * from "$shared/appData";
 export * from "$shared/runtimeAppData";
 
 import type { Uuid, MinMax } from "$shared/appData";
-import type {
-  Item,
-  Sound,
-  ItemId,
-  SoundId,
-  ThrowableImageConfig,
-} from "$shared/dataV2";
+import type { Item, ItemId, SoundId, ItemConfig } from "$shared/dataV2";
 
 type Option<T> = T | null;
 
-export type ItemWithImpactSounds = Item & { impact_sounds: Sound[] };
+export type ItemWithImpactSounds = Item & {
+  impact_sounds: SoundId[];
+  windup_sounds: SoundId[];
+};
 
 // File types for file uploads
 export enum StorageFolder {
@@ -446,16 +443,18 @@ export type UpdateSound = {
 
 export type CreateItem = {
   name: string;
-  image: ThrowableImageConfig;
+  config: ItemConfig;
   impact_sounds: SoundId[];
+  windup_sounds: SoundId[];
 };
 
 export type UpdateItem = {
   itemId: ItemId;
   update: Partial<{
     name: string;
-    image: ThrowableImageConfig;
+    config: ItemConfig;
     impact_sounds: SoundId[];
+    windup_sounds: SoundId[];
     order: number;
   }>;
 };

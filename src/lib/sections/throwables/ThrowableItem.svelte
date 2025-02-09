@@ -65,8 +65,8 @@
     <div class="item__image-wrapper">
       <img
         class="item__image"
-        class:item__image--pixelate={config.image.pixelate}
-        src={getBackendURL(config.image.src)}
+        class:item__image--pixelate={config.config.image.pixelate}
+        src={getBackendURL(config.config.image.src)}
         alt="Throwable"
         loading="lazy"
       />

@@ -18,7 +18,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(pk_uuid(Items::Id))
                     .col(string(Items::Name))
-                    .col(json(Items::Image))
+                    .col(json(Items::Config))
                     .col(integer(Items::Order))
                     .col(date_time(Items::CreatedAt))
                     .to_owned(),
@@ -38,7 +38,7 @@ pub enum Items {
     Table,
     Id,
     Name,
-    Image,
+    Config,
     Order,
     CreatedAt,
 }

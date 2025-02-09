@@ -293,21 +293,22 @@ async function onThrowItemEvent(
 }
 
 function pickRandomSound(
-  item: ItemWithSoundIds,
+  soundIds: string[],
   sounds: LoadedSoundMap,
   clone: boolean = false,
 ) {
-  if (item.impact_sound_ids.length > 0) {
-    const randomSoundId = arrayRandom(item.impact_sound_ids);
-    const audio = sounds.get(randomSoundId);
-    if (audio) {
-      return {
-        config: audio.config,
-        sound: clone
-          ? (audio.sound.cloneNode() as HTMLAudioElement)
-          : audio.sound,
-      };
-    }
+  if (soundIds.length < 1) return null;
+
+  const randomSoundId = arrayRandom(soundIds);
+  const audio = sounds.get(randomSoundId);
+
+  if (audio) {
+    return {
+      config: audio.config,
+      sound: clone
+        ? (audio.sound.cloneNode() as HTMLAudioElement)
+        : audio.sound,
+    };
   }
 
   return null;
@@ -350,7 +351,15 @@ function throwRandomItem(
   // No item found
   if (item === null) return Promise.resolve();
 
-  const impactAudio = pickRandomSound(item.config, loadedSounds);
+  const impactAudio = pickRandomSound(
+    item.config.impact_sound_ids,
+    loadedSounds,
+  );
+
+  const windupAudio = pickRandomSound(
+    item.config.windup_sound_ids,
+    loadedSounds,
+  );
 
   return throwItem(
     socket,
@@ -361,6 +370,7 @@ function throwRandomItem(
     item.config,
     item.image,
     impactAudio,
+    windupAudio,
   );
 }
 
