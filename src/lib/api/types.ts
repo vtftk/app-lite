@@ -41,7 +41,6 @@ export type Command = {
   enabled: boolean;
   name: string;
   command: string;
-  aliases: string[];
   outcome: CommandOutcome;
   cooldown: CommandCooldown;
   require_role: MinimumRequiredRole;
@@ -58,7 +57,6 @@ export type CreateCommand = {
   enabled: boolean;
   name: string;
   command: string;
-  aliases: string[];
   outcome: CommandOutcome;
   cooldown: CommandCooldown;
   require_role: MinimumRequiredRole;
@@ -70,7 +68,6 @@ export type UpdateCommand = {
     enabled: boolean;
     name: string;
     command: string;
-    aliases: string[];
     outcome: CommandOutcome;
     cooldown: CommandCooldown;
     require_role: MinimumRequiredRole;

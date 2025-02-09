@@ -15,7 +15,6 @@ impl MigrationTrait for Migration {
                     .col(boolean(Commands::Enabled))
                     .col(string(Commands::Name))
                     .col(text(Commands::Command))
-                    .col(json(Commands::Aliases))
                     .col(json(Commands::Outcome))
                     .col(json(Commands::Cooldown))
                     .col(string(Commands::RequireRole))
@@ -40,7 +39,6 @@ pub enum Commands {
     Enabled,
     Name,
     Command,
-    Aliases,
     Outcome,
     Cooldown,
     RequireRole,

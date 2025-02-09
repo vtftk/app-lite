@@ -27,8 +27,6 @@ pub struct Model {
     pub name: String,
     /// The command to trigger when entered
     pub command: String,
-    /// Aliases that also trigger the command
-    pub aliases: CommandAliases,
     /// The outcome of the command
     pub outcome: CommandOutcome,
     /// Cooldown between each trigger of the command
@@ -66,10 +64,6 @@ impl Default for CommandCooldown {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
-#[serde(transparent)]
-pub struct CommandAliases(pub Vec<String>);
-
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     /// Command can have many executions
@@ -99,7 +93,6 @@ pub struct CreateCommand {
     pub enabled: bool,
     pub name: String,
     pub command: String,
-    pub aliases: CommandAliases,
     pub outcome: CommandOutcome,
     pub cooldown: CommandCooldown,
     pub require_role: MinimumRequireRole,
@@ -110,7 +103,6 @@ pub struct UpdateCommand {
     pub enabled: Option<bool>,
     pub name: Option<String>,
     pub command: Option<String>,
-    pub aliases: Option<CommandAliases>,
     pub outcome: Option<CommandOutcome>,
     pub cooldown: Option<CommandCooldown>,
     pub require_role: Option<MinimumRequireRole>,
@@ -129,7 +121,6 @@ impl Model {
             enabled: Set(create.enabled),
             name: Set(create.name),
             command: Set(create.command),
-            aliases: Set(create.aliases),
             outcome: Set(create.outcome),
             cooldown: Set(create.cooldown),
             require_role: Set(create.require_role),
@@ -207,7 +198,6 @@ impl Model {
         this.enabled = data.enabled.map(Set).unwrap_or(this.enabled);
         this.name = data.name.map(Set).unwrap_or(this.name);
         this.command = data.command.map(Set).unwrap_or(this.command);
-        this.aliases = data.aliases.map(Set).unwrap_or(this.aliases);
         this.outcome = data.outcome.map(Set).unwrap_or(this.outcome);
         this.cooldown = data.cooldown.map(Set).unwrap_or(this.cooldown);
         this.require_role = data.require_role.map(Set).unwrap_or(this.require_role);

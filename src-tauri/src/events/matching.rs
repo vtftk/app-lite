@@ -650,7 +650,7 @@ mod test {
     use crate::{
         database::{
             entity::{
-                commands::{CommandAliases, CommandModel, CommandOutcome, CreateCommand},
+                commands::{CommandModel, CommandOutcome, CreateCommand},
                 events::{
                     CreateEvent, EventModel, EventOutcome, EventOutcomeSendChat, EventTrigger,
                 },
@@ -1182,7 +1182,6 @@ mod test {
                 enabled: true,
                 name: "Test Event".to_string(),
                 command: "!test".to_string(),
-                aliases: CommandAliases(Default::default()),
                 outcome: CommandOutcome::Template {
                     message: "test".to_string(),
                 },
@@ -1234,7 +1233,6 @@ mod test {
                 enabled: true,
                 name: "Test Event".to_string(),
                 command: "!test".to_string(),
-                aliases: CommandAliases(Default::default()),
                 outcome: CommandOutcome::Template {
                     message: "test".to_string(),
                 },
