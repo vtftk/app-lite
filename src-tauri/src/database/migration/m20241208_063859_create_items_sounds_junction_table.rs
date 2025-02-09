@@ -3,7 +3,7 @@
 //! Migration that creates the "items_impact_sounds" junction table which stores
 //! the connection between items and any number of sounds
 
-use sea_orm_migration::{prelude::*, schema::uuid};
+use sea_orm_migration::{prelude::*, schema::*};
 
 use super::{
     m20241208_060123_create_items_table::Items, m20241208_060144_create_sounds_table::Sounds,
@@ -18,22 +18,24 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(ItemsImpactSounds::Table)
+                    .table(ItemsSounds::Table)
                     .if_not_exists()
-                    .col(uuid(ItemsImpactSounds::ItemId))
-                    .col(uuid(ItemsImpactSounds::SoundId))
-                    // Junction table uses a composite key of the item and sound ids combined
+                    .col(uuid(ItemsSounds::ItemId))
+                    .col(uuid(ItemsSounds::SoundId))
+                    .col(string(ItemsSounds::SoundType))
+                    // Junction table uses a composite key of the item, sound id and sound type combined
                     .primary_key(
                         Index::create()
-                            .name("pk_items_impact_sounds")
-                            .col(ItemsImpactSounds::ItemId)
-                            .col(ItemsImpactSounds::SoundId),
+                            .name("pk_items_sounds")
+                            .col(ItemsSounds::ItemId)
+                            .col(ItemsSounds::SoundId)
+                            .col(ItemsSounds::SoundType),
                     )
                     // Connect to items table
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk_items_impact_sounds_item_id")
-                            .from(ItemsImpactSounds::Table, ItemsImpactSounds::ItemId)
+                            .name("fk_items_sounds_item_id")
+                            .from(ItemsSounds::Table, ItemsSounds::ItemId)
                             .to(Items::Table, Items::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
@@ -41,8 +43,8 @@ impl MigrationTrait for Migration {
                     // Connect to sounds table
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk_items_impact_sounds_sound_id")
-                            .from(ItemsImpactSounds::Table, ItemsImpactSounds::SoundId)
+                            .name("fk_items_sounds_sound_id")
+                            .from(ItemsSounds::Table, ItemsSounds::SoundId)
                             .to(Sounds::Table, Sounds::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
@@ -54,7 +56,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(ItemsImpactSounds::Table).to_owned())
+            .drop_table(Table::drop().table(ItemsSounds::Table).to_owned())
             .await?;
 
         Ok(())
@@ -62,8 +64,9 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum ItemsImpactSounds {
+enum ItemsSounds {
     Table,
     ItemId,
     SoundId,
+    SoundType,
 }

@@ -69,7 +69,6 @@ pub fn run() {
             // Item manipulation commands
             commands::items::get_item_by_id,
             commands::items::get_items,
-            commands::items::get_item_sounds,
             commands::items::create_item,
             commands::items::update_item,
             commands::items::update_item_orderings,

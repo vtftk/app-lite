@@ -8,7 +8,11 @@ use tokio::sync::broadcast;
 use uuid::Uuid;
 
 use crate::{
-    database::entity::{app_data::AppData, items::ItemModel, sounds::SoundModel},
+    database::entity::{
+        app_data::AppData,
+        items::ItemModel,
+        sounds::{PartialSoundModel, SoundModel},
+    },
     http::models::calibration::CalibrationStep,
 };
 
@@ -19,7 +23,7 @@ pub struct ItemsWithSounds {
     /// All the referenced items
     pub items: Vec<ItemWithSoundIds>,
     /// All the referenced sounds
-    pub sounds: Vec<SoundModel>,
+    pub sounds: Vec<PartialSoundModel>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,6 +31,7 @@ pub struct ItemWithSoundIds {
     #[serde(flatten)]
     pub item: ItemModel,
     pub impact_sound_ids: Vec<Uuid>,
+    pub windup_sound_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize)]

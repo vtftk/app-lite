@@ -90,7 +90,7 @@
               <div class="throwable__image-wrapper">
                 <img
                   class="throwable__image"
-                  src={getBackendURL(item.image.src)}
+                  src={getBackendURL(item.config.image.src)}
                   alt="Throwable"
                 />
               </div>
@@ -119,7 +119,7 @@
             <div class="grid-item__image throwable__image-wrapper">
               <img
                 class="throwable__image"
-                src={getBackendURL(option.image.src)}
+                src={getBackendURL(option.config.image.src)}
                 alt="Throwable"
               />
             </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CreateItem, ThrowableImageConfig } from "$lib/api/types";
+  import type { CreateItem, ItemImageConfig } from "$lib/api/types";
 
   import { toast } from "svelte-sonner";
   import { uploadFile } from "$lib/api/data";
@@ -20,9 +20,12 @@
     const images = Array.from(files);
 
     const createItems = await Promise.all(
-      images.map(async (image) => {
-        const imageURL = await uploadFile(StorageFolder.ThrowableImage, image);
-        const imageConfig: ThrowableImageConfig = {
+      images.map(async (imageFile) => {
+        const imageURL = await uploadFile(
+          StorageFolder.ThrowableImage,
+          imageFile,
+        );
+        const image: ItemImageConfig = {
           src: imageURL,
           pixelate: false,
           scale: 1,
@@ -30,9 +33,16 @@
         };
 
         const createItem: CreateItem = {
-          image: imageConfig,
-          name: image.name,
+          config: {
+            image,
+            windup: {
+              enabled: false,
+              duration: 0,
+            },
+          },
+          name: imageFile.name,
           impact_sounds: [],
+          windup_sounds: [],
         };
 
         return createItem;

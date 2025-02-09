@@ -44,10 +44,6 @@ export async function bulkCreateItem(creates: CreateItem[]) {
   invalidateItemsList();
 }
 
-export function getItemSounds(itemId: ItemId) {
-  return invoke<Sound[]>("get_item_sounds", { itemId });
-}
-
 export function getItemById(itemId: ItemId) {
   return invoke<ItemWithImpactSounds | null>("get_item_by_id", { itemId });
 }

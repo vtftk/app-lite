@@ -9,8 +9,9 @@ use crate::{
             EventOutcomePlaySound, EventOutcomeScript, EventOutcomeSendChat, EventOutcomeThrowable,
             EventOutcomeTriggerHotkey, ThrowableAmountData,
         },
-        items::{ItemModel, ThrowableImageConfig},
-        sounds::SoundModel,
+        items::{ItemConfig, ItemImageConfig, ItemModel},
+        items_sounds::SoundType,
+        sounds::{PartialSoundModel, SoundModel},
     },
     script::runtime::{RuntimeExecutionContext, ScriptExecutorHandle},
     twitch::manager::Twitch,
@@ -233,7 +234,7 @@ async fn throw_channel_emotes_outcome(
     let emotes = twitch.get_channel_emotes(user.id.clone()).await?;
 
     // Create sounds from builtins
-    let sounds: Vec<SoundModel> = create_default_impact_sounds();
+    let sounds: Vec<PartialSoundModel> = create_default_impact_sounds();
     let impact_sound_ids: Vec<Uuid> = sounds.iter().map(|sound| sound.id).collect();
 
     let items = emotes
@@ -242,11 +243,14 @@ async fn throw_channel_emotes_outcome(
             let item = ItemModel {
                 id: Uuid::new_v4(),
                 name: "<builtin-bits>".to_string(),
-                image: ThrowableImageConfig {
-                    src: emote.images.url_4x,
-                    pixelate: false,
-                    scale: 1.0,
-                    weight: 1.0,
+                config: ItemConfig {
+                    image: ItemImageConfig {
+                        src: emote.images.url_4x,
+                        pixelate: false,
+                        scale: 1.0,
+                        weight: 1.0,
+                    },
+                    windup: Default::default(),
                 },
                 order: 0,
                 created_at: Utc::now(),
@@ -255,6 +259,7 @@ async fn throw_channel_emotes_outcome(
             ItemWithSoundIds {
                 item,
                 impact_sound_ids: impact_sound_ids.clone(),
+                windup_sound_ids: Vec::new(),
             }
         })
         .collect();
@@ -377,29 +382,36 @@ pub async fn resolve_items(
     db: &DatabaseConnection,
     item_ids: &[Uuid],
 ) -> anyhow::Result<ItemsWithSounds> {
-    let items: Vec<ItemWithSoundIds> = ItemModel::get_by_ids_with_impact_sounds(db, item_ids)
+    let mut sound_ids = HashSet::new();
+
+    let items: Vec<ItemWithSoundIds> = ItemModel::get_by_ids_with_sounds(db, item_ids)
         .await?
         .into_iter()
-        .map(|(item, impact_sounds)| ItemWithSoundIds {
-            item,
-            impact_sound_ids: impact_sounds
-                .into_iter()
-                .map(|impact_sound| impact_sound.sound_id)
-                .collect(),
+        .map(|(item, sounds)| {
+            let mut impact_sound_ids = Vec::new();
+            let mut windup_sound_ids = Vec::new();
+
+            for sound in sounds {
+                sound_ids.insert(sound.sound_id);
+
+                match sound.sound_type {
+                    SoundType::Impact => impact_sound_ids.push(sound.sound_id),
+                    SoundType::Windup => windup_sound_ids.push(sound.sound_id),
+                }
+            }
+
+            ItemWithSoundIds {
+                item,
+                impact_sound_ids,
+                windup_sound_ids,
+            }
         })
         .collect();
 
-    // Collect all unique impact sound IDs
-    let impact_sound_ids: Vec<Uuid> = items
-        .iter()
-        .flat_map(|item| item.impact_sound_ids.iter())
-        .cloned()
-        // Collect to HashSet first for unique IDs
-        .collect::<HashSet<Uuid>>()
-        .into_iter()
-        .collect::<Vec<Uuid>>();
+    // Collect all unique sound IDs
+    let sound_ids: Vec<Uuid> = sound_ids.into_iter().collect::<Vec<Uuid>>();
 
-    let sounds = SoundModel::get_by_ids(db, &impact_sound_ids).await?;
+    let sounds = SoundModel::get_by_ids_partial(db, &sound_ids).await?;
 
     Ok(ItemsWithSounds { items, sounds })
 }
@@ -418,16 +430,13 @@ const DEFAULT_SOUND_FILES: &[(&str, &str)] = &[
     ("Seq1.15 Hit #3 96 HK1", "Seq1_15_Hit_3_96_HK1.wav"),
 ];
 
-fn create_default_impact_sounds() -> Vec<SoundModel> {
+fn create_default_impact_sounds() -> Vec<PartialSoundModel> {
     DEFAULT_SOUND_FILES
         .iter()
-        .map(|(name, file_name)| SoundModel {
+        .map(|(_name, file_name)| PartialSoundModel {
             id: Uuid::new_v4(),
-            name: name.to_string(),
             src: format!("backend://defaults/sounds/{file_name}"),
             volume: 1.,
-            order: 0,
-            created_at: Utc::now(),
         })
         .collect()
 }
@@ -453,17 +462,20 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
     let bit_src = format!("backend://defaults/bits/{bit_file_name}");
 
     // Create sounds from builtins
-    let impact_sounds: Vec<SoundModel> = create_default_impact_sounds();
+    let impact_sounds: Vec<PartialSoundModel> = create_default_impact_sounds();
     let impact_sound_ids: Vec<Uuid> = impact_sounds.iter().map(|sound| sound.id).collect();
 
     let item = ItemModel {
         id: Uuid::new_v4(),
         name: "<builtin-bits>".to_string(),
-        image: ThrowableImageConfig {
-            src: bit_src,
-            pixelate: false,
-            scale: 1.0,
-            weight: 1.0,
+        config: ItemConfig {
+            image: ItemImageConfig {
+                src: bit_src,
+                pixelate: false,
+                scale: 1.0,
+                weight: 1.0,
+            },
+            windup: Default::default(),
         },
         order: 0,
         created_at: Utc::now(),
@@ -472,6 +484,7 @@ pub fn create_default_bit_throwable(amount: i64) -> ItemsWithSounds {
     let item = ItemWithSoundIds {
         item,
         impact_sound_ids,
+        windup_sound_ids: Vec::new(),
     };
 
     let items = vec![item];

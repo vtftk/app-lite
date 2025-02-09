@@ -32,14 +32,14 @@
   import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
   import {
     StorageFolder,
+    type ItemConfig,
+    type ItemImageConfig,
     type ItemWithImpactSounds,
-    type ThrowableImageConfig,
   } from "$lib/api/types";
 
   type Props = {
     existing?: ItemWithImpactSounds;
   };
-
   const { existing }: Props = $props();
 
   const appContext = getAppContext();
@@ -64,13 +64,14 @@
   function createFromExisting(
     config: ItemWithImpactSounds,
   ): Partial<ItemSchema> {
+    const { image, windup } = config.config;
     return {
       name: config.name,
-      image: config.image.src,
-      scale: config.image.scale,
-      weight: config.image.weight,
-      pixelate: config.image.pixelate,
-      impactSoundIds: config.impact_sounds.map((sound) => sound.id),
+      image: image.src,
+      scale: image.scale,
+      weight: image.weight,
+      pixelate: image.pixelate,
+      impactSoundIds: config.impact_sounds,
     };
   }
 
@@ -128,11 +129,18 @@
 
   async function save(values: ItemSchema) {
     const imageURL: string = await saveImage(values.image);
-    const imageConfig: ThrowableImageConfig = {
+    const image: ItemImageConfig = {
       src: imageURL,
       pixelate: values.pixelate,
       scale: values.scale,
       weight: values.weight,
+    };
+    const config: ItemConfig = {
+      image,
+      windup: {
+        enabled: false,
+        duration: 0,
+      },
     };
 
     if (existing) {
@@ -140,15 +148,17 @@
         itemId: existing.id,
         update: {
           name: values.name,
-          image: imageConfig,
+          config,
           impact_sounds: values.impactSoundIds,
+          windup_sounds: [],
         },
       });
     } else {
       await createItem({
         name: values.name,
-        image: imageConfig,
+        config,
         impact_sounds: values.impactSoundIds,
+        windup_sounds: [],
       });
     }
   }
@@ -210,7 +220,7 @@
         <ImageUpload
           id="image"
           name="image"
-          value={$data.image ?? existing?.image?.src}
+          value={$data.image ?? existing?.config.image?.src}
           scale={$data.scale * 0.5}
           pixelated={$data.pixelate}
         />

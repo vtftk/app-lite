@@ -7,7 +7,7 @@ pub mod event_executions;
 pub mod event_logs;
 pub mod events;
 pub mod items;
-pub mod items_impact_sounds;
+pub mod items_sounds;
 pub mod key_value;
 pub mod links;
 pub mod model_data;

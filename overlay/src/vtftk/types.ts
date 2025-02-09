@@ -1,4 +1,4 @@
-import { Item, Sound, SoundId } from "$shared/dataV2";
+import { Item, SoundId } from "$shared/dataV2";
 
 export * from "$shared/dataV2";
 export * from "$shared/appData";
@@ -8,6 +8,15 @@ export const enum ThrowItemConfigType {
   Barrage = "Barrage",
   All = "All",
 }
+
+/**
+ * Sound with UI specific fields stripped
+ */
+export type PartialSoundModel = {
+  id: SoundId;
+  src: string;
+  volume: number;
+};
 
 export type ThrowItemConfig =
   | { type: ThrowItemConfigType.All; amount: number }
@@ -20,9 +29,10 @@ export type ThrowItemConfig =
 
 export type ItemWithSoundIds = Item & {
   impact_sound_ids: SoundId[];
+  windup_sound_ids: SoundId[];
 };
 
 export type ItemWithSounds = {
   items: ItemWithSoundIds[];
-  sounds: Sound[];
+  sounds: PartialSoundModel[];
 };
