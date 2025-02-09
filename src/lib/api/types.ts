@@ -7,7 +7,10 @@ import type { Item, ItemId, SoundId, ItemConfig } from "$shared/dataV2";
 
 type Option<T> = T | null;
 
-export type ItemWithImpactSounds = Item & { impact_sounds: SoundId[] };
+export type ItemWithImpactSounds = Item & {
+  impact_sounds: SoundId[];
+  windup_sounds: SoundId[];
+};
 
 // File types for file uploads
 export enum StorageFolder {

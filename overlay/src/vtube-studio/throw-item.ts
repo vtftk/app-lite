@@ -116,6 +116,21 @@ export async function throwItem(
 
   const { image: imageConfig, windup } = config.config;
 
+  if (windup.enabled) {
+    // Play the windup sound
+    if (windupAudio !== null) {
+      try {
+        windupAudio.sound.volume =
+          appData.sounds_config.global_volume * windupAudio.config.volume;
+        windupAudio.sound.play();
+      } catch (err) {
+        console.error("failed to play windup audio", err);
+      }
+    }
+
+    await sleep(windup.duration);
+  }
+
   const scaledImageWidth = image.width * imageConfig.scale * itemScale;
   const scaledImageHeight = image.height * imageConfig.scale * itemScale;
 
@@ -149,21 +164,6 @@ export async function throwItem(
   pivot.appendChild(movement);
   root.appendChild(pivot);
   document.body.appendChild(root);
-
-  if (windup.enabled) {
-    // Play the windup sound
-    if (windupAudio !== null) {
-      try {
-        windupAudio.sound.volume =
-          appData.sounds_config.global_volume * windupAudio.config.volume;
-        windupAudio.sound.play();
-      } catch (err) {
-        console.error("failed to play windup audio", err);
-      }
-    }
-
-    await sleep(windup.duration);
-  }
 
   // Impact is encountered half way through the animation
   const impactTimeout = throwables.duration / 2 + throwables.impact_delay;
