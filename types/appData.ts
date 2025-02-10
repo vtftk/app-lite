@@ -49,12 +49,14 @@ export type ThrowablesConfig = {
 };
 
 export enum ThrowDirection {
+  Weighted = "Weighted",
   Random = "Random",
   LeftOnly = "LeftOnly",
   RightOnly = "RightOnly",
 }
 
 export const THROW_DIRECTION_VALUES = [
+  ThrowDirection.Weighted,
   ThrowDirection.Random,
   ThrowDirection.LeftOnly,
   ThrowDirection.RightOnly,

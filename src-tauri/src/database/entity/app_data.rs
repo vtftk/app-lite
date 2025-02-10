@@ -198,8 +198,10 @@ impl Default for SoundsConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum ThrowDirection {
     /// Random direction, left or right
-    #[default]
     Random,
+    /// Random but weighted
+    #[default]
+    Weighted,
     /// Only thrown from left side
     LeftOnly,
     /// Only thrown from right side

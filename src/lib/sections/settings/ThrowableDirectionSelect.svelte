@@ -17,6 +17,12 @@
 
   const options = [
     {
+      value: ThrowDirection.Weighted,
+      label: "Weighted",
+      description:
+        "Randomly pick between the left and right side with a higher chance to come from the opposite side to the model",
+    },
+    {
       value: ThrowDirection.Random,
       label: "Random",
       description: "Randomly pick between the left and right side",

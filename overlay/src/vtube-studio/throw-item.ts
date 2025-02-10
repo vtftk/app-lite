@@ -98,7 +98,10 @@ export async function throwItem(
   const modelScale =
     (modelPosition.size + LARGEST_MODEL_SIZE) / TOTAL_MODEL_SIZE_RANGE;
 
-  const leftSide: boolean = isRandomDirectionLeft(throwables.direction);
+  const leftSide: boolean = isRandomDirectionLeft(
+    throwables.direction,
+    percentRange(modelScale, modelData.x.min, modelData.x.max),
+  );
 
   let angle = randomRange(
     throwables.throw_angle.min,
@@ -245,10 +248,16 @@ export async function throwItem(
  * config returning whether that direction is left
  *
  * @param direction The direction config
+ * @param xPos Window model relative position
  * @returns Whether the direction is left
  */
-function isRandomDirectionLeft(direction: ThrowDirection): boolean {
+function isRandomDirectionLeft(
+  direction: ThrowDirection,
+  xPos: number,
+): boolean {
   switch (direction) {
+    case ThrowDirection.Weighted:
+      return Math.random() >= (xPos + 1) / 2;
     case ThrowDirection.Random:
       return randomBool();
     case ThrowDirection.LeftOnly:
