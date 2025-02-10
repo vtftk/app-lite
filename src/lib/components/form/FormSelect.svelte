@@ -147,17 +147,6 @@
     margin-bottom: 0.5rem;
   }
 
-  .form-input input {
-    padding: 0.5rem;
-    background-color: #000;
-    border: 1px solid #666;
-    color: #fff;
-    border-radius: 0.25rem;
-    align-items: center;
-    display: flex;
-    gap: 0.5rem;
-  }
-
   .description {
     font-size: 0.8rem;
     color: #999;
@@ -169,6 +158,7 @@
     display: flex;
     border-radius: 0.25rem;
     padding: 0.5rem;
+    max-width: 500px;
   }
 
   .item:hover {
