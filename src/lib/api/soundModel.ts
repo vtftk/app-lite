@@ -13,13 +13,15 @@ import { queryClient } from "./client";
 
 const SOUNDS_KEY = ["sounds"];
 
+function createSoundKey(id: SoundId) {
+  return ["sound", id] as const;
+}
+
+// -----------------------------------------------------
+
 function invalidateSoundsList() {
   // Invalid the list of sounds
   queryClient.invalidateQueries({ queryKey: SOUNDS_KEY });
-}
-
-function createSoundKey(id: SoundId) {
-  return ["sound", id] as const;
 }
 
 export function getSoundById(soundId: SoundId) {

@@ -20,16 +20,33 @@ import { queryClient } from "./client";
 
 const EVENTS_KEY = ["events"];
 
+function createEventKey(id: EventId) {
+  return ["event", id] as const;
+}
+
+function createEventExecutionsKey(id: EventId, query?: ExecutionsQuery) {
+  if (query === undefined) {
+    return ["event-executions", id] as const;
+  }
+  return ["event-executions", id, query] as const;
+}
+
+function createEventLogsKey(id: EventId, query?: LogsQuery) {
+  if (query === undefined) {
+    return ["event-logs", id] as const;
+  }
+
+  return ["event-logs", id, query] as const;
+}
+
+// -----------------------------------------------------
+
 function invalidateEventsList() {
   return queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
 }
 
 export function getEvents() {
   return invoke<Event[]>("get_events");
-}
-
-function createEventKey(id: EventId) {
-  return ["event", id] as const;
 }
 
 export function getEventById(eventId: EventId) {
@@ -85,13 +102,6 @@ export async function updateEventOrder(update: UpdateOrdering[]) {
   queryClient.invalidateQueries({ queryKey: EVENTS_KEY });
 }
 
-function createEventExecutionsKey(id: EventId, query?: ExecutionsQuery) {
-  if (query === undefined) {
-    return ["event-executions", id] as const;
-  }
-  return ["event-executions", id, query] as const;
-}
-
 export function getEventExecutions(eventId: EventId, query: ExecutionsQuery) {
   return invoke<EventExecution[]>("get_event_executions", {
     eventId,
@@ -125,14 +135,6 @@ export async function deleteEventExecutions(
   queryClient.invalidateQueries({
     queryKey: createEventExecutionsKey(eventId),
   });
-}
-
-function createEventLogsKey(id: EventId, query?: LogsQuery) {
-  if (query === undefined) {
-    return ["event-logs", id] as const;
-  }
-
-  return ["event-logs", id, query] as const;
 }
 
 export function getEventLogs(eventId: EventId, query: LogsQuery) {

@@ -1,6 +1,5 @@
 import type {
   Item,
-  Sound,
   ItemId,
   SoundId,
   CreateItem,
@@ -19,6 +18,8 @@ const ITEMS_KEY = ["items"];
 function createItemKey(id: ItemId) {
   return ["item", id] as const;
 }
+
+// -----------------------------------------------------
 
 export async function updateItemOrder(update: UpdateOrdering[]) {
   await invoke("update_item_orderings", { update });

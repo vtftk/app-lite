@@ -20,12 +20,28 @@ import { queryClient } from "./client";
 
 const COMMANDS_KEY = ["commands"];
 
-export function getCommands() {
-  return invoke<Command[]>("get_commands");
-}
-
 function createCommandKey(id: CommandId) {
   return ["command", id] as const;
+}
+
+function createCommandExecutionsKey(id: CommandId, query?: ExecutionsQuery) {
+  if (query === undefined) {
+    return ["command-executions", id] as const;
+  }
+  return ["command-executions", id, query] as const;
+}
+
+function createCommandLogsKey(id: CommandId, query?: LogsQuery) {
+  if (query === undefined) {
+    return ["command-logs", id] as const;
+  }
+  return ["command-logs", id, query] as const;
+}
+
+// -----------------------------------------------------
+
+export function getCommands() {
+  return invoke<Command[]>("get_commands");
 }
 
 export function getCommandById(commandId: CommandId) {
@@ -87,13 +103,6 @@ export async function bulkDeleteCommands(commandIds: CommandId[]) {
   invalidateCommandsList();
 }
 
-function createCommandLogsKey(id: CommandId, query?: LogsQuery) {
-  if (query === undefined) {
-    return ["command-logs", id] as const;
-  }
-  return ["command-logs", id, query] as const;
-}
-
 export function getCommandLogs(commandId: CommandId, query: LogsQuery) {
   return invoke<CommandLog[]>("get_command_logs", { commandId, query });
 }
@@ -131,13 +140,6 @@ export async function updateCommandOrder(update: UpdateOrdering[]) {
   invalidateCommandsList();
 }
 
-function createCommandExecutionsKey(id: CommandId, query?: ExecutionsQuery) {
-  if (query === undefined) {
-    return ["command-executions", id] as const;
-  }
-  return ["command-executions", id, query] as const;
-}
-
 export function getCommandExecutions(
   commandId: CommandId,
   query: ExecutionsQuery,
@@ -145,13 +147,6 @@ export function getCommandExecutions(
   return invoke<CommandExecution[]>("get_command_executions", {
     commandId,
     query,
-  });
-}
-
-export function createCommandsQuery() {
-  return createQuery({
-    queryKey: COMMANDS_KEY,
-    queryFn: getCommands,
   });
 }
 
@@ -183,6 +178,13 @@ export async function deleteCommandExecutions(
 }
 
 // -----------------------------------------------------
+
+export function createCommandsQuery() {
+  return createQuery({
+    queryKey: COMMANDS_KEY,
+    queryFn: getCommands,
+  });
+}
 
 export function createCommandQuery(id: CommandId) {
   return createQuery({
