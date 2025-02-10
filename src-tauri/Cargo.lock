@@ -6655,7 +6655,7 @@ dependencies = [
 
 [[package]]
 name = "vtftk"
-version = "0.0.2"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "axum",
