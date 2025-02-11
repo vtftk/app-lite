@@ -118,7 +118,7 @@ pub struct UpdateCommand {
     pub cooldown: Option<CommandCooldown>,
     pub require_role: Option<MinimumRequireRole>,
     pub order: Option<u32>,
-    pub aliases: Vec<String>,
+    pub aliases: Option<Vec<String>>,
 }
 
 impl Model {
@@ -239,7 +239,9 @@ impl Model {
 
         let this = this.update(db).await?;
 
-        this.set_aliases(db, data.aliases).await?;
+        if let Some(aliases) = data.aliases {
+            this.set_aliases(db, aliases).await?;
+        }
 
         Ok(this)
     }

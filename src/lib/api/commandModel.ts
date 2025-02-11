@@ -70,10 +70,7 @@ export async function updateCommand(update: UpdateCommand) {
 
   // Invalidate the specific item query
   const itemKey = createCommandKey(command.id);
-  queryClient.setQueryData(itemKey, {
-    ...command,
-    aliases: update.update.aliases,
-  });
+  queryClient.setQueryData(itemKey, command);
 
   invalidateCommandsList();
 
