@@ -3,7 +3,7 @@ use database::{clean_old_data, entity::app_data::AppDataModel};
 use events::{
     create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
 };
-use script::{events::ScriptEventActor, runtime::create_script_executor};
+use script::runtime::{create_script_executor, ScriptRuntimeData};
 use sea_orm::DatabaseConnection;
 use state::runtime_app_data::RuntimeAppDataStore;
 use std::error::Error;
@@ -125,7 +125,14 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
 
     let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
-    let script_handle = create_script_executor(app_data_path.join("modules"));
+    let script_handle = create_script_executor(
+        app_data_path.join("modules"),
+        ScriptRuntimeData {
+            db: db.clone(),
+            event_sender: event_tx.clone(),
+            twitch: twitch.clone(),
+        },
+    );
 
     // Create background event scheduler
     let scheduler_handle = create_scheduler(
@@ -165,10 +172,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
 
         async move { twitch.attempt_auth_stored(db).await }
     });
-
-    // Initialize script actor
-    let actor = ScriptEventActor::new(event_tx.clone(), db.clone(), twitch.clone());
-    block_on(script::events::init_global_script_event_actor(actor));
 
     // Handle events triggered by twitch
     _ = spawn(process_twitch_events(

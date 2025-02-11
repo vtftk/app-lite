@@ -1,5 +1,8 @@
 use crate::{
-    events::matching::{EventData, EventInputData},
+    events::{
+        matching::{EventData, EventInputData},
+        EventMessageChannel,
+    },
     script::ops::{
         core::op_uuid_v4,
         http::op_http_request,
@@ -11,6 +14,7 @@ use crate::{
             op_vtftk_get_sounds_by_names,
         },
     },
+    twitch::manager::Twitch,
 };
 use anyhow::Context;
 use deno_core::{
@@ -18,6 +22,7 @@ use deno_core::{
     v8::{self, Global, Local},
     JsRuntime, PollEventLoopOptions, RuntimeOptions,
 };
+use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use std::{future::Future, path::PathBuf, pin::Pin, rc::Rc, task::Poll};
 use tokio::{
@@ -29,9 +34,16 @@ use uuid::Uuid;
 
 use super::module_loader::AppModuleLoader;
 
-/// Snapshot of the script engine runtime, see [build.rs](../../build.rs)
-static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/SCRIPT_RUNTIME_SNAPSHOT.bin"));
+pub struct ScriptRuntimeData {
+    /// Sender handle for submitting event messages
+    pub event_sender: EventMessageChannel,
+
+    /// Access to the database
+    pub db: DatabaseConnection,
+
+    /// Access to the twitch manager
+    pub twitch: Twitch,
+}
 
 deno_core::extension!(
     api_extension,
@@ -55,8 +67,16 @@ deno_core::extension!(
         op_vtftk_get_items_by_names,
         op_vtftk_get_items_by_ids,
     ],
+    options = {
+        data: ScriptRuntimeData
+    },
+    state = |state, options| { state.put(options.data); },
     docs = "Extension providing APIs to the JS runtime"
 );
+
+/// Snapshot of the script engine runtime, see [build.rs](../../build.rs)
+static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
+    include_bytes!(concat!(env!("OUT_DIR"), "/SCRIPT_RUNTIME_SNAPSHOT.bin"));
 
 /// Context passed to the JS runtime that is tracked
 /// across async calls for handling logging sources
@@ -176,7 +196,10 @@ fn spawn_script_promise(
 ///
 /// The JS runtime is !Send and thus it cannot be shared across tokio async tasks
 /// so here its provided a dedicated single threaded runtime and its own thread
-pub fn create_script_executor(modules_path: PathBuf) -> ScriptExecutorHandle {
+pub fn create_script_executor(
+    modules_path: PathBuf,
+    runtime_data: ScriptRuntimeData,
+) -> ScriptExecutorHandle {
     let (tx, rx) = mpsc::channel::<ScriptExecutorMessage>(5);
 
     std::thread::spawn(move || {
@@ -189,10 +212,11 @@ pub fn create_script_executor(modules_path: PathBuf) -> ScriptExecutorHandle {
         // Create runtime
         let js_runtime = JsRuntime::new(RuntimeOptions {
             startup_snapshot: Some(SCRIPT_RUNTIME_SNAPSHOT),
-            extensions: vec![api_extension::init_ops()],
+            extensions: vec![api_extension::init_ops(runtime_data)],
             module_loader: Some(Rc::new(AppModuleLoader {
                 module_root: modules_path,
             })),
+
             ..Default::default()
         });
 

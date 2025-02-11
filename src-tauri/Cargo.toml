@@ -60,7 +60,6 @@ thiserror = "2"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3.31"
 tokio-stream = { version = "0.1.16", features = ["full"] }
-interlink = "0.1.6"
 
 # UUID
 uuid = { version = "1", features = ["v4", "serde"] }

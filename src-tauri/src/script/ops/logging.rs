@@ -2,15 +2,19 @@
 //!
 //! API for performing logging from the JS runtime
 
+use std::{cell::RefCell, rc::Rc};
+
 use chrono::Utc;
 use deno_core::*;
+use log::error;
 
 use crate::{
-    database::entity::shared::LoggingLevelDb,
-    script::{
-        events::{global_script_event, LogPersistEvent},
-        runtime::RuntimeExecutionContext,
+    database::entity::{
+        command_logs::{CommandLogsModel, CreateCommandLog},
+        event_logs::{CreateEventLog, EventLogsModel},
+        shared::LoggingLevelDb,
     },
+    script::runtime::{RuntimeExecutionContext, ScriptRuntimeData},
 };
 
 fn exec_prefix(ctx: Option<&RuntimeExecutionContext>) -> String {
@@ -25,10 +29,17 @@ fn exec_prefix(ctx: Option<&RuntimeExecutionContext>) -> String {
 
 #[op2]
 pub fn op_log(
+    state: Rc<RefCell<OpState>>,
     #[serde] ctx: Option<RuntimeExecutionContext>,
     #[serde] level: LoggingLevelDb,
     #[string] message: String,
 ) {
+    let db = {
+        let state = state.borrow();
+        let data = state.borrow::<ScriptRuntimeData>();
+        data.db.clone()
+    };
+
     let prefix = exec_prefix(ctx.as_ref());
 
     let log_level = match &level {
@@ -41,11 +52,41 @@ pub fn op_log(
     log::log!(log_level, "{prefix}: {message}");
 
     if let Some(ctx) = ctx {
-        tokio::spawn(global_script_event(LogPersistEvent {
-            ctx,
-            level,
-            message,
-            created_at: Utc::now(),
-        }));
+        let created_at = Utc::now();
+
+        tokio::spawn(async move {
+            match ctx {
+                RuntimeExecutionContext::Event { event_id } => {
+                    if let Err(err) = EventLogsModel::create(
+                        &db,
+                        CreateEventLog {
+                            event_id,
+                            level,
+                            message,
+                            created_at,
+                        },
+                    )
+                    .await
+                    {
+                        error!("failed to persist script log: {:?}", err);
+                    }
+                }
+                RuntimeExecutionContext::Command { command_id } => {
+                    if let Err(err) = CommandLogsModel::create(
+                        &db,
+                        CreateCommandLog {
+                            command_id,
+                            level,
+                            message,
+                            created_at,
+                        },
+                    )
+                    .await
+                    {
+                        error!("failed to persist command log: {:?}", err);
+                    }
+                }
+            };
+        });
     }
 }
