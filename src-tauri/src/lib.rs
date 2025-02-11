@@ -47,7 +47,6 @@ pub fn run() {
             // Testing and running commands
             commands::test::test_throw,
             commands::test::test_throw_barrage,
-            commands::test::test_sound,
             commands::test::detect_vtube_studio,
             // Data manipulation comments
             commands::data::get_app_data,

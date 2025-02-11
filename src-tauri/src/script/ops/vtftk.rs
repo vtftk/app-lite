@@ -1,47 +1,20 @@
 use crate::{
     database::entity::sounds::SoundModel,
-    events::{ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig},
+    events::{EventMessage, ItemWithSoundIds},
     script::events::{
-        global_script_event, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs, GetSoundsByNames,
-        PlaySound, PlaySoundSeq, ThrowItems, TriggerHotkey, TriggerHotkeyByName,
+        global_script_event, EmitEventMessage, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs,
+        GetSoundsByNames,
     },
 };
 use anyhow::Context;
-use chrono::Utc;
 use deno_core::op2;
-use serde::Deserialize;
 use uuid::Uuid;
 
+/// Emit event messages to the websocket
 #[op2(async)]
 #[serde]
-pub async fn op_vtftk_trigger_vt_hotkey(#[string] hotkey_id: String) -> anyhow::Result<()> {
-    global_script_event(TriggerHotkey { hotkey_id })
-        .await
-        .context("failed to send event")?
-}
-
-#[op2(async)]
-#[serde]
-pub async fn op_vtftk_trigger_vt_hotkey_by_name(
-    #[string] hotkey_name: String,
-    ignore_case: bool,
-) -> anyhow::Result<()> {
-    global_script_event(TriggerHotkeyByName {
-        hotkey_name,
-        ignore_case,
-    })
-    .await
-    .context("failed to send event")?
-}
-
-/// Throw items
-#[op2(async)]
-#[serde]
-pub async fn op_vtftk_throw_items(
-    #[serde] items: ItemsWithSounds,
-    #[serde] config: ThrowItemConfig,
-) -> anyhow::Result<()> {
-    global_script_event(ThrowItems { items, config })
+pub async fn op_vtftk_emit_event_message(#[serde] message: EventMessage) -> anyhow::Result<()> {
+    global_script_event(EmitEventMessage { message })
         .await
         .context("failed to send event")?
 }
@@ -88,49 +61,6 @@ pub async fn op_vtftk_get_sounds_by_ids(
     #[serde] ids: Vec<Uuid>,
 ) -> anyhow::Result<Vec<SoundModel>> {
     global_script_event(GetSoundsByIDs { ids })
-        .await
-        .context("failed to send event")?
-}
-
-#[op2(async)]
-#[string]
-pub async fn op_vtftk_play_sound(#[string] src: String, volume: f32) -> anyhow::Result<()> {
-    let config = SoundModel {
-        id: Uuid::new_v4(),
-        name: "<internal>".to_string(),
-        src,
-        volume,
-        order: 0,
-        created_at: Utc::now(),
-    };
-
-    global_script_event(PlaySound { config })
-        .await
-        .context("failed to send event")?
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SoundSeq {
-    pub src: String,
-    pub volume: f32,
-}
-
-#[op2(async)]
-#[string]
-pub async fn op_vtftk_play_sound_seq(#[serde] seq: Vec<SoundSeq>) -> anyhow::Result<()> {
-    let configs = seq
-        .into_iter()
-        .map(|seq| SoundModel {
-            id: Uuid::new_v4(),
-            name: "<internal>".to_string(),
-            src: seq.src,
-            volume: seq.volume,
-            order: 0,
-            created_at: Utc::now(),
-        })
-        .collect();
-
-    global_script_event(PlaySoundSeq { configs })
         .await
         .context("failed to send event")?
 }

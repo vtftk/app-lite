@@ -50,7 +50,7 @@ type HttpOptions = Partial<{
   timeout: number;
 }>;
 
-type HttpResponse<BodyFormat> = {
+export type HttpResponse<BodyFormat> = {
   /**
    * Response status code
    */

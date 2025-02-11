@@ -1,3 +1,5 @@
+import { HttpResponse } from "./http";
+
 /**
  * Helper to assert the validity of a user ID before
  * sending it to actual APIs
@@ -9,14 +11,66 @@ function assertUserId(userId: TwitchUserId) {
   if (typeof userId !== "string") throw new Error("userId is invalid");
 }
 
+type TwitchCredentials = {
+  // Access token
+  token: string;
+
+  // User ID
+  user_id: string;
+
+  // Client ID being used
+  client_id: string;
+};
+
+/**
+ * @internal
+ *
+ * Requests currently authenticated users twitch access
+ * token
+ */
+async function getCredentials(): Promise<TwitchCredentials> {
+  const credentials: TwitchCredentials | null =
+    await Deno.core.ops.op_twitch_get_credentials();
+  if (credentials === null) throw new TwitchNotAuthenticated();
+  return credentials;
+}
+
+export class TwitchNotAuthenticated extends Error {
+  constructor() {
+    super("not authenticated");
+  }
+}
+
+function getTwitchHeaders(credentials: TwitchCredentials) {
+  return {
+    authorization: `Bearer ${credentials.token}`,
+    "client-id": credentials.client_id,
+  };
+}
+
 /**
  * Send a chat message to twitch
  *
  * @param message Message to send
  * @returns Promise resolved when the message has sent
  */
-export function sendChat(message: string): Promise<void> {
-  return Deno.core.ops.op_twitch_send_chat(message);
+export async function sendChat(message: string): Promise<void> {
+  const credentials = await getCredentials();
+
+  const response = await api.http.post(
+    "https://api.twitch.tv/helix/chat/messages",
+    {
+      broadcaster_id: credentials.user_id,
+      sender_id: credentials.user_id,
+      message,
+    },
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
 }
 
 /**
@@ -36,11 +90,26 @@ export type TwitchAnnouncementColor =
  * @param color Optional message color (Defaults to primary color)
  * @returns Promise resolved when the message has sent
  */
-export function sendChatAnnouncement(
+export async function sendChatAnnouncement(
   message: string,
   color: TwitchAnnouncementColor = "primary",
 ): Promise<void> {
-  return Deno.core.ops.op_twitch_send_chat_announcement(message, color);
+  const credentials = await getCredentials();
+  const userId = credentials.user_id;
+
+  const response = await api.http.post(
+    `https://api.twitch.tv/helix/chat/announcements?broadcaster_id=${userId}&moderator_id=${userId}`,
+    {
+      message,
+      color,
+    },
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
 }
 
 export type TwitchUserId = string;
@@ -66,13 +135,69 @@ export interface TwitchUser {
   profileImageUrl: string;
 }
 
+function mapTwitchUser(raw: RawTwitchUser): TwitchUser {
+  return {
+    id: raw.id,
+    name: raw.login,
+    displayName: raw.display_name,
+    profileImageUrl: raw.profile_image_url,
+  };
+}
+
+interface RawTwitchUser {
+  id: string;
+  login: string;
+  display_name: string;
+  profile_image_url: string;
+}
+
+async function _getTwitchUsersByIds(ids: string[]): Promise<TwitchUser[]> {
+  const credentials = await getCredentials();
+
+  const query = ids.map((id) => `id=${id}`).join("&");
+
+  const response = await api.http.get(
+    `https://api.twitch.tv/helix/users?${query}`,
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
+
+  const body = response.body as { data: RawTwitchUser[] };
+  return body.data.map(mapTwitchUser);
+}
+
+async function getTwitchUsersByUsernames(
+  logins: string[],
+): Promise<TwitchUser[]> {
+  const credentials = await getCredentials();
+
+  const query = logins.map((name) => `login=${name}`).join("&");
+
+  const response = await api.http.get(
+    `https://api.twitch.tv/helix/users?${query}`,
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
+
+  const body = response.body as { data: RawTwitchUser[] };
+  return body.data.map(mapTwitchUser);
+}
+
 /**
  * Attempts to lookup a twitch user by username
  *
  * @param username Username of the user to get
  * @returns Promise resolved to the twitch user
  */
-export function getUserByUsername(
+export async function getUserByUsername(
   username: TwitchUsername,
 ): Promise<TwitchUser | null> {
   // Validate username before calling API
@@ -80,7 +205,17 @@ export function getUserByUsername(
     throw new Error("username is invalid");
   }
 
-  return Deno.core.ops.op_twitch_get_user_by_username(username);
+  const users = await getTwitchUsersByUsernames([username]);
+  if (users.length < 1) return null;
+  return users[0];
+}
+
+export class TwitchError extends Error {
+  constructor(response: HttpResponse<unknown>) {
+    super(
+      `Twitch Error (${response.status}): ${api.logging.stringify(response.body)}`,
+    );
+  }
 }
 
 /**
@@ -89,10 +224,22 @@ export function getUserByUsername(
  * @param userId The ID of the user to shoutout
  * @returns Promise resolved when the shoutout is complete
  */
-export function shoutout(userId: TwitchUserId): Promise<void> {
+export async function shoutout(userId: TwitchUserId): Promise<void> {
   assertUserId(userId);
 
-  return Deno.core.ops.op_twitch_send_shoutout(userId);
+  const credentials = await getCredentials();
+  const broadcasterId = credentials.user_id;
+
+  const response = await api.http.post(
+    `https://api.twitch.tv/helix/chat/shoutouts?from_broadcaster_id=${broadcasterId}&to_broadcaster_id=${userId}&moderator_id=${broadcasterId}`,
+    {},
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
 }
 
 /**
@@ -101,10 +248,24 @@ export function shoutout(userId: TwitchUserId): Promise<void> {
  * @param userId The ID of the user
  * @returns Promise resolved with whether the user is a mod
  */
-export function isModerator(userId: TwitchUserId): Promise<boolean> {
+export async function isModerator(userId: TwitchUserId): Promise<boolean> {
   assertUserId(userId);
 
-  return Deno.core.ops.op_twitch_is_mod(userId);
+  const credentials = await getCredentials();
+  const broadcasterId = credentials.user_id;
+
+  const response = await api.http.get(
+    `https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=${broadcasterId}&user_id=${userId}`,
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
+
+  const body = response.body as { data: unknown[] };
+  return body.data.length > 0;
 }
 
 /**
@@ -113,10 +274,24 @@ export function isModerator(userId: TwitchUserId): Promise<boolean> {
  * @param userId The ID of the user
  * @returns Promise resolved with whether the user is a vip
  */
-export function isVip(userId: TwitchUserId): Promise<boolean> {
+export async function isVip(userId: TwitchUserId): Promise<boolean> {
   assertUserId(userId);
 
-  return Deno.core.ops.op_twitch_is_vip(userId);
+  const credentials = await getCredentials();
+  const broadcasterId = credentials.user_id;
+
+  const response = await api.http.get(
+    `https://api.twitch.tv/helix/channels/vips?broadcaster_id=${broadcasterId}&user_id=${userId}`,
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
+
+  const body = response.body as { data: unknown[] };
+  return body.data.length > 0;
 }
 
 /**
@@ -152,6 +327,14 @@ export interface TwitchFollower {
   followedAt: Date;
 }
 
+// Internal format for a twitch follower
+interface RawTwitchFollower {
+  followed_at: string;
+  user_id: string;
+  user_login: string;
+  user_name: string;
+}
+
 /**
  * Gets a twitch follower by ID
  *
@@ -166,18 +349,24 @@ export async function getFollower(
 ): Promise<TwitchFollower | null> {
   assertUserId(userId);
 
-  // Internal format for a twitch follower
-  interface _TwitchFollower {
-    followed_at: string;
-    user_id: string;
-    user_login: string;
-    user_name: string;
-  }
+  const credentials = await getCredentials();
+  const broadcasterId = credentials.user_id;
 
-  const follower: _TwitchFollower | null =
-    await Deno.core.ops.op_twitch_get_follower(userId);
+  const response = await api.http.get(
+    `https://api.twitch.tv/helix/channels/followers?broadcaster_id=${broadcasterId}&user_id=${userId}`,
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
 
-  if (follower === null) return null;
+  if (!response.ok) throw new TwitchError(response);
+
+  const body = response.body as { data: RawTwitchFollower[] };
+
+  const follower: RawTwitchFollower | undefined = body.data[0];
+
+  if (follower === undefined) return null;
 
   return {
     id: follower.user_id,
@@ -265,11 +454,20 @@ export function isValidUsernameStrict(username: TwitchUsername): boolean {
  * @param messageId ID of the chat message to delete
  * @returns Promise resolved when the message is deleted
  */
-export function deleteChatMessage(messageId: string): Promise<void> {
+export async function deleteChatMessage(messageId: string): Promise<void> {
   if (messageId === undefined) throw new Error("messageId must be provided");
   if (typeof messageId !== "string") throw new Error("messageId is invalid");
 
-  return Deno.core.ops.op_twitch_delete_chat_message(messageId);
+  const credentials = await getCredentials();
+  const userId = credentials.user_id;
+
+  const response = await api.http.request({
+    url: `https://api.twitch.tv/helix/moderation/chat?broadcaster_id=${userId}&moderator_id=${userId}&message_id=${messageId}`,
+    responseFormat: "json",
+    headers: getTwitchHeaders(credentials),
+  });
+
+  if (!response.ok) throw new TwitchError(response);
 }
 
 /**
@@ -277,8 +475,17 @@ export function deleteChatMessage(messageId: string): Promise<void> {
  *
  * @returns Promise resolved when the message
  */
-export function deleteAllChatMessages(): Promise<void> {
-  return Deno.core.ops.op_twitch_delete_all_chat_messages();
+export async function deleteAllChatMessages(): Promise<void> {
+  const credentials = await getCredentials();
+  const userId = credentials.user_id;
+
+  const response = await api.http.request({
+    url: `https://api.twitch.tv/helix/moderation/chat?broadcaster_id=${userId}&moderator_id=${userId}`,
+    responseFormat: "json",
+    headers: getTwitchHeaders(credentials),
+  });
+
+  if (!response.ok) throw new TwitchError(response);
 }
 
 /**
@@ -287,6 +494,19 @@ export function deleteAllChatMessages(): Promise<void> {
  * @param description Optional description for the stream marker
  * @returns Promise resolved when the marker is created
  */
-export function createStreamMarker(description?: string): Promise<void> {
-  return Deno.core.ops.op_twitch_create_stream_marker(description);
+export async function createStreamMarker(description?: string): Promise<void> {
+  const credentials = await getCredentials();
+  const response = await api.http.post(
+    `https://api.twitch.tv/helix/streams/markers`,
+    {
+      user_id: credentials.user_id,
+      description,
+    },
+    {
+      responseFormat: "json",
+      headers: getTwitchHeaders(credentials),
+    },
+  );
+
+  if (!response.ok) throw new TwitchError(response);
 }

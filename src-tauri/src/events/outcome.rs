@@ -371,7 +371,7 @@ async fn play_sound_outcome(
     db: &DatabaseConnection,
     data: EventOutcomePlaySound,
 ) -> anyhow::Result<EventMessage> {
-    let config = SoundModel::get_by_id(db, data.sound_id)
+    let config = SoundModel::get_by_id_partial(db, data.sound_id)
         .await?
         .context("sound config not found")?;
 

@@ -70,7 +70,7 @@ function stringifyArgs(...args: unknown[]): string {
  * @param data Value to print
  * @returns The string version of the value
  */
-function stringify(data: unknown): string {
+export function stringify(data: unknown): string {
   // Handle special cases
   if (data === undefined) return "undefined";
   if (data === null) return "null";

@@ -2,10 +2,11 @@ use anyhow::Context;
 use interlink::prelude::*;
 use log::error;
 use sea_orm::{prelude::DateTimeUtc, DatabaseConnection, ModelTrait};
+use serde::Serialize;
 use tokio::sync::{broadcast, RwLock};
 use twitch_api::{
-    helix::channels::Follower,
-    types::{MsgId, UserId},
+    twitch_oauth2::{AccessToken, ClientId},
+    types::UserId,
 };
 use uuid::Uuid;
 
@@ -19,8 +20,8 @@ use crate::{
         shared::LoggingLevelDb,
         sounds::SoundModel,
     },
-    events::{EventMessage, ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage},
-    twitch::{manager::Twitch, models::TwitchUser},
+    events::{EventMessage, ItemWithSoundIds},
+    twitch::manager::{Twitch, TWITCH_CLIENT_ID},
 };
 
 use super::runtime::RuntimeExecutionContext;
@@ -81,220 +82,37 @@ impl ScriptEventActor {
     }
 }
 
-/// Message to trigger sending a message to Twitch chat
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TwitchSendChat {
-    pub message: String,
-}
-
-impl Handler<TwitchSendChat> for ScriptEventActor {
-    type Response = Fr<TwitchSendChat>;
-
-    fn handle(&mut self, msg: TwitchSendChat, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            _ = twitch.send_chat_message(&msg.message).await?;
-            Ok(())
-        })
-    }
-}
-
-/// Message to trigger deleting a message from Twitch chat
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TwitchDeleteChatMessage {
-    pub message_id: MsgId,
-}
-
-impl Handler<TwitchDeleteChatMessage> for ScriptEventActor {
-    type Response = Fr<TwitchDeleteChatMessage>;
-
-    fn handle(
-        &mut self,
-        msg: TwitchDeleteChatMessage,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            twitch.delete_chat_message(msg.message_id).await?;
-            Ok(())
-        })
-    }
-}
-
-/// Message to trigger deleting all messages from Twitch chat
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TwitchDeleteAllChatMessages;
-
-impl Handler<TwitchDeleteAllChatMessages> for ScriptEventActor {
-    type Response = Fr<TwitchDeleteAllChatMessages>;
-
-    fn handle(
-        &mut self,
-        _msg: TwitchDeleteAllChatMessages,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            twitch.delete_all_chat_messages().await?;
-            Ok(())
-        })
-    }
-}
-
-/// Message to trigger creating a twitch stream marker
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TwitchCreateStreamMarker {
-    pub description: Option<String>,
-}
-
-impl Handler<TwitchCreateStreamMarker> for ScriptEventActor {
-    type Response = Fr<TwitchCreateStreamMarker>;
-
-    fn handle(
-        &mut self,
-        msg: TwitchCreateStreamMarker,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            twitch.create_stream_marker(msg.description).await?;
-            Ok(())
-        })
-    }
-}
-
-/// Message to check if a user is a moderator for a twitch channel
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<bool>")]
-pub struct TwitchIsMod {
+#[derive(Serialize)]
+pub struct TwitchCredentials {
+    pub token: AccessToken,
     pub user_id: UserId,
+    pub client_id: ClientId,
 }
 
-impl Handler<TwitchIsMod> for ScriptEventActor {
-    type Response = Fr<TwitchIsMod>;
-
-    fn handle(&mut self, msg: TwitchIsMod, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            let mods = twitch.get_moderator_list().await?;
-            Ok(mods.iter().any(|vip| vip.user_id == msg.user_id))
-        })
-    }
-}
-
-/// Message to check if a user is a VIP for a twitch channel
 #[derive(Message)]
-#[msg(rtype = "anyhow::Result<bool>")]
-pub struct TwitchIsVip {
-    pub user_id: UserId,
-}
+#[msg(rtype = "anyhow::Result<Option<TwitchCredentials>>")]
+pub struct TwitchGetCredentials;
 
-impl Handler<TwitchIsVip> for ScriptEventActor {
-    type Response = Fr<TwitchIsVip>;
-
-    fn handle(&mut self, msg: TwitchIsVip, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            let vips = twitch.get_vip_list().await?;
-            Ok(vips.iter().any(|vip| vip.user_id == msg.user_id))
-        })
-    }
-}
-
-/// Message to trigger sending an announcement message to Twitch chat
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TwitchSendChatAnnouncement {
-    pub message: String,
-    pub color: String,
-}
-
-impl Handler<TwitchSendChatAnnouncement> for ScriptEventActor {
-    type Response = Fr<TwitchSendChatAnnouncement>;
+impl Handler<TwitchGetCredentials> for ScriptEventActor {
+    type Response = Fr<TwitchGetCredentials>;
 
     fn handle(
         &mut self,
-        msg: TwitchSendChatAnnouncement,
+        _msg: TwitchGetCredentials,
         _ctx: &mut ServiceContext<Self>,
     ) -> Self::Response {
         let twitch = self.twitch.clone();
         Fr::new_box(async move {
-            _ = twitch
-                .send_chat_announcement_message(msg.message, msg.color)
-                .await?;
-            Ok(())
-        })
-    }
-}
+            let token = match twitch.get_user_token().await {
+                Some(value) => value,
+                None => return Ok(None),
+            };
 
-/// Message to get a twitch user using their username
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<Option<TwitchUser>>")]
-pub struct TwitchGetUserByUsername {
-    pub username: String,
-}
-
-impl Handler<TwitchGetUserByUsername> for ScriptEventActor {
-    type Response = Fr<TwitchGetUserByUsername>;
-
-    fn handle(
-        &mut self,
-        msg: TwitchGetUserByUsername,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            let user = twitch.get_user_by_username(&msg.username).await?;
-            Ok(user)
-        })
-    }
-}
-/// Message to get a twitch user using their username
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<Option<Follower>>")]
-pub struct TwitchGetFollower {
-    pub user_id: UserId,
-}
-
-impl Handler<TwitchGetFollower> for ScriptEventActor {
-    type Response = Fr<TwitchGetFollower>;
-
-    fn handle(
-        &mut self,
-        msg: TwitchGetFollower,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            let user = twitch.get_follower_by_id(msg.user_id).await?;
-            Ok(user)
-        })
-    }
-}
-
-/// Message to send a shoutout to a user
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TwitchSendShoutout {
-    pub user_id: UserId,
-}
-
-impl Handler<TwitchSendShoutout> for ScriptEventActor {
-    type Response = Fr<TwitchSendShoutout>;
-
-    fn handle(
-        &mut self,
-        msg: TwitchSendShoutout,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let twitch = self.twitch.clone();
-        Fr::new_box(async move {
-            _ = twitch.send_shoutout(msg.user_id).await?;
-            Ok(())
+            Ok(Some(TwitchCredentials {
+                token: token.access_token,
+                user_id: token.user_id,
+                client_id: TWITCH_CLIENT_ID.to_owned(),
+            }))
         })
     }
 }
@@ -492,114 +310,19 @@ impl Handler<GetItemsByIDs> for ScriptEventActor {
     }
 }
 
-/// Message to throw items
 #[derive(Message)]
 #[msg(rtype = "anyhow::Result<()>")]
-pub struct ThrowItems {
-    pub items: ItemsWithSounds,
-    pub config: ThrowItemConfig,
+pub struct EmitEventMessage {
+    pub message: EventMessage,
 }
 
-impl Handler<ThrowItems> for ScriptEventActor {
-    type Response = Mr<ThrowItems>;
+impl Handler<EmitEventMessage> for ScriptEventActor {
+    type Response = Mr<EmitEventMessage>;
 
-    fn handle(&mut self, msg: ThrowItems, _ctx: &mut ServiceContext<Self>) -> Self::Response {
+    fn handle(&mut self, msg: EmitEventMessage, _ctx: &mut ServiceContext<Self>) -> Self::Response {
         let result = self
             .event_sender
-            .send(EventMessage::ThrowItem(ThrowItemMessage {
-                items: msg.items,
-                config: msg.config,
-            }))
-            .context("event receiver was closed");
-
-        Mr(result.map(|_| ()))
-    }
-}
-
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TriggerHotkey {
-    pub hotkey_id: String,
-}
-
-impl Handler<TriggerHotkey> for ScriptEventActor {
-    type Response = Mr<TriggerHotkey>;
-
-    fn handle(&mut self, msg: TriggerHotkey, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let result = self
-            .event_sender
-            .send(EventMessage::TriggerHotkey {
-                hotkey_id: msg.hotkey_id,
-            })
-            .context("event receiver was closed");
-
-        Mr(result.map(|_| ()))
-    }
-}
-
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct TriggerHotkeyByName {
-    pub hotkey_name: String,
-    pub ignore_case: bool,
-}
-
-impl Handler<TriggerHotkeyByName> for ScriptEventActor {
-    type Response = Mr<TriggerHotkeyByName>;
-
-    fn handle(
-        &mut self,
-        msg: TriggerHotkeyByName,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let result = self
-            .event_sender
-            .send(EventMessage::TriggerHotkeyByName {
-                hotkey_name: msg.hotkey_name,
-                ignore_case: msg.ignore_case,
-            })
-            .context("event receiver was closed");
-
-        Mr(result.map(|_| ()))
-    }
-}
-
-/// Message to play a sound
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct PlaySound {
-    pub config: SoundModel,
-}
-
-impl Handler<PlaySound> for ScriptEventActor {
-    type Response = Mr<PlaySound>;
-
-    fn handle(&mut self, msg: PlaySound, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let result = self
-            .event_sender
-            .send(EventMessage::PlaySound { config: msg.config })
-            .context("event receiver was closed");
-
-        Mr(result.map(|_| ()))
-    }
-}
-
-/// Message to play a sequence of sounds in order
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<()>")]
-pub struct PlaySoundSeq {
-    pub configs: Vec<SoundModel>,
-}
-
-impl Handler<PlaySoundSeq> for ScriptEventActor {
-    type Response = Mr<PlaySoundSeq>;
-
-    fn handle(&mut self, msg: PlaySoundSeq, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let result = self
-            .event_sender
-            .send(EventMessage::PlaySoundSeq {
-                configs: msg.configs,
-            })
+            .send(msg.message)
             .context("event receiver was closed");
 
         Mr(result.map(|_| ()))

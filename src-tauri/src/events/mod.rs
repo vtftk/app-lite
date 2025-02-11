@@ -8,11 +8,7 @@ use tokio::sync::broadcast;
 use uuid::Uuid;
 
 use crate::{
-    database::entity::{
-        app_data::AppData,
-        items::ItemModel,
-        sounds::{PartialSoundModel, SoundModel},
-    },
+    database::entity::{app_data::AppData, items::ItemModel, sounds::PartialSoundModel},
     http::models::calibration::CalibrationStep,
 };
 
@@ -34,7 +30,7 @@ pub struct ItemWithSoundIds {
     pub windup_sound_ids: Vec<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThrowItemMessage {
     /// Items to throw
     pub items: ItemsWithSounds,
@@ -57,7 +53,7 @@ pub enum ThrowItemConfig {
 
 pub type EventMessageChannel = broadcast::Sender<EventMessage>;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum EventMessage {
     // Sets the current calibration step
@@ -90,12 +86,12 @@ pub enum EventMessage {
 
     /// Play a sound
     PlaySound {
-        config: SoundModel,
+        config: PartialSoundModel,
     },
 
     /// Play a sequence of sounds one after the other
     PlaySoundSeq {
-        configs: Vec<SoundModel>,
+        configs: Vec<PartialSoundModel>,
     },
 
     /// Tell the overlay to reload the app data as it

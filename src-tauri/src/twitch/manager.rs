@@ -1,7 +1,4 @@
-use super::{
-    models::{TwitchEvent, TwitchUser},
-    websocket::WebsocketManagedTask,
-};
+use super::{models::TwitchEvent, websocket::WebsocketManagedTask};
 use crate::database::entity::twitch_access::TwitchAccessModel;
 use anyhow::{anyhow, Context};
 use futures::TryStreamExt;
@@ -17,16 +14,14 @@ use twitch_api::{
     helix::{
         channels::{Follower, GetChannelFollowersRequest, Vip},
         chat::{
-            ChannelEmote, SendAShoutoutRequest, SendAShoutoutResponse, SendChatAnnouncementBody,
-            SendChatAnnouncementRequest, SendChatAnnouncementResponse, SendChatMessageBody,
-            SendChatMessageRequest, SendChatMessageResponse,
+            ChannelEmote, SendChatMessageBody, SendChatMessageRequest, SendChatMessageResponse,
         },
         moderation::Moderator,
         points::CustomReward,
-        EmptyBody, Scope,
+        Scope,
     },
     twitch_oauth2::{types::ClientIdRef, AccessToken, ImplicitUserTokenBuilder, UserToken},
-    types::{MsgId, UserId},
+    types::UserId,
     HelixClient,
 };
 
@@ -172,91 +167,6 @@ impl Twitch {
         Ok(response)
     }
 
-    pub async fn delete_chat_message(&self, message_id: MsgId) -> anyhow::Result<()> {
-        // Obtain twitch access token
-        let token = self.get_user_token().await.context("not authenticated")?;
-
-        // Get broadcaster user ID
-        let user_id = token.user_id.clone();
-
-        self.helix_client()
-            .delete_chat_message(user_id.clone(), user_id.clone(), message_id, &token)
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn delete_all_chat_messages(&self) -> anyhow::Result<()> {
-        // Obtain twitch access token
-        let token = self.get_user_token().await.context("not authenticated")?;
-
-        // Get broadcaster user ID
-        let user_id = token.user_id.clone();
-
-        self.helix_client()
-            .delete_all_chat_message(&user_id, &user_id, &token)
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn create_stream_marker(&self, description: Option<String>) -> anyhow::Result<()> {
-        // Obtain twitch access token
-        let token = self.get_user_token().await.context("not authenticated")?;
-
-        // Get broadcaster user ID
-        let user_id = token.user_id.clone();
-
-        self.helix_client()
-            .create_stream_marker(&user_id, description.unwrap_or_default(), &token)
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn send_chat_announcement_message(
-        &self,
-        message: String,
-        color: String,
-    ) -> anyhow::Result<SendChatAnnouncementResponse> {
-        // Obtain twitch access token
-        let token = self.get_user_token().await.context("not authenticated")?;
-
-        // Get broadcaster user ID
-        let user_id = token.user_id.clone();
-
-        // Create chat message request
-        let request = SendChatAnnouncementRequest::new(user_id.clone(), user_id.clone());
-        let body = SendChatAnnouncementBody::new(message, color.as_str())
-            .context("failed to create body")?;
-
-        // Send request and get response
-        let response: SendChatAnnouncementResponse = self
-            .helix_client()
-            .req_post(request, body, &token)
-            .await?
-            .data;
-
-        Ok(response)
-    }
-
-    pub async fn get_user_by_username(&self, username: &str) -> anyhow::Result<Option<TwitchUser>> {
-        // Obtain twitch access token
-        let token = self.get_user_token().await.context("not authenticated")?;
-
-        let user = self
-            .helix_client()
-            .get_user_from_login(username, &token)
-            .await?;
-
-        Ok(user.map(|user| TwitchUser {
-            id: user.id,
-            name: user.login,
-            display_name: user.display_name,
-            profile_image_url: user.profile_image_url,
-        }))
-    }
-
     pub async fn get_channel_emotes(&self, user_id: UserId) -> anyhow::Result<Vec<ChannelEmote>> {
         // Obtain twitch access token
         let token = self.get_user_token().await.context("not authenticated")?;
@@ -283,29 +193,6 @@ impl Twitch {
         let mut response: Vec<Follower> = self.helix_client().req_get(request, &token).await?.data;
 
         Ok(response.pop())
-    }
-
-    pub async fn send_shoutout(
-        &self,
-        target_user_id: UserId,
-    ) -> anyhow::Result<SendAShoutoutResponse> {
-        // Obtain twitch access token
-        let token = self.get_user_token().await.context("not authenticated")?;
-
-        // Get broadcaster user ID
-        let user_id = token.user_id.clone();
-
-        // Create chat message request
-        let request = SendAShoutoutRequest::new(user_id.clone(), target_user_id, user_id.clone());
-
-        // Send request and get response
-        let response: SendAShoutoutResponse = self
-            .helix_client()
-            .req_post(request, EmptyBody, &token)
-            .await?
-            .data;
-
-        Ok(response)
     }
 
     pub async fn get_user_token(&self) -> Option<UserToken> {

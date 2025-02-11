@@ -42,6 +42,16 @@ pub struct PartialSoundModel {
     pub volume: f32,
 }
 
+impl From<Model> for PartialSoundModel {
+    fn from(value: Model) -> Self {
+        Self {
+            id: value.id,
+            src: value.src,
+            volume: value.volume,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     /// Item can have many impact sounds
@@ -104,6 +114,14 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find_by_id(id).one(db).await
+    }
+
+    /// Find a specific sound by ID
+    pub async fn get_by_id_partial<C>(db: &C, id: Uuid) -> DbResult<Option<PartialSoundModel>>
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
+        Entity::find_by_id(id).into_partial_model().one(db).await
     }
 
     /// Find sounds with IDs present in the provided list

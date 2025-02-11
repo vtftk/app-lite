@@ -1,19 +1,14 @@
 use crate::{
     events::matching::{EventData, EventInputData},
     script::ops::{
+        core::op_uuid_v4,
         http::op_http_request,
         kv::{op_kv_get, op_kv_remove, op_kv_set},
         logging::op_log,
-        twitch::{
-            op_twitch_create_stream_marker, op_twitch_delete_all_chat_messages,
-            op_twitch_delete_chat_message, op_twitch_get_follower, op_twitch_get_user_by_username,
-            op_twitch_is_mod, op_twitch_is_vip, op_twitch_send_chat,
-            op_twitch_send_chat_announcement, op_twitch_send_shoutout,
-        },
+        twitch::op_twitch_get_credentials,
         vtftk::{
             op_vtftk_get_items_by_ids, op_vtftk_get_items_by_names, op_vtftk_get_sounds_by_ids,
-            op_vtftk_get_sounds_by_names, op_vtftk_play_sound, op_vtftk_play_sound_seq,
-            op_vtftk_throw_items, op_vtftk_trigger_vt_hotkey, op_vtftk_trigger_vt_hotkey_by_name,
+            op_vtftk_get_sounds_by_names,
         },
     },
 };
@@ -41,37 +36,24 @@ static SCRIPT_RUNTIME_SNAPSHOT: &[u8] =
 deno_core::extension!(
     api_extension,
     ops = [
+        // Core
+        op_uuid_v4,
         // HTTP
         op_http_request,
         // Logging
         op_log,
         // Twitch
-        op_twitch_send_chat,
-        op_twitch_is_mod,
-        op_twitch_is_vip,
-        op_twitch_get_user_by_username,
-        op_twitch_get_follower,
-        op_twitch_send_chat_announcement,
-        op_twitch_send_shoutout,
-        op_twitch_delete_chat_message,
-        op_twitch_delete_all_chat_messages,
-        op_twitch_create_stream_marker,
+        op_twitch_get_credentials,
         // KV
         op_kv_get,
         op_kv_set,
         op_kv_remove,
         // VTFTK Sounds
-        op_vtftk_play_sound,
-        op_vtftk_play_sound_seq,
         op_vtftk_get_sounds_by_names,
         op_vtftk_get_sounds_by_ids,
         // VTFTK Items
         op_vtftk_get_items_by_names,
         op_vtftk_get_items_by_ids,
-        op_vtftk_throw_items,
-        // VTFTK Hotkeys
-        op_vtftk_trigger_vt_hotkey,
-        op_vtftk_trigger_vt_hotkey_by_name,
     ],
     docs = "Extension providing APIs to the JS runtime"
 );

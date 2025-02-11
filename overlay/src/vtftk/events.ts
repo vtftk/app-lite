@@ -16,13 +16,13 @@ import {
   executeInterval,
 } from "../utils";
 import {
-  Sound,
   AppData,
   ModelId,
   ItemWithSounds,
   ThrowItemConfig,
   ModelCalibration,
   ItemWithSoundIds,
+  PartialSoundModel,
   ThrowItemConfigType,
 } from "./types";
 
@@ -159,13 +159,16 @@ async function onUpdateHotkeysEvent(vtSocket: VTubeStudioWebSocket) {
   return hotkeys;
 }
 
-async function onPlaySoundEvent(appData: AppData, config: Sound) {
+async function onPlaySoundEvent(appData: AppData, config: PartialSoundModel) {
   const audio = await loadAudio(config.src);
   audio.volume = config.volume * appData.sounds_config.global_volume;
   audio.play();
 }
 
-async function onPlaySoundSeqEvent(appData: AppData, configs: Sound[]) {
+async function onPlaySoundSeqEvent(
+  appData: AppData,
+  configs: PartialSoundModel[],
+) {
   const sounds = await loadSounds(configs);
 
   for (const config of configs) {

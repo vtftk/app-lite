@@ -13,6 +13,7 @@ import * as dateFns from "date-fns";
 
 import * as kv from "./kv";
 import * as http from "./http";
+import * as core from "./core";
 import * as vtftk from "./vtftk";
 import * as twitch from "./twitch";
 import * as random from "./random";
@@ -31,6 +32,7 @@ type VTFTKAPI = typeof vtftk;
 type IntegrationsAPI = typeof integrations;
 type RandomAPI = typeof random;
 type InternalAPI = typeof internal;
+type CoreAPI = typeof core;
 
 interface API {
   /**
@@ -66,6 +68,10 @@ interface API {
    * @internal
    */
   internal: InternalAPI;
+  /**
+   * Core - Provides some useful core features used internally like UUIDs
+   */
+  core: CoreAPI;
 }
 
 /**
@@ -88,6 +94,7 @@ const _api: Readonly<API> = Object.freeze({
   integrations,
   random,
   internal,
+  core,
 });
 
 const _modules: Readonly<Modules> = Object.freeze({

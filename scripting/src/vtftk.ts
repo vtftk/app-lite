@@ -1,3 +1,5 @@
+import { uuidv4 } from "./core";
+
 /**
  * Sound stored within VTFTK
  */
@@ -46,7 +48,14 @@ export interface SoundModel {
  * @returns Promise resolved when the sound has been sent to the event queue
  */
 export function playSound(src: string, volume: number = 1): Promise<void> {
-  return Deno.core.ops.op_vtftk_play_sound(src, volume);
+  return emitEventMessage({
+    type: "PlaySound",
+    config: {
+      id: uuidv4(),
+      src,
+      volume,
+    },
+  });
 }
 
 interface SoundSeq {
@@ -69,7 +78,14 @@ interface SoundSeq {
  * @returns Promise resolved when the sounds has been sent to the event queue
  */
 export function playSoundSeq(sounds: SoundSeq[]): Promise<void> {
-  return Deno.core.ops.op_vtftk_play_sound_seq(sounds);
+  return emitEventMessage({
+    type: "PlaySoundSeq",
+    configs: sounds.map((sound) => ({
+      id: uuidv4(),
+      src: sound.src,
+      volume: sound.volume,
+    })),
+  });
 }
 
 /**
@@ -508,7 +524,11 @@ export function throwItems(
   items: ItemsWithSounds,
   config: ThrowItemConfig,
 ): Promise<void> {
-  return Deno.core.ops.op_vtftk_throw_items(items, config);
+  return emitEventMessage({
+    type: "ThrowItem",
+    items,
+    config,
+  });
 }
 
 /**
@@ -518,7 +538,10 @@ export function throwItems(
  * @returns Promise resolved when the hotkey is triggered
  */
 export function triggerVTHotkey(hotkeyID: string): Promise<void> {
-  return Deno.core.ops.op_vtftk_trigger_vt_hotkey(hotkeyID);
+  return emitEventMessage({
+    type: "TriggerHotkey",
+    hotkey_id: hotkeyID,
+  });
 }
 
 /**
@@ -532,8 +555,19 @@ export function triggerVTHotkeyByName(
   hotkeyName: string,
   ignoreCase: boolean = false,
 ): Promise<void> {
-  return Deno.core.ops.op_vtftk_trigger_vt_hotkey_by_name(
-    hotkeyName,
-    ignoreCase,
-  );
+  return emitEventMessage({
+    type: "TriggerHotkeyByName",
+    hotkey_name: hotkeyName,
+    ignore_case: ignoreCase,
+  });
+}
+
+/**
+ * Emit a message to the overlay websockets
+ *
+ * @param msg
+ * @returns
+ */
+function emitEventMessage(msg: unknown): Promise<void> {
+  return Deno.core.ops.op_vtftk_emit_event_message(msg);
 }

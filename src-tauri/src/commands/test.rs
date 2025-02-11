@@ -1,10 +1,6 @@
 use super::CmdResult;
-use crate::{
-    database::entity::sounds::SoundModel,
-    events::{
-        outcome::resolve_items, EventMessage, EventMessageChannel, ThrowItemConfig,
-        ThrowItemMessage,
-    },
+use crate::events::{
+    outcome::resolve_items, EventMessage, EventMessageChannel, ThrowItemConfig, ThrowItemMessage,
 };
 use anyhow::Context;
 use log::debug;
@@ -62,19 +58,6 @@ pub async fn test_throw_barrage(
     }))?;
 
     Ok(())
-}
-
-/// Plays a test sound event
-#[tauri::command]
-pub fn test_sound(
-    config: SoundModel,
-    event_sender: State<'_, EventMessageChannel>,
-) -> Result<bool, ()> {
-    event_sender
-        .send(EventMessage::PlaySound { config })
-        .map_err(|_| ())?;
-
-    Ok(true)
 }
 
 /// Attempts to detect a locally running VTube studio instance by using
