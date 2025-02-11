@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use super::commands::CommandModel;
 
 // Type alias helpers for the database entity types
-pub type CommandAliasModel = Model;
 pub type CommandAliasActiveModel = ActiveModel;
 pub type CommandAliasColumn = Column;
 

@@ -11,7 +11,6 @@ use uuid::Uuid;
 
 use crate::{
     database::entity::{
-        app_data::AppDataModel,
         command_logs::{CommandLogsModel, CreateCommandLog},
         event_logs::{CreateEventLog, EventLogsModel},
         items::ItemModel,
@@ -21,7 +20,6 @@ use crate::{
         sounds::SoundModel,
     },
     events::{EventMessage, ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig, ThrowItemMessage},
-    integrations::tts_monster::{TTSMonsterService, TTSMonsterVoice},
     twitch::{manager::Twitch, models::TwitchUser},
 };
 
@@ -608,78 +606,6 @@ impl Handler<PlaySoundSeq> for ScriptEventActor {
     }
 }
 
-/// Message to get the list of available TTS voices
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<Vec<TTSMonsterVoice>>")]
-pub struct TTSGetVoices;
-
-impl Handler<TTSGetVoices> for ScriptEventActor {
-    type Response = Fr<TTSGetVoices>;
-
-    fn handle(&mut self, _msg: TTSGetVoices, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let db = self.db.clone();
-        Fr::new_box(async move {
-            let externals_config = AppDataModel::get_externals_config(&db).await?;
-            let token = externals_config
-                .tts_monster_api_key
-                .context("missing tts monster api key")?;
-
-            TTSMonsterService::get_voices(&token).await
-        })
-    }
-}
-
-/// Message to generate a TTS message
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<String>")]
-pub struct TTSGenerate {
-    pub voice_id: Uuid,
-    pub message: String,
-}
-
-impl Handler<TTSGenerate> for ScriptEventActor {
-    type Response = Fr<TTSGenerate>;
-
-    fn handle(&mut self, msg: TTSGenerate, _ctx: &mut ServiceContext<Self>) -> Self::Response {
-        let db = self.db.clone();
-        Fr::new_box(async move {
-            let externals_config = AppDataModel::get_externals_config(&db).await?;
-            let token = externals_config
-                .tts_monster_api_key
-                .context("missing tts monster api key")?;
-
-            TTSMonsterService::generate(&token, msg.voice_id, msg.message).await
-        })
-    }
-}
-
-/// Message to generate a TTS message from a message that
-/// is first parsed to determine which voices to use
-#[derive(Message)]
-#[msg(rtype = "anyhow::Result<Vec<String>>")]
-pub struct TTSGenerateParsed {
-    pub message: String,
-}
-
-impl Handler<TTSGenerateParsed> for ScriptEventActor {
-    type Response = Fr<TTSGenerateParsed>;
-
-    fn handle(
-        &mut self,
-        msg: TTSGenerateParsed,
-        _ctx: &mut ServiceContext<Self>,
-    ) -> Self::Response {
-        let db = self.db.clone();
-        Fr::new_box(async move {
-            let externals_config = AppDataModel::get_externals_config(&db).await?;
-            let token = externals_config
-                .tts_monster_api_key
-                .context("missing tts monster api key")?;
-
-            TTSMonsterService::generate_parsed(&token, msg.message).await
-        })
-    }
-}
 #[derive(Message)]
 #[msg(rtype = "()")]
 pub struct LogPersistEvent {

@@ -20,7 +20,6 @@
   import FormNumberInput from "$lib/components/form/FormNumberInput.svelte";
   import FormBoundCheckbox from "$lib/components/form/FormBoundCheckbox.svelte";
   import DetectVTubeStudio from "$lib/sections/settings/DetectVTubeStudio.svelte";
-  import SolarShareCircleBoldDuotone from "~icons/solar/share-circle-bold-duotone";
   import SolarPeopleNearbyBoldDuotone from "~icons/solar/people-nearby-bold-duotone";
   import SolarHeadphonesRoundBoldDuotone from "~icons/solar/headphones-round-bold-duotone";
   import {
@@ -70,11 +69,6 @@
       port: z.number(),
     }),
 
-    // Schema for external configuration
-    external: z.object({
-      tts_monster_api_key: z.string(),
-    }),
-
     main: z.object({
       minimize_to_tray: z.boolean(),
       clean_logs: z.boolean(),
@@ -104,7 +98,6 @@
       model_config,
       sounds_config,
       vtube_studio_config,
-      externals_config,
       main_config,
       physics_config,
     } = appData;
@@ -128,9 +121,6 @@
       vtube_studio: {
         host: vtube_studio_config.host,
         port: vtube_studio_config.port,
-      },
-      external: {
-        tts_monster_api_key: externals_config.tts_monster_api_key ?? "",
       },
       main: {
         minimize_to_tray: main_config.minimize_to_tray,
@@ -175,8 +165,7 @@
   );
 
   async function save(values: Schema) {
-    const { throwables, model, sounds, vtube_studio, external, main, physics } =
-      values;
+    const { throwables, model, sounds, vtube_studio, main, physics } = values;
 
     await $appDataMutation.mutateAsync({
       ...appData,
@@ -203,13 +192,6 @@
         ...appData.vtube_studio_config,
         host: vtube_studio.host,
         port: vtube_studio.port,
-      },
-      externals_config: {
-        ...appData.externals_config,
-        tts_monster_api_key:
-          external.tts_monster_api_key.trim().length < 1
-            ? null
-            : external.tts_monster_api_key,
       },
       main_config: {
         ...appData.main_config,
@@ -610,31 +592,6 @@
   </FormSections>
 {/snippet}
 
-{#snippet externalsTabContent()}
-  <FormSections>
-    <FormSection title="TTS Monster API Key">
-      <FormTextInput
-        id="external.tts_monster_api_key"
-        name="external.tts_monster_api_key"
-        label="TTS Monster API Key"
-        description="API Key to use TTS monster TTS voice generation"
-        type="password"
-      />
-
-      <p class="helper">
-        You can find your TTS Monster API key using the instructions
-        <a
-          href="https://docs.tts.monster/authentication#finding-your-api-token"
-          target="_blank"
-          class="link"
-        >
-          Here
-        </a>
-      </p>
-    </FormSection>
-  </FormSections>
-{/snippet}
-
 {#snippet actions()}
   <Button type="submit">Save</Button>
 {/snippet}
@@ -676,12 +633,6 @@
           icon: SolarPeopleNearbyBoldDuotone,
           label: "VTuber Model",
           content: vtubeModelTabContent,
-        },
-        {
-          value: "external",
-          icon: SolarShareCircleBoldDuotone,
-          label: "External APIs",
-          content: externalsTabContent,
         },
       ]}
     />

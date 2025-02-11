@@ -14,7 +14,6 @@ use crate::{
             op_vtftk_get_items_by_ids, op_vtftk_get_items_by_names, op_vtftk_get_sounds_by_ids,
             op_vtftk_get_sounds_by_names, op_vtftk_play_sound, op_vtftk_play_sound_seq,
             op_vtftk_throw_items, op_vtftk_trigger_vt_hotkey, op_vtftk_trigger_vt_hotkey_by_name,
-            op_vtftk_tts_generate, op_vtftk_tts_generate_parsed, op_vtftk_tts_get_voices,
         },
     },
 };
@@ -73,10 +72,6 @@ deno_core::extension!(
         // VTFTK Hotkeys
         op_vtftk_trigger_vt_hotkey,
         op_vtftk_trigger_vt_hotkey_by_name,
-        // TTS Monster
-        op_vtftk_tts_generate,
-        op_vtftk_tts_get_voices,
-        op_vtftk_tts_generate_parsed,
     ],
     docs = "Extension providing APIs to the JS runtime"
 );

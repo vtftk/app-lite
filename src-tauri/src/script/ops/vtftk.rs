@@ -1,11 +1,9 @@
 use crate::{
     database::entity::sounds::SoundModel,
     events::{ItemWithSoundIds, ItemsWithSounds, ThrowItemConfig},
-    integrations::tts_monster::TTSMonsterVoice,
     script::events::{
         global_script_event, GetItemsByIDs, GetItemsByNames, GetSoundsByIDs, GetSoundsByNames,
-        PlaySound, PlaySoundSeq, TTSGenerate, TTSGenerateParsed, TTSGetVoices, ThrowItems,
-        TriggerHotkey, TriggerHotkeyByName,
+        PlaySound, PlaySoundSeq, ThrowItems, TriggerHotkey, TriggerHotkeyByName,
     },
 };
 use anyhow::Context;
@@ -133,35 +131,6 @@ pub async fn op_vtftk_play_sound_seq(#[serde] seq: Vec<SoundSeq>) -> anyhow::Res
         .collect();
 
     global_script_event(PlaySoundSeq { configs })
-        .await
-        .context("failed to send event")?
-}
-
-#[op2(async)]
-#[serde]
-pub async fn op_vtftk_tts_generate_parsed(
-    #[string] message: String,
-) -> anyhow::Result<Vec<String>> {
-    global_script_event(TTSGenerateParsed { message })
-        .await
-        .context("failed to send event")?
-}
-
-#[op2(async)]
-#[serde]
-pub async fn op_vtftk_tts_get_voices() -> anyhow::Result<Vec<TTSMonsterVoice>> {
-    global_script_event(TTSGetVoices)
-        .await
-        .context("failed to send event")?
-}
-
-#[op2(async)]
-#[string]
-pub async fn op_vtftk_tts_generate(
-    #[serde] voice_id: Uuid,
-    #[string] message: String,
-) -> anyhow::Result<String> {
-    global_script_event(TTSGenerate { voice_id, message })
         .await
         .context("failed to send event")?
 }

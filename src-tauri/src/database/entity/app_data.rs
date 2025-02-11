@@ -48,7 +48,6 @@ impl PartialEq for AppData {
 #[serde(default)]
 pub struct AppConfig {
     pub main_config: MainConfig,
-    pub externals_config: ExternalsConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -113,12 +112,6 @@ impl Default for MainConfig {
             http_port: default_http_port(),
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default, FromJsonQueryResult)]
-#[serde(default)]
-pub struct ExternalsConfig {
-    pub tts_monster_api_key: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -371,29 +364,6 @@ impl Model {
             .one(db)
             .await?
             .map(|value| value.main_config)
-            .unwrap_or_default())
-    }
-
-    pub async fn get_externals_config<C>(db: &C) -> anyhow::Result<ExternalsConfig>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        #[derive(Default, FromQueryResult)]
-        struct PartialModel {
-            externals_config: ExternalsConfig,
-        }
-
-        Ok(Entity::find_by_id(Self::SINGLETON_ID)
-            .select_only()
-            // Select
-            .expr_as(
-                Expr::cust("json_extract(data, '$.externals_config')"),
-                "externals_config",
-            )
-            .into_model::<PartialModel>()
-            .one(db)
-            .await?
-            .map(|value| value.externals_config)
             .unwrap_or_default())
     }
 }

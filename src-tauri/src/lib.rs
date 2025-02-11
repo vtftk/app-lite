@@ -18,7 +18,6 @@ mod commands;
 mod database;
 mod events;
 mod http;
-mod integrations;
 mod script;
 mod state;
 mod storage;

@@ -11,7 +11,6 @@ export type AppData = {
   sounds_config: SoundsConfig;
   model_config: ModelConfig;
   vtube_studio_config: VTubeStudioConfig;
-  externals_config: ExternalsConfig;
   physics_config: PhysicsConfig;
 };
 
@@ -33,10 +32,6 @@ export type MainConfig = {
   clean_chat_history_days: number;
   auto_updating: boolean;
   http_port: number;
-};
-
-export type ExternalsConfig = {
-  tts_monster_api_key: string | null;
 };
 
 export type ThrowablesConfig = {
