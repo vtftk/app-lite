@@ -51,7 +51,7 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     Scope::ChannelReadVips,
     // Send chat messages
     Scope::UserWriteChat,
-    // Allows sending shoutouts from the scripting API
+    // Read shoutouts for shoutout trigger
     Scope::ModeratorReadShoutouts,
     // Scope to read ad break messages
     Scope::ChannelReadAds,
