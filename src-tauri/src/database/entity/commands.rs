@@ -8,8 +8,10 @@ use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
-    entity::prelude::*, sea_query::Func, ActiveValue::Set, Condition, FromJsonQueryResult,
-    IntoActiveModel, QueryOrder, QuerySelect, UpdateResult,
+    entity::prelude::*,
+    sea_query::{CaseStatement, Func},
+    ActiveValue::Set,
+    Condition, FromJsonQueryResult, IntoActiveModel, QueryOrder, QuerySelect, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -350,19 +352,26 @@ impl Model {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        let _results: Result<Vec<UpdateResult>, DbErr> = data
-            .into_iter()
-            .map(|data| -> BoxFuture<'_, DbResult<UpdateResult>> {
+        data.chunks(1000)
+            .map(|order_chunk| -> BoxFuture<'_, DbResult<UpdateResult>> {
+                let mut case = CaseStatement::new()
+                    // Use the current column value when not specified
+                    .finally(Expr::col(Column::Order));
+
+                // Add case for all updated values
+                for order in order_chunk {
+                    case = case.case(Expr::col(Column::Id).eq(order.id), Expr::value(order.order));
+                }
+
                 Box::pin(
                     Entity::update_many()
-                        .filter(Column::Id.eq(data.id))
-                        .col_expr(Column::Order, data.order.into())
+                        .col_expr(Column::Order, case.into())
                         .exec(db),
                 )
             })
             .collect::<FuturesUnordered<BoxFuture<'_, DbResult<UpdateResult>>>>()
-            .try_collect()
-            .await;
+            .try_collect::<Vec<UpdateResult>>()
+            .await?;
 
         Ok(())
     }
