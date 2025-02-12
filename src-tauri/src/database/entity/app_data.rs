@@ -65,10 +65,6 @@ pub struct OverlayConfig {
 pub struct MainConfig {
     /// Minimize to try instead of closing
     pub minimize_to_tray: bool,
-    /// Clean old log data on startup
-    pub clean_logs: bool,
-    /// Number of days of logs to retain when cleaning logs
-    pub clean_logs_days: u64,
     /// Clean old execution data on start
     pub clean_executions: bool,
     /// Number of days of execution data to retain when cleaning executions
@@ -102,8 +98,6 @@ impl Default for MainConfig {
     fn default() -> Self {
         Self {
             minimize_to_tray: true,
-            clean_logs: true,
-            clean_logs_days: 30,
             clean_executions: true,
             clean_executions_days: 30,
             clean_chat_history: true,

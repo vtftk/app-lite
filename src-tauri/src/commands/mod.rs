@@ -1,8 +1,6 @@
 use serde::Serialize;
 
 pub mod calibration;
-#[allow(clippy::module_inception)]
-pub mod commands;
 pub mod data;
 pub mod events;
 pub mod items;

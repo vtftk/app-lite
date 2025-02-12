@@ -3,7 +3,6 @@ use database::{clean_old_data, entity::app_data::AppDataModel};
 use events::{
     create_event_channel, processing::process_twitch_events, scheduler::create_scheduler,
 };
-use script::runtime::{create_script_executor, ScriptRuntimeData};
 use sea_orm::DatabaseConnection;
 use state::runtime_app_data::RuntimeAppDataStore;
 use std::error::Error;
@@ -18,7 +17,6 @@ mod commands;
 mod database;
 mod events;
 mod http;
-mod script;
 mod state;
 mod storage;
 mod tray;
@@ -57,7 +55,6 @@ pub fn run() {
             commands::data::get_overlay_url,
             commands::data::get_chat_history_estimate_size,
             commands::data::get_executions_estimate_size,
-            commands::data::get_logs_estimate_size,
             // Twitch commands
             commands::twitch::get_twitch_oauth_uri,
             commands::twitch::is_authenticated,
@@ -79,17 +76,6 @@ pub fn run() {
             commands::sounds::update_sound,
             commands::sounds::delete_sound,
             commands::sounds::update_sound_orderings,
-            // Command commands
-            commands::commands::get_commands,
-            commands::commands::get_command_by_id,
-            commands::commands::create_command,
-            commands::commands::update_command,
-            commands::commands::delete_command,
-            commands::commands::get_command_logs,
-            commands::commands::delete_command_logs,
-            commands::commands::update_command_orderings,
-            commands::commands::get_command_executions,
-            commands::commands::delete_command_executions,
             // Event commands
             commands::events::get_events,
             commands::events::get_event_by_id,
@@ -100,8 +86,6 @@ pub fn run() {
             commands::events::update_event_orderings,
             commands::events::get_event_executions,
             commands::events::delete_event_executions,
-            commands::events::get_event_logs,
-            commands::events::delete_event_logs,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -125,22 +109,8 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
 
     let runtime_app_data = RuntimeAppDataStore::new(handle.clone());
 
-    let script_handle = create_script_executor(
-        app_data_path.join("modules"),
-        ScriptRuntimeData {
-            db: db.clone(),
-            event_sender: event_tx.clone(),
-            twitch: twitch.clone(),
-        },
-    );
-
     // Create background event scheduler
-    let scheduler_handle = create_scheduler(
-        db.clone(),
-        twitch.clone(),
-        script_handle.clone(),
-        event_tx.clone(),
-    );
+    let scheduler_handle = create_scheduler(db.clone(), twitch.clone(), event_tx.clone());
 
     let storage = Storage::new_fs(handle)?;
 
@@ -156,9 +126,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
     // Provide access to twitch manager and event sender
     app.manage(event_tx.clone());
     app.manage(twitch.clone());
-
-    // Provide access to script running and
-    app.manage(script_handle.clone());
 
     // Provide database access
     app.manage(db.clone());
@@ -177,7 +144,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn Error>> {
     _ = spawn(process_twitch_events(
         db.clone(),
         twitch.clone(),
-        script_handle,
         event_tx.clone(),
         twitch_event_rx,
     ));

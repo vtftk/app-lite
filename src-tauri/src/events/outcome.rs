@@ -6,14 +6,13 @@ use crate::{
     database::entity::{
         events::{
             EventModel, EventOutcome, EventOutcomeBits, EventOutcomeChannelEmotes,
-            EventOutcomePlaySound, EventOutcomeScript, EventOutcomeSendChat, EventOutcomeThrowable,
+            EventOutcomePlaySound, EventOutcomeSendChat, EventOutcomeThrowable,
             EventOutcomeTriggerHotkey, ThrowableAmountData,
         },
         items::{ItemConfig, ItemImageConfig, ItemModel},
         items_sounds::SoundType,
         sounds::{PartialSoundModel, SoundModel},
     },
-    script::runtime::{RuntimeExecutionContext, ScriptExecutorHandle},
     twitch::manager::Twitch,
 };
 use anyhow::{anyhow, Context};
@@ -27,7 +26,6 @@ use uuid::Uuid;
 pub async fn produce_outcome_message(
     db: &DatabaseConnection,
     twitch: &Twitch,
-    script_handle: &ScriptExecutorHandle,
 
     event: EventModel,
     event_data: EventData,
@@ -41,31 +39,10 @@ pub async fn produce_outcome_message(
             send_chat_message(twitch, event_data, data).await?;
             Ok(None)
         }
-        EventOutcome::Script(data) => {
-            execute_script(script_handle, event.id, event_data, data).await?;
-            Ok(None)
-        }
         EventOutcome::ChannelEmotes(data) => throw_channel_emotes_outcome(twitch, event_data, data)
             .await
             .map(Some),
     }
-}
-
-pub async fn execute_script(
-    script_handle: &ScriptExecutorHandle,
-    event_id: Uuid,
-    event_data: EventData,
-    data: EventOutcomeScript,
-) -> anyhow::Result<()> {
-    script_handle
-        .execute(
-            RuntimeExecutionContext::Event { event_id },
-            data.script,
-            event_data,
-        )
-        .await?;
-
-    Ok(())
 }
 
 fn format_subscription_tier(tier: SubscriptionTier) -> &'static str {

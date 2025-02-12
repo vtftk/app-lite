@@ -5,7 +5,6 @@ use chrono::Utc;
 use log::error;
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Deserializer, Serialize};
-use tokio::join;
 use twitch_api::{
     eventsub::channel::chat::Fragment,
     types::{MsgId, SubscriptionTier},
@@ -15,7 +14,6 @@ use uuid::Uuid;
 use crate::{
     database::entity::{
         chat_history::{ChatHistoryModel, CreateChatHistory},
-        commands::CommandModel,
         events::{EventModel, EventTrigger, EventTriggerType},
     },
     twitch::models::{
@@ -30,22 +28,8 @@ pub struct EventMatchingData {
     /// List of events to attempt to trigger
     pub events: Vec<EventModel>,
 
-    /// List of commands to trigger
-    pub commands: Vec<CommandWithContext>,
-
     /// Additional data attached to the event
     pub event_data: EventData,
-}
-
-/// Command to trigger with some additional context
-pub struct CommandWithContext {
-    pub command: CommandModel,
-
-    /// Message with the command/alias removed
-    pub message: String,
-
-    /// Args with the first argument command/alias removed
-    pub args: Vec<String>,
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -217,11 +201,7 @@ pub async fn match_redeem_event(
         }),
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_cheer_bits_event(
@@ -266,11 +246,7 @@ pub async fn match_cheer_bits_event(
         user,
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_follow_event(
@@ -295,11 +271,7 @@ pub async fn match_follow_event(
         ..Default::default()
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_subscription_event(
@@ -327,11 +299,7 @@ pub async fn match_subscription_event(
         }),
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_gifted_subscription_event(
@@ -367,11 +335,7 @@ pub async fn match_gifted_subscription_event(
         user,
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_re_subscription_event(
@@ -402,11 +366,7 @@ pub async fn match_re_subscription_event(
         }),
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 async fn store_chat_event(
@@ -450,16 +410,11 @@ pub async fn match_chat_event(
         Some(args.remove(0))
     };
 
-    let (events, commands) = if let Some(first_arg) = first_arg {
+    let events = if let Some(first_arg) = first_arg {
         // Get the command argument from the first argument
         let command_arg = first_arg.trim().to_lowercase();
 
-        let (events, commands) = join!(
-            // Load all command event triggers
-            EventModel::get_by_trigger_type(db, EventTriggerType::Command),
-            // Load all commands
-            CommandModel::get_by_command(db, &command_arg),
-        );
+        let events = EventModel::get_by_trigger_type(db, EventTriggerType::Command).await;
 
         let events = match events {
             Ok(value) => value,
@@ -469,42 +424,13 @@ pub async fn match_chat_event(
             }
         };
 
-        let commands = match commands {
-            Ok(value) => value,
-            Err(err) => {
-                error!("failed to load commands: {:?}", err);
-                Default::default()
-            }
-        };
-
         // Filter events for matching command messages
-        let events = events
+        events
             .into_iter()
             .filter(|event| matches!(&event.trigger, EventTrigger::Command { message } if message.trim().to_lowercase().eq(&command_arg)))
-            .collect();
-
-        // Provide additional context to commands
-        let commands = commands
-            .into_iter()
-            .map(|command| {
-                // Strip prefix and trim any leading space
-                let message = message
-                    .strip_prefix(&first_arg)
-                    .unwrap_or(&message)
-                    .trim_start()
-                    .to_string();
-
-                CommandWithContext {
-                    command,
-                    message,
-                    args: args.clone(),
-                }
-            })
-            .collect();
-
-        (events, commands)
+            .collect()
     } else {
-        (Default::default(), Default::default())
+        Default::default()
     };
 
     let event_data = EventData {
@@ -521,11 +447,7 @@ pub async fn match_chat_event(
         }),
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands,
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_raid_event(
@@ -563,11 +485,7 @@ pub async fn match_raid_event(
         }),
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_ad_break_event(
@@ -591,11 +509,7 @@ pub async fn match_ad_break_event(
         user: None,
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 pub async fn match_shoutout_receive_event(
@@ -633,11 +547,7 @@ pub async fn match_shoutout_receive_event(
         }),
     };
 
-    Ok(EventMatchingData {
-        events,
-        commands: Default::default(),
-        event_data,
-    })
+    Ok(EventMatchingData { events, event_data })
 }
 
 #[cfg(test)]
@@ -649,11 +559,8 @@ mod test {
     };
     use crate::{
         database::{
-            entity::{
-                commands::{CommandModel, CommandOutcome, CreateCommand},
-                events::{
-                    CreateEvent, EventModel, EventOutcome, EventOutcomeSendChat, EventTrigger,
-                },
+            entity::events::{
+                CreateEvent, EventModel, EventOutcome, EventOutcomeSendChat, EventTrigger,
             },
             mock_database,
         },
@@ -1170,107 +1077,6 @@ mod test {
 
         // Expect found event to match created
         assert_eq!(event.id, expected_event.id);
-    }
-
-    #[tokio::test]
-    async fn test_match_chat_event_command() {
-        let db = mock_database().await;
-
-        let expected_command = CommandModel::create(
-            &db,
-            CreateCommand {
-                enabled: true,
-                name: "Test Event".to_string(),
-                command: "!test".to_string(),
-                outcome: CommandOutcome::Template {
-                    message: "test".to_string(),
-                },
-                cooldown: Default::default(),
-                require_role: Default::default(),
-                aliases: Vec::new(),
-            },
-        )
-        .await
-        .unwrap();
-
-        let message = serde_json::json!({
-            "text": "!test",
-            "fragments": []
-        });
-        let message: twitch_api::eventsub::channel::chat::Message =
-            serde_json::from_value(message).unwrap();
-
-        let found_event = match_chat_event(
-            &db,
-            TwitchEventChatMsg {
-                message_id: "mock-message".into(),
-                message,
-                cheer: None,
-
-                user_id: UserId::from_static("mock-user-id"),
-                user_name: UserName::from_static("mockuser"),
-                user_display_name: DisplayName::from_static("Mock User"),
-            },
-        )
-        .await
-        .unwrap();
-
-        let command = found_event
-            .commands
-            .first()
-            .expect("missing matching event");
-
-        // Expect found event to match created
-        assert_eq!(command.command.id, expected_command.id);
-    }
-
-    #[tokio::test]
-    async fn test_match_chat_event_command_not_matching() {
-        let db = mock_database().await;
-
-        CommandModel::create(
-            &db,
-            CreateCommand {
-                enabled: true,
-                name: "Test Event".to_string(),
-                command: "!test".to_string(),
-                outcome: CommandOutcome::Template {
-                    message: "test".to_string(),
-                },
-                cooldown: Default::default(),
-                require_role: Default::default(),
-                aliases: Vec::new(),
-            },
-        )
-        .await
-        .unwrap();
-
-        let message = serde_json::json!({
-            "text": "!tes",
-            "fragments": []
-        });
-        let message: twitch_api::eventsub::channel::chat::Message =
-            serde_json::from_value(message).unwrap();
-
-        let found_event = match_chat_event(
-            &db,
-            TwitchEventChatMsg {
-                message_id: "mock-message".into(),
-                message,
-                cheer: None,
-
-                user_id: UserId::from_static("mock-user-id"),
-                user_name: UserName::from_static("mockuser"),
-                user_display_name: DisplayName::from_static("Mock User"),
-            },
-        )
-        .await
-        .unwrap();
-
-        assert!(
-            found_event.commands.is_empty(),
-            "should not match any events"
-        );
     }
 
     #[tokio::test]

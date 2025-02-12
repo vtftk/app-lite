@@ -8,10 +8,8 @@ use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
-    entity::prelude::*,
-    sea_query::{CaseStatement, Func},
-    ActiveValue::Set,
-    FromJsonQueryResult, IntoActiveModel, QueryOrder, UpdateResult,
+    entity::prelude::*, sea_query::CaseStatement, ActiveValue::Set, FromJsonQueryResult,
+    IntoActiveModel, QueryOrder, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -158,34 +156,6 @@ impl Model {
         Entity::find()
             .find_with_related(super::items_sounds::Entity)
             .filter(Column::Id.is_in(ids.iter().copied()))
-            .all(db)
-            .await
-    }
-
-    /// Find items with names present in the provided list
-    pub async fn get_by_names_with_sounds<C>(
-        db: &C,
-        names: &[String],
-        ignore_case: bool,
-    ) -> DbResult<Vec<(Self, Vec<ItemsSoundsModel>)>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        let mut select = Entity::find();
-
-        if ignore_case {
-            select = select.filter(
-                // Convert stored name to lower case
-                Expr::expr(Func::lower(Expr::col(Column::Name)))
-                    // Compare with lowercase value
-                    .is_in(names.iter().map(|value| value.to_lowercase())),
-            )
-        } else {
-            select = select.filter(Column::Name.is_in(names))
-        }
-
-        select
-            .find_with_related(super::items_sounds::Entity)
             .all(db)
             .await
     }

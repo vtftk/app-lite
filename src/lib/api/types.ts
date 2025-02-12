@@ -34,57 +34,6 @@ export type VTubeStudioBroadcast = {
   };
 };
 
-export type CommandId = Uuid;
-
-export type Command = {
-  id: Uuid;
-  enabled: boolean;
-  name: string;
-  command: string;
-  outcome: CommandOutcome;
-  cooldown: CommandCooldown;
-  require_role: MinimumRequiredRole;
-  order: number;
-};
-
-export type CommandWithAliases = Command & {
-  aliases: string[];
-};
-
-export type CommandCooldown = {
-  enabled: boolean;
-  duration: number;
-  per_user: boolean;
-};
-
-export type CreateCommand = {
-  enabled: boolean;
-  name: string;
-  command: string;
-  outcome: CommandOutcome;
-  cooldown: CommandCooldown;
-  require_role: MinimumRequiredRole;
-  aliases: string[];
-};
-
-export type UpdateCommand = {
-  commandId: CommandId;
-  update: Partial<{
-    enabled: boolean;
-    name: string;
-    command: string;
-    outcome: CommandOutcome;
-    cooldown: CommandCooldown;
-    require_role: MinimumRequiredRole;
-    order: number;
-    aliases: string[];
-  }>;
-};
-
-export type CommandExecution = {
-  command_id: string;
-} & ExecutionData;
-
 export type EventId = Uuid;
 
 export type VEvent = {
@@ -358,45 +307,6 @@ export enum SubscriptionTier {
   Prime = "Prime",
 }
 
-export type EventLog = {
-  event_id: string;
-} & LogData;
-
-export type CommandLog = {
-  command_id: string;
-} & LogData;
-
-export type LogId = string;
-
-export type LogData = {
-  id: LogId;
-  level: LoggingLevelStr;
-  message: string;
-  created_at: string;
-};
-
-export enum LoggingLevelDb {
-  Debug = 0,
-  Info = 1,
-  Warn = 2,
-  Error = 3,
-}
-
-export enum LoggingLevelStr {
-  Debug = "Debug",
-  Info = "Info",
-  Warn = "Warn",
-  Error = "Error",
-}
-
-export type LogsQuery = Partial<{
-  level: LoggingLevelDb;
-  start_date: string;
-  end_date: string;
-  offset: number;
-  limit: number;
-}>;
-
 export type ExecutionsQuery = Partial<{
   start_date: string;
   end_date: string;
@@ -570,7 +480,6 @@ export enum EventOutcomeType {
   TriggerHotkey = "TriggerHotkey",
   PlaySound = "PlaySound",
   SendChatMessage = "SendChatMessage",
-  Script = "Script",
   ChannelEmotes = "ChannelEmotes",
 }
 
@@ -589,7 +498,6 @@ export type EventOutcomeThrowable = {
 export type EventOutcomeTriggerHotkey = { hotkey_id: Uuid };
 export type EventOutcomePlaySound = { sound_id: Uuid };
 export type EventOutcomeSendChatMessage = { template: string };
-export type EventOutcomeScript = { script: string };
 export type EventOutcomeChannelEmotes = {
   amount: ThrowableData;
 };
@@ -599,7 +507,6 @@ export type EventOutcome =
   | ({ type: EventOutcomeType.TriggerHotkey } & EventOutcomeTriggerHotkey)
   | ({ type: EventOutcomeType.PlaySound } & EventOutcomePlaySound)
   | ({ type: EventOutcomeType.SendChatMessage } & EventOutcomeSendChatMessage)
-  | ({ type: EventOutcomeType.Script } & EventOutcomeScript)
   | ({ type: EventOutcomeType.ChannelEmotes } & EventOutcomeChannelEmotes);
 
 export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
@@ -609,15 +516,3 @@ export type EventOutcomeVariant<T extends EventOutcomeType> = Extract<
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CustomReward = any;
-
-export enum CommandOutcomeType {
-  Template = "Template",
-  Script = "Script",
-}
-
-export type CommandOutcomeTemplate = { message: string };
-export type CommandOutcomeScript = { script: string };
-
-export type CommandOutcome =
-  | ({ type: CommandOutcomeType.Template } & CommandOutcomeTemplate)
-  | ({ type: CommandOutcomeType.Script } & CommandOutcomeScript);

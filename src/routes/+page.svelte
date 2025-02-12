@@ -8,7 +8,7 @@
 </script>
 
 <PageLayoutList
-  title="Home | VTFTK"
+  title="Home | VTFTK Lite"
   description="Details about your current setup"
 >
   {#snippet actions()}

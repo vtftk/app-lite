@@ -8,7 +8,6 @@ use crate::{
         processing::execute_event,
         EventMessage,
     },
-    script::runtime::ScriptExecutorHandle,
     twitch::manager::Twitch,
 };
 use anyhow::Context;
@@ -64,7 +63,6 @@ impl SchedulerHandle {
 pub fn create_scheduler(
     db: DatabaseConnection,
     twitch: Twitch,
-    script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
 ) -> SchedulerHandle {
     let (tx, rx) = mpsc::channel(5);
@@ -90,7 +88,6 @@ pub fn create_scheduler(
         current_sleep: None,
         db,
         twitch,
-        script_handle,
         event_sender,
     });
 
@@ -110,14 +107,12 @@ struct SchedulerEventLoop {
 
     db: DatabaseConnection,
     twitch: Twitch,
-    script_handle: ScriptExecutorHandle,
     event_sender: broadcast::Sender<EventMessage>,
 }
 
 async fn execute_scheduled_event(
     db: DatabaseConnection,
     twitch: Twitch,
-    script_handle: ScriptExecutorHandle,
     event_sender: EventMessageChannel,
     event: EventModel,
 ) -> anyhow::Result<()> {
@@ -155,7 +150,6 @@ async fn execute_scheduled_event(
     execute_event(
         &db,
         &twitch,
-        &script_handle,
         &event_sender,
         event,
         EventData {
@@ -202,13 +196,10 @@ impl SchedulerEventLoop {
                 let event = event.event.clone();
                 let db = self.db.clone();
                 let twitch = self.twitch.clone();
-                let script_handle = self.script_handle.clone();
                 let event_sender = self.event_sender.clone();
 
                 async move {
-                    if let Err(err) =
-                        execute_scheduled_event(db, twitch, script_handle, event_sender, event)
-                            .await
+                    if let Err(err) = execute_scheduled_event(db, twitch, event_sender, event).await
                     {
                         error!("error while executing event outcome (in timer): {err:?}");
                     }

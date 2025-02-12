@@ -27,15 +27,14 @@
     createAppDateMutation,
   } from "$lib/api/runtimeAppData";
   import {
+    getExecutionsEstimateSize,
+    getChatHistoryEstimateSize,
+  } from "$lib/api/data";
+  import {
     type AppData,
     EYES_MODE_VALUES,
     THROW_DIRECTION_VALUES,
   } from "$lib/api/types";
-  import {
-    getLogsEstimateSize,
-    getExecutionsEstimateSize,
-    getChatHistoryEstimateSize,
-  } from "$lib/api/data";
 
   import EyesModeSelect from "./EyesModeSelect.svelte";
   import ThrowableDirectionSelect from "./ThrowableDirectionSelect.svelte";
@@ -71,8 +70,6 @@
 
     main: z.object({
       minimize_to_tray: z.boolean(),
-      clean_logs: z.boolean(),
-      clean_logs_days: z.number(),
       clean_executions: z.boolean(),
       clean_executions_days: z.number(),
       clean_chat_history: z.boolean(),
@@ -124,8 +121,6 @@
       },
       main: {
         minimize_to_tray: main_config.minimize_to_tray,
-        clean_logs: main_config.clean_logs,
-        clean_logs_days: main_config.clean_logs_days,
         clean_executions: main_config.clean_executions,
         clean_executions_days: main_config.clean_executions_days,
         clean_chat_history: main_config.clean_chat_history,
@@ -196,8 +191,7 @@
       main_config: {
         ...appData.main_config,
         minimize_to_tray: main.minimize_to_tray,
-        clean_logs: main.clean_logs,
-        clean_logs_days: main.clean_logs_days,
+
         clean_executions: main.clean_executions,
         clean_executions_days: main.clean_executions_days,
         clean_chat_history: main.clean_chat_history,
@@ -244,40 +238,7 @@
         Turn off this setting if you want the app to close fully when close is pushed.
       </Aside>
     </FormSection>
-    <FormSection
-      title="Logging"
-      description="VTFTK keeps track of logging messages when running scripts and commands, you can automatically clear them after time has passed in order to save space"
-    >
-      <p class="helper">
-        You can view and delete logs for individual scripts manually using the
-        "Logs" tab when editing the script/command
-      </p>
 
-      <FormBoundCheckbox
-        id="main.clean_logs"
-        name="main.clean_logs"
-        label="Automatically clean logs"
-        description="Disable this to prevent automatic log clearing"
-      />
-
-      <FormNumberInput
-        id="main.clean_logs_days"
-        name="main.clean_logs_days"
-        label="Retain days"
-        description="Number of days logs will be retained for"
-        min={0}
-      />
-      <p class="size-estimate">
-        {#await getLogsEstimateSize()}
-          Loading Estimate...
-        {:then sizeBytes}
-          Estimated Size:
-          <span class="size-estimate__size">
-            {formatBytes(sizeBytes)}
-          </span>
-        {/await}
-      </p>
-    </FormSection>
     <FormSection
       title="Executions"
       description="VTFTK tracks executions of commands and events, this allows it to keep track of cooldown and show you who's triggered a command or event"
@@ -644,10 +605,6 @@
     position: relative;
     overflow: hidden;
     height: 100%;
-  }
-
-  .helper {
-    font-size: 0.8rem;
   }
 
   .row {

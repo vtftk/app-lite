@@ -28,7 +28,7 @@ use twitch_api::{
 /// If you are forking this app program for your own use, please create your own
 /// twitch developer application client ID at https://dev.twitch.tv/console/apps
 pub const TWITCH_CLIENT_ID: &ClientIdRef =
-    ClientIdRef::from_static("x0zzeitiwvgblu743qnxzaipa9e01z");
+    ClientIdRef::from_static("ooliehf2tmiiipbahv3f0m007x8b2v");
 
 /// Scopes required from twitch by the app
 pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
@@ -52,13 +52,7 @@ pub const TWITCH_REQUIRED_SCOPES: &[Scope] = &[
     // Send chat messages
     Scope::UserWriteChat,
     // Allows sending shoutouts from the scripting API
-    Scope::ModeratorManageShoutouts,
-    // Allow sending chat announcements
-    Scope::ModeratorManageAnnouncements,
-    // Allow deleting messages
-    Scope::ModeratorManageChatMessages,
-    // Allow creating stream markers
-    Scope::ChannelManageBroadcast,
+    Scope::ModeratorReadShoutouts,
     // Scope to read ad break messages
     Scope::ChannelReadAds,
 ];

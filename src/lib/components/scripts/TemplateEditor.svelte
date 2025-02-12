@@ -1,6 +1,4 @@
 <script lang="ts">
-  import MonacoEditor from "./MonacoEditor.svelte";
-
   type EditorTemplate = {
     key: string;
     description: string;
@@ -18,15 +16,13 @@
 
 <div class="template-split">
   <section class="editor">
-    <MonacoEditor
-      language="commandTemplateFormat"
+    <textarea
+      class="input"
       {value}
-      {onChange}
-      {onUserSave}
-      options={{
-        wordWrap: "on",
+      onchange={(event) => {
+        onChange(event.currentTarget.value);
       }}
-    />
+    ></textarea>
   </section>
 
   <div class="hints">
@@ -83,5 +79,19 @@
 
   .template > span {
     color: #e4b654;
+  }
+
+  .input {
+    padding: 0.5rem;
+    background-color: #000;
+    border: 1px solid #666;
+    color: #ccc;
+    border-radius: 0.25rem;
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    resize: none;
   }
 </style>

@@ -1,6 +1,5 @@
 <script lang="ts">
   import Dialog from "$lib/components/dialog/Dialog.svelte";
-  import MonacoEditor from "$lib/components/scripts/MonacoEditor.svelte";
   import DialogCloseButton from "$lib/components/dialog/DialogCloseButton.svelte";
 
   type Props = {
@@ -22,12 +21,8 @@
   <!-- Content -->
   {#snippet children()}
     <section class="editor">
-      <MonacoEditor
-        language="json"
-        value={metadataValue}
-        readOnly
-        onChange={() => {}}
-      />
+      <textarea class="metadata" name="" id="" readonly value={metadataValue}
+      ></textarea>
     </section>
   {/snippet}
 
@@ -48,5 +43,19 @@
   :global(.metadata-dialog-content) {
     width: 60vw;
     max-width: 60rem;
+  }
+
+  .metadata {
+    padding: 0.5rem;
+    background-color: #000;
+    border: 1px solid #666;
+    color: #ccc;
+    border-radius: 0.25rem;
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    resize: none;
   }
 </style>

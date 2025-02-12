@@ -3,10 +3,8 @@ use anyhow::Context;
 use chrono::Utc;
 use futures::{future::BoxFuture, stream::FuturesUnordered, TryStreamExt};
 use sea_orm::{
-    entity::prelude::*,
-    sea_query::{CaseStatement, Func},
-    ActiveValue::Set,
-    FromQueryResult, IntoActiveModel, QueryOrder, UpdateResult,
+    entity::prelude::*, sea_query::CaseStatement, ActiveValue::Set, FromQueryResult,
+    IntoActiveModel, QueryOrder, UpdateResult,
 };
 use serde::{Deserialize, Serialize};
 
@@ -127,16 +125,6 @@ impl Model {
     }
 
     /// Find sounds with IDs present in the provided list
-    pub async fn get_by_ids<C>(db: &C, ids: &[Uuid]) -> DbResult<Vec<Self>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        Entity::find()
-            .filter(Column::Id.is_in(ids.iter().copied()))
-            .all(db)
-            .await
-    }
-    /// Find sounds with IDs present in the provided list
     pub async fn get_by_ids_partial<C>(db: &C, ids: &[Uuid]) -> DbResult<Vec<PartialSoundModel>>
     where
         C: ConnectionTrait + Send + 'static,
@@ -154,31 +142,6 @@ impl Model {
         C: ConnectionTrait + Send + 'static,
     {
         Entity::find()
-            .order_by_asc(Column::Order)
-            .order_by_desc(Column::CreatedAt)
-            .all(db)
-            .await
-    }
-
-    /// Find all sounds with a matching name, optionally ignoring case
-    pub async fn get_by_names<C>(db: &C, names: &[String], ignore_case: bool) -> DbResult<Vec<Self>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        let mut select = Entity::find();
-
-        if ignore_case {
-            select = select.filter(
-                // Convert stored name to lower case
-                Expr::expr(Func::lower(Expr::col(Column::Name)))
-                    // Compare with lowercase value
-                    .is_in(names.iter().map(|name| name.to_lowercase())),
-            )
-        } else {
-            select = select.filter(Column::Name.is_in(names))
-        }
-
-        select
             .order_by_asc(Column::Order)
             .order_by_desc(Column::CreatedAt)
             .all(db)

@@ -1,9 +1,7 @@
 use anyhow::Context;
 use chrono::{Days, Utc};
 use entity::{
-    app_data::AppDataModel, chat_history::ChatHistoryModel,
-    command_executions::CommandExecutionModel, command_logs::CommandLogsModel,
-    event_executions::EventExecutionModel, event_logs::EventLogsModel,
+    app_data::AppDataModel, chat_history::ChatHistoryModel, event_executions::EventExecutionModel,
 };
 use log::warn;
 use migration::Migrator;
@@ -60,23 +58,12 @@ pub async fn clean_old_data(db: DatabaseConnection) -> anyhow::Result<()> {
 
     let now = Utc::now();
 
-    // Clean logs
-    if main_config.clean_logs {
-        let clean_date = now
-            .checked_sub_days(Days::new(main_config.clean_logs_days))
-            .context("system time is incorrect")?;
-
-        EventLogsModel::delete_before(&db, clean_date).await?;
-        CommandLogsModel::delete_before(&db, clean_date).await?;
-    }
-
     // Clean executions
     if main_config.clean_executions {
         let clean_date = now
             .checked_sub_days(Days::new(main_config.clean_executions_days))
             .context("system time is incorrect")?;
 
-        CommandExecutionModel::delete_before(&db, clean_date).await?;
         EventExecutionModel::delete_before(&db, clean_date).await?;
     }
 

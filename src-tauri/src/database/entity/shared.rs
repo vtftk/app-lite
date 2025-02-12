@@ -30,28 +30,6 @@ pub struct MinMax<T> {
     pub max: T,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
-#[sea_orm(rs_type = "i32", db_type = "Integer")]
-pub enum LoggingLevelDb {
-    #[sea_orm(num_value = 0)]
-    Debug,
-    #[sea_orm(num_value = 1)]
-    Info,
-    #[sea_orm(num_value = 2)]
-    Warn,
-    #[sea_orm(num_value = 3)]
-    Error,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LogsQuery {
-    pub level: Option<LoggingLevelDb>,
-    pub start_date: Option<DateTimeUtc>,
-    pub end_date: Option<DateTimeUtc>,
-    pub offset: Option<u64>,
-    pub limit: Option<u64>,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExecutionsQuery {
     pub start_date: Option<DateTimeUtc>,

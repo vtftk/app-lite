@@ -1,7 +1,6 @@
 use super::{
     event_executions::{EventExecutionColumn, EventExecutionModel},
-    event_logs::{EventLogsColumn, EventLogsModel},
-    shared::{DbResult, ExecutionsQuery, LogsQuery, MinMax, MinimumRequireRole, UpdateOrdering},
+    shared::{DbResult, ExecutionsQuery, MinMax, MinimumRequireRole, UpdateOrdering},
 };
 use anyhow::Context;
 use chrono::Utc;
@@ -251,11 +250,6 @@ pub struct EventOutcomeSendChat {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct EventOutcomeScript {
-    pub script: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EventOutcomeChannelEmotes {
     /// How many emotes to throw
     pub amount: ThrowableAmountData,
@@ -274,8 +268,6 @@ pub enum EventOutcome {
     PlaySound(EventOutcomePlaySound),
     /// Send a chat message
     SendChatMessage(EventOutcomeSendChat),
-    /// Execute a script
-    Script(EventOutcomeScript),
     /// Throw the emotes of a specific channel
     ChannelEmotes(EventOutcomeChannelEmotes),
 }
@@ -285,19 +277,11 @@ pub enum Relation {
     /// Event can have many executions
     #[sea_orm(has_many = "super::event_executions::Entity")]
     Executions,
-    /// Event can have many logs
-    #[sea_orm(has_many = "super::event_logs::Entity")]
-    Logs,
 }
 
 impl Related<super::event_executions::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Executions.def()
-    }
-}
-impl Related<super::event_logs::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Logs.def()
     }
 }
 
@@ -496,38 +480,6 @@ impl Model {
 
         select
             .order_by(EventExecutionColumn::CreatedAt, sea_orm::Order::Desc)
-            .all(db)
-            .await
-    }
-
-    pub async fn get_logs<C>(&self, db: &C, query: LogsQuery) -> DbResult<Vec<EventLogsModel>>
-    where
-        C: ConnectionTrait + Send + 'static,
-    {
-        let mut select = self.find_related(super::event_logs::Entity);
-
-        if let Some(level) = query.level {
-            select = select.filter(EventLogsColumn::Level.eq(level))
-        }
-
-        if let Some(start_date) = query.start_date {
-            select = select.filter(EventLogsColumn::CreatedAt.gt(start_date))
-        }
-
-        if let Some(end_date) = query.end_date {
-            select = select.filter(EventLogsColumn::CreatedAt.lt(end_date))
-        }
-
-        if let Some(offset) = query.offset {
-            select = select.offset(offset);
-        }
-
-        if let Some(limit) = query.limit {
-            select = select.limit(limit);
-        }
-
-        select
-            .order_by(EventLogsColumn::CreatedAt, sea_orm::Order::Desc)
             .all(db)
             .await
     }

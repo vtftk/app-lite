@@ -1,5 +1,5 @@
 {
-  "name": "vtftk",
+  "name": "vtftk-lite",
   "version": "0.0.1",
   "description": "",
   "type": "module",
@@ -39,7 +39,6 @@
     "eslint-plugin-perfectionist": "^4.3.0",
     "eslint-plugin-svelte": "^2.46.1",
     "eslint-plugin-unused-imports": "^4.1.4",
-    "monaco-editor": "^0.52.0",
     "prettier": "^3.4.2",
     "prettier-plugin-svelte": "^3.3.2",
     "svelte": "^5.0.0",

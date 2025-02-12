@@ -1,11 +1,11 @@
 [package]
-name = "vtftk"
+name = "vtftk-lite"
 version = "0.0.1"
 description = "A Tauri App"
 edition = "2021"
 license = "MIT"
 authors = ["Jacobtread <jacobtread@gmail.com>"]
-repository = "https://github.com/vtftk/app"
+repository = "https://github.com/vtftk/app-lite"
 
 [lib]
 name = "vtftk_lib"
@@ -13,8 +13,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
-# Deno core for compiling runtime snapshot
-deno_core = "0.323.0"
 
 [dependencies]
 # Tauri for frontend UI and its plugins
@@ -70,9 +68,6 @@ mime_guess = "2"
 # Logging
 log = "0.4"
 env_logger = "0.11"
-
-# JavaScript runtime
-deno_core = "0.323.0"
 
 # Date & Time
 chrono = { version = "0.4.39", features = ["serde"] }

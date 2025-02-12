@@ -16,7 +16,6 @@
   import FormSection from "$lib/components/form/FormSection.svelte";
   import SolarBookBoldDuotone from "~icons/solar/book-bold-duotone";
   import SolarGiftBoldDuotone from "~icons/solar/gift-bold-duotone";
-  import CodeEditor from "$lib/components/scripts/CodeEditor.svelte";
   import FormSections from "$lib/components/form/FormSections.svelte";
   import SolarCard2BoldDuotone from "~icons/solar/card-2-bold-duotone";
   import SolarAltArrowLeftBold from "~icons/solar/alt-arrow-left-bold";
@@ -61,7 +60,6 @@
     type EventTriggerTypeWithInput,
   } from "$lib/schemas/event";
 
-  import EventLogs from "./EventLogs.svelte";
   import SoundSelect from "./SoundSelect.svelte";
   import HotkeySelect from "./HotkeySelect.svelte";
   import EventExecutions from "./EventExecutions.svelte";
@@ -780,15 +778,6 @@
       selected={$data.outcome.type === EventOutcomeType.SendChatMessage}
       onclick={() => onChangeOutcomeType(EventOutcomeType.SendChatMessage)}
     />
-
-    <CardButton
-      icon={SolarCodeSquareBoldDuotone}
-      color="purple"
-      label="Run script"
-      description="Execute JavaScript code"
-      selected={$data.outcome.type === EventOutcomeType.Script}
-      onclick={() => onChangeOutcomeType(EventOutcomeType.Script)}
-    />
   </div>
 {/snippet}
 
@@ -858,20 +847,7 @@
 {/snippet}
 
 {#snippet codeTabContent()}
-  {#if $data.outcome.type === EventOutcomeType.Script}
-    <section class="editor">
-      <CodeEditor
-        value={$data.outcome.script}
-        onChange={(value) => {
-          setFields("outcome.script", value, true);
-          setIsDirty(true);
-        }}
-        onUserSave={() => {
-          if (existing) save($data);
-        }}
-      />
-    </section>
-  {:else if $data.outcome.type === EventOutcomeType.SendChatMessage}
+  {#if $data.outcome.type === EventOutcomeType.SendChatMessage}
     <TemplateEditor
       value={$data.outcome.template}
       onChange={(value) => {
@@ -937,12 +913,6 @@
   {/if}
 {/snippet}
 
-{#snippet logsTabContent()}
-  {#if existing !== undefined}
-    <EventLogs id={existing.id} />
-  {/if}
-{/snippet}
-
 <form use:form>
   <PageLayoutList
     title={existing ? "Edit Event" : "Create Event"}
@@ -992,8 +962,7 @@
           content: outcomeTabContent,
         },
 
-        ...($data.outcome.type === EventOutcomeType.SendChatMessage ||
-        $data.outcome.type === EventOutcomeType.Script
+        ...($data.outcome.type === EventOutcomeType.SendChatMessage
           ? [
               {
                 value: "code",
@@ -1025,18 +994,6 @@
               },
             ]
           : []),
-        ...(existing !== undefined &&
-        existing.outcome.type === EventOutcomeType.Script
-          ? [
-              {
-                value: "logs",
-                icon: SolarReorderBoldDuotone,
-                label: "Logs",
-                content: logsTabContent,
-                disablePadding: true,
-              },
-            ]
-          : []),
       ]}
     />
   </PageLayoutList>
@@ -1058,11 +1015,5 @@
 
     grid-template-columns: 1fr;
     gap: 0.5rem;
-  }
-
-  .editor {
-    position: relative;
-    overflow: hidden;
-    height: 100%;
   }
 </style>

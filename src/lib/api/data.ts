@@ -34,7 +34,3 @@ export function getChatHistoryEstimateSize() {
 export function getExecutionsEstimateSize() {
   return invoke<number>("get_executions_estimate_size");
 }
-
-export function getLogsEstimateSize() {
-  return invoke<number>("get_logs_estimate_size");
-}

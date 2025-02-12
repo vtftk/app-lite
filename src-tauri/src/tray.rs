@@ -10,9 +10,9 @@ use tauri::{
 };
 
 #[cfg(not(debug_assertions))]
-const TRAY_NAME: &str = "VTFTK - VTuber Fun Toolkit";
+const TRAY_NAME: &str = "VTFTK - Lite - VTuber Fun Toolkit";
 #[cfg(debug_assertions)]
-const TRAY_NAME: &str = "VTFTK - VTuber Fun Toolkit (Dev)";
+const TRAY_NAME: &str = "VTFTK - Lite - VTuber Fun Toolkit (Dev)";
 
 /// Creates a tray menu for the app
 pub fn create_tray_menu(app: &mut App) -> anyhow::Result<()> {

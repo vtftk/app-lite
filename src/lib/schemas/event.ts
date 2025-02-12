@@ -103,10 +103,6 @@ export const eventOutcomeSchema = z.discriminatedUnion("type", [
     template: z.string(),
   }),
   z.object({
-    type: z.literal(EventOutcomeType.Script),
-    script: z.string(),
-  }),
-  z.object({
     type: z.literal(EventOutcomeType.ChannelEmotes),
     amount: throwableDataSchema,
   }),
@@ -195,7 +191,6 @@ export function getEventOutcomeDefaults(): Record<
     [EventOutcomeType.SendChatMessage]: getEventOutcomeDefault(
       EventOutcomeType.SendChatMessage,
     ),
-    [EventOutcomeType.Script]: getEventOutcomeDefault(EventOutcomeType.Script),
     [EventOutcomeType.ChannelEmotes]: getEventOutcomeDefault(
       EventOutcomeType.ChannelEmotes,
     ),
@@ -256,11 +251,6 @@ export function getEventOutcomeDefault(
       return {
         type: EventOutcomeType.SendChatMessage,
         template: "",
-      };
-    case EventOutcomeType.Script:
-      return {
-        type: EventOutcomeType.Script,
-        script: "",
       };
     case EventOutcomeType.ChannelEmotes:
       return {

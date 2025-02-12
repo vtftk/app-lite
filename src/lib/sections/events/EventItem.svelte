@@ -18,7 +18,6 @@
   import SolarBasketballBoldDuotone from "~icons/solar/basketball-bold-duotone";
   import SolarBoltCircleBoldDuotone from "~icons/solar/bolt-circle-bold-duotone";
   import SolarTextSquareBoldDuotone from "~icons/solar/text-square-bold-duotone";
-  import SolarCodeSquareBoldDuotone from "~icons/solar/code-square-bold-duotone";
   import SolarArrowRightBoldDuotone from "~icons/solar/arrow-right-bold-duotone";
   import ControlledCheckbox from "$lib/components/input/ControlledCheckbox.svelte";
   import { confirmDialog } from "$lib/components/dialog/GlobalConfirmDialog.svelte";
@@ -192,11 +191,6 @@
       <div class="detail" data-color="green">
         <SolarChatSquareCodeBoldDuotone />
         Send chat message
-      </div>
-    {:else if config.outcome.type === EventOutcomeType.Script}
-      <div class="detail" data-color="purple">
-        <SolarCodeSquareBoldDuotone />
-        Run script
       </div>
     {/if}
 
